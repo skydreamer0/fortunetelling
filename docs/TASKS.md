@@ -335,7 +335,7 @@ earthlyBranch, mutagen（該大限四化）, isCurrent }`。
 
 ---
 
-## 任務 D4 — EvolutionCalculator（區塊 H③）
+## 任務 D4 ✅ — EvolutionCalculator（區塊 H③）
 
 **目標**：新增 `src/analysis/EvolutionCalculator.js`：吃 `SystemResult[]`＋asOf，產出
 `{ periods: Period[], narrative: string }`（形狀 §4.2）：

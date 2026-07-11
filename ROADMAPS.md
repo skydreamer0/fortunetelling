@@ -43,7 +43,7 @@
 ### Phase 4: Block H - 動靜分層與時期演化 (Layers & Evolution)
 - [x] **`LayerClassifier`**：標註所有部件的所屬層級（L0恆定、L1慢變、L2年變、L3情境）。
 - [x] **`StateSwitchTable`**（任務 D2）：實作五大情境切換表（初識、親密、衝突、低谷、工作），映射表可擴充、無來源情境明示「資料不足」。
-- [ ] **`EvolutionCalculator`**（任務 D4）：以八字大運與紫微大限為軸，計算各時期的雷達形狀變化與演化敘事。
+- [x] **`EvolutionCalculator`**（任務 D4）：以八字大運與紫微大限為軸，計算各時期的雷達形狀變化與演化敘事（大運疊加規則 `bazi_element_balance_dayun`、大限四化重算宮強）。
 - [x] **`HonestyGuard`**（任務 D1）：文字輸出守門員（L0 允許「你是」，L1/L2/L3 禁定性斷言；`analyze()` 已接誠實稽核）。
 
 ### Phase 5: UI 與前端整合 (Premium UI Integration)

@@ -62,8 +62,8 @@ npm run build
 本專案採用高度模組化的架構設計，將不同命理學派實作為獨立的計算引擎，並統一資料格式進行視覺化展示。
 
 **🟢 目前開發進度**
-- **已完成**：基礎架構 (Phase 1)、全部計算引擎 (Phase 2，含紫微斗數、八字、生命靈數、命卦、馬雅 Kin)、雷達與透明計分核心 (RadarBuilder/ScoringRules，任務 C1)、動靜分層與誠實守門 (LayerClassifier/HonestyGuard/StateSwitchTable，任務 D1–D3)。
-- **進行中**：任務 D4 時期演化 (EvolutionCalculator)，之後為 C2 radars 接線與 C3/D5 UI 整合。
+- **已完成**：基礎架構 (Phase 1)、全部計算引擎 (Phase 2，含紫微斗數、八字、生命靈數、命卦、馬雅 Kin)、雷達與透明計分核心 (RadarBuilder/ScoringRules，任務 C1)、動靜分層/誠實守門/狀態切換/時期演化 (任務 D1–D4)。
+- **即將開發**：任務 C2 radars 接線，之後為 C3、D5 的 UI 圖表整合。
 
 更詳細的系統架構、評分規則設計與未來的開發階段規劃，請參閱 [`ROADMAPS.md`](./ROADMAPS.md) 文件。
 
