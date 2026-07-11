@@ -131,13 +131,13 @@ const DEFAULT_RULES = [
     radarType: 'palace_strength',
     axisName: '宮位力量',
     sourceSystem: 'ziwei',
-    formula: '(mainStarBrightness * 0.6) + (auxiliaryStarCount * 10 * 0.2) + (fourTransformBonus * 0.2)',
-    description: '宮位綜合力量 = 主星亮度(60%) + 輔星數量加成(20%) + 四化加成(20%)。',
+    formula: '(mainStarBrightness * 0.6) + (min(auxiliaryStarCount * 10, 100) * 0.2) + (fourTransformBonus * 0.2)',
+    description: '宮位綜合力量 = 主星亮度(60%) + 輔星數量加成(20%) + 四化加成(20%)。主星亮度取宮內主星最高亮度分數×100（0–100，無主星計 0）；輔星數量加成 = 輔星數×10（上限 100）；四化加成 = 宮內含生年四化星（祿權科忌）為 100，否則為 0。',
     inputs: ['mainStarBrightness', 'auxiliaryStarCount', 'fourTransformBonus'],
     maxValue: 100,
     minValue: 0,
     unit: '分',
-    version: '1.0.0'
+    version: '1.1.0'
   },
 
   // ── Vedic Dignity Radar ───────────────────────────────────────────────
@@ -172,15 +172,15 @@ const DEFAULT_RULES = [
   {
     id: 'numerology_digit_frequency',
     radarType: 'digit_frequency',
-    axisName: '數字頻率',
+    axisName: '數字頻次',
     sourceSystem: 'numerology',
-    formula: '(digitOccurrences / totalDigits) * 100',
-    description: '生命靈數中某數字出現次數佔總數字位數的百分比。',
-    inputs: ['digitOccurrences', 'totalDigits'],
-    maxValue: 100,
+    formula: 'digitOccurrences',
+    description: '生命靈數九宮格中某數字（1–9）於出生日期 yyyymmdd 八位數中的出現次數。0 不計入；單位為次數而非百分比（D-011）。',
+    inputs: ['digitOccurrences'],
+    maxValue: 8,
     minValue: 0,
-    unit: '%',
-    version: '1.0.0'
+    unit: '次',
+    version: '2.0.0'
   },
 
   // ── Human Design Centers Radar ────────────────────────────────────────
@@ -196,74 +196,11 @@ const DEFAULT_RULES = [
     minValue: 0,
     unit: '%',
     version: '1.0.0'
-  },
-
-  // ── Cross-System Personality Radar ────────────────────────────────────
-  {
-    id: 'cross_leadership',
-    radarType: 'personality_composite',
-    axisName: '領導力',
-    sourceSystem: 'cross_system',
-    formula: '(baziOfficerStar * 0.3) + (ziweiEmperorBrightness * 0.3) + (vedicSunDignity * 0.2) + (hdSacralDefined * 0.2)',
-    description: '跨系統領導力指標：八字官星(30%) + 紫微星亮度(30%) + 吠陀太陽尊貴度(20%) + 人類圖薦骨定義(20%)。',
-    inputs: ['baziOfficerStar', 'ziweiEmperorBrightness', 'vedicSunDignity', 'hdSacralDefined'],
-    maxValue: 100,
-    minValue: 0,
-    unit: '分',
-    version: '1.0.0'
-  },
-  {
-    id: 'cross_creativity',
-    radarType: 'personality_composite',
-    axisName: '創造力',
-    sourceSystem: 'cross_system',
-    formula: '(baziHurtOfficer * 0.3) + (ziweiTianJi * 0.25) + (vedicVenusDignity * 0.25) + (hdThroatDefined * 0.2)',
-    description: '跨系統創造力指標：八字傷官(30%) + 天機星(25%) + 吠陀金星(25%) + 人類圖喉嚨中心(20%)。',
-    inputs: ['baziHurtOfficer', 'ziweiTianJi', 'vedicVenusDignity', 'hdThroatDefined'],
-    maxValue: 100,
-    minValue: 0,
-    unit: '分',
-    version: '1.0.0'
-  },
-  {
-    id: 'cross_emotional_depth',
-    radarType: 'personality_composite',
-    axisName: '情感深度',
-    sourceSystem: 'cross_system',
-    formula: '(baziWaterStrength * 0.25) + (ziweiTaiYin * 0.25) + (vedicMoonDignity * 0.3) + (hdEmotionalDefined * 0.2)',
-    description: '跨系統情感深度：八字水五行(25%) + 太陰星(25%) + 吠陀月亮(30%) + 人類圖情緒中心(20%)。',
-    inputs: ['baziWaterStrength', 'ziweiTaiYin', 'vedicMoonDignity', 'hdEmotionalDefined'],
-    maxValue: 100,
-    minValue: 0,
-    unit: '分',
-    version: '1.0.0'
-  },
-  {
-    id: 'cross_analytical',
-    radarType: 'personality_composite',
-    axisName: '分析力',
-    sourceSystem: 'cross_system',
-    formula: '(baziMetalStrength * 0.25) + (ziweiTianLiang * 0.25) + (vedicMercuryDignity * 0.3) + (hdAjnaDefined * 0.2)',
-    description: '跨系統分析力：八字金五行(25%) + 天梁星(25%) + 吠陀水星(30%) + 人類圖邏輯中心(20%)。',
-    inputs: ['baziMetalStrength', 'ziweiTianLiang', 'vedicMercuryDignity', 'hdAjnaDefined'],
-    maxValue: 100,
-    minValue: 0,
-    unit: '分',
-    version: '1.0.0'
-  },
-  {
-    id: 'cross_resilience',
-    radarType: 'personality_composite',
-    axisName: '韌性',
-    sourceSystem: 'cross_system',
-    formula: '(baziEarthStrength * 0.25) + (ziweiTianFu * 0.25) + (vedicSaturnDignity * 0.3) + (hdRootDefined * 0.2)',
-    description: '跨系統韌性指標：八字土五行(25%) + 天府星(25%) + 吠陀土星(30%) + 人類圖根部中心(20%)。',
-    inputs: ['baziEarthStrength', 'ziweiTianFu', 'vedicSaturnDignity', 'hdRootDefined'],
-    maxValue: 100,
-    minValue: 0,
-    unit: '分',
-    version: '1.0.0'
   }
+
+  // 註：原「Cross-System Personality Radar」的 5 條 personality_composite
+  // 規則已依 D-009 於任務 C1 移除——它們依賴永不存在的 vedic/humandesign
+  // 輸入（死規則），且違反「每系統一張、不做跨系統合併雷達」的決策。
 ];
 
 // ─── Formatting Helpers ─────────────────────────────────────────────────────
@@ -277,8 +214,7 @@ const SOURCE_LABELS = {
   ziwei: '紫微斗數',
   vedic: '吠陀占星',
   numerology: '生命靈數',
-  humandesign: '人類圖',
-  cross_system: '跨系統綜合'
+  humandesign: '人類圖'
 };
 
 /**
@@ -291,9 +227,8 @@ const RADAR_TYPE_LABELS = {
   palace_strength: '宮位力量雷達',
   planetary_dignity: '行星尊貴度雷達',
   divisional_comparison: '分盤比較雷達',
-  digit_frequency: '數字頻率雷達',
-  center_definition: '能量中心定義雷達',
-  personality_composite: '人格綜合雷達'
+  digit_frequency: '數字頻次長條',
+  center_definition: '能量中心定義雷達'
 };
 
 // ─── ScoringRules Class ─────────────────────────────────────────────────────
