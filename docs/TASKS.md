@@ -147,9 +147,9 @@
 ## 任務 B3 — BaZi 十神顯隱（L3 `tenGodsContext`）
 
 **目標**：輸出 L3 情境部件 `tenGodsContext`：把 B1 的十神統計聚合成五個關係角色群
-（官殺=權威場合、財星=資源/親密、食傷=表達/創造、印星=支持/學習、比劫=同輩競合），
-每群 value `{ group, tenGods: string[], count, share, presence: '顯'|'隱' }`
-（share=該群次數/十神總數；presence 依 share 是否 > 0 級距自訂並在 JSDoc 說明）。
+（官殺=規範與權威、財星=資源與交換、食傷=表達與產出、印星=學習與支持、比劫=同儕與競合）。
+每群 value 包含 `group`, `context`, `tenGods`, `observedTenGods`, `breakdown`, `visibleCount`, `hiddenCount`, `count`, `share`, 與 `presence: '顯'|'隱'|'無'`。
+（`presence` 三態：天干有為顯，僅藏干有為隱，皆無為無。`total` 為所有群 `count` 總和，必須排除日柱天干本身）。
 語氣屬 L3——component `name` 與任何文字禁用「你是」句式。
 分層規則 `bazi/tenGodsContext → L3` 已存在，不要動 LayerClassifier。
 
@@ -160,9 +160,10 @@
 **驗收條件**：
 1. `npm test` 全綠。
 2. `analyze()` 後 `layers.byLayer.L3` 含 bazi 部件（與既有 ziwei L3 並存）。
-3. 五群 share 總和 ≈ 1（±浮點誤差）。
+3. 五群 share 總和 ≈ 1（±浮點誤差）；五群 `count` 總和等於 `total`。
+4. B1 原始 `tenGods` 統計與總數維持不變。
 
-**測試案例**：五群齊全；share ∈ [0,1]；分類後 layer === 'L3' 且非 unclassified。
+**測試案例**：五群齊全且順序固定；share ∈ [0,1]；分類後 layer === 'L3' 且非 unclassified；使用固定命盤精確驗證 count，並使用至少另一組命盤確保測試資料整體覆蓋「顯、隱、無」三態；驗證 `visibleCount + hiddenCount === count`，`total === tenGods.value.total - 1`，以及 `sum(group.breakdown values) === group.count`。
 
 **失敗回報**：HARNESS_SPEC §四，ID=B3。
 
