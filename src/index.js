@@ -40,6 +40,13 @@ export {
 export { LayerClassifier } from './analysis/LayerClassifier.js';
 export { ScoringRules } from './analysis/ScoringRules.js';
 export { HonestyGuard, QUALITATIVE_PATTERNS } from './analysis/HonestyGuard.js';
+export {
+  StateSwitchTable,
+  SCENARIO_DEFINITIONS,
+  CATEGORY_SCENARIO_MAP,
+  TEN_GOD_GROUP_SCENARIO_MAP,
+  TEN_GOD_GROUP_EXPRESSIONS,
+} from './analysis/StateSwitchTable.js';
 
 // ── Visualization（框架無關的文字降級輸出）──
 export * as TextFallback from './visualization/TextFallback.js';
