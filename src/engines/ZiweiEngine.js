@@ -9,7 +9,7 @@
  *   palaces         → L0  十二宮結構
  *   mainStars       → L0  主星落宮 + 廟旺利得平不陷亮度（計分用）
  *   fourTransforms  → L0  生年四化（祿權科忌）
- *   daXian          → L1  當前大限（十年一變）
+ *   daXian          → L1  全部大限序列（十年一變，含各大限四化）
  *   xiaoXian        → L2  小限（每年一變）
  *   flyingStars     → L2  流年四化 / 流耀（每年一變）
  *   soulVsBody      → L3  命宮 vs 身宮對照（先天格局 vs 後天/情境反應）
@@ -101,7 +101,7 @@ export class ZiweiEngine extends BaseEngine {
     this.#addPalacesAndStars(result, astrolabe);
     this.#addFourTransforms(result, astrolabe);
     this.#addContextFacets(result, astrolabe);
-    this.#addHoroscope(result, astrolabe);
+    this.#addHoroscope(result, astrolabe, birth);
 
     result.meta = {
       solarDate: astrolabe.solarDate,
@@ -279,41 +279,28 @@ export class ZiweiEngine extends BaseEngine {
   // ─── L1/L2: Time-varying periods ────────────────────────────────────────
 
   /**
-   * Add the current 大限 (L1), 小限 (L2) and 流年四化 (L2) via iztro's horoscope.
-   * Wrapped defensively: if the horoscope lookup fails, the natal (L0) data is
-   * still returned and a warning is recorded rather than aborting the engine.
+   * Add the full 大限 sequence (L1), 小限 (L2) and 流年四化 (L2) via iztro's
+   * horoscope. Wrapped defensively: if the horoscope lookup fails, the natal
+   * (L0) data is still returned and a warning is recorded rather than aborting
+   * the engine.
    *
    * @param {SystemResult} result
    * @param {import('iztro/lib/astro/FunctionalAstrolabe').IFunctionalAstrolabe} astrolabe
+   * @param {BirthData} birth
    */
-  #addHoroscope(result, astrolabe) {
+  #addHoroscope(result, astrolabe, birth) {
     const target = this.asOf ? new Date(this.asOf) : new Date();
-    let horoscope;
+    let horoscope = null;
     try {
       horoscope = astrolabe.horoscope(target);
     } catch (err) {
       result.warn(`運限計算失敗（${target.toISOString().slice(0, 10)}）：${err.message}`);
-      return;
     }
 
-    const decadal = horoscope.decadal;
-    if (decadal) {
-      const decadalPalace = astrolabe.palaces[decadal.index];
-      result.add({
-        id: 'daXian_current',
-        name: `當前大限（${decadalPalace?.name ?? ''}）`,
-        category: 'daXian',
-        value: {
-          name: decadal.name,
-          range: decadalPalace?.decadal?.range ?? null,
-          heavenlyStem: decadal.heavenlyStem,
-          earthlyBranch: decadal.earthlyBranch,
-          palaceIndex: decadal.index,
-          mutagen: decadal.mutagen,
-          asOf: target.toISOString().slice(0, 10),
-        },
-      });
-    }
+    // 大限全序列不依賴 asOf 的靜態欄位；isCurrent 依 asOf 虛歲判定（D-014、D-016）。
+    this.#addDaXianSequence(result, astrolabe, birth, horoscope?.age?.nominalAge ?? null);
+
+    if (!horoscope) return;
 
     const age = horoscope.age;
     if (age) {
@@ -346,6 +333,70 @@ export class ZiweiEngine extends BaseEngine {
         },
       });
     }
+  }
+
+  /**
+   * Emit the **full 大限 sequence** as one component per decade
+   * (`daXian_1` … `daXian_12`, sorted by ascending starting nominal age).
+   *
+   * Per-decade 四化 (mutagen)：對每個大限範圍內的任一日期呼叫
+   * `astrolabe.horoscope()` 取 `decadal.mutagen`（探測日取該大限第 5 個虛歲年的
+   * 7 月 1 日，避開農曆年界，必然落於該大限的虛歲區間內）。
+   *
+   * `isCurrent` 依 asOf 當日虛歲是否落在大限虛歲區間（含頭尾）判定；
+   * 區間互不重疊，故至多一步為 true。asOf 早於起運則全 false。
+   *
+   * @param {SystemResult} result
+   * @param {import('iztro/lib/astro/FunctionalAstrolabe').IFunctionalAstrolabe} astrolabe
+   * @param {BirthData} birth
+   * @param {number|null} asOfNominalAge - 虛歲 at asOf, or null if unknown.
+   */
+  #addDaXianSequence(result, astrolabe, birth, asOfNominalAge) {
+    const decadalPalaces = astrolabe.palaces
+      .filter(p => Array.isArray(p.decadal?.range) && p.decadal.range.length === 2)
+      .slice()
+      .sort((a, b) => a.decadal.range[0] - b.decadal.range[0]);
+
+    decadalPalaces.forEach((palace, i) => {
+      const index = i + 1;
+      const [startAge, endAge] = palace.decadal.range;
+
+      // Probe date inside this decade: nominal age ≈ startAge + 5 (or +6 for
+      // pre-新年 births), always within [startAge, endAge] for a 10-year span.
+      const probeDate = new Date(birth.year + startAge + 4, 6, 1);
+      let mutagen = null;
+      try {
+        const decadal = astrolabe.horoscope(probeDate).decadal;
+        mutagen = decadal?.mutagen ?? null;
+        if (decadal && decadal.index !== palace.index) {
+          result.warn(
+            `大限四化探測不一致：daXian_${index} 期望宮位 ${palace.index}，` +
+            `horoscope 回傳 ${decadal.index}。`,
+          );
+        }
+      } catch (err) {
+        result.warn(`大限 ${index} 四化計算失敗（${probeDate.getFullYear()}）：${err.message}`);
+      }
+
+      const isCurrent =
+        asOfNominalAge !== null && asOfNominalAge >= startAge && asOfNominalAge <= endAge;
+
+      result.add({
+        id: `daXian_${index}`,
+        name: `第${index}大限（${palace.name}，虛歲 ${startAge}–${endAge}）`,
+        category: 'daXian',
+        value: {
+          index,
+          palaceIndex: palace.index,
+          palaceName: palace.name,
+          range: [startAge, endAge],
+          heavenlyStem: palace.decadal.heavenlyStem,
+          earthlyBranch: palace.decadal.earthlyBranch,
+          mutagen,
+          isCurrent,
+        },
+      });
+    });
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────
