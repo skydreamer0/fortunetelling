@@ -56,11 +56,18 @@
 **目標**：新增第 5 個引擎 BaZiEngine，輸出本命（L0）四類部件：
 - `natal`：四柱（年/月/日/時的干支）
 - `dayMaster`：日主（日干）＋其五行與陰陽
-- `elements`：五行分佈 `{ counts: {木,火,土,金,水}, total, includesHiddenStems: true }`——
-  天干、地支本氣與藏干均計入（供 `bazi_*_strength` 計分規則的 `woodCount/totalElements` 使用）
-- `tenGods`：十神統計（相對日主，各十神出現次數，含天干與藏干）
+- `elements`：五行**出現次數** `{ counts: {木,火,土,金,水}, total,
+  includesHiddenStems: true, includesDayMaster: true, metric: 'occurrence-count' }`——
+  四個天干與各地支完整藏干都計入；本氣已包含於藏干，同一地支不重複計數、
+  同一藏干出現在不同地支則分別計數。此資料**不代表旺衰或強弱**，不含月令、
+  藏干權重與真太陽時校正；C1 僅能呈現出現占比，不得標示為五行強度。
+- `tenGods`：十神統計（相對日主，各十神出現次數，含四個天干與藏干；
+  日干本身計為比肩，`includesDayMaster: true`）
 
-使用 `lunar-javascript`（已在 dependencies）的 `Solar`/`Lunar`/`EightChar`。
+使用 `lunar-javascript@1.7.7`（已在 dependencies）的 `Solar`/`Lunar`/`EightChar`。
+所有輸入固定解讀為 **Asia/Taipei 民用時間的國曆**；直接使用年月日時分，不做 UTC／時區
+換算、出生地經度或真太陽時校正，並採套件預設 sect=2 換日口徑。此限制必須寫入 natal metadata；
+非台灣時區或真太陽時需求待未來擴充 `BirthData.timezone` 與出生地資訊後處理。
 繼承 `BaseEngine`，`id='bazi'`，`name='八字'`。分層規則已預埋於 LayerClassifier，不要動它。
 
 **修改檔案**：
@@ -75,17 +82,20 @@
 
 **驗收條件**：
 1. `npm test` 全綠（不鎖定測試總數；既有斷言與本任務新增斷言都必須通過）。
-2. `analyze()` 回傳 5 個引擎，bazi 零 `errors`、無 `unclassified` 部件。
+2. `analyze()` 的引擎結果含 `bazi`，且 bazi 零 `errors`、四個部件皆歸 L0、無
+   `unclassified` 部件；不鎖定預設引擎總數。
 3. 四柱黃金向量通過（見測試案例）。
-4. `elements.counts` 五鍵齊全、總和 = `total`。
+4. `elements.counts` 五鍵齊全、總和 = `total`，且 `includesDayMaster === true`；
+   `tenGods.total === elements.total`、`includesDayMaster === true`。
 
 **測試案例**（至少）：
-- 黃金向量（出處：lunar-javascript README 範例）：1986-05-29 →
-  年柱 `丙寅`、月柱 `癸巳`、日柱 `癸酉`；日主 `癸`（水）。
+- 黃金向量（固定為國曆、Asia/Taipei、辰時 08:00、套件 sect=2）：1986-05-29 08:00 →
+  四柱 `丙寅`／`癸巳`／`癸酉`／`丙辰`；日主 `癸`（水）；
+  `elements.total === 14`、`tenGods.total === 14`。
 - 1991-10-05 14:00 → 引擎零錯誤、components 含全部四個 category、
   十神次數總和 > 0。
-- `elements` 藏干驗證：任選一柱，斷言藏干確實被計入（counts 總和 > 8，
-  因為僅天干+地支本氣為 8）。
+- `elements` 藏干驗證：1986 黃金向量斷言五行次數為木 2、火 4、土 3、金 2、水 3，
+  以 14 筆明確總數取代不通用的 `total > 8` 判斷。
 
 **失敗回報**：HARNESS_SPEC §四，ID=B1。
 
