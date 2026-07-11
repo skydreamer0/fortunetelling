@@ -47,6 +47,7 @@ export {
   TEN_GOD_GROUP_SCENARIO_MAP,
   TEN_GOD_GROUP_EXPRESSIONS,
 } from './analysis/StateSwitchTable.js';
+export { EvolutionCalculator, DAYUN_OVERLAY_PER_CHAR } from './analysis/EvolutionCalculator.js';
 
 // ── Visualization（框架無關的文字降級輸出）──
 export * as TextFallback from './visualization/TextFallback.js';

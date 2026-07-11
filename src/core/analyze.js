@@ -15,6 +15,7 @@ import { LayerClassifier } from '../analysis/LayerClassifier.js';
 import { ScoringRules } from '../analysis/ScoringRules.js';
 import { HonestyGuard } from '../analysis/HonestyGuard.js';
 import { StateSwitchTable } from '../analysis/StateSwitchTable.js';
+import { EvolutionCalculator } from '../analysis/EvolutionCalculator.js';
 import { createDefaultRegistry } from '../engines/index.js';
 
 /** Public library version (semver). Bump on any observable API change. */
@@ -117,6 +118,12 @@ export function analyze(input, { asOf = null } = {}) {
   // ── 區塊 H②：狀態切換表（D2）——必須在誠實稽核前填入，讓自產文字受檢 ──
   report.stateTable.scenarios = StateSwitchTable.build(layers);
   report.stateTable.pending = false;
+
+  // ── 區塊 H③：時期演化（D4）——同樣先於誠實稽核填入，讓自產文字受檢 ──
+  const evolution = EvolutionCalculator.calculate(engines, { asOf: asOfStr });
+  report.evolution.periods = evolution.periods;
+  report.evolution.narrative = evolution.narrative;
+  report.evolution.pending = false;
 
   // ── 區塊 H④：組完 Report 後跑誠實稽核（D1）──
   report.honesty.violations = HonestyGuard.auditReport(report);

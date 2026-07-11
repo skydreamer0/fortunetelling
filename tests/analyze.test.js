@@ -23,7 +23,7 @@ test('analyze() 回傳完整 Report 契約欄位', () => {
   // G/H 進階欄位：穩定空殼必須存在（shape 從第一天就定案）
   assert.ok(Array.isArray(report.radars));
   assert.ok(Array.isArray(report.stateTable.scenarios));
-  assert.ok(Array.isArray(report.evolution.periods) && report.evolution.pending === true);
+  assert.ok(Array.isArray(report.evolution.periods));
   assert.ok(Array.isArray(report.honesty.violations));
   assert.equal(report.honesty.languageRules.length, 4);
 
@@ -37,6 +37,12 @@ test('analyze() 回傳完整 Report 契約欄位', () => {
     report.stateTable.scenarios.map(s => s.id),
     ['first_meeting', 'intimate_stable', 'conflict', 'low_pressure', 'workplace'],
   );
+
+  // D4：evolution 已接線 — bazi 10 步大運 + ziwei 12 大限、敘事非空、pending 翻為 false
+  assert.equal(report.evolution.pending, false);
+  assert.equal(report.evolution.periods.filter(p => p.system === 'bazi').length, 10);
+  assert.equal(report.evolution.periods.filter(p => p.system === 'ziwei').length, 12);
+  assert.ok(report.evolution.narrative.length > 0);
 });
 
 test('Report 頂層欄位集合完全不變（Schema v1 凍結，D-012）', () => {
@@ -48,9 +54,9 @@ test('Report 頂層欄位集合完全不變（Schema v1 凍結，D-012）', () =
       'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'version',
     ],
   );
-  // D1/D2 已翻 honesty.pending 與 stateTable.pending；evolution 空殼維持 true
+  // D1/D2/D4 已翻 honesty / stateTable / evolution 的 pending
   assert.equal(report.stateTable.pending, false);
-  assert.equal(report.evolution.pending, true);
+  assert.equal(report.evolution.pending, false);
   assert.equal(report.honesty.pending, false);
 });
 

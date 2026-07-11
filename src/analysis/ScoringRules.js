@@ -111,6 +111,21 @@ const DEFAULT_RULES = [
     version: '1.0.0'
   },
 
+  // ── BaZi DaYun Element Overlay Radar（D4 時期演化用）──────────────────
+  {
+    id: 'bazi_element_balance_dayun',
+    radarType: 'element_balance_dayun',
+    axisName: '五行（大運疊加）',
+    sourceSystem: 'bazi',
+    formula: '((natalCount + daYunOverlay) / (natalTotal + 2)) * 100 where daYunOverlay = 該步大運干支兩字中屬該五行的字數 × 1.0',
+    description: '疊加法：本命五行出現次數（天干地支藏干均計入）加上該步大運干支的臨時疊加——大運天干與地支各依其五行計 1.0（兩字同五行則該軸 +2.0），總數固定增加 2.0，重算各五行佔比。僅反映出現占比的時期位移，不代表旺衰強弱。',
+    inputs: ['natalCount', 'daYunOverlay', 'natalTotal'],
+    maxValue: 100,
+    minValue: 0,
+    unit: '%',
+    version: '1.0.0'
+  },
+
   // ── ZiWei Star Brightness Radar ───────────────────────────────────────
   {
     id: 'ziwei_star_brightness',
@@ -223,6 +238,7 @@ const SOURCE_LABELS = {
  */
 const RADAR_TYPE_LABELS = {
   element_balance: '五行平衡雷達',
+  element_balance_dayun: '大運五行疊加雷達',
   star_brightness: '主星亮度雷達',
   palace_strength: '宮位力量雷達',
   planetary_dignity: '行星尊貴度雷達',
