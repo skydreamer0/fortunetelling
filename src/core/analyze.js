@@ -13,6 +13,7 @@
 import { BirthData } from './models/BirthData.js';
 import { LayerClassifier } from '../analysis/LayerClassifier.js';
 import { ScoringRules } from '../analysis/ScoringRules.js';
+import { HonestyGuard } from '../analysis/HonestyGuard.js';
 import { createDefaultRegistry } from '../engines/index.js';
 
 /** Public library version (semver). Bump on any observable API change. */
@@ -76,7 +77,7 @@ export function analyze(input, { asOf = null } = {}) {
 
   const scoring = new ScoringRules();
 
-  return {
+  const report = {
     version: VERSION,
     schemaVersion: REPORT_SCHEMA_VERSION,
     generatedAt: new Date().toISOString(),
@@ -101,7 +102,7 @@ export function analyze(input, { asOf = null } = {}) {
     stateTable: { scenarios: [], pending: true },
     evolution: { periods: [], narrative: '', pending: true },
     honesty: {
-      // 語言規則現在就給（來自分層定義）；違規稽核由 HonestyGuard（里程碑 D）填入
+      // 語言規則來自分層定義；違規由下方 HonestyGuard 稽核填入（D1）
       languageRules: layers.layerDefinitions.map(d => ({
         layer: d.code,
         name: d.name,
@@ -111,4 +112,10 @@ export function analyze(input, { asOf = null } = {}) {
       pending: true,
     },
   };
+
+  // ── 區塊 H④：組完 Report 後跑誠實稽核（D1）──
+  report.honesty.violations = HonestyGuard.auditReport(report);
+  report.honesty.pending = false;
+
+  return report;
 }

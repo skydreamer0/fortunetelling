@@ -39,6 +39,7 @@ export {
 // ── Analysis ──
 export { LayerClassifier } from './analysis/LayerClassifier.js';
 export { ScoringRules } from './analysis/ScoringRules.js';
+export { HonestyGuard, QUALITATIVE_PATTERNS } from './analysis/HonestyGuard.js';
 
 // ── Visualization（框架無關的文字降級輸出）──
 export * as TextFallback from './visualization/TextFallback.js';

@@ -26,6 +26,25 @@ test('analyze() 回傳完整 Report 契約欄位', () => {
   assert.ok(Array.isArray(report.evolution.periods) && report.evolution.pending === true);
   assert.ok(Array.isArray(report.honesty.violations));
   assert.equal(report.honesty.languageRules.length, 4);
+
+  // D1：honesty 稽核已接線 — 僅 honesty.pending 翻為 false，空殼內容零違規
+  assert.equal(report.honesty.pending, false);
+  assert.deepEqual(report.honesty.violations, []);
+});
+
+test('Report 頂層欄位集合完全不變（Schema v1 凍結，D-012）', () => {
+  const report = analyze(INPUT, { asOf: AS_OF });
+  assert.deepEqual(
+    Object.keys(report).sort(),
+    [
+      'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input',
+      'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'version',
+    ],
+  );
+  // D1 只翻 honesty.pending；其餘空殼 pending 維持 true
+  assert.equal(report.stateTable.pending, true);
+  assert.equal(report.evolution.pending, true);
+  assert.equal(report.honesty.pending, false);
 });
 
 test('預設引擎全數執行且零錯誤', () => {
