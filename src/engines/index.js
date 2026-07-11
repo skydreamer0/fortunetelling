@@ -12,11 +12,13 @@ import { ZiweiEngine } from './ZiweiEngine.js';
 import { NumerologyEngine } from './NumerologyEngine.js';
 import { MingGuaEngine } from './MingGuaEngine.js';
 import { DreamspellEngine } from './DreamspellEngine.js';
+import { BaZiEngine } from './BaZiEngine.js';
 
 export { ZiweiEngine } from './ZiweiEngine.js';
 export { NumerologyEngine } from './NumerologyEngine.js';
 export { MingGuaEngine } from './MingGuaEngine.js';
 export { DreamspellEngine } from './DreamspellEngine.js';
+export { BaZiEngine } from './BaZiEngine.js';
 
 /**
  * Instantiate the default set of engines.
@@ -28,6 +30,7 @@ export { DreamspellEngine } from './DreamspellEngine.js';
  */
 export function createEngines({ asOf = null } = {}) {
   return [
+    new BaZiEngine({ asOf }),
     new ZiweiEngine({ asOf }),
     new NumerologyEngine({ asOf }),
     new MingGuaEngine(),

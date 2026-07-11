@@ -33,6 +33,7 @@ export {
   NumerologyEngine,
   MingGuaEngine,
   DreamspellEngine,
+  BaZiEngine,
 } from './engines/index.js';
 
 // ── Analysis ──

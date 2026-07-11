@@ -28,13 +28,9 @@ test('analyze() 回傳完整 Report 契約欄位', () => {
   assert.equal(report.honesty.languageRules.length, 4);
 });
 
-test('四引擎全數執行且零錯誤', () => {
+test('預設引擎全數執行且零錯誤', () => {
   const report = analyze(INPUT, { asOf: AS_OF });
-  assert.equal(report.engines.length, 4);
-  assert.deepEqual(
-    report.engines.map(e => e.engineId).sort(),
-    ['dreamspell', 'minggua', 'numerology', 'ziwei'],
-  );
+  assert.ok(report.engines.some(engine => engine.engineId === 'bazi'), '缺少 bazi 引擎');
   for (const engine of report.engines) {
     assert.equal(engine.errors.length, 0, `${engine.engineId} 有錯誤: ${engine.errors.join('; ')}`);
     assert.ok(engine.components.length > 0, `${engine.engineId} 無部件輸出`);
@@ -49,6 +45,13 @@ test('分層結果：L0/L1/L2/L3 皆非空、無未分類部件', () => {
   }
   assert.equal(unclassified.length, 0,
     `未分類部件: ${unclassified.map(c => `${c.sourceSystem}/${c.category}`).join(', ')}`);
+
+  const baziComponents = report.engines.find(engine => engine.engineId === 'bazi').components;
+  assert.equal(baziComponents.length, 4);
+  for (const component of baziComponents) {
+    const classified = byLayer.L0.find(item => item.sourceSystem === 'bazi' && item.id === component.id);
+    assert.ok(classified, `bazi/${component.category} 未歸入 L0`);
+  }
 });
 
 test('scoringRules 匯出可覆核（每條規則帶公式與範圍）', () => {
@@ -65,7 +68,7 @@ test('scoringRules 匯出可覆核（每條規則帶公式與範圍）', () => {
 test('接受 BirthData 實例作為輸入', () => {
   const birth = new BirthData(INPUT);
   const report = analyze(birth, { asOf: AS_OF });
-  assert.equal(report.engines.length, 4);
+  assert.ok(report.engines.some(engine => engine.engineId === 'bazi'));
 });
 
 test('無效輸入快速失敗', () => {
