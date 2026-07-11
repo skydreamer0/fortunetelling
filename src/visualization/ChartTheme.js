@@ -15,17 +15,17 @@
  */
 export const BACKGROUNDS = {
   /** Chart canvas background */
-  canvas: '#0a0e27',
+  canvas: '#f7f4ef',
   /** Slightly lighter panel background */
-  panel: '#101538',
+  panel: '#f0ebe1',
   /** Card / tooltip background */
-  card: '#161b42',
+  card: '#ffffff',
   /** Overlay / modal background */
-  overlay: 'rgba(10, 14, 39, 0.92)',
+  overlay: 'rgba(247, 244, 239, 0.95)',
   /** Grid line color */
-  grid: 'rgba(255, 255, 255, 0.06)',
+  grid: 'rgba(92, 83, 70, 0.08)',
   /** Grid line color (emphasized) */
-  gridStrong: 'rgba(255, 255, 255, 0.12)'
+  gridStrong: 'rgba(92, 83, 70, 0.18)'
 };
 
 /**
@@ -36,46 +36,46 @@ export const BACKGROUNDS = {
  */
 export const SYSTEM_COLORS = {
   bazi: {
-    hue: 30,
-    solid: 'hsl(30, 95%, 60%)',
-    glow: 'hsla(30, 95%, 60%, 0.6)',
-    fill: 'hsla(30, 95%, 60%, 0.15)',
-    light: 'hsl(30, 95%, 80%)'
+    hue: 6,
+    solid: '#a83f39',
+    glow: 'rgba(168, 63, 57, 0.45)',
+    fill: 'rgba(168, 63, 57, 0.08)',
+    light: '#cca5a1'
   },
   ziwei: {
-    hue: 270,
-    solid: 'hsl(270, 85%, 65%)',
-    glow: 'hsla(270, 85%, 65%, 0.6)',
-    fill: 'hsla(270, 85%, 65%, 0.15)',
-    light: 'hsl(270, 85%, 82%)'
+    hue: 40,
+    solid: '#b79552',
+    glow: 'rgba(183, 149, 82, 0.45)',
+    fill: 'rgba(183, 149, 82, 0.08)',
+    light: '#dcc699'
   },
   vedic: {
-    hue: 200,
-    solid: 'hsl(200, 90%, 55%)',
-    glow: 'hsla(200, 90%, 55%, 0.6)',
-    fill: 'hsla(200, 90%, 55%, 0.15)',
-    light: 'hsl(200, 90%, 78%)'
+    hue: 180,
+    solid: '#527878',
+    glow: 'rgba(82, 120, 120, 0.45)',
+    fill: 'rgba(82, 120, 120, 0.08)',
+    light: '#a6c0c0'
   },
   numerology: {
-    hue: 150,
-    solid: 'hsl(150, 80%, 50%)',
-    glow: 'hsla(150, 80%, 50%, 0.6)',
-    fill: 'hsla(150, 80%, 50%, 0.15)',
-    light: 'hsl(150, 80%, 75%)'
+    hue: 147,
+    solid: '#4f7660',
+    glow: 'rgba(79, 118, 96, 0.45)',
+    fill: 'rgba(79, 118, 96, 0.08)',
+    light: '#a3c0b0'
   },
   humandesign: {
-    hue: 340,
-    solid: 'hsl(340, 85%, 60%)',
-    glow: 'hsla(340, 85%, 60%, 0.6)',
-    fill: 'hsla(340, 85%, 60%, 0.15)',
-    light: 'hsl(340, 85%, 80%)'
+    hue: 6,
+    solid: '#8f3028',
+    glow: 'rgba(143, 48, 40, 0.45)',
+    fill: 'rgba(143, 48, 40, 0.08)',
+    light: '#d6a3a0'
   },
   cross_system: {
-    hue: 55,
-    solid: 'hsl(55, 90%, 55%)',
-    glow: 'hsla(55, 90%, 55%, 0.6)',
-    fill: 'hsla(55, 90%, 55%, 0.15)',
-    light: 'hsl(55, 90%, 78%)'
+    hue: 40,
+    solid: '#b79552',
+    glow: 'rgba(183, 149, 82, 0.45)',
+    fill: 'rgba(183, 149, 82, 0.08)',
+    light: '#dcc699'
   }
 };
 
@@ -107,11 +107,11 @@ export function generateDatasetPalette(baseHue, count) {
  * Traditional Chinese five-element color mapping (for BaZi/ZiWei).
  */
 export const ELEMENT_COLORS = {
-  木: { solid: 'hsl(140, 70%, 50%)', fill: 'hsla(140, 70%, 50%, 0.2)' },
-  火: { solid: 'hsl(5, 85%, 55%)',   fill: 'hsla(5, 85%, 55%, 0.2)' },
-  土: { solid: 'hsl(40, 75%, 55%)',  fill: 'hsla(40, 75%, 55%, 0.2)' },
-  金: { solid: 'hsl(45, 10%, 75%)',  fill: 'hsla(45, 10%, 75%, 0.2)' },
-  水: { solid: 'hsl(210, 80%, 55%)', fill: 'hsla(210, 80%, 55%, 0.2)' }
+  木: { solid: '#5a866d', fill: 'rgba(90, 134, 109, 0.2)' },
+  火: { solid: '#ad4f46', fill: 'rgba(173, 79, 70, 0.2)' },
+  土: { solid: '#ad8948', fill: 'rgba(173, 137, 72, 0.2)' },
+  金: { solid: '#bcb3a4', fill: 'rgba(188, 179, 164, 0.2)' },
+  水: { solid: '#5c7c82', fill: 'rgba(92, 124, 130, 0.2)' }
 };
 
 // ─── Typography ─────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export const ELEMENT_COLORS = {
  * Primary: Inter (Latin), Noto Sans TC (Chinese).
  */
 export const FONTS = {
-  family: "'Inter', 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif",
+  family: "'Noto Sans TC', 'Inter', 'PingFang TC', 'Microsoft JhengHei', sans-serif",
   sizeTitle: 16,
   sizeLabel: 13,
   sizeTick: 11,
@@ -153,10 +153,10 @@ export const ANIMATION = {
 // ─── Text Colors ────────────────────────────────────────────────────────────
 
 export const TEXT_COLORS = {
-  primary: 'rgba(255, 255, 255, 0.92)',
-  secondary: 'rgba(255, 255, 255, 0.65)',
-  muted: 'rgba(255, 255, 255, 0.40)',
-  accent: 'hsl(200, 90%, 70%)'
+  primary: '#2c2a29',
+  secondary: '#5c5346',
+  muted: '#8c8170',
+  accent: '#a83f39'
 };
 
 // ─── Tooltip Theme ──────────────────────────────────────────────────────────

@@ -178,13 +178,68 @@ function buildHighAxisNotes(radar) {
   `).join('');
 }
 
+// ─── Numerology 3x3 Grid (九宮格) ──────────────────────────────────────────
+
+function buildNumerologyGrid(radar) {
+  // Standard Pythagorean Life Numerology Layout:
+  // 3  6  9
+  // 2  5  8
+  // 1  4  7
+  const layout = ['3', '6', '9', '2', '5', '8', '1', '4', '7'];
+
+  const cellsHtml = layout.map(digit => {
+    const axis = radar.axes.find(a => a.label === digit);
+    const count = axis ? axis.value : 0;
+    const isActive = count > 0;
+
+    // Draw dots equal to count
+    let dotsHtml = '';
+    if (isActive) {
+      dotsHtml = `
+        <div class="numerology-nine-grid__dots">
+          ${Array(Math.min(count, 8)).fill('<span class="numerology-nine-grid__dot"></span>').join('')}
+        </div>
+      `;
+    } else {
+      dotsHtml = '<div class="numerology-nine-grid__dots"></div>';
+    }
+
+    const badgeHtml = isActive
+      ? `<span class="numerology-nine-grid__badge">${count}次</span>`
+      : `<span class="numerology-nine-grid__badge-empty">—</span>`;
+
+    return `
+      <div class="numerology-nine-grid__cell ${isActive ? 'numerology-nine-grid__cell--active' : ''}">
+        <span class="numerology-nine-grid__digit">${digit}</span>
+        ${dotsHtml}
+        ${badgeHtml}
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="numerology-nine-grid">
+      ${cellsHtml}
+    </div>
+  `;
+}
+
 function buildTextFallback(radar) {
   const maxValue = radar.kind === 'bar'
     ? Math.max(1, ...radar.axes.map(axis => axis.value))
     : 100;
-  return radar.axes.map(axis =>
-    renderTextBar(axis.label, axis.value, maxValue, { labelWidth: 8, barWidth: 24 })
-  ).join('\n');
+  return radar.axes.map(axis => {
+    if (axis.unit === '次') {
+      const barStr = renderTextBar(axis.label, axis.value, maxValue, {
+        labelWidth: 8,
+        barWidth: 24,
+        showPercentage: false,
+        showValue: false
+      });
+      return `${barStr} ${axis.value}次`;
+    }
+    return renderTextBar(axis.label, axis.value, maxValue, { labelWidth: 8, barWidth: 24 });
+  }).join('\n');
 }
 
 /** Build the report's chart cards from already-computed Report data. */
@@ -194,7 +249,9 @@ export function buildRadarSection(report) {
   }
   const ruleMap = rulesById(report.scoringRules);
 
-  return `<div class="radar-grid">${report.radars.map((radar, index) => `
+  return `<div class="radar-grid">${report.radars.map((radar, index) => {
+    const isNumerologyGrid = radar.id === 'numerology_digit_frequency';
+    return `
     <article class="radar-card animate-slideUp stagger-${Math.min(index + 1, 6)}">
       <header class="radar-card__header">
         <div>
@@ -202,9 +259,15 @@ export function buildRadarSection(report) {
           <h4 class="radar-card__title">${esc(radar.title)}</h4>
         </div>
       </header>
-      <div class="radar-card__chart chart-container chart-container--${radar.kind === 'bar' ? 'bar' : 'radar'}">
-        <canvas data-radar-id="${esc(radar.id)}" role="img" aria-label="${esc(radar.title)}"></canvas>
-      </div>
+      ${isNumerologyGrid ? `
+        <div class="numerology-grid-wrapper">
+          ${buildNumerologyGrid(radar)}
+        </div>
+      ` : `
+        <div class="radar-card__chart chart-container chart-container--${radar.kind === 'bar' ? 'bar' : 'radar'}">
+          <canvas data-radar-id="${esc(radar.id)}" role="img" aria-label="${esc(radar.title)}"></canvas>
+        </div>
+      `}
       ${buildHighAxisNotes(radar)}
       <details class="radar-rules">
         <summary>各軸計分規則</summary>
@@ -215,7 +278,8 @@ export function buildRadarSection(report) {
         <pre>${esc(buildTextFallback(radar))}</pre>
       </details>
     </article>
-  `).join('')}</div>`;
+  `;
+  }).join('')}</div>`;
 }
 
 // ─── Main render ────────────────────────────────────────────────────────────
@@ -241,9 +305,9 @@ export function renderReport(container, report, { onBack }) {
     </div>
 
     ${warnings.length > 0 ? `
-      <div class="empty-state">
-        <span class="empty-state__icon">⚠</span>
-        <p class="empty-state__text">${warnings.map(esc).join('<br />')}</p>
+      <div class="report-warning-box border-double">
+        <span class="report-warning-box__icon">⚠</span>
+        <p class="report-warning-box__text">${warnings.map(esc).join('<br />')}</p>
       </div>` : ''}
 
     <div class="overview-grid">${buildOverviewCards(report)}</div>
@@ -270,6 +334,7 @@ export function renderReport(container, report, { onBack }) {
   for (const radar of report.radars ?? []) {
     const canvas = [...container.querySelectorAll('canvas[data-radar-id]')]
       .find(node => node.dataset.radarId === radar.id);
+    if (!canvas) continue;
     if (radar.kind === 'bar') renderBarChart(canvas, radar);
     else renderRadarChart(canvas, radar);
   }

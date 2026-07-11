@@ -27,12 +27,14 @@ const SYSTEM_NAMES = Object.freeze({
 function periodCard(period) {
   const [start, end] = period.range;
   const sysName = SYSTEM_NAMES[period.system] || period.system;
+  const currentClass = period.isCurrent ? ' decade-radar-card--current' : '';
   return `
-    <article class="timeline-node decade-radar-card">
+    <article class="timeline-node decade-radar-card${currentClass}">
       <div class="timeline-node__marker" aria-hidden="true"></div>
       <div class="timeline-node__content">
         <header class="decade-card__header">
           <span class="tag tag--${esc(period.system)}">${esc(sysName)}</span>
+          ${period.isCurrent ? '<span class="tag tag--current">當前時期</span>' : ''}
           <h5>${esc(period.label)}</h5>
           <span class="decade-card__range">${esc(start)}–${esc(end)}</span>
         </header>

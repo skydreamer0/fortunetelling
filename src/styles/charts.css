@@ -251,10 +251,7 @@
 .chart-score__value {
   font-size: var(--text-3xl);
   font-weight: var(--weight-bold);
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--accent-red);
 }
 
 .chart-score__label {
@@ -267,11 +264,11 @@
 
 /* ─── Chart Gradient Definitions ─────────────────────────── */
 /* These are CSS representations for JS chart gradient configurations */
-.gradient-purple { background: linear-gradient(135deg, #7c3aed, #a855f7); }
-.gradient-blue { background: linear-gradient(135deg, #3b82f6, #06b6d4); }
-.gradient-amber { background: linear-gradient(135deg, #f59e0b, #f0c674); }
-.gradient-emerald { background: linear-gradient(135deg, #10b981, #34d399); }
-.gradient-rose { background: linear-gradient(135deg, #f43f5e, #fb7185); }
+.gradient-purple { background: linear-gradient(135deg, #b79552, #d5bd8c); }
+.gradient-blue { background: linear-gradient(135deg, #527878, #7aa3a3); }
+.gradient-amber { background: linear-gradient(135deg, #b79552, #d5bd8c); }
+.gradient-emerald { background: linear-gradient(135deg, #3a6044, #5a8a6a); }
+.gradient-rose { background: linear-gradient(135deg, #a83f39, #c87a75); }
 
 /* ─── Chart Animations ───────────────────────────────────── */
 @keyframes chartReveal {

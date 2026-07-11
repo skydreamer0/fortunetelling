@@ -174,6 +174,7 @@ function buildBaziPeriods(baziResult) {
       label,
       range: [step.startYear, step.endYear],
       radar,
+      isCurrent: !!step.isCurrent,
       summary: [
         lintedL1(`這段時期（${label}）你會偏向受「${top}」能量帶動，行動與判斷較常沿此軸展開。`),
         lintedL1(`「${low}」面向在此期占比相對較低，常見需要留意補位或向外借力。`),
@@ -287,6 +288,7 @@ function buildZiweiPeriods(ziweiResult, birthYear) {
       label,
       range: [startYear, endYear],
       radar,
+      isCurrent: !!step.isCurrent,
       summary: [
         lintedL1(`這段時期（${label}）你會偏向把重心放在「${top}」相關的課題上。`),
         lintedL1(mutagenLine),

@@ -63,3 +63,52 @@ test('ReportView 為每張 Radar 產生 canvas、規則與文字降級內容', (
   assert.match(html, /資產面/);
   assert.match(html, /負債面/);
 });
+
+test('ReportView.buildRadarSection 針對生命靈數數字頻次產生九宮格 HTML 與無百分比的文字降級內容', () => {
+  const numerologyRadar = {
+    id: 'numerology_digit_frequency',
+    system: 'numerology',
+    title: '生命靈數數字頻次',
+    kind: 'bar',
+    axes: [
+      { label: '1', value: 2, unit: '次', ruleId: 'numerology_digit_frequency', assets: ['A'], liabilities: ['B'] },
+      { label: '2', value: 0, unit: '次', ruleId: 'numerology_digit_frequency', assets: ['A'], liabilities: ['B'] },
+      { label: '3', value: 0, unit: '次', ruleId: 'numerology_digit_frequency', assets: ['A'], liabilities: ['B'] },
+      { label: '4', value: 0, unit: '次', ruleId: 'numerology_digit_frequency', assets: ['A'], liabilities: ['B'] },
+      { label: '5', value: 1, unit: '次', ruleId: 'numerology_digit_frequency', assets: ['A'], liabilities: ['B'] },
+      { label: '6', value: 1, unit: '次', ruleId: 'numerology_digit_frequency', assets: ['A'], liabilities: ['B'] },
+      { label: '7', value: 1, unit: '次', ruleId: 'numerology_digit_frequency', assets: ['A'], liabilities: ['B'] },
+      { label: '8', value: 0, unit: '次', ruleId: 'numerology_digit_frequency', assets: ['A'], liabilities: ['B'] },
+      { label: '9', value: 2, unit: '次', ruleId: 'numerology_digit_frequency', assets: ['A'], liabilities: ['B'] },
+    ],
+  };
+
+  const html = ReportView.buildRadarSection({
+    radars: [numerologyRadar],
+    scoringRules: {
+      byRadarType: {
+        numerology_digit_frequency: [{ id: 'numerology_digit_frequency', formula: 'digitOccurrences', description: '出現次數' }],
+      },
+    },
+  });
+
+  // 驗證是否包含九宮格元素，且不包含 ChartJS canvas
+  assert.match(html, /class="numerology-nine-grid"/);
+  assert.ok(!html.includes('data-radar-id="numerology_digit_frequency"'));
+
+  // 驗證 1-9 的數字是否都呈現在 HTML 中
+  for (let i = 1; i <= 9; i++) {
+    assert.match(html, new RegExp(`class="numerology-nine-grid__digit">${i}`));
+  }
+
+  // 驗證有出現的數字（如 1）包含 active 類別
+  assert.match(html, /class="numerology-nine-grid__cell numerology-nine-grid__cell--active"/);
+
+  // 驗證文字降級條（無百分比，顯示 X次）
+  assert.match(html, /1\s+[█░]+\s+2次/);
+  assert.match(html, /2\s+░+\s+0次/);
+  assert.match(html, /5\s+[█░]+\s+1次/);
+  assert.ok(!html.includes('100%'));
+  assert.ok(!html.includes('50%'));
+});
+

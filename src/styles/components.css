@@ -312,12 +312,11 @@
 }
 
 .report-title {
+  font-family: var(--font-serif);
   font-size: var(--text-2xl);
-  font-weight: var(--weight-bold);
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
 }
 
 .report-meta {
@@ -506,6 +505,101 @@
 .radar-card__chart canvas {
   width: 100% !important;
   height: 100% !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   NUMEROLOGY NINE-GRID (3x3 Grid)
+   ───────────────────────────────────────────────────────────── */
+.numerology-grid-wrapper {
+  margin: var(--space-6) auto;
+  max-width: 280px;
+  width: 100%;
+}
+
+.numerology-nine-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: var(--space-3);
+  aspect-ratio: 1;
+}
+
+.numerology-nine-grid__cell {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3);
+  position: relative;
+  transition: all var(--duration-default) var(--ease-default);
+}
+
+.numerology-nine-grid__cell:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--border-strong);
+}
+
+/* For active numbers */
+.numerology-nine-grid__cell--active {
+  border-color: var(--sys-numerology-border);
+  background: linear-gradient(135deg, rgba(79, 118, 96, 0.12) 0%, rgba(79, 118, 96, 0.03) 100%);
+  box-shadow: var(--shadow-sm), inset 0 0 10px rgba(79, 118, 96, 0.1);
+}
+
+.numerology-nine-grid__digit {
+  font-family: var(--font-serif);
+  font-size: 2.25rem;
+  font-weight: var(--weight-bold);
+  color: var(--text-tertiary);
+  opacity: 0.25;
+  line-height: 1;
+  transition: all var(--duration-default) var(--ease-default);
+}
+
+.numerology-nine-grid__cell--active .numerology-nine-grid__digit {
+  color: var(--sys-numerology);
+  opacity: 1;
+  text-shadow: 0 0 12px rgba(79, 118, 96, 0.4);
+}
+
+/* Frequency dot indicators */
+.numerology-nine-grid__dots {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: var(--space-2);
+  height: 6px;
+  width: 100%;
+}
+
+.numerology-nine-grid__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--sys-numerology);
+  box-shadow: 0 0 6px rgba(79, 118, 96, 0.8);
+}
+
+.numerology-nine-grid__badge {
+  font-size: var(--text-xs);
+  color: var(--sys-numerology);
+  margin-top: var(--space-2);
+  background: rgba(79, 118, 96, 0.1);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(79, 118, 96, 0.2);
+  font-weight: var(--weight-medium);
+}
+
+.numerology-nine-grid__badge-empty {
+  font-size: var(--text-xs);
+  color: var(--text-tertiary);
+  opacity: 0.4;
+  margin-top: var(--space-2);
+  font-weight: var(--weight-light);
 }
 
 /* Scoring Rules Expandable */
@@ -1247,7 +1341,7 @@
   background: var(--bg-card);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-default);
+  border: 4px double var(--border-soft);
   border-radius: var(--radius-xl);
   padding: var(--space-6);
   box-shadow: var(--shadow-lg), var(--shadow-inset);
@@ -1326,6 +1420,68 @@
   max-width: 400px;
   margin: 0 auto;
   line-height: var(--leading-relaxed);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   TRADITIONAL EASTERN DOUBLE BORDERS & SPECIFIC ALERTS
+   ───────────────────────────────────────────────────────────── */
+.border-double {
+  border: 4px double var(--border-strong) !important;
+}
+
+/* 第一張結果總覽卡片使用雙邊框 */
+.radar-grid > .radar-card:first-child {
+  border: 4px double var(--border-soft);
+}
+.radar-grid > .radar-card:first-child:hover {
+  border-color: var(--border-strong);
+}
+
+/* 當前大限或流年使用雙邊框與玉/金調和 */
+.decade-radar-card--current {
+  border: 4px double var(--border-strong) !important;
+  box-shadow: var(--shadow-xl), 0 0 20px rgba(183, 149, 82, 0.12) !important;
+}
+.decade-radar-card--current::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent-gold);
+}
+
+.tag--current {
+  background: rgba(168, 63, 57, 0.08) !important;
+  color: #a83f39 !important;
+  border: 1px solid rgba(168, 63, 57, 0.2) !important;
+}
+
+/* 重要提示框 */
+.report-warning-box {
+  background: rgba(168, 63, 57, 0.03);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5) var(--space-6);
+  margin-bottom: var(--space-8);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  border: 4px double rgba(168, 63, 57, 0.3) !important;
+}
+.report-warning-box__icon {
+  font-size: var(--text-xl);
+  color: var(--accent-red);
+  line-height: 1;
+}
+.report-warning-box__text {
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  line-height: var(--leading-relaxed);
+  margin: 0;
 }
 
 /* ─────────────────────────────────────────────────────────────
