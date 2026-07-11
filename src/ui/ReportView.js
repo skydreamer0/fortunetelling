@@ -1,14 +1,15 @@
 /**
  * @fileoverview 報告呈現（App 層，非核心）。
  *
- * 只消費 `analyze()` 產出的 `Report`，不做任何計算。目前為文字降級版
- * （TextFallback 長條）；雷達圖（Chart.js）於里程碑 C 接上 `report.radars`。
+ * 只消費 `analyze()` 產出的 `Report`，不做任何命理計算。量化區塊以
+ * Chart.js 呈現 `report.radars`，並保留可展開的文字降級內容。
  *
  * @module ui/ReportView
  */
 
-import { renderTextBar, renderDigitFrequency } from '../visualization/TextFallback.js';
-import { ScoringRules } from '../analysis/ScoringRules.js';
+import { renderTextBar } from '../visualization/TextFallback.js';
+import { renderRadarChart } from '../visualization/RadarChart.js';
+import { renderBarChart } from '../visualization/BarChart.js';
 
 /** 簡易 HTML escape（使用者輸入的姓名等）。 */
 function esc(text) {
@@ -113,47 +114,85 @@ function buildLayerTable(report) {
   `;
 }
 
-// ─── Text-fallback bars (區塊 G 降級呈現) ───────────────────────────────────
+// ─── Radar / bar charts (區塊 G) ────────────────────────────────────────────
 
-function buildTextCharts(report) {
-  const blocks = [];
+function rulesById(scoringRules) {
+  return new Map(
+    Object.values(scoringRules?.byRadarType ?? {})
+      .flat()
+      .map(rule => [rule.id, rule]),
+  );
+}
 
-  const numerology = engineById(report, 'numerology');
-  const freq = firstValue(numerology, 'digitFrequency');
-  if (freq) {
-    blocks.push({
-      title: '靈數｜1–9 數字頻次（出生年月日各位數出現次數）',
-      body: renderDigitFrequency(freq),
-    });
-  }
+function buildAxisRules(radar, ruleMap) {
+  return radar.axes.map(axis => {
+    const rule = ruleMap.get(axis.ruleId);
+    return `
+      <li class="radar-rule">
+        <div><strong>${esc(axis.label)}</strong> ${esc(axis.value)}${esc(axis.unit)}</div>
+        <code>${esc(rule?.formula ?? axis.ruleId)}</code>
+        ${rule?.description ? `<p>${esc(rule.description)}</p>` : ''}
+      </li>
+    `;
+  }).join('');
+}
 
-  const ziwei = engineById(report, 'ziwei');
-  if (ziwei) {
-    const stars = ziwei.components.filter(c => c.category === 'mainStars' && c.value.brightnessScore !== null);
-    if (stars.length > 0) {
-      const bars = stars.map(s =>
-        renderTextBar(`${s.value.star}`, Math.round(s.value.brightnessScore * 100), 100, { labelWidth: 4 })
-      ).join('\n');
-      blocks.push({
-        title: '紫微｜主星亮度（廟7…陷1 ÷ 7，計分規則見下方透明度報告）',
-        body: bars,
-      });
-    }
-  }
-
-  return blocks.map(b => `
-    <div class="chart-container chart-container--bar">
-      <p class="chart-score__label">${b.title}</p>
-      <pre style="overflow-x:auto">${esc(b.body)}</pre>
+function buildHighAxisNotes(radar) {
+  const highAxes = radar.axes.filter(axis => axis.value >= 60);
+  if (highAxes.length === 0) return '';
+  return highAxes.map(axis => `
+    <div class="radar-axis-notes">
+      <h5>${esc(axis.label)} ${esc(axis.value)}${esc(axis.unit)}</h5>
+      <p><strong>資產面</strong>：${(axis.assets ?? []).map(esc).join('、') || '—'}</p>
+      <p><strong>負債面</strong>：${(axis.liabilities ?? []).map(esc).join('、') || '—'}</p>
     </div>
   `).join('');
+}
+
+function buildTextFallback(radar) {
+  const maxValue = radar.kind === 'bar'
+    ? Math.max(1, ...radar.axes.map(axis => axis.value))
+    : 100;
+  return radar.axes.map(axis =>
+    renderTextBar(axis.label, axis.value, maxValue, { labelWidth: 8, barWidth: 24 })
+  ).join('\n');
+}
+
+/** Build the report's chart cards from already-computed Report data. */
+export function buildRadarSection(report) {
+  if (!report.radars?.length) {
+    return '<div class="empty-state"><p class="empty-state__text">目前沒有可呈現的量化資料。</p></div>';
+  }
+  const ruleMap = rulesById(report.scoringRules);
+
+  return `<div class="radar-grid">${report.radars.map((radar, index) => `
+    <article class="radar-card animate-slideUp stagger-${Math.min(index + 1, 6)}">
+      <header class="radar-card__header">
+        <div>
+          <span class="tag tag--${esc(radar.system)}">${esc(radar.system)}</span>
+          <h4 class="radar-card__title">${esc(radar.title)}</h4>
+        </div>
+      </header>
+      <div class="radar-card__chart chart-container chart-container--${radar.kind === 'bar' ? 'bar' : 'radar'}">
+        <canvas data-radar-id="${esc(radar.id)}" role="img" aria-label="${esc(radar.title)}"></canvas>
+      </div>
+      ${buildHighAxisNotes(radar)}
+      <details class="radar-rules">
+        <summary>各軸計分規則</summary>
+        <ul>${buildAxisRules(radar, ruleMap)}</ul>
+      </details>
+      <details class="radar-fallback">
+        <summary>文字長條（無圖形環境使用）</summary>
+        <pre>${esc(buildTextFallback(radar))}</pre>
+      </details>
+    </article>
+  `).join('')}</div>`;
 }
 
 // ─── Pending shells (區塊 G 雷達 / H②③) ────────────────────────────────────
 
 function buildPendingBlocks(report) {
   const items = [
-    { icon: '◔', text: '雷達圖與資產/負債並列（區塊 G）— 里程碑 C' },
     { icon: '⇄', text: `狀態切換表（區塊 H②）— 里程碑 D${report.stateTable.pending ? '' : ''}` },
     { icon: '∿', text: '時期演化雷達與敘事（區塊 H③）— 里程碑 D' },
   ];
@@ -175,7 +214,6 @@ function buildPendingBlocks(report) {
  */
 export function renderReport(container, report, { onBack }) {
   const warnings = report.engines.flatMap(e => e.errors.map(msg => `[${e.engineName}] ${msg}`));
-  const scoringText = new ScoringRules().generateTransparencyReport();
 
   container.innerHTML = `
     <div class="report-header">
@@ -200,19 +238,20 @@ export function renderReport(container, report, { onBack }) {
     <p class="section-subtitle">L0 可寫「你是」；L1/L2 只能寫「這段時期」；L3 只能寫「在某情境下」。所有結果為待驗證假說。</p>
     ${buildLayerTable(report)}
 
-    <h3 class="section-title"><span class="title-accent" aria-hidden="true">◈</span> 量化呈現（文字降級版）</h3>
-    ${buildTextCharts(report)}
-
-    <div class="scoring-rules">
-      <details>
-        <summary class="scoring-rules__toggle">▸ 評分規則透明度報告（每一軸的計分方式，共 ${report.scoringRules.totalRules} 條）</summary>
-        <pre class="scoring-formula" style="overflow-x:auto">${esc(scoringText)}</pre>
-      </details>
-    </div>
+    <h3 class="section-title"><span class="title-accent" aria-hidden="true">◈</span> 量化呈現</h3>
+    <p class="section-subtitle">圖形只呈現報告中的既有數值；展開卡片可逐軸覆核公式與文字長條。</p>
+    ${buildRadarSection(report)}
 
     <h3 class="section-title"><span class="title-accent" aria-hidden="true">◈</span> 待完成區塊</h3>
     ${buildPendingBlocks(report)}
   `;
 
   container.querySelector('#report-back').addEventListener('click', onBack);
+
+  for (const radar of report.radars ?? []) {
+    const canvas = [...container.querySelectorAll('canvas[data-radar-id]')]
+      .find(node => node.dataset.radarId === radar.id);
+    if (radar.kind === 'bar') renderBarChart(canvas, radar);
+    else renderRadarChart(canvas, radar);
+  }
 }
