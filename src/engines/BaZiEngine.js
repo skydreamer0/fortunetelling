@@ -22,6 +22,17 @@ const ELEMENT_CONTROLS = Object.freeze({ 木: '土', 火: '金', 土: '水', 金
 
 const TEN_GODS = Object.freeze(['比肩', '劫財', '食神', '傷官', '偏財', '正財', '七殺', '正官', '偏印', '正印']);
 
+/**
+ * @typedef {'顯'|'隱'|'無'} TenGodPresence
+ */
+const TEN_GOD_GROUPS = Object.freeze([
+  Object.freeze({ group: '官殺', context: '規範與權威', tenGods: Object.freeze(['正官', '七殺']) }),
+  Object.freeze({ group: '財星', context: '資源與交換', tenGods: Object.freeze(['正財', '偏財']) }),
+  Object.freeze({ group: '食傷', context: '表達與產出', tenGods: Object.freeze(['食神', '傷官']) }),
+  Object.freeze({ group: '印星', context: '學習與支持', tenGods: Object.freeze(['正印', '偏印']) }),
+  Object.freeze({ group: '比劫', context: '同儕與競合', tenGods: Object.freeze(['比肩', '劫財']) }),
+]);
+
 const TAIPEI_CONVENTION = Object.freeze({
   calendar: 'gregorian',
   timezone: 'Asia/Taipei',
@@ -132,6 +143,11 @@ export class BaZiEngine extends BaseEngine {
       dayStem,
       eightChar.getTimeGan(),
     ];
+    const contextVisibleStems = [
+      eightChar.getYearGan(),
+      eightChar.getMonthGan(),
+      eightChar.getTimeGan(),
+    ];
     const hiddenStems = [
       ...eightChar.getYearHideGan(),
       ...eightChar.getMonthHideGan(),
@@ -146,6 +162,36 @@ export class BaZiEngine extends BaseEngine {
       elementCounts[STEM_ELEMENTS[stem]] += 1;
       tenGodCounts[tenGodFor(dayStem, stem)] += 1;
     }
+
+    const visibleTenGods = contextVisibleStems.map(stem => tenGodFor(dayStem, stem));
+    const hiddenTenGods = hiddenStems.map(stem => tenGodFor(dayStem, stem));
+    const contextGroups = TEN_GOD_GROUPS.map(definition => {
+      const breakdown = Object.fromEntries(definition.tenGods.map(name => [
+        name,
+        visibleTenGods.filter(tenGod => tenGod === name).length
+          + hiddenTenGods.filter(tenGod => tenGod === name).length,
+      ]));
+      const visibleCount = visibleTenGods.filter(tenGod => definition.tenGods.includes(tenGod)).length;
+      const hiddenCount = hiddenTenGods.filter(tenGod => definition.tenGods.includes(tenGod)).length;
+
+      return {
+        group: definition.group,
+        context: definition.context,
+        tenGods: [...definition.tenGods],
+        breakdown,
+        observedTenGods: definition.tenGods.filter(name => breakdown[name] > 0),
+        visibleCount,
+        hiddenCount,
+        count: visibleCount + hiddenCount,
+        /** @type {TenGodPresence} */
+        presence: visibleCount > 0 ? '顯' : (hiddenCount > 0 ? '隱' : '無'),
+      };
+    });
+    const tenGodsContextTotal = contextGroups.reduce((sum, group) => sum + group.count, 0);
+    const tenGodsContextGroups = contextGroups.map(group => ({
+      ...group,
+      share: tenGodsContextTotal > 0 ? group.count / tenGodsContextTotal : 0,
+    }));
 
     const result = this.result();
     result.meta = {
@@ -192,6 +238,19 @@ export class BaZiEngine extends BaseEngine {
         counts: tenGodCounts,
         total: allStems.length,
         includesDayMaster: true,
+      },
+    });
+    result.add({
+      id: 'tenGodsContext',
+      name: '十神關係角色',
+      category: 'tenGodsContext',
+      value: {
+        groups: tenGodsContextGroups,
+        total: tenGodsContextTotal,
+        includesHiddenStems: true,
+        includesDayMaster: false,
+        metric: 'occurrence-share',
+        presenceConvention: 'visible-hidden-absent',
       },
     });
 

@@ -53,6 +53,12 @@ test('分層結果：L0/L1/L2/L3 皆非空、無未分類部件', () => {
     const classified = byLayer.L0.find(item => item.sourceSystem === 'bazi' && item.id === component.id);
     assert.ok(classified, `bazi/${component.category} 未歸入 L0`);
   }
+
+  const tenGodsContext = byLayer.L3.find(
+    item => item.sourceSystem === 'bazi' && item.id === 'tenGodsContext',
+  );
+  assert.ok(tenGodsContext, 'bazi/tenGodsContext 未歸入 L3');
+  assert.equal(tenGodsContext.unclassified, undefined);
 });
 
 test('scoringRules 匯出可覆核（每條規則帶公式與範圍）', () => {

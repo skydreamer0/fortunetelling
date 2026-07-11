@@ -51,6 +51,69 @@ test('八字：五行與十神以十四次出現統計且包含日干', () => {
   assert.equal(Object.values(tenGods.value.counts).reduce((sum, count) => sum + count, 0), 14);
 });
 
+test('八字 B3：十神關係角色排除日主並產出固定顯隱統計', () => {
+  const result = getBaZiEngine().run(new BirthData({
+    year: 1986, month: 5, day: 29, hour: 8, minute: 0,
+  }));
+  const tenGods = result.byCategory('tenGods')[0];
+  const context = result.byCategory('tenGodsContext')[0];
+
+  assert.ok(context, '應產出 tenGodsContext');
+  assert.equal(context.id, 'tenGodsContext');
+  assert.equal(context.name, '十神關係角色');
+  assert.doesNotMatch(context.name, /你是/);
+  assert.deepEqual(
+    context.value.groups.map(({ group, context: label, count, presence }) => ({ group, context: label, count, presence })),
+    [
+      { group: '官殺', context: '規範與權威', count: 3, presence: '隱' },
+      { group: '財星', context: '資源與交換', count: 4, presence: '顯' },
+      { group: '食傷', context: '表達與產出', count: 2, presence: '隱' },
+      { group: '印星', context: '學習與支持', count: 2, presence: '隱' },
+      { group: '比劫', context: '同儕與競合', count: 2, presence: '顯' },
+    ],
+  );
+  assert.equal(context.value.total, 13);
+  assert.equal(context.value.total, tenGods.value.total - 1);
+  assert.equal(context.value.includesHiddenStems, true);
+  assert.equal(context.value.includesDayMaster, false);
+  assert.equal(context.value.metric, 'occurrence-share');
+  assert.equal(context.value.presenceConvention, 'visible-hidden-absent');
+
+  let shareTotal = 0;
+  for (const group of context.value.groups) {
+    assert.equal(group.count, group.visibleCount + group.hiddenCount);
+    assert.ok(group.share >= 0 && group.share <= 1);
+    assert.equal(group.share, group.count / context.value.total);
+    assert.deepEqual(Object.keys(group.breakdown), group.tenGods);
+    assert.deepEqual(
+      group.observedTenGods,
+      group.tenGods.filter(name => group.breakdown[name] > 0),
+    );
+    assert.equal(
+      Object.values(group.breakdown).reduce((sum, count) => sum + count, 0),
+      group.count,
+    );
+    shareTotal += group.share;
+  }
+  assert.ok(Math.abs(shareTotal - 1) < 1e-12);
+});
+
+test('八字 B3：十神群完全未出現時 presence 為無', () => {
+  const result = getBaZiEngine().run(new BirthData({
+    year: 1980, month: 1, day: 3, hour: 0, minute: 0,
+  }));
+  const context = result.byCategory('tenGodsContext')[0];
+  const officers = context.value.groups.find(group => group.group === '官殺');
+
+  assert.deepEqual(officers.breakdown, { 正官: 0, 七殺: 0 });
+  assert.deepEqual(officers.observedTenGods, []);
+  assert.equal(officers.visibleCount, 0);
+  assert.equal(officers.hiddenCount, 0);
+  assert.equal(officers.count, 0);
+  assert.equal(officers.presence, '無');
+  assert.equal(officers.share, 0);
+});
+
 test('八字：1991-10-05 14:00 產出四個完整 L0 component', () => {
   const result = getBaZiEngine().run(new BirthData({
     year: 1991, month: 10, day: 5, hour: 14, minute: 0, gender: 'female',
