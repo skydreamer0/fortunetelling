@@ -38,11 +38,13 @@
 
 來源不足或出生時間不確定的案例，不對依賴時辰的欄位建立黃金斷言。
 
-## Node 與套件管理
+## Bun 與執行環境
 
-- 公開自動化統一使用 Node 22。
-- 產生並提交 `package-lock.json`，CI 使用 `npm ci`。
-- `package.json` 增加 Node engine 與 `check` script。
+- Bun 是唯一套件管理器，沿用並提交既有文字格式 `bun.lock`，不產生 `package-lock.json`。
+- `package.json` 以 `packageManager: bun@1.3.14` 固定 CI 與本機版本，並保留 Node ≥22 engine。
+- CI 使用 `actions/setup-node@v6` 固定 Node 22，再使用官方合作夥伴 action `oven-sh/setup-bun@v2` 固定 Bun 1.3.14，並執行 `bun install --frozen-lockfile`。
+- 測試仍由既有 Node test runner 執行，但一律透過 `bun run test` script 呼叫。
+- `package.json` 增加 Bun engine 與 `check` script。
 - `check` 依序執行完整測試與 production build。
 
 ## CI workflow
@@ -51,7 +53,7 @@
 
 - 觸發：`pull_request`、push 到 `main`、手動執行。
 - 權限：`contents: read`。
-- 步驟：checkout、setup-node（npm cache）、`npm ci`、`npm test`、`npm run build`。
+- 步驟：checkout、setup-node 22、setup-bun、`bun install --frozen-lockfile`、`bun run test`、`bun run build`。
 - 設定 timeout，避免 runner 無限等待。
 - 不讀 secrets、不使用 `pull_request_target`。
 
@@ -60,7 +62,7 @@
 `deploy-pages.yml`：
 
 - 觸發：push 到 `main` 與 `workflow_dispatch`。
-- build job 使用 `contents: read`，重新執行 `npm ci`、測試與 build。
+- build job 使用 `contents: read`，重新執行 frozen Bun install、測試與 build。
 - 以 `configure-pages` 設定 Pages，`upload-pages-artifact` 上傳 `dist`。
 - deploy job 依賴 build，使用 `pages: write`、`id-token: write` 與 `github-pages` environment。
 - concurrency 取消舊的進行中部署，避免舊 artifact 覆蓋新版。
@@ -70,7 +72,7 @@
 
 新增 `.github/dependabot.yml`：
 
-- npm dependencies 每週檢查。
+- Bun dependencies（`package-ecosystem: bun`）每週檢查；GitHub 支援目前的文字格式 `bun.lock`。
 - GitHub Actions 每週檢查，directory 使用 `/`。
 - 限制同時開啟的更新 PR 數量，避免公開專案被更新噪音淹沒。
 
@@ -85,7 +87,7 @@ README 補上 CI badge、Pages 設定步驟與本機驗證命令；`SECURITY.md`
 
 ## 驗收
 
-- 本機 `npm ci`、`npm run check` 成功。
+- 本機 `bun install --frozen-lockfile`、`bun run check` 成功。
 - 整合 fixture 全數通過，輸出具可重現性。
 - workflow YAML 可解析，權限符合最小權限原則。
 - PR 只執行 CI；`main` 通過後可發布 `dist` 至 GitHub Pages。
@@ -96,3 +98,5 @@ README 補上 CI badge、Pages 設定步驟與本機驗證命令；`SECURITY.md`
 - [GitHub Pages custom workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
 - [GitHub Pages publishing source](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
 - [Dependabot for GitHub Actions](https://docs.github.com/en/code-security/how-tos/secure-your-supply-chain/secure-your-dependencies/auto-update-actions)
+- [Bun install in GitHub Actions](https://bun.sh/docs/pm/cli/install)
+- [Dependabot supported ecosystems](https://docs.github.com/en/code-security/reference/supply-chain-security/supported-ecosystems-and-repositories)

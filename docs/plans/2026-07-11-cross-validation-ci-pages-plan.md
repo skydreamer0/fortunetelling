@@ -6,56 +6,63 @@
 
 **Architecture:** Test data lives in a versioned fixture module with explicit provenance and confidence metadata. Integration tests enter only through the public `analyze()` API and assert deterministic contracts plus independently recomputable values. CI and Pages use separate least-privilege workflows; Pages rebuilds and retests before uploading `dist`.
 
-**Tech Stack:** Node.js 22, npm lockfile, Node test runner, Vite 8, GitHub Actions, GitHub Pages, Dependabot.
+**Tech Stack:** Bun 1.3.14, Node test runner (via Bun scripts), Vite 8, GitHub Actions, GitHub Pages, Dependabot.
 
 ---
 
-### Task 1: Standardize the public automation command
+### Task 1: Standardize Bun automation
 
 **Files:**
 - Modify: `package.json`
-- Create: `package-lock.json`
+- Modify only if required: `bun.lock`
+- Modify: `docs/DECISIONS.md`
+- Modify: `docs/HARNESS_SPEC.md`
 
 **Step 1: Record the precondition**
 
-Run: `Test-Path package-lock.json`
+Run: `bun --version; Test-Path bun.lock; Test-Path package-lock.json`
 
-Expected: `False`.
+Expected: Bun `1.3.14`, then `True`, then `False`.
 
 **Step 2: Add automation metadata**
 
 Add to `package.json`:
 
 ```json
-"engines": { "node": ">=22" },
+"packageManager": "bun@1.3.14",
+"engines": { "node": ">=22", "bun": ">=1.3.14" },
 "scripts": {
   "dev": "vite",
   "build": "vite build --base=./",
   "preview": "vite preview",
   "test": "node --test \"tests/**/*.test.js\"",
-  "check": "npm test && npm run build"
+  "test:integration": "node --test tests/integration.test.js",
+  "test:automation": "node --test tests/automationConfig.test.js",
+  "check": "bun run test && bun run build"
 }
 ```
 
+Add a new decision that supersedes only D-013's package-manager clause: Bun is mandatory for install and script invocation; Node ≥22 remains the authoritative `node:test` runtime. Update HARNESS_SPEC environment commands accordingly.
+
 The relative Vite base makes assets work both at `/` and at `/OWNER/REPO/` on GitHub Pages.
 
-**Step 3: Generate the lockfile**
+**Step 3: Verify the existing lockfile**
 
-Run: `npm install --package-lock-only`
+Run: `bun install --frozen-lockfile`
 
-Expected: `package-lock.json` exists and npm reports no install error.
+Expected: install succeeds without changing `bun.lock`; `package-lock.json` remains absent.
 
 **Step 4: Verify clean installation and check command**
 
-Run: `npm ci && npm run check`
+Run: `bun install --frozen-lockfile && bun run check`
 
 Expected: all tests pass and Vite build exits 0.
 
 **Step 5: Commit**
 
 ```bash
-git add package.json package-lock.json
-git commit -m "build: standardize Node automation"
+git add package.json bun.lock docs/DECISIONS.md docs/HARNESS_SPEC.md
+git commit -m "build: standardize Bun automation"
 ```
 
 ### Task 2: Add provenance-aware public fixtures
@@ -88,7 +95,7 @@ Require unique ids, HTTPS source URLs for public cases, explicit `asOf`, and no 
 
 **Step 2: Verify RED**
 
-Run: `node --test tests/integration.test.js`
+Run: `bun run test:integration`
 
 Expected: FAIL because `tests/fixtures/integrationCases.js` does not exist.
 
@@ -104,7 +111,7 @@ For uncertain public birth times, keep `expected` limited to date-based outputs 
 
 **Step 4: Verify GREEN**
 
-Run: `node --test tests/integration.test.js`
+Run: `bun run test:integration`
 
 Expected: fixture contract test passes.
 
@@ -144,7 +151,7 @@ Add a deliberately impossible expected value to prove the test fails for the int
 
 **Step 2: Verify RED**
 
-Run: `node --test tests/integration.test.js`
+Run: `bun run test:integration`
 
 Expected: FAIL at the deliberate fixture expectation.
 
@@ -160,7 +167,7 @@ Do not copy engine implementation formulas except the already documented indepen
 
 **Step 4: Verify GREEN**
 
-Run: `node --test tests/integration.test.js`
+Run: `bun run test:integration`
 
 Expected: all integration cases pass.
 
@@ -184,7 +191,7 @@ For each fixture, call `analyze()` twice with the same explicit `asOf`, remove o
 
 Temporarily retain `generatedAt` in `stableReport()` and run:
 
-Run: `node --test tests/integration.test.js`
+Run: `bun run test:integration`
 
 Expected: FAIL because generation timestamps differ.
 
@@ -194,7 +201,7 @@ Remove only `generatedAt`; do not normalize, sort, or discard any computed domai
 
 **Step 4: Verify GREEN**
 
-Run: `node --test tests/integration.test.js`
+Run: `bun run test:integration`
 
 Expected: determinism test passes.
 
@@ -217,25 +224,25 @@ Read `.github/workflows/ci.yml` as text and assert it contains:
 
 - `pull_request`, `push`, and `workflow_dispatch` triggers;
 - `contents: read`;
-- `actions/checkout@v6` and `actions/setup-node@v6`;
-- Node 22 and npm cache;
-- `npm ci` and `npm run check`;
+- `actions/checkout@v6`, `actions/setup-node@v6`, and `oven-sh/setup-bun@v2`;
+- Node 22 plus Bun version resolved from `package.json`;
+- `bun install --frozen-lockfile` and `bun run check`;
 - a finite `timeout-minutes`;
 - no `pull_request_target`.
 
 **Step 2: Verify RED**
 
-Run: `node --test tests/automationConfig.test.js`
+Run: `bun run test:automation`
 
 Expected: FAIL because `ci.yml` does not exist.
 
 **Step 3: Create the workflow**
 
-Use one `verify` job on `ubuntu-latest`, least-privilege permissions, and a 15-minute timeout. Trigger pushes only for `main`.
+Use one `verify` job on `ubuntu-latest`, least-privilege permissions, Node 22, Bun 1.3.14, and a 15-minute timeout. Trigger pushes only for `main`.
 
 **Step 4: Verify GREEN and full check**
 
-Run: `node --test tests/automationConfig.test.js && npm run check`
+Run: `bun run test -- tests/automationConfig.test.js && bun run check`
 
 Expected: workflow contract and project check pass.
 
@@ -258,13 +265,13 @@ Assert the workflow contains:
 
 - push to `main` and `workflow_dispatch`;
 - concurrency with cancellation;
-- build job: checkout, setup-node, `npm ci`, `npm run check`, `configure-pages@v5`, `upload-pages-artifact@v4` with `path: ./dist`;
+- build job: checkout, setup-node 22, setup-bun, frozen install, `bun run check`, `configure-pages@v5`, `upload-pages-artifact@v4` with `path: ./dist`;
 - deploy job with `needs: build`, `github-pages` environment, `pages: write`, `id-token: write`, and `deploy-pages@v4`;
 - no deployment on pull requests.
 
 **Step 2: Verify RED**
 
-Run: `node --test tests/automationConfig.test.js`
+Run: `bun run test:automation`
 
 Expected: FAIL because `deploy-pages.yml` does not exist.
 
@@ -274,7 +281,7 @@ Follow GitHub's current custom Pages workflow contract. Keep elevated permission
 
 **Step 4: Verify generated assets are relative**
 
-Run: `npm run build`
+Run: `bun run build`
 
 Then assert `dist/index.html` uses `./assets/` rather than `/assets/`.
 
@@ -282,7 +289,7 @@ Expected: build passes and asset URLs are repository-subpath safe.
 
 **Step 5: Verify GREEN**
 
-Run: `node --test tests/automationConfig.test.js && npm run check`
+Run: `bun run test -- tests/automationConfig.test.js && bun run check`
 
 Expected: all automation contracts and project checks pass.
 
@@ -303,11 +310,11 @@ git commit -m "ci: deploy verified build to Pages"
 
 **Step 1: Write the failing maintenance-config test**
 
-Assert Dependabot contains weekly entries for `npm` and `github-actions`, both rooted at `/`, with a bounded `open-pull-requests-limit`.
+Assert Dependabot contains weekly entries for `bun` and `github-actions`, both rooted at `/`, with a bounded `open-pull-requests-limit`.
 
 **Step 2: Verify RED**
 
-Run: `node --test tests/automationConfig.test.js`
+Run: `bun run test:automation`
 
 Expected: FAIL because `.github/dependabot.yml` does not exist.
 
@@ -322,13 +329,13 @@ Expected: FAIL because `.github/dependabot.yml` does not exist.
 README must include:
 
 - CI badge using an owner/repository placeholder documented for replacement;
-- `npm ci` and `npm run check` contributor commands;
+- `bun install --frozen-lockfile` and `bun run check` contributor commands;
 - GitHub Pages setup: Settings → Pages → Source → GitHub Actions;
 - note that only `main` deploys.
 
 **Step 4: Verify GREEN**
 
-Run: `node --test tests/automationConfig.test.js && npm run check`
+Run: `bun run test -- tests/automationConfig.test.js && bun run check`
 
 Expected: all tests and build pass.
 
@@ -352,7 +359,7 @@ Expected: no credential or unauthorized private-data findings.
 
 **Step 2: Run the clean-install gate**
 
-Run: `npm ci && npm run check`
+Run: `bun install --frozen-lockfile && bun run check`
 
 Expected: all tests pass and production build exits 0.
 
