@@ -47,8 +47,9 @@ test('分層結果：L0/L1/L2/L3 皆非空、無未分類部件', () => {
     `未分類部件: ${unclassified.map(c => `${c.sourceSystem}/${c.category}`).join(', ')}`);
 
   const baziComponents = report.engines.find(engine => engine.engineId === 'bazi').components;
-  assert.equal(baziComponents.length, 4);
-  for (const component of baziComponents) {
+  const baziL0Components = baziComponents.filter(c => ['natal', 'dayMaster', 'elements', 'tenGods'].includes(c.category));
+  assert.equal(baziL0Components.length, 4);
+  for (const component of baziL0Components) {
     const classified = byLayer.L0.find(item => item.sourceSystem === 'bazi' && item.id === component.id);
     assert.ok(classified, `bazi/${component.category} 未歸入 L0`);
   }

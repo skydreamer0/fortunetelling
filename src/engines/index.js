@@ -29,8 +29,13 @@ export { BaZiEngine } from './BaZiEngine.js';
  * @returns {import('../core/BaseEngine.js').BaseEngine[]}
  */
 export function createEngines({ asOf = null } = {}) {
+  let baziAsOf = asOf;
+  if (asOf instanceof Date && !Number.isNaN(asOf.getTime())) {
+    baziAsOf = asOf.toISOString().slice(0, 10);
+  }
+
   return [
-    new BaZiEngine({ asOf }),
+    new BaZiEngine({ asOf: baziAsOf }),
     new ZiweiEngine({ asOf }),
     new NumerologyEngine({ asOf }),
     new MingGuaEngine(),

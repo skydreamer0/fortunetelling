@@ -105,10 +105,21 @@
 
 **目標**：BaZiEngine 增加時間層輸出：
 - `daYun`（L1）：**全部大運步**，每步一個 component，
-  value `{ index, ganZhi, startYear, endYear, startAge, isCurrent }`。
-  `isCurrent` 依 `asOf` 判定，至多一步為 true（asOf 早於起運則全 false）。
+  固定輸出 **10 步**（index 1–10；排除套件 index 0 的出生至起運前區間），
+  value `{ index, ganZhi, startYear, endYear, startAge, isCurrent,
+  ageConvention: 'nominal-year-age' }`。`startAge` 採套件虛歲算法
+  `startYear - birthYear + 1`。`isCurrent` 依實際起運時間判定，第一步從
+  `yun.getStartSolar()` 開始、後續每十年同時刻開始，採起點包含／終點不包含；
+  `startYear`／`endYear` 僅作年度顯示。至多一步為 true（asOf 早於起運則全 false）。
   ⚠️ 必須輸出**完整序列**而非只有當前步——D4 EvolutionCalculator 依賴它（D-016）。
-- `liuNian`（L2）：`asOf` 當年的流年干支 value `{ year, ganZhi }`。
+- `liuNian`（L2）：`asOf` 當日的流年干支 value `{ year, ganZhi }`，採立春**精確**交節
+  `getYearInGanZhiExact()`；`asOf` 固定解讀為 Asia/Taipei `00:00:00`，不接受 ISO timestamp。
+  result metadata 必須輸出 `asOfConvention: { timezone: 'Asia/Taipei', time: '00:00:00',
+  yearBoundary: 'liChun-exact', precision: 'date' }`。
+
+起運與日柱換日分開記錄：`dayBoundary: 'eight-char sect=2'`、
+`yunCalculation: 'getYun sect=2'`。僅 `male`／`female` 可映射為套件 gender `1`／`0`；
+缺失或非法值必須回報引擎錯誤，不得依賴套件把非 1 值視為女性的寬鬆行為。
 
 **修改檔案**：`src/engines/BaZiEngine.js`、`tests/bazi.test.js`。
 
@@ -116,14 +127,18 @@
 
 **驗收條件**：
 1. `npm test` 全綠。
-2. daYun 部件數 ≥ 8；恰好 ≤1 步 `isCurrent`；各步 `startYear` 嚴格遞增且不重疊。
-3. `asOf` 改變只影響 `isCurrent` 與 liuNian，不影響序列本身（決定論，D-014）。
+2. daYun 部件數恰為 10（index 1–10）；每步 `endYear - startYear === 9`、
+   `startYear` 嚴格遞增且不重疊；`isCurrent` 恰 ≤1。只有 asOf 落於十步的實際時間
+   範圍內，才要求恰有一筆 `isCurrent === true`。
+3. `asOf` 改變只影響 `isCurrent` 與 liuNian，不影響大運的靜態欄位（決定論，D-014）。
 
 **測試案例**（至少）：
 - 1991-10-05 14:00 女、asOf=2026-07-11：liuNian ganZhi = `丙午`（2026 丙午年，
-  可用 lunar-javascript 交叉驗證後寫死）。
-- 同輸入、asOf=2030-01-01 vs 2026-07-11：daYun 序列逐步深比對相等（isCurrent 除外）。
-- isCurrent 的那步滿足 `startYear ≤ asOf年 ≤ endYear`。
+  採立春精確交節）。
+- 同輸入、asOf=2030-01-01：liuNian ganZhi = `己酉`；2030 立春精確交節後才切換為
+  `庚戌`。同輸入、asOf=2030-01-01 vs 2026-07-11：daYun 靜態欄位逐步深比對相等，
+  `isCurrent` 可改變或維持。
+- isCurrent 以 `yun.getStartSolar()` 的實際時刻和後續十年邊界驗證，而非年度顯示欄位。
 
 **失敗回報**：HARNESS_SPEC §四，ID=B2。
 

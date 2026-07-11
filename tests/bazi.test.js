@@ -57,11 +57,90 @@ test('八字：1991-10-05 14:00 產出四個完整 L0 component', () => {
   }));
 
   assert.equal(result.errors.length, 0, result.errors.join('; '));
-  assert.deepEqual(result.components.map(component => component.category), [
-    'natal', 'dayMaster', 'elements', 'tenGods',
-  ]);
+  assert.deepEqual(
+    result.components
+      .map(c => c.category)
+      .filter(cat => ['natal', 'dayMaster', 'elements', 'tenGods'].includes(cat)),
+    ['natal', 'dayMaster', 'elements', 'tenGods']
+  );
   const elements = result.byCategory('elements')[0].value;
   const tenGods = result.byCategory('tenGods')[0].value;
   assert.equal(tenGods.total, elements.total);
   assert.ok(tenGods.total > 0);
+});
+
+test('八字：B2 大運與流年驗證 1991-10-05 14:00 女 asOf=2026-07-11', () => {
+  const engine = createEngines({ asOf: '2026-07-11' }).find(item => item.id === 'bazi');
+  const result = engine.run(new BirthData({
+    year: 1991, month: 10, day: 5, hour: 14, minute: 0, gender: 'female',
+  }));
+
+  assert.equal(result.errors.length, 0, result.errors.join('; '));
+  
+  const daYuns = result.byCategory('daYun');
+  assert.equal(daYuns.length, 10, '應恰好產出 10 步大運');
+  
+  let currentCount = 0;
+  for (let i = 0; i < 10; i++) {
+    const v = daYuns[i].value;
+    assert.equal(v.index, i + 1, 'index 必須是 1 到 10');
+    assert.equal(v.endYear - v.startYear, 9, '年份差固定為 9');
+    if (i > 0) {
+      assert.ok(v.startYear > daYuns[i-1].value.startYear, 'startYear 遞增');
+    }
+    if (v.isCurrent) currentCount++;
+  }
+  
+  assert.equal(currentCount, 1, '剛好一步大運是 isCurrent: true');
+
+  const liuNian = result.byCategory('liuNian')[0];
+  assert.equal(liuNian.value.year, 2026);
+  assert.equal(liuNian.value.ganZhi, '丙午');
+});
+
+test('八字：B2 2030-01-01 大運靜態不變與己酉流年', () => {
+  const engine26 = createEngines({ asOf: '2026-07-11' }).find(item => item.id === 'bazi');
+  const engine30 = createEngines({ asOf: '2030-01-01' }).find(item => item.id === 'bazi');
+  
+  const birth = new BirthData({
+    year: 1991, month: 10, day: 5, hour: 14, minute: 0, gender: 'female',
+  });
+  
+  const res26 = engine26.run(birth);
+  const res30 = engine30.run(birth);
+  
+  const dyn26 = res26.byCategory('daYun');
+  const dyn30 = res30.byCategory('daYun');
+  
+  for (let i = 0; i < 10; i++) {
+    assert.equal(dyn26[i].value.ganZhi, dyn30[i].value.ganZhi);
+    assert.equal(dyn26[i].value.startYear, dyn30[i].value.startYear);
+  }
+  
+  const liuNian30 = res30.byCategory('liuNian')[0];
+  assert.equal(liuNian30.value.year, 2030);
+  assert.equal(liuNian30.value.ganZhi, '己酉');
+});
+
+test('八字：B2 asOf 格式與性別驗證錯誤', () => {
+  const invalidInputs = [
+    { asOf: '2026-07-11T00:00:00Z', error: /asOf in YYYY-MM-DD/ },
+    { asOf: null, error: /asOf in YYYY-MM-DD/ },
+    { asOf: '2026-02-30', error: /valid calendar date/ },
+  ];
+
+  for (const input of invalidInputs) {
+    const engine = createEngines({ asOf: input.asOf }).find(item => item.id === 'bazi');
+    const result = engine.run(new BirthData({
+      year: 1991, month: 10, day: 5, hour: 14, minute: 0, gender: 'female',
+    }));
+    assert.ok(result.errors.length > 0, `Should have error for asOf: ${input.asOf}`);
+    assert.match(result.errors[0], input.error);
+  }
+
+  const engine2 = createEngines({ asOf: '2026-07-11' }).find(item => item.id === 'bazi');
+  // bypassing BirthData validation to test internal engine strictness
+  assert.throws(() => {
+    engine2._compute({ year: 1991, month: 10, day: 5, hour: 14, minute: 0, gender: 'alien' });
+  }, /'male' or 'female'/);
 });

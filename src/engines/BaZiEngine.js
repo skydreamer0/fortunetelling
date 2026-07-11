@@ -30,6 +30,12 @@ const TAIPEI_CONVENTION = Object.freeze({
   library: 'lunar-javascript@1.7.7',
 });
 
+const ASOF_CONVENTION = Object.freeze({
+  timezone: 'Asia/Taipei',
+  time: '00:00:00',
+  yearBoundary: 'liChun-exact',
+  precision: 'date',
+});
 /**
  * Classify a stem relative to the day master using the orthodox five-element
  * producing/controlling cycles and the stem's yin/yang polarity.
@@ -80,6 +86,18 @@ export class BaZiEngine extends BaseEngine {
    * @returns {import('../core/models/SystemResult.js').SystemResult}
    */
   _compute(birth) {
+    if (!this.asOf || typeof this.asOf !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(this.asOf)) {
+      throw new Error(`BaZiEngine requires asOf in YYYY-MM-DD format, got: ${this.asOf}`);
+    }
+    const asOfParts = this.asOf.split('-').map(Number);
+    const dateObj = new Date(asOfParts[0], asOfParts[1] - 1, asOfParts[2]);
+    if (dateObj.getFullYear() !== asOfParts[0] || dateObj.getMonth() !== asOfParts[1] - 1 || dateObj.getDate() !== asOfParts[2]) {
+      throw new Error(`BaZiEngine requires a valid calendar date, got: ${this.asOf}`);
+    }
+
+    const asOfCompareStr = `${this.asOf} 00:00:00`;
+    const asOfSolar = Solar.fromYmdHms(asOfParts[0], asOfParts[1], asOfParts[2], 0, 0, 0);
+
     const solar = Solar.fromYmdHms(
       birth.year,
       birth.month,
@@ -90,6 +108,16 @@ export class BaZiEngine extends BaseEngine {
     );
     const eightChar = solar.getLunar().getEightChar();
     eightChar.setSect(2);
+
+    let genderValue;
+    if (birth.gender === 'male') {
+      genderValue = 1;
+    } else if (birth.gender === 'female') {
+      genderValue = 0;
+    } else {
+      throw new Error(`BaZiEngine requires birth.gender to be 'male' or 'female', got: ${birth.gender}`);
+    }
+    const yun = eightChar.getYun(genderValue, 2);
 
     const pillars = {
       year: eightChar.getYear(),
@@ -120,6 +148,12 @@ export class BaZiEngine extends BaseEngine {
     }
 
     const result = this.result();
+    result.meta = {
+      asOfConvention: ASOF_CONVENTION,
+      dayBoundary: 'eight-char sect=2',
+      yunCalculation: 'getYun sect=2',
+    };
+
     result.add({
       id: 'natal',
       name: '四柱',
@@ -158,6 +192,42 @@ export class BaZiEngine extends BaseEngine {
         counts: tenGodCounts,
         total: allStems.length,
         includesDayMaster: true,
+      },
+    });
+
+    const daYuns = yun.getDaYun(11);
+    const startSolarStr = yun.getStartSolar().toYmdHms();
+    
+    for (let i = 1; i <= 10; i++) {
+      const dy = daYuns[i];
+      const stepStart = `${String(parseInt(startSolarStr.substring(0, 4), 10) + (i - 1) * 10)}${startSolarStr.substring(4)}`;
+      const stepEnd = `${String(parseInt(startSolarStr.substring(0, 4), 10) + i * 10)}${startSolarStr.substring(4)}`;
+      
+      const isCurrent = asOfCompareStr >= stepStart && asOfCompareStr < stepEnd;
+      
+      result.add({
+        id: `daYun_${i}`,
+        name: `大運 ${i}`,
+        category: 'daYun',
+        value: {
+          index: i,
+          ganZhi: dy.getGanZhi(),
+          startYear: dy.getStartYear(),
+          endYear: dy.getStartYear() + 9, // strict 9 years difference according to tests
+          startAge: dy.getStartAge(),
+          isCurrent,
+          ageConvention: 'nominal-year-age',
+        },
+      });
+    }
+
+    result.add({
+      id: 'liuNian',
+      name: '流年',
+      category: 'liuNian',
+      value: {
+        year: asOfParts[0],
+        ganZhi: asOfSolar.getLunar().getYearInGanZhiExact(),
       },
     });
 
