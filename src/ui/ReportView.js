@@ -10,6 +10,8 @@
 import { renderTextBar } from '../visualization/TextFallback.js';
 import { renderRadarChart } from '../visualization/RadarChart.js';
 import { renderBarChart } from '../visualization/BarChart.js';
+import { buildStateTablePanel } from './StateTablePanel.js';
+import { buildEvolutionPanel } from './EvolutionPanel.js';
 
 /** 簡易 HTML escape（使用者輸入的姓名等）。 */
 function esc(text) {
@@ -189,21 +191,6 @@ export function buildRadarSection(report) {
   `).join('')}</div>`;
 }
 
-// ─── Pending shells (區塊 G 雷達 / H②③) ────────────────────────────────────
-
-function buildPendingBlocks(report) {
-  const items = [
-    { icon: '⇄', text: `狀態切換表（區塊 H②）— 里程碑 D${report.stateTable.pending ? '' : ''}` },
-    { icon: '∿', text: '時期演化雷達與敘事（區塊 H③）— 里程碑 D' },
-  ];
-  return items.map(i => `
-    <div class="empty-state">
-      <span class="empty-state__icon" aria-hidden="true">${i.icon}</span>
-      <p class="empty-state__text">${i.text}</p>
-    </div>
-  `).join('');
-}
-
 // ─── Main render ────────────────────────────────────────────────────────────
 
 /**
@@ -242,8 +229,13 @@ export function renderReport(container, report, { onBack }) {
     <p class="section-subtitle">圖形只呈現報告中的既有數值；展開卡片可逐軸覆核公式與文字長條。</p>
     ${buildRadarSection(report)}
 
-    <h3 class="section-title"><span class="title-accent" aria-hidden="true">◈</span> 待完成區塊</h3>
-    ${buildPendingBlocks(report)}
+    <h3 class="section-title"><span class="title-accent" aria-hidden="true">⇄</span> 狀態切換表（區塊 H②）</h3>
+    <p class="section-subtitle">每項情境假說都標示實際來源部件；資料不足時不補寫推論。</p>
+    ${buildStateTablePanel(report.stateTable)}
+
+    <h3 class="section-title"><span class="title-accent" aria-hidden="true">∿</span> 時期演化（區塊 H③）</h3>
+    <p class="section-subtitle">依系統分列十年尺度的演化輪廓；展開各期可查看量化文字圖。</p>
+    ${buildEvolutionPanel(report.evolution)}
   `;
 
   container.querySelector('#report-back').addEventListener('click', onBack);
