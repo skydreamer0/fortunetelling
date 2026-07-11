@@ -29,20 +29,22 @@
   - [x] 男/女命卦計算（含千禧年修正）與八宅吉凶方位。
 - [x] **`DreamspellEngine` (馬雅 Kin)**：
   - [x] 13 音階與 20 圖騰計算（Kin 錨定 1987-07-26=Kin34，含閏日規則）。
-- [ ] **`BaZiEngine` (八字)**：
+- [x] **`BaZiEngine` (八字)**：
   - [x] 任務 B1、B2：四柱、五行/十神出現次數、大運與流年基礎計算。
-  - [ ] 任務 B3：十神顯隱（L3 `tenGodsContext`），聚合成五大關係角色群並判定顯、隱、無三態。
+  - [x] 任務 B3：十神顯隱（L3 `tenGodsContext`），聚合成五大關係角色群並判定顯、隱、無三態。
+- [x] **`ZiweiEngine` 大限全序列**（任務 D3）：`daXian_1`–`daXian_12` 十二步、各步含該大限四化與 `isCurrent`，供 EvolutionCalculator 使用。
 
 ### Phase 3: Block G - 雷達與透明計分 (Radar & Scoring)
-- [ ] **`ScoringRules`**：建立可匯出的透明計分結構（確保可被使用者覆核）。
-- [ ] **`RadarBuilder`**：收集引擎結果並轉換為雷達圖/長條圖格式。
-- [ ] **圖表視覺化**：整合 Chart.js，實作 `RadarChart`、`BarChart` 及純文字降級方案 (`TextFallback`)。
+- [x] **`ScoringRules`**：建立可匯出的透明計分結構（任務 C1 已清理死規則、數字頻次改計次）。
+- [x] **`RadarBuilder`**：收集引擎結果並轉換為雷達圖/長條圖格式（含 `AxisNotes` 各軸資產/負債註記，任務 C1）。
+- [ ] **analyze() 接線 radars**（任務 C2）：把 RadarBuilder 結果填入 `report.radars`。
+- [ ] **圖表視覺化**（任務 C3）：整合 Chart.js，實作 `RadarChart`、`BarChart`；純文字降級方案 (`TextFallback`) 已完成。
 
 ### Phase 4: Block H - 動靜分層與時期演化 (Layers & Evolution)
-- [ ] **`LayerClassifier`**：標註所有部件的所屬層級（L0恆定、L1慢變、L2年變、L3情境）。
-- [ ] **`StateSwitchTable`**：實作五大情境切換表（初識、親密、衝突、低谷、工作），並標註「⚠️ 待驗證」。
-- [ ] **`EvolutionCalculator`**：以紫微大限（十年）為主軸，計算各個時期的雷達形狀變化與演化敘事。
-- [ ] **`HonestyGuard`**：文字輸出守門員（限制 L0 只能寫「你是」，L1/L2 寫「這段時期」，L3 寫「在某情境下」）。
+- [x] **`LayerClassifier`**：標註所有部件的所屬層級（L0恆定、L1慢變、L2年變、L3情境）。
+- [x] **`StateSwitchTable`**（任務 D2）：實作五大情境切換表（初識、親密、衝突、低谷、工作），映射表可擴充、無來源情境明示「資料不足」。
+- [ ] **`EvolutionCalculator`**（任務 D4）：以八字大運與紫微大限為軸，計算各時期的雷達形狀變化與演化敘事。
+- [x] **`HonestyGuard`**（任務 D1）：文字輸出守門員（L0 允許「你是」，L1/L2/L3 禁定性斷言；`analyze()` 已接誠實稽核）。
 
 ### Phase 5: UI 與前端整合 (Premium UI Integration)
 - [ ] **Design System**：建立 `index.css`（深色主題色票、玻璃態 CSS、字體 Inter & Noto Sans TC）。
