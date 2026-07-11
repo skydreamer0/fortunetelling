@@ -60,6 +60,36 @@ test('Report 頂層欄位集合完全不變（Schema v1 凍結，D-012）', () =
   assert.equal(report.honesty.pending, false);
 });
 
+test('analyze() 只填入既有 radars 空殼，且每軸計分規則可解析', () => {
+  const report = analyze(INPUT, { asOf: AS_OF });
+  const radarIds = report.radars.map(radar => radar.id);
+  const ruleIds = new Set(
+    Object.values(report.scoringRules.byRadarType)
+      .flat()
+      .map(rule => rule.id),
+  );
+
+  assert.ok(report.radars.length >= 3);
+  assert.ok(radarIds.includes('bazi_element_balance'));
+  assert.ok(radarIds.includes('ziwei_palace_strength'));
+  assert.ok(radarIds.includes('numerology_digit_frequency'));
+
+  for (const radar of report.radars) {
+    assert.ok(radar.axes.length > 0, `${radar.id} 缺少軸資料`);
+    for (const axis of radar.axes) {
+      assert.ok(ruleIds.has(axis.ruleId), `${radar.id}/${axis.label} ruleId 無法解析: ${axis.ruleId}`);
+    }
+  }
+
+  assert.deepEqual(
+    Object.keys(report).sort(),
+    [
+      'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input',
+      'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'version',
+    ],
+  );
+});
+
 test('預設引擎全數執行且零錯誤', () => {
   const report = analyze(INPUT, { asOf: AS_OF });
   assert.ok(report.engines.some(engine => engine.engineId === 'bazi'), '缺少 bazi 引擎');

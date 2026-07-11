@@ -16,6 +16,7 @@ import { ScoringRules } from '../analysis/ScoringRules.js';
 import { HonestyGuard } from '../analysis/HonestyGuard.js';
 import { StateSwitchTable } from '../analysis/StateSwitchTable.js';
 import { EvolutionCalculator } from '../analysis/EvolutionCalculator.js';
+import { buildRadars } from '../analysis/RadarBuilder.js';
 import { createDefaultRegistry } from '../engines/index.js';
 
 /** Public library version (semver). Bump on any observable API change. */
@@ -114,6 +115,9 @@ export function analyze(input, { asOf = null } = {}) {
       pending: true,
     },
   };
+
+  // ── 區塊 G：雷達（C2）——RadarBuilder 只填入既有 radars 空殼 ──
+  report.radars = buildRadars(engines);
 
   // ── 區塊 H②：狀態切換表（D2）——必須在誠實稽核前填入，讓自產文字受檢 ──
   report.stateTable.scenarios = StateSwitchTable.build(layers);
