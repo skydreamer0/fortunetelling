@@ -39,6 +39,8 @@
  * @property {string} category     - Sub-category within the engine
  * @property {*} value             - The component's value / data
  * @property {string} rationale    - Why it was classified into this layer
+ * @property {boolean} [unclassified] - True when no rule matched and the layer
+ *   is a conservative fallback, not a real classification
  */
 
 /**
@@ -47,6 +49,8 @@
  * @property {ClassifiedComponent[]} components   - All classified components
  * @property {Record<LayerCode, ClassifiedComponent[]>} byLayer - Grouped
  * @property {Record<string, ClassifiedComponent[]>} bySystem  - Grouped
+ * @property {ClassifiedComponent[]} unclassified - Components no rule matched
+ *   (assigned L3 as conservative fallback; add a rule to classify them properly)
  * @property {string} classifiedAt - ISO timestamp
  */
 
@@ -108,6 +112,7 @@ const CLASSIFICATION_RULES = [
   { sourceSystem: 'bazi', category: 'dayMaster',       layer: 'L0', rationale: '日主（日干）為命盤核心，終生不變。' },
   { sourceSystem: 'bazi', category: 'tenGods',         layer: 'L0', rationale: '十神格局為命盤結構，終生不變。' },
   { sourceSystem: 'bazi', category: 'elements',        layer: 'L0', rationale: '五行分佈為命盤結構，終生不變。' },
+  { sourceSystem: 'bazi', category: 'tenGodsContext',  layer: 'L3', rationale: '十神作為關係角色（對財、對官、對印等）在不同對象前顯隱，屬情境切換面向；十神格局本身仍屬 L0（tenGods）。' },
   { sourceSystem: 'bazi', category: 'daYun',           layer: 'L1', rationale: '大運每十年一變，為慢變週期。' },
   { sourceSystem: 'bazi', category: 'liuNian',         layer: 'L2', rationale: '流年每年一變。' },
   { sourceSystem: 'bazi', category: 'liuYue',          layer: 'L2', rationale: '流月每月一變，歸入年變層。' },
@@ -120,13 +125,15 @@ const CLASSIFICATION_RULES = [
   { sourceSystem: 'ziwei', category: 'daXian',         layer: 'L1', rationale: '大限每十年一變，為慢變週期。' },
   { sourceSystem: 'ziwei', category: 'xiaoXian',       layer: 'L2', rationale: '小限每年一變。' },
   { sourceSystem: 'ziwei', category: 'flyingStars',    layer: 'L2', rationale: '流年飛星每年變化。' },
+  { sourceSystem: 'ziwei', category: 'soulVsBody',     layer: 'L3', rationale: '命宮主先天格局、身宮主後天發展與情境反應，兩者對照為隨場合切換的面向。' },
+  { sourceSystem: 'ziwei', category: 'sanFangSiZheng', layer: 'L3', rationale: '三方四正描述宮位在互動情境中被會照的組合，屬情境切換面向。' },
 
   // ── Vedic ───────────────────────────────────────────────────────────
   { sourceSystem: 'vedic', category: 'natal',          layer: 'L0', rationale: '吠陀本命盤（D1）終生不變。' },
   { sourceSystem: 'vedic', category: 'd9',             layer: 'L0', rationale: '九分盤（D9）終生不變。' },
   { sourceSystem: 'vedic', category: 'nakshatras',     layer: 'L0', rationale: '月亮星宿終生不變。' },
   { sourceSystem: 'vedic', category: 'mahadasha',      layer: 'L1', rationale: 'Mahadasha 大運週期約6-20年一變。' },
-  { sourceSystem: 'vedic', category: 'antardasha',     layer: 'L1', rationale: 'Antardasha 為大運子週期，數年一變。' },
+  { sourceSystem: 'vedic', category: 'antardasha',     layer: 'L2', rationale: 'Antardasha（中運）為大運子週期，以年為尺度變化，屬年變層。' },
   { sourceSystem: 'vedic', category: 'transits',       layer: 'L2', rationale: '行星行運持續變化，歸入年變層。' },
 
   // ── Numerology ──────────────────────────────────────────────────────
@@ -146,6 +153,15 @@ const CLASSIFICATION_RULES = [
   { sourceSystem: 'humandesign', category: 'channels',        layer: 'L0', rationale: '通道連結終生不變。' },
   { sourceSystem: 'humandesign', category: 'openCenters',     layer: 'L3', rationale: '開放中心隨外在環境與互動對象而變化，為情境切換。' },
   { sourceSystem: 'humandesign', category: 'conditioning',    layer: 'L3', rationale: '制約來自外在環境，隨情境切換。' },
+
+  // ── MingGua (八宅命卦) ───────────────────────────────────────────────
+  { sourceSystem: 'minggua', category: 'mingGua',    layer: 'L0', rationale: '本命卦由出生年（立春為界）決定，終生不變。' },
+  { sourceSystem: 'minggua', category: 'directions', layer: 'L0', rationale: '八宅吉凶方位由本命卦決定，終生不變。' },
+
+  // ── Dreamspell (馬雅曆 Kin) ──────────────────────────────────────────
+  { sourceSystem: 'dreamspell', category: 'kin',  layer: 'L0', rationale: 'Kin 印記由出生日期計算，終生不變。' },
+  { sourceSystem: 'dreamspell', category: 'tone', layer: 'L0', rationale: '銀河音階由 Kin 決定，終生不變。' },
+  { sourceSystem: 'dreamspell', category: 'seal', layer: 'L0', rationale: '圖騰由 Kin 決定，終生不變。' },
 
   // ── Cross-System Context ────────────────────────────────────────────
   { sourceSystem: 'vedic',       category: 'ascendant',    layer: 'L3', rationale: '上升星座代表社交面具，在初識場合較為顯著。' },
@@ -255,6 +271,7 @@ export class LayerClassifier {
       components: allComponents,
       byLayer,
       bySystem,
+      unclassified: allComponents.filter(c => c.unclassified),
       classifiedAt: new Date().toISOString()
     };
   }
@@ -270,14 +287,30 @@ export class LayerClassifier {
     const category = component.category ?? '';
     const matchedRule = this.#findRule(sourceSystem, category);
 
+    if (matchedRule) {
+      return {
+        id: component.id ?? `${sourceSystem}_${category}_${Date.now()}`,
+        name: component.name ?? category,
+        layer: matchedRule.layer,
+        sourceSystem,
+        category,
+        value: component.value ?? null,
+        rationale: matchedRule.rationale
+      };
+    }
+
+    // 誠實條款：未知部件不得預設進 L0（「你是…」為最強斷言）。
+    // 保守起見退到語氣最弱的 L3，並以 unclassified 標記，
+    // 讓下游（StateSwitchTable / HonestyGuard / 報告）可過濾或警示。
     return {
       id: component.id ?? `${sourceSystem}_${category}_${Date.now()}`,
       name: component.name ?? category,
-      layer: matchedRule?.layer ?? 'L0',
+      layer: 'L3',
       sourceSystem,
       category,
       value: component.value ?? null,
-      rationale: matchedRule?.rationale ?? `未找到分類規則，預設為 L0（恆定結構層）。來源：${sourceSystem}，類別：${category}。`
+      unclassified: true,
+      rationale: `未找到分類規則，保守歸入 L3（語氣最弱層）並標記 unclassified。請為（${sourceSystem}, ${category}）補分類規則。`
     };
   }
 
@@ -317,9 +350,16 @@ export class LayerClassifier {
 
       if (comps.length > 0) {
         for (const comp of comps) {
-          lines.push(`     · [${comp.sourceSystem}] ${comp.name}`);
+          const flag = comp.unclassified ? '（⚠ 未分類，保守歸層）' : '';
+          lines.push(`     · [${comp.sourceSystem}] ${comp.name}${flag}`);
         }
       }
+      lines.push('');
+    }
+
+    const unclassified = classification.unclassified ?? [];
+    if (unclassified.length > 0) {
+      lines.push(`⚠ 共 ${unclassified.length} 個部件未匹配任何分類規則（已保守歸入 L3），請補規則。`);
       lines.push('');
     }
 

@@ -15,20 +15,20 @@
 
 ### Phase 1: 基礎架構與核心模型 (Core Architecture)
 - [x] Vite 專案初始化 (`vanilla` 模板)與基礎依賴安裝 (`iztro`, `lunar-javascript`, `chart.js`)。
-- [ ] 實作 `BirthData.js`：統一的出生資料模型（包含真太陽時轉換、公農曆轉換）。
-- [ ] 實作 `SystemResult.js` 與 `BaseEngine.js`：所有計算引擎的標準介面。
-- [ ] 實作 `EngineRegistry.js`：註冊與調度各命理系統。
+- [x] 實作 `BirthData.js`：統一的出生資料模型（包含真太陽時轉換、公農曆轉換）。
+- [x] 實作 `SystemResult.js` 與 `BaseEngine.js`：所有計算引擎的標準介面。
+- [x] 實作 `EngineRegistry.js`：註冊與調度各命理系統。
 
 ### Phase 2: 命理計算引擎 (Calculation Engines)
-- [ ] **`ZiweiEngine` (紫微斗數)**：
-  - 封裝 `iztro`，提取十二宮、主星亮度、四化、大限。
-  - 設計透明的計分規則（廟旺得利平不陷加權、三方四正加權）。
-- [ ] **`NumerologyEngine` (生命靈數)**：
-  - 生命靈數、表達數、數字九宮格頻次統計。
-- [ ] **`MingGuaEngine` (命卦)**：
-  - 男/女命卦計算與吉凶方位。
-- [ ] **`DreamspellEngine` (馬雅 Kin)**：
-  - 13 音階與 20 圖騰計算。
+- [x] **`ZiweiEngine` (紫微斗數)**：
+  - [x] 封裝 `iztro`，提取十二宮、主星亮度、四化、大限（`_compute` 產出 natal/palaces/mainStars/fourTransforms/daXian/xiaoXian/flyingStars components）。
+  - [x] 亮度透明計分基礎：`BRIGHTNESS_WEIGHTS` + `brightnessScore()`（廟旺得利平不陷 → 0-1）；三方四正加權留待 Phase 3 `RadarBuilder`。
+- [x] **`NumerologyEngine` (生命靈數)**：
+  - [x] 生命靈數、表達數、靈魂數、人格數、數字九宮格頻次；個人流年/流月（L2）。
+- [x] **`MingGuaEngine` (命卦)**：
+  - [x] 男/女命卦計算（含千禧年修正）與八宅吉凶方位。
+- [x] **`DreamspellEngine` (馬雅 Kin)**：
+  - [x] 13 音階與 20 圖騰計算（Kin 錨定 1987-07-26=Kin34，含閏日規則）。
 
 ### Phase 3: Block G - 雷達與透明計分 (Radar & Scoring)
 - [ ] **`ScoringRules`**：建立可匯出的透明計分結構（確保可被使用者覆核）。

@@ -117,13 +117,14 @@ const DEFAULT_RULES = [
     radarType: 'star_brightness',
     axisName: '主星亮度',
     sourceSystem: 'ziwei',
-    formula: 'brightnessMap[starState] where 廟=100, 旺=80, 得=60, 利=40, 平=20, 陷=0',
-    description: '紫微斗數主星在該宮位的廟旺狀態轉換為亮度百分比。廟為最亮（100%），陷為最暗（0%）。',
-    inputs: ['starName', 'starState'],
+    // 與 ZiweiEngine.BRIGHTNESS_WEIGHTS 共用同一套七級制，兩處不得分岔
+    formula: '(BRIGHTNESS_WEIGHTS[brightness] / 7) * 100 where 廟=7, 旺=6, 得=5, 利=4, 平=3, 不=2, 陷=1',
+    description: '紫微斗數主星在該宮位的廟旺利得平不陷（七級）狀態，除以最高權重 7 轉換為百分比。廟為最亮（100%），陷為最暗（約 14%）。權重表與 ZiweiEngine.BRIGHTNESS_WEIGHTS 同源。',
+    inputs: ['starName', 'brightness'],
     maxValue: 100,
-    minValue: 0,
+    minValue: 14,
     unit: '%',
-    version: '1.0.0'
+    version: '1.1.0'
   },
   {
     id: 'ziwei_palace_strength',
