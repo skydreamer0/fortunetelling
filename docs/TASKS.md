@@ -208,7 +208,7 @@
 
 ---
 
-## 任務 C2 — analyze() 接上 radars
+## 任務 C2 ✅ — analyze() 接上 radars
 
 **目標**：`core/analyze.js` 呼叫 RadarBuilder，把結果填入 `report.radars`。
 不新增欄位、不動其他欄位（D-012）。
@@ -227,7 +227,7 @@
 
 ---
 
-## 任務 C3 — RadarChart / BarChart ＋ UI 接圖（並修 D-015 違例）
+## 任務 C3 ✅ — RadarChart / BarChart ＋ UI 接圖（並修 D-015 違例）
 
 **目標**：
 1. 新增 `src/visualization/RadarChart.js`、`BarChart.js`：Chart.js 轉接層，
@@ -365,7 +365,7 @@ earthlyBranch, mutagen（該大限四化）, isCurrent }`。
 
 ---
 
-## 任務 D5 — UI：狀態切換表 ＋ 時期演化面板
+## 任務 D5 ✅ — UI：狀態切換表 ＋ 時期演化面板
 
 **目標**：`ReportView.js`（可拆 `ui/StateTablePanel.js`、`ui/EvolutionPanel.js`）
 呈現 `report.stateTable`（用既有 `.state-table*` class；每格顯示來源部件 chip
