@@ -110,27 +110,88 @@ function buildOverviewCards(report) {
 
 // ─── Layer table (區塊 H①) ──────────────────────────────────────────────────
 
+function buildLayerCards(report) {
+  const cardsHtml = report.layers.layerDefinitions.map(def => {
+    const lc = def.code.toLowerCase();
+    const comps = report.layers.byLayer[def.code] ?? [];
+    const count = comps.length;
+
+    let desc = '';
+    if (def.code === 'L0') desc = '包含先天五行基因、紫微斗數先天命盤結構、生命靈數特質，是終生不變的本質基底。';
+    else if (def.code === 'L1') desc = '對應大運與大限，約 10-20 年發生移轉，呈現中長期的運勢偏向與成長主題。';
+    else if (def.code === 'L2') desc = '對應流年流月，每年或每月推移，指引當下的流年趨勢與變動軌跡。';
+    else if (def.code === 'L3') desc = '根據當下情境（初識、親密、衝突、低谷、工作）切換，呈現不同環境下的動態適應傾向。';
+
+    return `
+      <div class="layer-overview-card layer-overview-card--${lc}">
+        <div class="layer-overview-card__header">
+          <span class="layer-badge layer-badge--${lc}">${def.code}</span>
+          <h4 class="layer-overview-card__title">${esc(def.name)}</h4>
+        </div>
+        <div class="layer-overview-card__meta">
+          <span class="layer-overview-card__time">⏰ ${esc(def.timeScale)}</span>
+          <span class="layer-overview-card__rule">🗣️ ${esc(def.languageRule)}</span>
+        </div>
+        <p class="layer-overview-card__desc">${desc}</p>
+        <span class="layer-overview-card__count">收錄 ${count} 個分析部件</span>
+      </div>
+    `;
+  }).join('');
+
+  return `<div class="layer-overview-grid">${cardsHtml}</div>`;
+}
+
+function buildComponentGroups(comps) {
+  if (comps.length === 0) return '<span class="no-components">（無）</span>';
+
+  // Group by system
+  const grouped = {};
+  comps.forEach(c => {
+    const sys = c.sourceSystem;
+    if (!grouped[sys]) grouped[sys] = [];
+    grouped[sys].push(c);
+  });
+
+  // Render each system group
+  return Object.entries(grouped).map(([sysKey, sysComps]) => {
+    const sysName = SYSTEM_NAMES[sysKey] || sysKey;
+    
+    // Sort components by name for neatness
+    sysComps.sort((a, b) => a.name.localeCompare(b.name, 'zh-TW'));
+
+    const tagsHtml = sysComps.map(c => {
+      const warnClass = c.unclassified ? 'system-tag--unclassified' : '';
+      const warnTitle = c.unclassified ? ' title="未配置規則部件，保守歸入此層"' : '';
+      return `<span class="system-tag system-tag--${sysKey} ${warnClass}"${warnTitle}>${esc(c.name)}${c.unclassified ? ' ⚠' : ''}</span>`;
+    }).join('');
+
+    return `
+      <div class="layer-system-group">
+        <span class="system-group-label system-group-label--${sysKey}">${esc(sysName)}</span>
+        <div class="system-tag-list">${tagsHtml}</div>
+      </div>
+    `;
+  }).join('');
+}
+
 function buildLayerTable(report) {
   const rows = report.layers.layerDefinitions.map(def => {
     const comps = report.layers.byLayer[def.code] ?? [];
-    const compList = comps.map(c => {
-      const sysName = SYSTEM_NAMES[c.sourceSystem] || c.sourceSystem;
-      return `[${esc(sysName)}] ${esc(c.name)}${c.unclassified ? ' ⚠未分類' : ''}`;
-    }).join('、') || '（無）';
     const lc = def.code.toLowerCase();
     return `
       <tr class="layer-row layer-row--${lc}">
         <td><span class="layer-badge layer-badge--${lc}">${def.code}</span></td>
         <td>${esc(def.name)}<br /><small>${esc(def.timeScale)}</small></td>
         <td>${esc(def.languageRule)}</td>
-        <td class="layer-components">${compList}</td>
+        <td class="layer-components">${buildComponentGroups(comps)}</td>
       </tr>
     `;
   }).join('');
 
   return `
+    ${buildLayerCards(report)}
     <details class="layer-table-details">
-      <summary class="layer-table-summary">查看系統分層與動靜屬性覆核 (技術細節)</summary>
+      <summary class="layer-table-summary">查看詳細部件分層技術覆核 (共 ${report.layers.components.length} 個分析部件)</summary>
       <div class="layer-table-container" style="margin-top: var(--space-4);">
         <table class="layer-table">
           <thead>
@@ -153,29 +214,100 @@ function rulesById(scoringRules) {
   );
 }
 
+function formatRuleFormula(ruleId, inputs, value, unit) {
+  if (!inputs) return '';
+
+  switch (ruleId) {
+    case 'bazi_wood_strength':
+      return `計算過程：${inputs.woodCount ?? 0} (木行個數) ÷ ${inputs.totalElements ?? 0} (五行總數) × 100% = ${value}%`;
+    case 'bazi_fire_strength':
+      return `計算過程：${inputs.fireCount ?? 0} (火行個數) ÷ ${inputs.totalElements ?? 0} (五行總數) × 100% = ${value}%`;
+    case 'bazi_earth_strength':
+      return `計算過程：${inputs.earthCount ?? 0} (土行個數) ÷ ${inputs.totalElements ?? 0} (五行總數) × 100% = ${value}%`;
+    case 'bazi_metal_strength':
+      return `計算過程：${inputs.metalCount ?? 0} (金行個數) ÷ ${inputs.totalElements ?? 0} (五行總數) × 100% = ${value}%`;
+    case 'bazi_water_strength':
+      return `計算過程：${inputs.waterCount ?? 0} (水行個數) ÷ ${inputs.totalElements ?? 0} (五行總數) × 100% = ${value}%`;
+    case 'ziwei_palace_strength': {
+      const main = inputs.mainStarBrightness ?? 0;
+      const aux = inputs.auxiliaryStarCount ?? 0;
+      const transform = inputs.fourTransformBonus ?? 0;
+      const auxScore = Math.min(aux * 10, 100);
+      return `計算過程：${main} (主星亮度) × 60% + ${auxScore} (輔星加成: ${aux} 顆 × 10) × 20% + ${transform} (四化加成) × 20% = ${value}分`;
+    }
+    case 'numerology_digit_frequency': {
+      const occurrences = inputs.digitOccurrences ?? 0;
+      return `計算過程：出生日期中出現 ${occurrences}次`;
+    }
+    default:
+      return '';
+  }
+}
+
 function buildAxisRules(radar, ruleMap) {
-  return radar.axes.map(axis => {
+  const descriptions = new Set();
+  radar.axes.forEach(axis => {
     const rule = ruleMap.get(axis.ruleId);
+    if (rule?.description) {
+      descriptions.add(rule.description);
+    }
+  });
+
+  let headerDescHtml = '';
+  if (descriptions.size === 1) {
+    headerDescHtml = `<p class="radar-rules__global-desc">${esc([...descriptions][0])}</p>`;
+  }
+
+  const itemsHtml = radar.axes.map(axis => {
+    const rule = ruleMap.get(axis.ruleId);
+    const friendlyFormula = formatRuleFormula(axis.ruleId, axis.inputs, axis.value, axis.unit);
+
+    let formulaHtml = '';
+    if (friendlyFormula) {
+      formulaHtml = `<div class="radar-rule__formula-friendly">${esc(friendlyFormula)}</div>`;
+    } else if (rule?.formula) {
+      formulaHtml = `<code class="radar-rule__formula-raw">${esc(rule.formula)}</code>`;
+    } else {
+      formulaHtml = `<code class="radar-rule__formula-raw">${esc(axis.ruleId)}</code>`;
+    }
+
+    const showDescInline = descriptions.size !== 1 && rule?.description;
+
     return `
       <li class="radar-rule">
         <div><strong>${esc(axis.label)}</strong> ${esc(axis.value)}${esc(axis.unit)}</div>
-        <code>${esc(rule?.formula ?? axis.ruleId)}</code>
-        ${rule?.description ? `<p>${esc(rule.description)}</p>` : ''}
+        ${formulaHtml}
+        ${showDescInline ? `<p class="radar-rule__desc">${esc(rule.description)}</p>` : ''}
       </li>
     `;
   }).join('');
+
+  return `
+    ${headerDescHtml}
+    <ul>${itemsHtml}</ul>
+  `;
 }
 
 function buildHighAxisNotes(radar) {
   const highAxes = radar.axes.filter(axis => axis.value >= 60);
   if (highAxes.length === 0) return '';
-  return highAxes.map(axis => `
-    <div class="radar-axis-notes">
-      <h5>${esc(axis.label)} ${esc(axis.value)}${esc(axis.unit)}</h5>
-      <p><strong>資產面</strong>：${(axis.assets ?? []).map(esc).join('、') || '—'}</p>
-      <p><strong>負債面</strong>：${(axis.liabilities ?? []).map(esc).join('、') || '—'}</p>
+  const cardsHtml = highAxes.map(axis => `
+    <div class="axis-note-card">
+      <h5 class="axis-note-title">${esc(axis.label)} ${esc(axis.value)}${esc(axis.unit)}</h5>
+      <div class="axis-note-columns">
+        <div class="axis-note-column axis-note-column--assets">
+          <span class="axis-note-badge badge-assets">🌟 資產面 (天賦優勢)</span>
+          <p class="axis-note-content">${(axis.assets ?? []).map(esc).join('、') || '—'}</p>
+        </div>
+        <div class="axis-note-column axis-note-column--liabilities">
+          <span class="axis-note-badge badge-liabilities">⚡ 負債面 (潛在挑戰)</span>
+          <p class="axis-note-content">${(axis.liabilities ?? []).map(esc).join('、') || '—'}</p>
+        </div>
+      </div>
     </div>
   `).join('');
+
+  return `<div class="radar-axis-notes-container">${cardsHtml}</div>`;
 }
 
 // ─── Numerology 3x3 Grid (九宮格) ──────────────────────────────────────────
@@ -263,16 +395,19 @@ export function buildRadarSection(report) {
         <div class="numerology-grid-wrapper">
           ${buildNumerologyGrid(radar)}
         </div>
+        <p class="numerology-grid-desc">生命靈數九宮格：統計出生日期中數字 1–9 出現的次數（0 不計入）。出現頻次越高，代表該能量特質在性格中越為顯著。</p>
       ` : `
         <div class="radar-card__chart chart-container chart-container--${radar.kind === 'bar' ? 'bar' : 'radar'}">
           <canvas data-radar-id="${esc(radar.id)}" role="img" aria-label="${esc(radar.title)}"></canvas>
         </div>
       `}
       ${buildHighAxisNotes(radar)}
+      ${isNumerologyGrid ? '' : `
       <details class="radar-rules">
         <summary>各軸計分規則</summary>
-        <ul>${buildAxisRules(radar, ruleMap)}</ul>
+        ${buildAxisRules(radar, ruleMap)}
       </details>
+      `}
       <details class="radar-fallback">
         <summary>文字長條（無圖形環境使用）</summary>
         <pre>${esc(buildTextFallback(radar))}</pre>

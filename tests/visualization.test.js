@@ -112,3 +112,44 @@ test('ReportView.buildRadarSection 針對生命靈數數字頻次產生九宮格
   assert.ok(!html.includes('50%'));
 });
 
+test('ReportView.buildRadarSection 針對五行與宮位力量產生易讀的「計算過程」說明', () => {
+  const baziRadar = {
+    id: 'bazi_element_balance',
+    system: 'bazi',
+    title: '八字五行出現占比',
+    kind: 'radar',
+    axes: [
+      { label: '木', value: 25, unit: '%', ruleId: 'bazi_wood_strength', inputs: { woodCount: 2, totalElements: 8 } },
+    ],
+  };
+
+  const ziweiRadar = {
+    id: 'ziwei_palace_strength',
+    system: 'ziwei',
+    title: '紫微十二宮位力量',
+    kind: 'radar',
+    axes: [
+      { label: '遷移', value: 62, unit: '分', ruleId: 'ziwei_palace_strength', inputs: { mainStarBrightness: 100, auxiliaryStarCount: 1, fourTransformBonus: 0 } },
+    ],
+  };
+
+  const html = ReportView.buildRadarSection({
+    radars: [baziRadar, ziweiRadar],
+    scoringRules: {
+      byRadarType: {
+        element_balance: [{ id: 'bazi_wood_strength', formula: '(woodCount / totalElements) * 100', description: '木五行占比' }],
+        palace_strength: [{ id: 'ziwei_palace_strength', formula: '(mainStarBrightness * 0.6) + ...', description: '宮位力量' }],
+      },
+    },
+  });
+
+  // 驗證八字五行計算過程已格式化為中文說明且含數值
+  assert.match(html, /計算過程：2 \(木行個數\) ÷ 8 \(五行總數\) × 100% = 25%/);
+  // 驗證紫微斗數計算過程已格式化為中文說明且含數值
+  assert.match(html, /計算過程：100 \(主星亮度\) × 60% \+ 10 \(輔星加成: 1 顆 × 10\) × 20% \+ 0 \(四化加成\) × 20% = 62分/);
+  // 確保不包含 raw 的 code block
+  assert.ok(!html.includes('<code>(woodCount / totalElements) * 100</code>'));
+  assert.ok(!html.includes('<code>(mainStarBrightness * 0.6)</code>'));
+});
+
+
