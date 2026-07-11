@@ -14,14 +14,25 @@ function radarFallback(radar) {
   ).join('\n');
 }
 
+const SYSTEM_NAMES = Object.freeze({
+  bazi: '八字',
+  ziwei: '紫微斗數',
+  numerology: '生命靈數',
+  minggua: '八宅命卦',
+  dreamspell: '馬雅曆 Kin',
+  vedic: '吠陀占星',
+  humandesign: '人類圖'
+});
+
 function periodCard(period) {
   const [start, end] = period.range;
+  const sysName = SYSTEM_NAMES[period.system] || period.system;
   return `
     <article class="timeline-node decade-radar-card">
       <div class="timeline-node__marker" aria-hidden="true"></div>
       <div class="timeline-node__content">
         <header class="decade-card__header">
-          <span class="tag tag--${esc(period.system)}">${esc(period.system)}</span>
+          <span class="tag tag--${esc(period.system)}">${esc(sysName)}</span>
           <h5>${esc(period.label)}</h5>
           <span class="decade-card__range">${esc(start)}–${esc(end)}</span>
         </header>

@@ -18,9 +18,9 @@ const formContainer = document.querySelector('#input-form-container');
 const loadingOverlay = document.querySelector('#loading-overlay');
 const toastContainer = document.querySelector('#toast-container');
 
-function toast(message) {
+function toast(message, type = 'info') {
   const el = document.createElement('div');
-  el.className = 'toast';
+  el.className = `toast${type === 'error' ? ' toast--error' : type === 'success' ? ' toast--success' : ''}`;
   el.setAttribute('role', 'status');
   el.textContent = message;
   toastContainer.appendChild(el);
@@ -50,7 +50,7 @@ renderInputForm(formContainer, {
         showReport(report);
       } catch (err) {
         console.error(err);
-        toast(`分析失敗：${err.message}`);
+        toast(`分析失敗：${err.message}`, 'error');
       } finally {
         loadingOverlay.hidden = true;
       }

@@ -72,6 +72,12 @@
   --sys-evolution: #f59e0b;
   --sys-evolution-bg: rgba(245, 158, 11, 0.12);
   --sys-evolution-border: rgba(245, 158, 11, 0.3);
+  --sys-minggua: #10b981;
+  --sys-minggua-bg: rgba(16, 185, 129, 0.12);
+  --sys-minggua-border: rgba(16, 185, 129, 0.3);
+  --sys-dreamspell: #06b6d4;
+  --sys-dreamspell-bg: rgba(6, 182, 212, 0.12);
+  --sys-dreamspell-border: rgba(6, 182, 212, 0.3);
 
   /* ── Borders ── */
   --border-subtle: rgba(255, 255, 255, 0.06);
@@ -592,6 +598,18 @@ code {
   background: var(--sys-evolution-bg);
   color: var(--sys-evolution);
   border: 1px solid var(--sys-evolution-border);
+}
+
+.tag--minggua {
+  background: var(--sys-minggua-bg);
+  color: var(--sys-minggua);
+  border: 1px solid var(--sys-minggua-border);
+}
+
+.tag--dreamspell {
+  background: var(--sys-dreamspell-bg);
+  color: var(--sys-dreamspell);
+  border: 1px solid var(--sys-dreamspell-border);
 }
 
 .tag--unverified {

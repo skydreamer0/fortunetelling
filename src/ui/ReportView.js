@@ -13,6 +13,16 @@ import { renderBarChart } from '../visualization/BarChart.js';
 import { buildStateTablePanel } from './StateTablePanel.js';
 import { buildEvolutionPanel } from './EvolutionPanel.js';
 
+const SYSTEM_NAMES = Object.freeze({
+  bazi: '八字',
+  ziwei: '紫微斗數',
+  numerology: '生命靈數',
+  minggua: '八宅命卦',
+  dreamspell: '馬雅曆 Kin',
+  vedic: '吠陀占星',
+  humandesign: '人類圖'
+});
+
 /** 簡易 HTML escape（使用者輸入的姓名等）。 */
 function esc(text) {
   return String(text ?? '')
@@ -43,6 +53,19 @@ function buildOverviewCards(report) {
       icon: '✦', label: '紫微斗數', value: soulStars,
       sub: `五行局：${esc(ziwei.meta.fiveElementsClass ?? '')}｜身宮：${esc(svb?.body.name ?? '')}`,
     });
+  }
+
+  const bazi = engineById(report, 'bazi');
+  if (bazi) {
+    const dm = firstValue(bazi, 'dayMaster');
+    const natal = firstValue(bazi, 'natal');
+    if (dm && natal) {
+      cards.push({
+        icon: '☯', label: '八字命盤',
+        value: `日主：${esc(dm.stem)}${esc(dm.element)}（${esc(dm.yinYang)}）`,
+        sub: `年：${esc(natal.year)}｜月：${esc(natal.month)}｜日：${esc(natal.day)}｜時：${esc(natal.time)}`,
+      });
+    }
   }
 
   const numerology = engineById(report, 'numerology');
@@ -90,9 +113,10 @@ function buildOverviewCards(report) {
 function buildLayerTable(report) {
   const rows = report.layers.layerDefinitions.map(def => {
     const comps = report.layers.byLayer[def.code] ?? [];
-    const compList = comps.map(c =>
-      `[${esc(c.sourceSystem)}] ${esc(c.name)}${c.unclassified ? ' ⚠未分類' : ''}`
-    ).join('、') || '（無）';
+    const compList = comps.map(c => {
+      const sysName = SYSTEM_NAMES[c.sourceSystem] || c.sourceSystem;
+      return `[${esc(sysName)}] ${esc(c.name)}${c.unclassified ? ' ⚠未分類' : ''}`;
+    }).join('、') || '（無）';
     const lc = def.code.toLowerCase();
     return `
       <tr class="layer-row layer-row--${lc}">
@@ -105,14 +129,17 @@ function buildLayerTable(report) {
   }).join('');
 
   return `
-    <div class="layer-table-container">
-      <table class="layer-table">
-        <thead>
-          <tr><th>層級</th><th>名稱</th><th>語言規則</th><th>部件（${report.layers.components.length}）</th></tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
+    <details class="layer-table-details">
+      <summary class="layer-table-summary">查看系統分層與動靜屬性覆核 (技術細節)</summary>
+      <div class="layer-table-container" style="margin-top: var(--space-4);">
+        <table class="layer-table">
+          <thead>
+            <tr><th>層級</th><th>名稱</th><th>語言規則</th><th>部件（${report.layers.components.length}）</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </details>
   `;
 }
 
@@ -171,7 +198,7 @@ export function buildRadarSection(report) {
     <article class="radar-card animate-slideUp stagger-${Math.min(index + 1, 6)}">
       <header class="radar-card__header">
         <div>
-          <span class="tag tag--${esc(radar.system)}">${esc(radar.system)}</span>
+          <span class="tag tag--${esc(radar.system)}">${esc(SYSTEM_NAMES[radar.system] || radar.system)}</span>
           <h4 class="radar-card__title">${esc(radar.title)}</h4>
         </div>
       </header>
@@ -221,19 +248,19 @@ export function renderReport(container, report, { onBack }) {
 
     <div class="overview-grid">${buildOverviewCards(report)}</div>
 
-    <h3 class="section-title"><span class="title-accent" aria-hidden="true">◈</span> 系統動靜屬性表（區塊 H①）</h3>
-    <p class="section-subtitle">L0 可寫「你是」；L1/L2 只能寫「這段時期」；L3 只能寫「在某情境下」。所有結果為待驗證假說。</p>
+    <h3 class="section-title"><span class="title-accent" aria-hidden="true">◈</span> 系統動靜屬性表</h3>
+    <p class="section-subtitle">將命理特質依時間尺度分類（如恆定特質、階段運勢、情境面向），所有結果均為待驗證假說。</p>
     ${buildLayerTable(report)}
 
     <h3 class="section-title"><span class="title-accent" aria-hidden="true">◈</span> 量化呈現</h3>
     <p class="section-subtitle">圖形只呈現報告中的既有數值；展開卡片可逐軸覆核公式與文字長條。</p>
     ${buildRadarSection(report)}
 
-    <h3 class="section-title"><span class="title-accent" aria-hidden="true">⇄</span> 狀態切換表（區塊 H②）</h3>
+    <h3 class="section-title"><span class="title-accent" aria-hidden="true">⇄</span> 狀態切換表</h3>
     <p class="section-subtitle">每項情境假說都標示實際來源部件；資料不足時不補寫推論。</p>
     ${buildStateTablePanel(report.stateTable)}
 
-    <h3 class="section-title"><span class="title-accent" aria-hidden="true">∿</span> 時期演化（區塊 H③）</h3>
+    <h3 class="section-title"><span class="title-accent" aria-hidden="true">∿</span> 時期演化</h3>
     <p class="section-subtitle">依系統分列十年尺度的演化輪廓；展開各期可查看量化文字圖。</p>
     ${buildEvolutionPanel(report.evolution)}
   `;

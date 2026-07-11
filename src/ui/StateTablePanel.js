@@ -6,13 +6,26 @@ function esc(text) {
     .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
 
+const SYSTEM_NAMES = Object.freeze({
+  bazi: '八字',
+  ziwei: '紫微斗數',
+  numerology: '生命靈數',
+  minggua: '八宅命卦',
+  dreamspell: '馬雅曆 Kin',
+  vedic: '吠陀占星',
+  humandesign: '人類圖'
+});
+
 function sourceChips(sources) {
-  return (sources ?? []).map(source => `
-    <span class="state-source-chip tag tag--${esc(source.system)}"
-      title="${esc(source.system)}/${esc(source.componentId)}">
-      ${esc(source.system)} · ${esc(source.name)}
-    </span>
-  `).join('');
+  return (sources ?? []).map(source => {
+    const sysName = SYSTEM_NAMES[source.system] || source.system;
+    return `
+      <span class="state-source-chip tag tag--${esc(source.system)}"
+        title="${esc(source.system)}/${esc(source.componentId)}">
+        ${esc(sysName)} · ${esc(source.name)}
+      </span>
+    `;
+  }).join('');
 }
 
 function scenarioBody(scenario) {
