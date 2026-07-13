@@ -13,6 +13,10 @@ const REPORT_KEYS = [
   'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'version',
 ];
 
+const RUNTIME_METADATA_KEYS = new Set([
+  'generatedAt', 'computedAt', 'durationMs', 'classifiedAt', 'exportedAt',
+]);
+
 function rulesById(report) {
   return new Map(
     Object.values(report.scoringRules.byRadarType)
@@ -28,7 +32,19 @@ function engineComponent(report, engineId, category) {
 }
 
 function stableReport(report) {
-  const { generatedAt: _generatedAt, ...stable } = report;
+  const stable = structuredClone(report);
+  const removeRuntimeMetadata = value => {
+    if (!value || typeof value !== 'object') return;
+    if (Array.isArray(value)) {
+      value.forEach(removeRuntimeMetadata);
+      return;
+    }
+    for (const key of Object.keys(value)) {
+      if (RUNTIME_METADATA_KEYS.has(key)) delete value[key];
+      else removeRuntimeMetadata(value[key]);
+    }
+  };
+  removeRuntimeMetadata(stable);
   return stable;
 }
 
@@ -143,4 +159,15 @@ test('public analyze contract holds for golden and sourced celebrity charts', ()
   }
 });
 
-void stableReport;
+test('explicit asOf makes celebrity and golden reports deterministic', () => {
+  for (const fixture of INTEGRATION_CASES) {
+    const first = analyze(fixture.input, { asOf: fixture.asOf });
+    const generatedAt = Date.now();
+    while (Date.now() === generatedAt) {
+      // Ensure the regression proof observes distinct generation timestamps.
+    }
+    const second = analyze(fixture.input, { asOf: fixture.asOf });
+
+    assert.deepEqual(stableReport(first), stableReport(second), fixture.id);
+  }
+});
