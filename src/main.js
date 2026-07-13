@@ -43,8 +43,7 @@ function showReport(report) {
 renderInputForm(formContainer, {
   onSubmit: (params) => {
     loadingOverlay.hidden = false;
-    // 讓 loading overlay 有機會先繪製，再執行同步計算
-    requestAnimationFrame(() => setTimeout(() => {
+    setTimeout(() => {
       try {
         const report = analyze(params);
         showReport(report);
@@ -54,6 +53,6 @@ renderInputForm(formContainer, {
       } finally {
         loadingOverlay.hidden = true;
       }
-    }, 50));
+    }, 50);
   },
 });

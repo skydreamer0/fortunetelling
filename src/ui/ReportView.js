@@ -129,8 +129,8 @@ function buildLayerCards(report) {
           <h4 class="layer-overview-card__title">${esc(def.name)}</h4>
         </div>
         <div class="layer-overview-card__meta">
-          <span class="layer-overview-card__time">⏰ ${esc(def.timeScale)}</span>
-          <span class="layer-overview-card__rule">🗣️ ${esc(def.languageRule)}</span>
+          <span class="layer-overview-card__time">◷ ${esc(def.timeScale)}</span>
+          <span class="layer-overview-card__rule">⟡ ${esc(def.languageRule)}</span>
         </div>
         <p class="layer-overview-card__desc">${desc}</p>
         <span class="layer-overview-card__count">收錄 ${count} 個分析部件</span>
@@ -296,11 +296,11 @@ function buildHighAxisNotes(radar) {
       <h5 class="axis-note-title">${esc(axis.label)} ${esc(axis.value)}${esc(axis.unit)}</h5>
       <div class="axis-note-columns">
         <div class="axis-note-column axis-note-column--assets">
-          <span class="axis-note-badge badge-assets">🌟 資產面 (天賦優勢)</span>
+          <span class="axis-note-badge badge-assets">✦ 資產面 (天賦優勢)</span>
           <p class="axis-note-content">${(axis.assets ?? []).map(esc).join('、') || '—'}</p>
         </div>
         <div class="axis-note-column axis-note-column--liabilities">
-          <span class="axis-note-badge badge-liabilities">⚡ 負債面 (潛在挑戰)</span>
+          <span class="axis-note-badge badge-liabilities">⇌ 負債面 (潛在挑戰)</span>
           <p class="axis-note-content">${(axis.liabilities ?? []).map(esc).join('、') || '—'}</p>
         </div>
       </div>
@@ -439,32 +439,58 @@ export function renderReport(container, report, { onBack }) {
       </div>
     </div>
 
+    <nav class="report-toc" aria-label="報告目錄">
+      <a href="#sec-overview" class="report-toc__link report-toc__link--active">總覽</a>
+      <a href="#sec-layers" class="report-toc__link">動靜屬性</a>
+      <a href="#sec-charts" class="report-toc__link">量化呈現</a>
+      <a href="#sec-states" class="report-toc__link">狀態切換</a>
+      <a href="#sec-evolution" class="report-toc__link">時期演化</a>
+    </nav>
+
     ${warnings.length > 0 ? `
       <div class="report-warning-box border-double">
         <span class="report-warning-box__icon">⚠</span>
         <p class="report-warning-box__text">${warnings.map(esc).join('<br />')}</p>
       </div>` : ''}
 
+    <div id="sec-overview" class="report-anchor"></div>
     <div class="overview-grid">${buildOverviewCards(report)}</div>
 
+    <div id="sec-layers" class="report-anchor"></div>
     <h3 class="section-title"><span class="title-accent" aria-hidden="true">◈</span> 系統動靜屬性表</h3>
     <p class="section-subtitle">將命理特質依時間尺度分類（如恆定特質、階段運勢、情境面向），所有結果均為待驗證假說。</p>
     ${buildLayerTable(report)}
 
+    <div id="sec-charts" class="report-anchor"></div>
     <h3 class="section-title"><span class="title-accent" aria-hidden="true">◈</span> 量化呈現</h3>
     <p class="section-subtitle">圖形只呈現報告中的既有數值；展開卡片可逐軸覆核公式與文字長條。</p>
     ${buildRadarSection(report)}
 
+    <div id="sec-states" class="report-anchor"></div>
     <h3 class="section-title"><span class="title-accent" aria-hidden="true">⇄</span> 狀態切換表</h3>
     <p class="section-subtitle">每項情境假說都標示實際來源部件；資料不足時不補寫推論。</p>
     ${buildStateTablePanel(report.stateTable)}
 
+    <div id="sec-evolution" class="report-anchor"></div>
     <h3 class="section-title"><span class="title-accent" aria-hidden="true">∿</span> 時期演化</h3>
     <p class="section-subtitle">依系統分列十年尺度的演化輪廓；展開各期可查看量化文字圖。</p>
     ${buildEvolutionPanel(report.evolution)}
   `;
 
   container.querySelector('#report-back').addEventListener('click', onBack);
+
+  const tocLinks = container.querySelectorAll('.report-toc__link');
+  const anchors = container.querySelectorAll('.report-anchor');
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        for (const link of tocLinks) {
+          link.classList.toggle('report-toc__link--active', link.getAttribute('href') === `#${entry.target.id}`);
+        }
+      }
+    }
+  }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
+  for (const anchor of anchors) observer.observe(anchor);
 
   for (const radar of report.radars ?? []) {
     const canvas = [...container.querySelectorAll('canvas[data-radar-id]')]

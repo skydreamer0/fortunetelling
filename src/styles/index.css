@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    Design System — 命理綜合分析平台
-   Premium dark-mode with glassmorphism, gradients, micro-animations
+   Warm light-mode with glassmorphism, gradients, micro-animations
    ═══════════════════════════════════════════════════════════════ */
 
 /* ─── Reset ──────────────────────────────────────────────── */
@@ -29,7 +29,7 @@
   /* ── Text ── */
   --text-primary: #2c2a29;
   --text-secondary: #5c5346;
-  --text-tertiary: #8c8170;
+  --text-tertiary: #706354;
   --text-accent: #9e7a36;
   --text-inverse: #f7f4ef;
 
@@ -89,20 +89,19 @@
 
   /* ── Borders ── */
   --border-subtle: rgba(92, 83, 70, 0.12);
-  --border-default: var(--border-soft);
-  --border-strong: var(--border-strong);
-  --border-accent: rgba(183, 149, 82, 0.5);
   --border-soft: rgba(183, 149, 82, 0.28);
+  --border-default: var(--border-soft);
   --border-strong: rgba(183, 149, 82, 0.58);
+  --border-accent: rgba(183, 149, 82, 0.5);
 
   /* ── Shadows ── */
   --shadow-sm: 0 1px 3px rgba(92, 83, 70, 0.08);
   --shadow-md: 0 4px 16px rgba(92, 83, 70, 0.1);
   --shadow-lg: 0 12px 32px rgba(92, 83, 70, 0.12);
   --shadow-xl: 0 20px 48px rgba(92, 83, 70, 0.15);
-  --shadow-glow-purple: 0 0 15px rgba(183, 149, 82, 0.18);
-  --shadow-glow-blue: 0 0 15px rgba(168, 63, 57, 0.18);
-  --shadow-glow-amber: 0 0 15px rgba(58, 96, 68, 0.18);
+  --shadow-glow-gold: 0 0 15px rgba(183, 149, 82, 0.18);
+  --shadow-glow-red: 0 0 15px rgba(168, 63, 57, 0.18);
+  --shadow-glow-jade: 0 0 15px rgba(58, 96, 68, 0.18);
   --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 
   /* ── Typography ── */
@@ -318,7 +317,7 @@ code {
 
 .glass-panel--hover:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--shadow-xl), var(--shadow-inset), var(--shadow-glow-purple);
+  box-shadow: var(--shadow-xl), var(--shadow-inset), var(--shadow-glow-gold);
   transform: translateY(-2px);
   transition: all var(--duration-default) var(--ease-default);
 }
@@ -486,7 +485,7 @@ code {
 
 /* Custom select */
 .input-field--select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%238b95a5' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6l3.5 4 3.5-4z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23706354' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6l3.5 4 3.5-4z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: var(--space-10);
@@ -1108,5 +1107,80 @@ code {
 @media (min-width: 1280px) {
   :root {
     --max-width: 1280px;
+  }
+}
+
+/* ─── Print ─────────────────────────────────────────────── */
+@media print {
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    color: #000 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  body {
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  #ambient-glow,
+  .app-header,
+  .app-footer,
+  .loading-overlay,
+  .toast-container,
+  .report-toc,
+  .report-back-btn,
+  .input-section,
+  .form-example-btn {
+    display: none !important;
+  }
+
+  .report-section {
+    display: block !important;
+  }
+
+  .app-main {
+    padding: 0;
+  }
+
+  .container {
+    max-width: 100%;
+    padding: 0;
+  }
+
+  .glass-panel,
+  .overview-card,
+  .radar-card,
+  .state-table__scenario,
+  .timeline-node__content {
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  details {
+    open: true;
+  }
+
+  details[open] summary {
+    margin-bottom: 0.5em;
+  }
+
+  canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+
+  a[href]::after {
+    content: none;
+  }
+
+  h2, h3, h4 {
+    page-break-after: avoid;
   }
 }

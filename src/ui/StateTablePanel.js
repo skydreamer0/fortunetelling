@@ -42,7 +42,7 @@ function scenarioBody(scenario) {
     <div class="state-cell">
       <div class="state-cell__sources">${sourceChips(cell.sources)}</div>
       <p class="state-cell__expression">${esc(cell.expression)}</p>
-      <span class="tag tag--unverified">⚠️ 待驗證</span>
+      <span class="tag tag--unverified">⚠ 待驗證</span>
     </div>
   `).join('');
 }
