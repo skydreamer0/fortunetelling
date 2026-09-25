@@ -1,5 +1,9 @@
 # 架構契約 (Architecture Contract)
 
+> **🚧 v2 遷移中（2026-09-25）**：目標架構見 [ARCHITECTURE-V2.md](ARCHITECTURE-V2.md)，
+> 決策 D-021～D-029。遷移完成前，本文件仍是**現行程式碼**的契約；
+> D-002／D-003／D-013 已被取代，執行環境改以 Bun 為準（D-025）。
+
 > 本文件是**執行任何開發任務前必讀**的設計契約。修改程式前先讀完本文件與
 > [DECISIONS.md](DECISIONS.md)；任務規格在 [TASKS.md](TASKS.md)；
 > 執行規則在 [HARNESS_SPEC.md](HARNESS_SPEC.md)；測試策略在 [TEST_PLAN.md](TEST_PLAN.md)。

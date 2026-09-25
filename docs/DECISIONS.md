@@ -10,11 +10,11 @@
 `core / engines / analysis / visualization` 為框架無關 ES module；`ui` 只是消費者。
 唯一公開 API 是 `src/index.js`（package.json `exports` 鎖定）。深路徑 import 不受 semver 保護。
 
-## D-002 系統子集：5 系統，印占/西占/人類圖只留接縫 ✅
+## D-002 系統子集：5 系統，印占/西占/人類圖只留接縫 🗑（由 D-022 取代）
 紫微／靈數／命卦／Kin／八字。LayerClassifier 與 ScoringRules 中的 vedic/humandesign
 規則是**接縫（seam）**，不是待辦——沒有對應引擎前不得產生輸出。
 
-## D-003 型別策略：JSDoc + `jsconfig.json` checkJs ✅
+## D-003 型別策略：JSDoc + `jsconfig.json` checkJs 🗑（由 D-024 取代）
 不遷移 TypeScript。所有公開函式必須有完整 JSDoc typedef。
 
 ## D-004 Dreamspell Kin 錨定：1987-07-26 = Kin 34 ✅
@@ -38,7 +38,7 @@ fallback = L3（語氣最弱）+ `unclassified: true`，並收錄於 `classifica
 引擎輸出在任務 B3）。西占/人類圖的 L3 部件缺席是**已知且明示的侷限**，
 StateSwitchTable 遇到無資料的情境必須標「資料不足」，禁止編故事。
 
-## D-009 雷達策略：每系統一張，不做跨系統合併雷達 ✅
+## D-009 雷達策略：每系統一張，不做跨系統合併雷達 ✅（D-023 補充：跨系統只在 signals 層）
 不同系統尺度本質不同，合併會誤導。`ScoringRules` 中 5 條 `personality_composite`
 （cross_leadership 等）依賴永不存在的 vedic/humandesign 輸入，屬死規則——
 **排定於任務 C1 移除**。在那之前不得被任何 RadarBuilder 引用。
@@ -57,7 +57,7 @@ StateSwitchTable 遇到無資料的情境必須標「資料不足」，禁止編
 honesty.violations）並把對應 `pending` 翻成 `false`；**新增/改名/刪除頂層欄位一律禁止**，
 需要時必須先在本文件開新決策並 bump schemaVersion。
 
-## D-013 執行環境：Node ≥22 為準，Bun 為可選加速 ✅
+## D-013 執行環境：Node ≥22 為準，Bun 為可選加速 🗑（由 D-025 取代）
 機器未裝 Bun，不做全域安裝。測試一律寫 `node:test` 格式：
 - `npm test` → `node --test`（權威，CI 以此為準）
 - `npm run test:bun` → `bun test`（可選，需 Bun ≥1.2 其 node:test 相容層）
@@ -79,7 +79,7 @@ iztro / lunar-javascript 只允許在 `engines/` 出現。EvolutionCalculator �
 「全部大限/大運序列」必須由引擎以 components 形式輸出（任務 B2、D3），
 analysis 層只做聚合計算。這保持 analysis 可獨立測試、可被替換。
 
-## D-017 命卦立春邊界：Feb-4 近似 ✅（已知精度債）
+## D-017 命卦立春邊界：Feb-4 近似 ✅（已知精度債，V1 由 D-026 TimeContext 償還）
 未用精確節氣時刻。`BirthData.solarTermInfo` 已有資料可日後精修；
 生於 2/3–2/5 的使用者結果需標註不確定性。暫不排任務。
 
@@ -103,3 +103,59 @@ Schema v1 其餘欄位與元素形狀保持不變。
 雙人比較由獨立的 `analyzeCompatibility()` 與 `COMPATIBILITY_SCHEMA_VERSION = 1`
 守護，不混入單人 Report。五行互補定義為雙方平均分布接近每元素 20%，摩擦只表示
 雙方共同過度集中；公式隨結果匯出，且不得將分數解讀為關係成敗。
+
+---
+
+# v2 架構決策（2026-09-25，對應 [ARCHITECTURE-V2.md](ARCHITECTURE-V2.md)）
+
+## D-021 計算與解讀完全分離 ✅
+排盤、規則、訊號、時間軸全部由 `packages/core` 確定性計算；AI 只讀這些 JSON 做解讀。
+`core` 不得呼叫 LLM；`packages/ai` 不得 import 命理函式庫或計算器。AI 輸出必須引用
+`signal.id`，並經程式後驗證（引用存在、干支／星名存在於輸入、HonestyGuard），
+未通過的段落直接丟棄。理由：避免 AI 把八字、紫微、人類圖算錯（幻覺）。
+
+## D-022 系統範圍擴充為 6 + 1（取代 D-002）✅
+八字、紫微、Numerology、Tzolkin（沿用 Dreamspell 引擎）、Jyotish、Human Design，
+另保留命卦（既有、成本低，不參與 V1 以後新增的規則引擎，但仍可輸出 components 與 signals）。
+Jyotish／Human Design 在 V2 實作；在引擎存在之前，D-002 的「接縫不得產生輸出」規則仍然適用。
+
+## D-023 跨系統彙整只存在於 signals 層（補充 D-009）✅
+雷達仍是每系統一張、不合併。跨系統比較一律透過 `Signal { domain, trait, intensity, valence, window }`：
+系統內先用 noisy-OR 合併（避免規則多的系統壓過別人），再跨系統加權平均；
+≥3 系統同向標「高共識」；方向相反標 `conflict` 並列出雙方來源，**禁止平均抵銷**。
+
+## D-024 型別策略：新程式碼用 TypeScript（取代 D-003）✅
+`packages/core` 啟用 TypeScript（`allowJs` + `checkJs` 漸進遷移）。既有 JS 檔搬遷時不強制改寫，
+修改到的檔案優先轉 `.ts`。公開 API 必須有完整型別。Bun 可直接執行 TS，不需額外建置步驟跑測試。
+
+## D-025 執行環境：Bun 為權威 runtime（取代 D-013）✅
+與 `.agents/AGENTS.md`（commit 80cfbaf）一致：安裝、測試、建置、dev 一律用 `bun`
+（`bun install`／`bun test`／`bun run build`／`bun run dev`）。採 Bun workspaces 管理
+`packages/*` 與 `apps/*`。`core` 仍須保持可在瀏覽器與 Node 執行（不得使用 Bun 專屬 API）。
+
+## D-026 時間標準化層是唯一時間來源 ✅
+所有 calculator 只接受 `TimeContext`，**禁止**各自做時區、DST、真太陽時或節氣換算。
+時區一律存 IANA 名稱，歷史 DST（例如台灣 1945–1979）交給 tzdata，禁止手寫 DST 表。
+時辰／節氣交界、早晚子時、DST 缺口或重疊都要以 `flags` 明示；落在邊界容忍範圍內時兩盤並算，
+不替使用者選邊。各系統採用的時間約定是顯式 config（見 ARCHITECTURE-V2 §3.4）。
+現行 BaZiEngine 的「固定 Asia/Taipei、不做真太陽時」是已知債務，V1 償還。
+
+## D-027 星曆函式庫選擇 ⚠️ 衝突待裁決
+Jyotish／Human Design 需要精確行星位置，禁止自行推算。候選方案：
+- **A. Swiss Ephemeris（WASM 版）**：業界標準、內建 ayanamsa／交點。**AGPL 授權**：
+  公開網站使用必須開源全部程式碼，否則需購買商業授權。
+- **B. astronomy-engine（MIT）**：純 JS、體積小、精度對命理用途足夠；Lahiri ayanamsa、
+  Rahu/Ketu（月交點）需要自行實作並用公開計算器交叉驗證。
+- **C. 伺服器端 Swiss Ephemeris + 商業授權**：精度最佳，但破壞本地優先（D-029）且有授權費。
+建議 B（授權乾淨、符合本地優先），但需使用者在 V2 開始前裁決。
+
+## D-028 解讀以特徵權重資料表示，不 hardcode 定性文字 ✅
+星曜、十神、宮位等只輸出 `traits { change, leadership, risk, ... }` 權重，存於版本化資料表；
+宮位、旺陷（沿用 D-005 七級）、煞曜、四化等修正因子逐項記錄於 `signal.evidence.modifiers`。
+程式碼中禁止出現「七殺＝壞」「貪狼＝桃花」這類定性對照。舊版本權重不可修改，只能新增版本，
+確保舊報告可重現（延伸 D-014）。
+
+## D-029 本地優先，資料庫與 AI 為選用上層 ✅
+`packages/core` 必須能在瀏覽器內完整運作，不依賴伺服器或資料庫（延續 ROADMAPS 原則 1）。
+帳號、`life_events`、回驗、AI 解讀屬於 V4／V5 的選用層。出生資料屬敏感個資：
+伺服器端必須 RLS、可一鍵刪除；送給 AI 的 profile 必須去識別化（不含姓名與精確出生地標籤）。
