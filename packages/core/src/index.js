@@ -60,3 +60,13 @@ export { InsightBuilder, INSIGHT_VERSION } from './analysis/InsightBuilder.js';
 
 // ── Visualization（框架無關的文字降級輸出）──
 export * as TextFallback from './visualization/TextFallback.js';
+
+// ── V2 架構（ARCHITECTURE-V2）──
+// ① 出生資料與時間標準化層（V1-01／V1-02）
+export * from './profile/index';
+export * from './time/index';
+// ④ Signal 模型與彙整（V1-09）
+export * from './signals/index';
+// ② 純函式計算器（V1-06／V1-07）；以命名空間匯出，避免同名 helper 衝突
+export * as Numerology from './calculators/numerology/numerology';
+export * as Tzolkin from './calculators/tzolkin/tzolkin';

@@ -169,3 +169,11 @@ Swiss Ephemeris 僅允許出現在 `calculators/jyotish`、`calculators/humanDes
 - 視覺方向「通書」：宣紙底、墨色字、朱砂印章色；Chiron Sung HK（標題）、Noto Sans TC（內文）、
   霞鶩文楷（摘要）、Cormorant Garamond（數字）。規格見 `design-system/fortune-telling-platform/MASTER.md`。
 - D-015（UI 只消費 Report）維持不變。
+
+## D-031 時間層可使用 lunar-javascript（修訂 D-016）✅（2026-09-25）
+D-016 規定 iztro／lunar-javascript 只能出現在 `engines/`。V1-02 TimeContext 需要精確節氣時刻與農曆，
+因此放寬為：**`engines/`、`calculators/`、`time/` 可使用；`analysis/`、`signals/`、`timeline/` 仍禁止**。
+- lunar-javascript 的節氣時刻為中國標準時間（UTC+8），`time/solarTerms.ts` 固定減 8 小時轉 UTC。
+  驗證：立春 2026 = 2026-02-03T20:02:08Z；冬至 1999 與公開值 07:44 UT 相差 1 分鐘內。
+- 套件沒有型別宣告，由 `src/types/lunar-javascript.d.ts` 以 any 宣告，呼叫端負責轉成強型別。
+- TimeContext 的邊界容忍值（時辰 5／15／60 分、節氣 30／30／60 分，依 `timeAccuracy`）是匯出常數，屬資料而非寫死規則。

@@ -1,3 +1,4 @@
+/// <reference path="../types/lunar-javascript.d.ts" />
 /**
  * @fileoverview Exact 節氣 instants from lunar-javascript, converted to UTC.
  *

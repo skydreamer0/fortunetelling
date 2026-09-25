@@ -1,3 +1,4 @@
+/// <reference path="../types/lunar-javascript.d.ts" />
 /**
  * @fileoverview ① 時間標準化層 — the single source of time for all calculators
  * (ARCHITECTURE-V2 §3, D-026). Pure and deterministic (D-014): no system

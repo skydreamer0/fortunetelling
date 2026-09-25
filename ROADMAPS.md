@@ -1,6 +1,6 @@
 # Roadmap — 命理計算引擎 × AI 解讀
 
-> 狀態更新：2026-09-25
+> 狀態更新：2026-09-25（V1 第一批：V1-01／02／06／07／09 完成）
 > 目標架構與介面契約：[docs/ARCHITECTURE-V2.md](docs/ARCHITECTURE-V2.md)
 > 決策依據：[docs/DECISIONS.md](docs/DECISIONS.md) D-021 ～ D-029
 > 現行 Report 契約（v3）：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
@@ -79,18 +79,18 @@
 
 | ID | 任務 | 產出 | 依賴 |
 |---|---|---|---|
-| V1-01 | **BirthProfile＋離線城市表** | `profile/`：驗證、IANA 時區、台灣各縣市與常見海外城市的經緯度（離線 JSON） | — |
-| V1-02 | **TimeContext** | `time/`：local→UTC（IANA tzdata，禁止手寫 DST 表）、JD(UT/TT, ΔT)、均時差→真太陽時、精確節氣時刻、農曆；`flags`：`dst_applied`／`dst_gap`／`dst_overlap`／`near_shichen_boundary`／`near_jie_boundary`／`zi_hour_convention`／`time_unknown` | V1-01 |
+| V1-01 ✅ | **BirthProfile＋離線城市表** | `profile/`：驗證、IANA 時區、台灣各縣市與常見海外城市的經緯度（離線 JSON） | — |
+| V1-02 ✅ | **TimeContext** | `time/`：local→UTC（IANA tzdata，禁止手寫 DST 表）、JD(UT/TT, ΔT)、均時差→真太陽時、精確節氣時刻、農曆；`flags`：`dst_applied`／`dst_gap`／`dst_overlap`／`near_shichen_boundary`／`near_jie_boundary`／`zi_hour_convention`／`time_unknown` | V1-01 |
 | V1-03 | **Calculator 契約＋搬遷** | `calculators/<system>/`，`calculate(ctx, config) → ChartResult`；現有五引擎改包成 calculator，`components` 不變，以免破壞 Report v3 | V1-02 |
 | V1-04 | 八字改吃 TimeContext | 真太陽時（預設開）、`ziHourConvention`、起運精確到月、流月；邊界時兩盤並算 | V1-03 |
 | V1-05 | 紫微改吃 TimeContext＋強型別盤 | 身宮、五行局、命主身主、三方四正索引、流年／流月序列 | V1-03 |
-| V1-06 | Numerology 補齊 | `11/2` 主數格式、Birthday、Attitude、Pinnacle×4、Challenge×4、`personalYears` 多年 | V1-03 |
-| V1-07 | Tzolkin 補齊 | Wavespell、Castle、Oracle 四位 | V1-03 |
+| V1-06 ✅ | Numerology 補齊 | `11/2` 主數格式、Birthday、Attitude、Pinnacle×4、Challenge×4、`personalYears` 多年 | V1-03 |
+| V1-07 ✅ | Tzolkin 補齊 | Wavespell、Castle、Oracle 四位 | V1-03 |
 | V1-08 | 命卦改用精確立春 | 修正 D-017 近似 | V1-02 |
-| V1-09 | **Signal 模型** | `signals/`：`Signal` 型別、決定性 id 雜湊、`Domain`／`Trait` 封閉列舉 | — |
+| V1-09 ✅ | **Signal 模型** | `signals/`：`Signal` 型別、決定性 id 雜湊、`Domain`／`Trait` 封閉列舉 | — |
 | V1-10 | **八字 Rule Engine** | `rules/bazi/`＋`catalog.json`：天干五合、生剋、六合、六沖、三合、三會、刑、害、破、伏吟、反吟、歲運並臨；範圍涵蓋原局、原局×大運、原局×流年、原局×流月 | V1-04, V1-09 |
 | V1-11 | **紫微特徵權重＋規則** | `traits/ziwei.json`（星曜→trait vector，帶版本）；修正鏈：宮位×旺陷×煞曜×四化，記進 `evidence.modifiers`；規則包含四化飛入、大限／流年疊宮、三方四正煞曜、天馬、祿存 | V1-05, V1-09 |
-| V1-12 | 單系統彙整 | `aggregateSignals()` 第 1 步（系統內 noisy-OR）＋第 2 步（系統權重，先固定） | V1-10, V1-11 |
+| V1-12 🟡 | 單系統彙整（noisy-OR 與跨系統加權已隨 V1-09 完成，待接規則） | `aggregateSignals()` 第 1 步（系統內 noisy-OR）＋第 2 步（系統權重，先固定） | V1-10, V1-11 |
 | V1-13 | **Timeline Engine** | `timeline/`：`asOf` 起 5 年＋當年 12 個月 × 領域分數 0–100，每格附 `topSignals[]`；UI 分四段（低／中／中高／高，切點是資料） | V1-12 |
 | V1-14 | Report v4 | 新增頂層 `timeContext`、`signals`、`timeline`，其餘沿用 v3 | V1-13 |
 | V1-15 | UI：Timeline 視圖 | 年度卡片（❤️ 感情／💰 財運／💼 事業／🚗 移動）＋月份展開＋點開看來源規則；出生地輸入改為城市選擇 | V1-14 |
