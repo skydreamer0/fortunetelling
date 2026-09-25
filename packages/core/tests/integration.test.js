@@ -8,11 +8,11 @@ const REQUIRED_INPUT_KEYS = [
   'gender', 'name', 'longitude', 'latitude',
 ];
 
-// Report v4 (D-032) = v3 keys + timeContext / signals / timeline.
+// Report v5 (D-034) = v4 (D-032: v3 keys + timeContext / signals / timeline) + consensus.
 const REPORT_KEYS = [
   'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input',
   'insights', 'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'summary', 'version',
-  'signals', 'timeContext', 'timeline',
+  'signals', 'timeContext', 'timeline', 'consensus',
 ];
 
 // analyze() takes ~1 s since v4 (sync timeline); these tests run several reports.
@@ -123,7 +123,7 @@ test('public analyze contract holds for golden and sourced celebrity charts', SL
     const expected = fixture.expected;
 
     assert.deepEqual(Object.keys(report).sort(), [...REPORT_KEYS].sort(), fixture.id);
-    assert.equal(report.schemaVersion, 4, fixture.id);
+    assert.equal(report.schemaVersion, 5, fixture.id);
     assert.ok(report.summary.sentences.length >= 3, fixture.id);
     assert.equal(report.asOf, fixture.asOf, fixture.id);
     assert.deepEqual(report.input, v3Input(fixture.input), fixture.id);

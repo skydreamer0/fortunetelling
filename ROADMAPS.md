@@ -119,9 +119,9 @@
 
 | ID | 任務 |
 |---|---|
-| V3-01 | `aggregateSignals()` 第 3 步：`consensus`（強度 ≥ θ 的系統數，≥ 3 標記「高共識」）、`conflict`（方向相反時保留並列出雙方 signal id，不做平均抵銷） |
-| V3-02 | Report v5：新增 `consensus` 頂層欄位 |
-| V3-03 | UI：每年每領域顯示共識徽章與矛盾說明 |
+| V3-01 ✅ | `aggregateSignals()` 第 3 步：`consensus`（強度 ≥ θ 的系統數，≥ 3 標記「高共識」）、`conflict`（方向相反時保留並列出雙方 signal id，不做平均抵銷） |
+| V3-02 ✅ | Report v5：新增 `consensus` 頂層欄位（`buildConsensus(timeline)`：各年高共識／矛盾、headlines、覆蓋度；D-034） |
+| V3-03 ✅ | UI：每年每領域顯示共識徽章與矛盾說明；時序章節新增「共識與分歧」摘要與每格「n／m 系統」覆蓋度 |
 | V3-04 | 評估 Next.js（Vercel）遷移；`@fortune/core` 保持框架無關，可同時給 Web、App、API 使用 |
 
 **完成條件**：共識與矛盾各有單元測試，包含「兩系統正、一系統負」的案例。

@@ -5,7 +5,7 @@
  */
 
 import type { Domain as CoreDomain, TimelineCell } from '@fortune/core';
-import type { Component, EngineResult, Period, Radar, Report, ScoringRule, Signal, SystemId, Timeline } from './types';
+import type { Component, ConsensusSummary, EngineResult, Period, Radar, Report, ScoringRule, Signal, SystemId, Timeline } from './types';
 
 export const SYSTEM_NAMES: Record<string, string> = {
   bazi: '八字',
@@ -491,7 +491,18 @@ export interface TimelineCellView {
   conflict: null | { positive: TimelineConflictSide[]; negative: TimelineConflictSide[] };
   /** Systems that emitted signals for this cell (繁中). */
   systems: string[];
+  /** v5 `consensus.coverage`: how many timeline systems could vs did speak. Null on v4 reports. */
+  coverage: TimelineCoverageView | null;
   topSignals: TimelineSignalView[];
+}
+
+export interface TimelineCoverageView {
+  available: number;
+  speaking: number;
+  /** 繁中 names of the systems that emitted no signal for this cell. */
+  silent: string[];
+  /** e.g. 「2／3 系統」. */
+  label: string;
 }
 
 export interface TimelineRow extends DomainMeta { cells: TimelineCellView[] }
@@ -579,6 +590,31 @@ function isCurrentPeriod(grain: 'year' | 'month', start: string, asOf: string): 
   return grain === 'year' ? start.slice(0, 4) === asOf.slice(0, 4) : start.slice(0, 7) === asOf.slice(0, 7);
 }
 
+function consensusOf(report: Report): ConsensusSummary | null {
+  const consensus = report.consensus;
+  return consensus && Array.isArray(consensus.years) && consensus.headlines && consensus.coverage ? consensus : null;
+}
+
+const systemName = (system: string) => SIGNAL_SYSTEM_NAMES[system] ?? system;
+
+/** `${start}:${domain}` → coverage view, for one grain of a v5 report. */
+function coverageIndex(report: Report, grain: 'year' | 'month'): Map<string, TimelineCoverageView> {
+  const index = new Map<string, TimelineCoverageView>();
+  const consensus = consensusOf(report);
+  const cells = (grain === 'year' ? consensus?.coverage.years : consensus?.coverage.months) ?? [];
+  for (const cell of cells) {
+    for (const item of cell.domains ?? []) {
+      index.set(`${cell.window.start}:${item.domain}`, {
+        available: item.available,
+        speaking: item.speaking,
+        silent: (item.silent ?? []).map(systemName),
+        label: `${item.speaking}／${item.available} 系統`,
+      });
+    }
+  }
+  return index;
+}
+
 function buildGrid(report: Report, grain: 'year' | 'month'): TimelineGrid | null {
   const timeline = timelineOf(report);
   if (!timeline) return null;
@@ -586,6 +622,7 @@ function buildGrid(report: Report, grain: 'year' | 'month'): TimelineGrid | null
   if (!cells.length) return null;
   const cuts = bandCutsOf(timeline);
   const lookup = reportSignals(report);
+  const coverage = coverageIndex(report, grain);
   const asOf = timeline.asOf ?? report.asOf;
 
   const periods = cells.map(cell => ({
@@ -622,6 +659,7 @@ function buildGrid(report: Report, grain: 'year' | 'month'): TimelineGrid | null
           ? { positive: conflictSide(found.conflict.positive, found, lookup), negative: conflictSide(found.conflict.negative, found, lookup) }
           : null,
         systems,
+        coverage: coverage.get(`${cell.window.start}:${meta.domain}`) ?? null,
         topSignals,
       };
     }),
@@ -665,4 +703,92 @@ export function findTimelineCell(key: string | null, ...grids: (TimelineGrid | n
     }
   }
   return null;
+}
+
+// ─── Consensus (Report v5, ARCHITECTURE-V2 §6.1 step 3; D-034) ──────────────
+
+export interface ConsensusSystemChip { system: string; name: string }
+
+export interface ConsensusAgreementView {
+  /** Timeline cell key (`year:${start}:${domain}`) so the UI can open the detail panel. */
+  key: string;
+  yearLabel: string;
+  domain: TimelineDomain;
+  domainLabel: string;
+  icon: string;
+  consensus: number;
+  systems: ConsensusSystemChip[];
+}
+
+export interface ConsensusConflictSideView {
+  systems: ConsensusSystemChip[];
+  items: TimelineConflictSide[];
+}
+
+export interface ConsensusConflictView {
+  key: string;
+  yearLabel: string;
+  domain: TimelineDomain;
+  domainLabel: string;
+  icon: string;
+  positive: ConsensusConflictSideView;
+  negative: ConsensusConflictSideView;
+}
+
+export interface ConsensusView {
+  /** Timeline systems that could contribute (繁中). */
+  systems: string[];
+  minSystems: number;
+  agreements: ConsensusAgreementView[];
+  /** Every conflict, never capped. */
+  conflicts: ConsensusConflictView[];
+}
+
+const domainMeta = (domain: string) => TIMELINE_DOMAINS.find(item => item.domain === domain);
+const chips = (systems: readonly string[]): ConsensusSystemChip[] => systems.map(system => ({ system, name: systemName(system) }));
+
+/** Headline agreements and all conflicts of a v5 report; null for v3/v4 reports (block hidden). */
+export function selectConsensus(report: Report): ConsensusView | null {
+  const consensus = consensusOf(report);
+  const timeline = timelineOf(report);
+  if (!consensus || !timeline) return null;
+  const lookup = reportSignals(report);
+  const coreCell = (start: string, domain: string) =>
+    timeline.years.find(cell => cell.window.start === start)?.domains.find(item => item.domain === domain) ?? null;
+
+  const agreements = (consensus.headlines.agreements ?? []).map((item): ConsensusAgreementView => {
+    const meta = domainMeta(item.domain);
+    return {
+      key: `year:${item.window.start}:${item.domain}`,
+      yearLabel: item.window.start.slice(0, 4),
+      domain: item.domain,
+      domainLabel: meta?.label ?? item.domain,
+      icon: meta?.icon ?? '',
+      consensus: item.consensus,
+      systems: chips(item.systems ?? []),
+    };
+  });
+
+  const conflicts = (consensus.headlines.conflicts ?? []).map((item): ConsensusConflictView => {
+    const meta = domainMeta(item.domain);
+    const cell = coreCell(item.window.start, item.domain);
+    const side = (ids: string[]): TimelineConflictSide[] =>
+      cell ? conflictSide(ids, cell, lookup) : ids.map(id => ({ id, systemName: '未知系統', label: `訊號 ${id}`, text: null }));
+    return {
+      key: `year:${item.window.start}:${item.domain}`,
+      yearLabel: item.window.start.slice(0, 4),
+      domain: item.domain,
+      domainLabel: meta?.label ?? item.domain,
+      icon: meta?.icon ?? '',
+      positive: { systems: chips(item.positive.systems ?? []), items: side(item.positive.signalIds ?? []) },
+      negative: { systems: chips(item.negative.systems ?? []), items: side(item.negative.signalIds ?? []) },
+    };
+  });
+
+  return {
+    systems: (consensus.systems ?? []).map(systemName),
+    minSystems: consensus.highConsensusMinSystems ?? 3,
+    agreements,
+    conflicts,
+  };
 }

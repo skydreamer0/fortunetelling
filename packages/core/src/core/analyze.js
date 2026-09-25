@@ -6,7 +6,7 @@
  * the TimeContext, the rest on the civil date), classifies all components into
  * L0–L3 layers, attaches the transparent scoring-rule registry, the Block G/H
  * fields, and — since Report v4 (D-032) — `timeContext`, `timeline` and
- * `signals`.
+ * `signals`; since Report v5 (D-034) — `consensus`.
  *
  * @module core/analyze
  */
@@ -23,17 +23,18 @@ import { createDefaultRegistry } from '../engines/index.js';
 import { createTimeContext } from '../time/createTimeContext';
 import { buildTimeline, TIMELINE_SYSTEMS } from '../timeline/buildTimeline';
 import { SYSTEM_IDS } from '../signals/types';
+import { buildConsensus } from '../consensus/buildConsensus';
 import { resolveAnalyzeInput, toZiweiZiConvention } from './analyzeInput';
 import { TimeContextBaZiEngine, TimeContextZiweiEngine } from './timeContextEngines';
 
 /** Public library version (semver). Bump on any observable API change. */
-export const VERSION = '0.4.0';
+export const VERSION = '0.5.0';
 
 /**
  * Version of the `Report` shape itself, independent of code version.
  * Consumers should check this before deserializing stored reports.
  */
-export const REPORT_SCHEMA_VERSION = 4;
+export const REPORT_SCHEMA_VERSION = 5;
 
 /** Timeline systems that need the Swiss Ephemeris; sync `analyze()` never initialises it. */
 const EPHEMERIS_SYSTEMS = ['jyotish', 'humanDesign'];
@@ -65,6 +66,7 @@ const LEGACY_MERIDIAN_TOLERANCE_DEG = 15;
  * @property {Object} timeContext   - v4: TimeContext (profile without name) + `conventions`
  * @property {Object[]} signals     - v4: every timeline `topSignals` entry, deduped by id, sorted by id
  * @property {Object} timeline      - v4: sync `buildTimeline` (5 years + 12 months of the asOf year)
+ * @property {Object} consensus     - v5: `buildConsensus(timeline)` — cross-system agreements, conflicts, coverage
  */
 
 /**
@@ -149,6 +151,9 @@ export function analyze(input, { asOf = null } = {}) {
     timeContext: null,
     signals: [],
     timeline: null,
+
+    // ── v5（D-034）──
+    consensus: null,
   };
 
   // ── 區塊 G：雷達（C2）——RadarBuilder 只填入既有 radars 空殼 ──
@@ -172,6 +177,8 @@ export function analyze(input, { asOf = null } = {}) {
   report.timeContext = buildReportTimeContext(ctx, options, birthplaceSource);
   report.timeline = timeline;
   report.signals = collectSignals(timeline);
+  // ── v5：跨系統共識／矛盾摘要（只重排 timeline 已有的判定，不另算分數，D-033）──
+  report.consensus = buildConsensus(timeline);
 
   // ── 區塊 H④：組完 Report 後跑誠實稽核（D1）──
   report.honesty.violations = HonestyGuard.auditReport(report);

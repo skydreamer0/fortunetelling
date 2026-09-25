@@ -14,6 +14,7 @@ const V3_KEYS = [
   'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'summary', 'version',
 ];
 const V4_KEYS = [...V3_KEYS, 'signals', 'timeContext', 'timeline'].sort();
+const V5_KEYS = [...V4_KEYS, 'consensus'].sort();
 
 test('analyze() 回傳完整 Report 契約欄位', () => {
   const report = analyze(INPUT, { asOf: AS_OF });
@@ -57,20 +58,24 @@ test('analyze() 回傳完整 Report 契約欄位', () => {
   assert.ok(report.evolution.narrative.length > 0);
 });
 
-test('Report Schema v4 = v3 欄位 + timeContext／signals／timeline，且保留可追溯摘要', () => {
+test('Report Schema v5 = v4 欄位 + consensus（v4 = v3 + timeContext／signals／timeline），且保留可追溯摘要', () => {
   const report = analyze(INPUT, { asOf: AS_OF });
   assert.deepEqual(
     Object.keys(report).sort(),
-    V4_KEYS,
+    V5_KEYS,
   );
   // D1/D2/D4 已翻 honesty / stateTable / evolution 的 pending
   assert.equal(report.stateTable.pending, false);
   assert.equal(report.evolution.pending, false);
   assert.equal(report.honesty.pending, false);
-  assert.equal(report.schemaVersion, 4);
-  assert.equal(REPORT_SCHEMA_VERSION, 4);
-  for (const key of V3_KEYS) assert.ok(key in report, `v3 key ${key} missing`);
-  assert.deepEqual(Object.keys(report).filter(k => !V3_KEYS.includes(k)).sort(), ['signals', 'timeContext', 'timeline']);
+  assert.equal(report.schemaVersion, 5);
+  assert.equal(REPORT_SCHEMA_VERSION, 5);
+  assert.equal(VERSION, '0.5.0');
+  for (const key of V4_KEYS) assert.ok(key in report, `v4 key ${key} missing`);
+  assert.deepEqual(Object.keys(report).filter(k => !V3_KEYS.includes(k)).sort(), ['consensus', 'signals', 'timeContext', 'timeline']);
+  assert.deepEqual(Object.keys(report).filter(k => !V4_KEYS.includes(k)), ['consensus']);
+  assert.equal(report.consensus.asOf, AS_OF);
+  assert.deepEqual(report.consensus.systems, report.timeline.systems);
   for (const sentence of report.summary.sentences) {
     assert.ok(sentence.sources.length > 0, `${sentence.id} 缺少來源`);
   }
@@ -99,7 +104,7 @@ test('analyze() 只填入既有 radars 空殼，且每軸計分規則可解析',
 
   assert.deepEqual(
     Object.keys(report).sort(),
-    V4_KEYS,
+    V5_KEYS,
   );
 });
 

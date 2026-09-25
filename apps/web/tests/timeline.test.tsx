@@ -1,15 +1,15 @@
 import { describe, expect, mock, test } from 'bun:test';
-import { buildTimeline, cityToBirthplace, createTimeContext, findCity, type Timeline } from '@fortune/core';
+import { buildConsensus, buildTimeline, cityToBirthplace, createTimeContext, findCity, type Timeline } from '@fortune/core';
 import { isValidElement, type ReactElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { BirthForm, formToInput, type BirthFormState } from '../src/components/input/BirthForm';
 import { CHAPTERS, ReportView } from '../src/components/report/ReportView';
-import { Timeline as TimelineChapter, TimelineTable, TimelineView, pickRows } from '../src/components/report/Timeline';
+import { ConsensusBlock, Timeline as TimelineChapter, TimelineDetail, TimelineTable, TimelineView, pickRows } from '../src/components/report/Timeline';
 import { cityById, searchCities } from '../src/lib/cities';
 import { analyze } from '../src/lib/core';
 import { createReportStore } from '../src/lib/store';
 import {
-  HEADLINE_DOMAINS, findTimelineCell, selectTimelineMeta, selectTimelineMonths, selectTimelineYears,
+  HEADLINE_DOMAINS, findTimelineCell, selectConsensus, selectTimelineMeta, selectTimelineMonths, selectTimelineYears,
   type TimelineCellView,
 } from '../src/model/selectors';
 import type { BirthInput, Report } from '../src/model/types';
@@ -27,10 +27,12 @@ const INPUT: BirthInput = {
   name: '', year: 1995, month: 7, day: 16, hour: 22, minute: 0, timeKnown: true,
   gender: 'male', calendarType: 'solar', cityId: 'tainan', timeAccuracy: 'exact',
 };
-// Report v4 起 analyze() 自帶 timeline；這裡明確移除 v4 欄位來模擬舊的 v3 報告（例如最近查詢裡存的舊結果）。
-const { timeline: _timeline, timeContext: _timeContext, signals: _signals, ...v3Fields } = analyze(INPUT);
+// Report v4 起 analyze() 自帶 timeline、v5 起自帶 consensus；這裡明確移除 v4/v5 欄位來模擬舊報告（例如最近查詢裡存的舊結果）。
+const { timeline: _timeline, timeContext: _timeContext, signals: _signals, consensus: _consensus, ...v3Fields } = analyze(INPUT);
 const v3: Report = { ...v3Fields, schemaVersion: 3 };
 const v4: Report = { ...v3, input: { ...v3.input, cityId: 'tainan' }, asOf: ASOF, schemaVersion: 4, timeline };
+const consensus = buildConsensus(timeline);
+const v5: Report = { ...v4, schemaVersion: 5, consensus };
 
 const years = selectTimelineYears(v4)!;
 const months = selectTimelineMonths(v4)!;
@@ -216,6 +218,88 @@ describe('timeline chapter', () => {
     expect(html).toContain('id="ch-timeline"');
     expect(html).toContain('沒有時序資料');
     expect(html).not.toContain('data-key="year:');
+  });
+});
+
+describe('consensus (Report v5)', () => {
+  const view = selectConsensus(v5)!;
+  const years5 = selectTimelineYears(v5)!;
+  const months5 = selectTimelineMonths(v5)!;
+
+  test('selector: headline agreements with system chips, every conflict with both sides', () => {
+    expect(view.systems).toEqual(['八字', '紫微斗數', '生命靈數']);
+    expect(view.minSystems).toBe(3);
+    expect(view.agreements.map(item => item.key)).toEqual(
+      consensus.headlines.agreements.map(item => `year:${item.window.start}:${item.domain}`),
+    );
+    expect(view.agreements.length).toBeGreaterThan(0);
+    for (const item of view.agreements) {
+      expect(item.systems.map(chip => chip.name)).toEqual(['八字', '紫微斗數', '生命靈數']);
+      expect(findTimelineCell(item.key, years5)!.highConsensus).toBe(true);
+    }
+    const expectedConflicts = timeline.years.flatMap(cell => cell.domains.filter(d => d.conflict).map(d => `year:${cell.window.start}:${d.domain}`));
+    expect(expectedConflicts.length).toBeGreaterThan(0);
+    expect(view.conflicts.map(item => item.key)).toEqual(expectedConflicts);
+    for (const item of view.conflicts) {
+      expect(item.positive.systems.length).toBeGreaterThan(0);
+      expect(item.negative.systems.length).toBeGreaterThan(0);
+      expect(item.positive.items.length).toBeGreaterThan(0);
+      expect(item.negative.items.length).toBeGreaterThan(0);
+    }
+  });
+
+  test('summary block renders above the grid, lists all conflicts, and selects a cell on click', () => {
+    const html = renderToStaticMarkup(<TimelineChapter report={v5} />);
+    expect(html).toContain('共識與分歧');
+    expect(html.indexOf('共識與分歧')).toBeLessThan(html.indexOf('各領域訊號強度'));
+    expect(html.match(/class="tl-cons__conflict"/g)).toHaveLength(view.conflicts.length);
+    expect(html).toContain('class="tl-chip" data-system="bazi"');
+
+    const onSelect = mock((_key: string) => {});
+    const tree = ConsensusBlock({ consensus: view, selected: null, onSelect });
+    const button = findElement(tree, element => element.type === 'button' && element.props['aria-pressed'] === false);
+    expect(button).not.toBeNull();
+    button!.props.onClick();
+    expect(onSelect).toHaveBeenCalledWith(view.agreements[0].key);
+    // Neutral wording in the block chrome.
+    expect(renderToStaticMarkup(<ConsensusBlock consensus={view} selected={null} onSelect={() => {}} />)).not.toMatch(/[吉凶]|你是/);
+  });
+
+  test('empty lists get a neutral note', () => {
+    const html = renderToStaticMarkup(<ConsensusBlock consensus={{ ...view, agreements: [], conflicts: [] }} selected={null} onSelect={() => {}} />);
+    expect(html).toContain('沒有任何領域達到 3 個系統以上的共識');
+    expect(html).toContain('沒有系統間方向相反的領域');
+  });
+
+  test('detail panel shows per-cell coverage 「n／3 系統」 for years and months', () => {
+    for (const cell of [...allCells(years5), ...allCells(months5)]) {
+      expect(cell.coverage).not.toBeNull();
+      expect(cell.coverage!.available).toBe(3);
+      expect(cell.coverage!.label).toBe(`${cell.coverage!.speaking}／3 系統`);
+      expect(cell.coverage!.speaking).toBe(cell.systems.length);
+    }
+    const single = allCells(years5).find(cell => cell.coverage!.speaking === 1)!;
+    expect(single).toBeDefined();
+    const html = renderToStaticMarkup(<TimelineDetail cell={single} />);
+    expect(html).toContain('1／3 系統');
+    expect(html).toContain('只有 1／3 個系統對這一格有訊號');
+    expect(html).toContain('未發訊號：');
+  });
+
+  test('v4 report without consensus: block and coverage hidden, grid unchanged', () => {
+    expect(selectConsensus(v4)).toBeNull();
+    expect(selectConsensus(v3)).toBeNull();
+    expect(allCells().every(cell => cell.coverage === null)).toBe(true);
+    const html = renderToStaticMarkup(<TimelineChapter report={v4} />);
+    expect(html).not.toContain('共識與分歧');
+    expect(html).not.toContain('tl-coverage');
+    expect(html.match(/data-key="year:/g)).toHaveLength(50);
+  });
+
+  test('the live analyze() report is v5 and renders the block', () => {
+    const report = analyze(INPUT);
+    expect(report.schemaVersion).toBe(5);
+    expect(selectConsensus(report)).not.toBeNull();
   });
 });
 

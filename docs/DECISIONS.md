@@ -220,3 +220,17 @@ D-016 規定 iztro／lunar-javascript 只能出現在 `engines/`。V1-02 TimeCon
   因此逐年會跳動（例：移動 0 ↔ 50），不同領域間的分數也不可直接比較。UI 必須標示「未校準」。
 - 不在沒有資料的情況下憑感覺改公式或權重。系統權重（目前皆 1）、四段切點（35／55／75）、
   是否把未發訊號系統計為 0，全部留到 V4 以 `life_events` 回驗後決定，調整只產生新版本（D-028）。
+
+## D-034 Report Schema v5：跨系統共識摘要 `consensus`（V3，2026-09-25）✅
+依 D-012 升版條款，`REPORT_SCHEMA_VERSION` bump 至 5、函式庫 semver bump 至 0.5.0（`VERSION`）。v4 全部欄位與形狀保留，
+只新增頂層 `consensus = buildConsensus(timeline)`（形狀見 ARCHITECTURE §4.4；ARCHITECTURE-V2 §11）。
+- **只重排、不另算**：共識數、高共識旗標、矛盾雙方都照抄 `aggregateSignals` 在 timeline 各格的判定（§6.1 第 3 步），
+  `buildConsensus` 只補上「哪些系統」與「哪些 signal id」，並排序出 headlines。沒有新的分數公式或權重（D-033 不動）。
+- **矛盾永不截斷**（D-023）：`headlines.conflicts` 列出全部年格的矛盾；`headlines.agreements` 只取最強的 5 筆，
+  排序固定為 共識系統數↓、分數↓、DOMAINS 順序、年份，確保決定論。
+- **覆蓋度 `coverage`**：每個領域 × 年／月格記錄「可發訊號的系統數（timeline.systems）／實際發訊號的系統數」。
+  這是對 D-033 稀疏問題的**揭露**而非修正：UI 顯示「n／m 系統」，只有 1 個系統時註明分數即該系統強度，分數本身不變。
+- 列出「達門檻系統」用的 θ 預設 0.5，必須與建 timeline 時的 θ 相同（timeline 目前不記錄 θ，由 `buildConsensus` 參數傳入並寫入輸出）。
+- `analyze()` 仍為同步，`consensus` 因此只涵蓋八字／紫微／靈數（與 v4 timeline 相同）；jyotish／humanDesign 需以
+  `buildConsensus(await buildTimelineAsync(ctx, { asOf }))` 取得。
+- 已知限制：`packages/core/package.json` 的 `version` 欄位未同步（仍為 0.4.0；私有套件，公開版本以 `VERSION` 常數為準）。

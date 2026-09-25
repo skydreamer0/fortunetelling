@@ -1,6 +1,7 @@
 /**
  * 參 時序 — Timeline (ARCHITECTURE-V2 §7): domains × 5 years, the asOf year's
- * months, and a detail panel listing the rules behind any cell.
+ * months, and a detail panel listing the rules behind any cell. Report v5 adds
+ * a 「共識與分歧」 summary above the grid and per-cell system coverage (D-034).
  *
  * Reads only `model/selectors` (D-015). Scores stay 0–100 in the data; the grid
  * shows the four bands 低／中／中高／高 and exposes the number on hover, focus,
@@ -9,7 +10,8 @@
 
 import { useMemo, useState, type KeyboardEvent } from 'react';
 import {
-  BAND_ORDER, HEADLINE_DOMAINS, findTimelineCell, selectTimelineMeta, selectTimelineMonths, selectTimelineYears,
+  BAND_ORDER, HEADLINE_DOMAINS, findTimelineCell, selectConsensus, selectTimelineMeta, selectTimelineMonths, selectTimelineYears,
+  type ConsensusConflictSideView, type ConsensusSystemChip, type ConsensusView,
   type TimelineCellView, type TimelineConflictSide, type TimelineGrid, type TimelineMeta,
 } from '../../model/selectors';
 import type { Report } from '../../model/types';
@@ -169,12 +171,24 @@ export function TimelineDetail({ cell }: { cell: TimelineCellView | null }) {
 
       <div className="tl-detail__flags">
         {cell.highConsensus && <span className="tl-badge tl-badge--consensus">高共識</span>}
+        {cell.coverage && (
+          <span className="tl-coverage" title="有訊號的系統數／可提供訊號的系統數">{cell.coverage.label}</span>
+        )}
         {!cell.empty && (
           <span className="tl-detail__consensus">
             {cell.consensus} 個系統訊號達門檻・來源：{cell.systems.join('、') || '—'}
           </span>
         )}
       </div>
+
+      {cell.coverage && cell.coverage.speaking === 1 && cell.coverage.available > 1 && (
+        <p className="tl-detail__coverage-note">
+          只有 1／{cell.coverage.available} 個系統對這一格有訊號，分數即該系統自身的強度，沒有其他系統可以交叉比對。
+        </p>
+      )}
+      {cell.coverage && cell.coverage.silent.length > 0 && cell.coverage.speaking > 0 && (
+        <p className="tl-detail__silent">未發訊號：{cell.coverage.silent.join('、')}</p>
+      )}
 
       {cell.conflict && (
         <div className="tl-conflict" role="note">
@@ -212,6 +226,100 @@ export function TimelineDetail({ cell }: { cell: TimelineCellView | null }) {
         </ol>
       )}
     </aside>
+  );
+}
+
+function SystemChips({ systems }: { systems: ConsensusSystemChip[] }) {
+  return (
+    <span className="tl-chips">
+      {systems.map(chip => <span key={chip.system} className="tl-chip" data-system={chip.system}>{chip.name}</span>)}
+    </span>
+  );
+}
+
+function ConsensusSide({ title, side }: { title: string; side: ConsensusConflictSideView }) {
+  return (
+    <div className="tl-cons__side">
+      <p className="tl-conflict__title">{title}</p>
+      <SystemChips systems={side.systems} />
+      <ul>
+        {side.items.map(item => (
+          <li key={item.id}>
+            <span className="tl-conflict__system">{item.systemName}</span>
+            <span>{item.label}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+interface ConsensusBlockProps {
+  consensus: ConsensusView;
+  selected: string | null;
+  onSelect: (key: string) => void;
+}
+
+/**
+ * 「共識與分歧」: the strongest cross-system agreements (capped by core) and every
+ * conflict with both sides. Each entry opens its cell in the detail panel.
+ */
+export function ConsensusBlock({ consensus, selected, onSelect }: ConsensusBlockProps) {
+  const { agreements, conflicts, minSystems, systems } = consensus;
+  return (
+    <section className="timeline__block tl-cons" aria-labelledby="tl-cons-title">
+      <h3 id="tl-cons-title" className="subhead">共識與分歧</h3>
+      <p className="tl-cons__lede">
+        共識：同一年同一領域，有 {minSystems} 個以上系統的訊號強度達門檻。分歧：不同系統給出相反方向的訊號，兩邊都列出，不互相抵銷。
+        本報告可比對的系統：{systems.join('、') || '—'}。
+      </p>
+      <div className="tl-cons__cols">
+        <div className="tl-cons__col">
+          <p className="tl-cons__title"><span className="tl-cell__mark tl-cell__mark--consensus" aria-hidden="true">共</span>跨系統共識</p>
+          {agreements.length === 0 ? (
+            <p className="tl-cons__empty">這幾年沒有任何領域達到 {minSystems} 個系統以上的共識。</p>
+          ) : (
+            <ul className="tl-cons__list">
+              {agreements.map(item => (
+                <li key={item.key}>
+                  <button type="button" className="tl-cons__item" aria-pressed={item.key === selected} onClick={() => onSelect(item.key)}>
+                    <span className="tl-cons__where">
+                      <span className="tl-cons__year">{item.yearLabel}</span>
+                      <span aria-hidden="true">{item.icon}</span>{item.domainLabel}
+                    </span>
+                    <span className="tl-cons__count">{item.consensus} 個系統</span>
+                    <SystemChips systems={item.systems} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="tl-cons__col">
+          <p className="tl-cons__title"><span className="tl-cell__mark tl-cell__mark--conflict" aria-hidden="true">歧</span>系統間分歧（全部列出）</p>
+          {conflicts.length === 0 ? (
+            <p className="tl-cons__empty">這幾年沒有系統間方向相反的領域。</p>
+          ) : (
+            <ul className="tl-cons__list">
+              {conflicts.map(item => (
+                <li key={item.key} className="tl-cons__conflict">
+                  <button type="button" className="tl-cons__item" aria-pressed={item.key === selected} onClick={() => onSelect(item.key)}>
+                    <span className="tl-cons__where">
+                      <span className="tl-cons__year">{item.yearLabel}</span>
+                      <span aria-hidden="true">{item.icon}</span>{item.domainLabel}
+                    </span>
+                  </button>
+                  <div className="tl-cons__sides">
+                    <ConsensusSide title="偏支持" side={item.positive} />
+                    <ConsensusSide title="偏壓力" side={item.negative} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -262,13 +370,15 @@ interface TimelineViewProps {
   years: TimelineGrid | null;
   months: TimelineGrid | null;
   meta: TimelineMeta | null;
+  /** Report v5 only; null/absent hides the 「共識與分歧」 block. */
+  consensus?: ConsensusView | null;
   schemaVersion: number;
   selected: string | null;
   onSelect: (key: string) => void;
 }
 
 /** Stateless body of the chapter (selection is owned by `Timeline`). */
-export function TimelineView({ years, months, meta, schemaVersion, selected, onSelect }: TimelineViewProps) {
+export function TimelineView({ years, months, meta, consensus = null, schemaVersion, selected, onSelect }: TimelineViewProps) {
   if (!years || !meta) {
     return (
       <EmptyNote>
@@ -286,6 +396,8 @@ export function TimelineView({ years, months, meta, schemaVersion, selected, onS
   return (
     <div className="timeline">
       <div className="timeline__main">
+        {consensus && <ConsensusBlock consensus={consensus} selected={selected} onSelect={onSelect} />}
+
         <div className="timeline__block">
           <h3 className="subhead">{span} 各領域訊號強度</h3>
           <Legend cuts={meta.bandCuts} />
@@ -354,12 +466,13 @@ export function Timeline({ report, initialSelected }: { report: Report; initialS
   const years = useMemo(() => selectTimelineYears(report), [report]);
   const months = useMemo(() => selectTimelineMonths(report), [report]);
   const meta = useMemo(() => selectTimelineMeta(report), [report]);
+  const consensus = useMemo(() => selectConsensus(report), [report]);
   const [selected, setSelected] = useState<string | null>(() => initialSelected ?? defaultSelection(years));
 
   return (
     <Section id="ch-timeline" index="參" title="時序"
       lede="未來五年與今年各月，十個生活領域被多少規則觸發。點選任一格，可以看到背後的規則與原文依據。">
-      <TimelineView years={years} months={months} meta={meta} schemaVersion={report.schemaVersion}
+      <TimelineView years={years} months={months} meta={meta} consensus={consensus} schemaVersion={report.schemaVersion}
         selected={selected} onSelect={setSelected} />
     </Section>
   );

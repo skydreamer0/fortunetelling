@@ -75,3 +75,5 @@ export * from './calculators/index';
 // ⑤ Timeline（V1-13）與 ⑥ 問事引擎（V5-01/02）
 export * from './timeline/index';
 export * from './questions/index';
+// V3 跨系統共識摘要（Report v5 `consensus`，D-034）
+export * from './consensus/index';
