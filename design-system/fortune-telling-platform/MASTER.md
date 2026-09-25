@@ -1,207 +1,51 @@
-# Design System Master File
+# 通書 Design System
 
-> **LOGIC:** When building a specific page, first check `design-system/pages/[page-name].md`.
-> If that file exists, its rules **override** this Master file.
-> If not, strictly follow the rules below.
+The web app's visual language: an almanac (通書) printed on rice paper.
+Tokens live in `apps/web/src/styles/tokens.css`; this file explains intent.
 
----
+## Principles
 
-**Project:** Fortune Telling Platform
-**Generated:** 2026-07-11 22:41:02
-**Category:** Sustainable Energy / Climate Tech
+1. **Paper, ink, seal.** Rice-paper background, ink text, vermilion only for seals,
+   the primary action and "you are here" markers. Never decorative gradients.
+2. **Rules, not boxes.** Structure comes from hairline rules and ledger rows;
+   raised cards are reserved for self-contained units (domain cards, detail panels).
+3. **Every number is auditable.** Charts show real report values and expose their
+   formula; colour is never the only carrier of meaning.
+4. **Chapters, not a feed.** Reports are numbered chapters (壹…柒, 附) with a sticky index.
 
----
+## Colour
 
-## Global Rules
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `--paper` | `#F3EDE1` | `#16140F` | page |
+| `--paper-raised` | `#F8F4EC` | `#1E1B15` | cards, form sheet |
+| `--ink` / `--ink-2` / `--ink-3` | `#1D1A15` / `#4A443A` / `#7A7162` | `#ECE4D2` / `#C2B8A3` / `#8F8674` | text hierarchy |
+| `--rule` / `--rule-strong` | `#D6CAB3` / `#A99B81` | `#353026` / `#5A5142` | hairlines |
+| `--zhu` 朱 | `#B03A26` | `#E0593F` | seal, primary action, current state |
+| `--qing` 青 / `--jin` 金 / `--dai` 黛 / `--zi` 紫 | celadon / ochre / indigo / plum | lighter variants | systems & elements |
 
-### Color Palette
+Five elements: 木 `--qing`, 火 `--zhu`, 土 `--jin`, 金 `--steel`, 水 `--dai`.
+Systems: 八字 朱, 紫微 黛, 靈數 金, 八宅 青, 馬雅曆 紫.
+四化: 祿 green, 權 plum, 科 blue, 忌 vermilion.
 
-| Role | Hex | CSS Variable |
-|------|-----|--------------|
-| Primary | `#0F172A` | `--color-primary` |
-| On Primary | `#FFFFFF` | `--color-on-primary` |
-| Secondary | `#1E3A8A` | `--color-secondary` |
-| Accent/CTA | `#A16207` | `--color-accent` |
-| Background | `#F8FAFC` | `--color-background` |
-| Foreground | `#020617` | `--color-foreground` |
-| Muted | `#E8ECF1` | `--color-muted` |
-| Border | `#E2E8F0` | `--color-border` |
-| Destructive | `#DC2626` | `--color-destructive` |
-| Ring | `#0F172A` | `--color-ring` |
+## Type
 
-**Color Notes:** Trust navy + premium gold [Accent adjusted from #CA8A04 for WCAG 3:1]
+| Role | Family | Notes |
+|---|---|---|
+| Display | Chiron Sung HK (fallback Noto Serif TC) | titles, pillars, palace names; wide letter-spacing |
+| Body | Noto Sans TC | 16px / 1.75 |
+| Script | LXGW WenKai TC | summary sentences and compatibility narrative only |
+| Numerals | Cormorant Garamond | always `lining-nums tabular-nums` |
 
-### Typography
+## Components
 
-- **Heading Font:** Noto Serif TC
-- **Body Font:** Noto Sans TC
-- **Mood:** chinese, traditional, elegant, cultural, multilingual, readable
-- **Google Fonts:** [Noto Serif TC + Noto Sans TC](https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;500;600;700&display=swap)
+- **Seal** (`.seal-mark`, `.masthead__seal`): vermilion square with an inset paper line.
+- **Segmented / 時辰 grid**: native radio inputs, ink fill when selected (時辰 uses vermilion).
+- **Chapter**: numbered index box + display title + one-line lede.
+- **Sources**: system-coloured label + component name; every claim carries one.
+- **Radar**: SVG, auto-scaled with `niceMax`, scale label on the outer ring, hidden data table.
 
-**CSS Import:**
-```css
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;500;600;700&display=swap');
-```
+## Motion
 
-### Spacing Variables
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--space-xs` | `4px` / `0.25rem` | Tight gaps |
-| `--space-sm` | `8px` / `0.5rem` | Icon gaps, inline spacing |
-| `--space-md` | `16px` / `1rem` | Standard padding |
-| `--space-lg` | `24px` / `1.5rem` | Section padding |
-| `--space-xl` | `32px` / `2rem` | Large gaps |
-| `--space-2xl` | `48px` / `3rem` | Section margins |
-| `--space-3xl` | `64px` / `4rem` | Hero padding |
-
-### Shadow Depths
-
-| Level | Value | Usage |
-|-------|-------|-------|
-| `--shadow-sm` | `0 1px 2px rgba(0,0,0,0.05)` | Subtle lift |
-| `--shadow-md` | `0 4px 6px rgba(0,0,0,0.1)` | Cards, buttons |
-| `--shadow-lg` | `0 10px 15px rgba(0,0,0,0.1)` | Modals, dropdowns |
-| `--shadow-xl` | `0 20px 25px rgba(0,0,0,0.15)` | Hero images, featured cards |
-
----
-
-## Component Specs
-
-### Buttons
-
-```css
-/* Primary Button */
-.btn-primary {
-  background: #A16207;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-
-.btn-primary:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-/* Secondary Button */
-.btn-secondary {
-  background: transparent;
-  color: #0F172A;
-  border: 2px solid #0F172A;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-```
-
-### Cards
-
-```css
-.card {
-  background: #F8FAFC;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: var(--shadow-md);
-  transition: all 200ms ease;
-  cursor: pointer;
-}
-
-.card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
-}
-```
-
-### Inputs
-
-```css
-.input {
-  padding: 12px 16px;
-  border: 1px solid #E2E8F0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 200ms ease;
-}
-
-.input:focus {
-  border-color: #0F172A;
-  outline: none;
-  box-shadow: 0 0 0 3px #0F172A20;
-}
-```
-
-### Modals
-
-```css
-.modal-overlay {
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-}
-
-.modal {
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: var(--shadow-xl);
-  max-width: 500px;
-  width: 90%;
-}
-```
-
----
-
-## Style Guidelines
-
-**Style:** Organic Biophilic
-
-**Keywords:** Nature, organic shapes, green, sustainable, rounded, flowing, wellness, earthy, natural textures
-
-**Best For:** Wellness apps, sustainability brands, eco products, health apps, meditation, organic food brands
-
-**Key Effects:** Rounded corners (16-24px), organic curves (border-radius variations), natural shadows, flowing SVG shapes
-
-### Page Pattern
-
-**Pattern Name:** Data + Trust
-
-- **CTA Placement:** Above fold
-- **Section Order:** Hero > Features > CTA
-
----
-
-## Anti-Patterns (Do NOT Use)
-
-- ❌ Greenwashing
-- ❌ No real data
-
-### Additional Forbidden Patterns
-
-- ❌ **Emojis as icons** — Use SVG icons (Heroicons, Lucide, Simple Icons)
-- ❌ **Missing cursor:pointer** — All clickable elements must have cursor:pointer
-- ❌ **Layout-shifting hovers** — Avoid scale transforms that shift layout
-- ❌ **Low contrast text** — Maintain 4.5:1 minimum contrast ratio
-- ❌ **Instant state changes** — Always use transitions (150-300ms)
-- ❌ **Invisible focus states** — Focus states must be visible for a11y
-
----
-
-## Pre-Delivery Checklist
-
-Before delivering any UI code, verify:
-
-- [ ] No emojis used as icons (use SVG instead)
-- [ ] All icons from consistent icon set (Heroicons/Lucide)
-- [ ] `cursor-pointer` on all clickable elements
-- [ ] Hover states with smooth transitions (150-300ms)
-- [ ] Light mode: text contrast 4.5:1 minimum
-- [ ] Focus states visible for keyboard navigation
-- [ ] `prefers-reduced-motion` respected
-- [ ] Responsive: 375px, 768px, 1024px, 1440px
-- [ ] No content hidden behind fixed navbars
-- [ ] No horizontal scroll on mobile
+One staggered rise on page load; tab panels fade; everything respects
+`prefers-reduced-motion`.

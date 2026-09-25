@@ -1,0 +1,128 @@
+/*
+ * 通書 design tokens.
+ * Light = 宣紙 rice paper with 墨 ink and 朱砂 vermilion seals.
+ * Dark  = 墨 ink-black paper with warm paper-coloured text.
+ */
+
+:root {
+  /* Paper & ink */
+  --paper: #f3ede1;
+  --paper-raised: #f8f4ec;
+  --paper-sunk: #e9e1d1;
+  --ink: #1d1a15;
+  --ink-2: #4a443a;
+  --ink-3: #7a7162;
+  --rule: #d6cab3;
+  --rule-strong: #a99b81;
+
+  /* Pigments */
+  --zhu: #b03a26;         /* 朱 vermilion — seals, primary action, emphasis */
+  --zhu-ink: #fff8ef;     /* text on vermilion */
+  --zhu-wash: rgb(176 58 38 / 0.08);
+  --qing: #2f6b5b;        /* 青 celadon */
+  --jin: #94702a;         /* 金 ochre */
+  --dai: #2e4a6b;         /* 黛 indigo */
+  --zi: #7a3f6e;          /* 紫 plum */
+  --steel: #6f6d66;
+
+  /* Five elements */
+  --el-wood: var(--qing);
+  --el-fire: var(--zhu);
+  --el-earth: var(--jin);
+  --el-metal: var(--steel);
+  --el-water: var(--dai);
+
+  /* Systems */
+  --sys-bazi: var(--zhu);
+  --sys-ziwei: var(--dai);
+  --sys-numerology: var(--jin);
+  --sys-minggua: var(--qing);
+  --sys-dreamspell: var(--zi);
+
+  /* 四化 */
+  --mu-lu: #2f7a52;
+  --mu-quan: #7a3f6e;
+  --mu-ke: #2e5e8f;
+  --mu-ji: #b03a26;
+
+  /* Type */
+  --font-display: 'Chiron Sung HK', 'Noto Serif TC', 'Songti TC', serif;
+  --font-body: 'Noto Sans TC', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  --font-script: 'LXGW WenKai TC', 'Kaiti TC', 'DFKai-SB', var(--font-display);
+  --font-numeral: 'Cormorant Garamond', 'Chiron Sung HK', serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+  --text-4xl: clamp(2.5rem, 1.6rem + 4vw, 4.5rem);
+
+  /* Space & shape */
+  --gutter: clamp(1rem, 0.6rem + 2vw, 2.5rem);
+  --measure: 40rem;
+  --page: 72rem;
+  --radius: 3px;
+  --masthead-h: 3.5rem;
+  --shadow: 0 1px 0 rgb(29 26 21 / 0.04), 0 8px 24px -12px rgb(29 26 21 / 0.18);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --paper: #16140f;
+  --paper-raised: #1e1b15;
+  --paper-sunk: #110f0b;
+  --ink: #ece4d2;
+  --ink-2: #c2b8a3;
+  --ink-3: #8f8674;
+  --rule: #353026;
+  --rule-strong: #5a5142;
+
+  --zhu: #e0593f;
+  --zhu-ink: #1a0f0a;
+  --zhu-wash: rgb(224 89 63 / 0.12);
+  --qing: #72b5a0;
+  --jin: #d4a85a;
+  --dai: #8aabd3;
+  --zi: #c48bb8;
+  --steel: #a5a39b;
+
+  --mu-lu: #6cc08f;
+  --mu-quan: #c48bb8;
+  --mu-ke: #8aabd3;
+  --mu-ji: #e0593f;
+
+  --shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 10px 30px -12px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #16140f;
+    --paper-raised: #1e1b15;
+    --paper-sunk: #110f0b;
+    --ink: #ece4d2;
+    --ink-2: #c2b8a3;
+    --ink-3: #8f8674;
+    --rule: #353026;
+    --rule-strong: #5a5142;
+    --zhu: #e0593f;
+    --zhu-ink: #1a0f0a;
+    --zhu-wash: rgb(224 89 63 / 0.12);
+    --qing: #72b5a0;
+    --jin: #d4a85a;
+    --dai: #8aabd3;
+    --zi: #c48bb8;
+    --steel: #a5a39b;
+    --mu-lu: #6cc08f;
+    --mu-quan: #c48bb8;
+    --mu-ke: #8aabd3;
+    --mu-ji: #e0593f;
+    --shadow: 0 1px 0 rgb(0 0 0 / 0.3), 0 10px 30px -12px rgb(0 0 0 / 0.6);
+    color-scheme: dark;
+  }
+}

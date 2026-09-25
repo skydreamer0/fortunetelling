@@ -158,3 +158,14 @@ Swiss Ephemeris 僅允許出現在 `calculators/jyotish`、`calculators/humanDes
 `packages/core` 必須能在瀏覽器內完整運作，不依賴伺服器或資料庫（延續 ROADMAPS 原則 1）。
 帳號、`life_events`、回驗、AI 解讀屬於 V4／V5 的選用層。出生資料屬敏感個資：
 伺服器端必須 RLS、可一鍵刪除；送給 AI 的 profile 必須去識別化（不含姓名與精確出生地標籤）。
+
+## D-030 前端改寫：React + TypeScript、SVG 圖表、「通書」視覺 ✅（2026-09-25）
+`apps/web` 由字串模板改為 React 19 + TypeScript。理由：報告區塊變多（V1 起加入 Timeline／signals），
+字串拼接難以維護與測試；React 也讓 V3 評估 Next.js 時可直接沿用元件。
+- 元件只讀 `model/selectors.ts` 產出的畫面資料，不直接翻 `engines[].components`；selectors 為純函式並有測試。
+- 移除 Chart.js，改用自繪 SVG 雷達（含無障礙資料表），圖表與版面同一套 tokens，明暗主題不需重繪。
+- 報告改為八章（命格／本年／領域／命盤／運程／情境／建議／方法），各系統命盤收進分頁；
+  手機版頁長由約 18,000px 降到約 10,600px。列印時展開所有分頁與摺疊區塊。
+- 視覺方向「通書」：宣紙底、墨色字、朱砂印章色；Chiron Sung HK（標題）、Noto Sans TC（內文）、
+  霞鶩文楷（摘要）、Cormorant Garamond（數字）。規格見 `design-system/fortune-telling-platform/MASTER.md`。
+- D-015（UI 只消費 Report）維持不變。

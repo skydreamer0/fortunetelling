@@ -49,14 +49,14 @@ packages/core/            @fortune/core — 框架無關核心（V0 起自 src/ 
                             EvolutionCalculator / HonestyGuard / SummaryBuilder / InsightBuilder
     visualization/       ✅ TextFallback（純文字降級，無 DOM 依賴）
   tests/                 ✅ 核心與整合測試（bun test）
-apps/web/                 @fortune/web — Vite UI App（只透過 @fortune/core 取用核心）
-  index.html  vite.config.js  public/
+apps/web/                 @fortune/web — React 19 + TypeScript + Vite（D-030；只透過 @fortune/core 取用核心）
   src/
-    main.js              ✅ App 進入點
-    ui/                  ✅ 表單、報告、合盤、面板
-    visualization/       ✅ ChartTheme / RadarChart / BarChart / CompatibilityChart（Chart.js）
-    styles/
-  tests/                 ✅ UI 與視覺化測試
+    main.tsx  App.tsx    ✅ 進入點與 App 殼（畫面切換、載入、主題、列印）
+    lib/                 ✅ core 型別橋接、最近查詢、主題、術語表
+    model/               ✅ Report 型別與 selectors（Report → 畫面資料，純函式）
+    components/          ✅ input/（表單）report/（八章報告）compat/（合盤）ui/（SVG 雷達、分頁等）
+    styles/              ✅ tokens / base / intake / report / charts / print
+  tests/                 ✅ selectors、儲存、SSR 渲染測試
 docs/  ARCHITECTURE.md(本文件) ARCHITECTURE-V2.md DECISIONS.md HARNESS_SPEC.md TASKS.md
        CONTRIBUTING.md PLAN-FOR-AUDIT.md
 ```
@@ -173,7 +173,7 @@ Violation {
 - **權威 runtime：Bun**，Bun workspaces 管理 `packages/*` 與 `apps/*`。
 - 根目錄指令：`bun install`、`bun test`（跑所有 workspace 的測試）、`bun run dev`、`bun run build`
   （轉交 `@fortune/web`，輸出在 `apps/web/dist`）。
-- 型別檢查：`bun run --filter @fortune/core typecheck`（D-024；目前有已知 JSDoc 型別債，尚未納入 CI）。
+- 型別檢查：`bun run --filter @fortune/web typecheck`（CI 執行）；`bun run --filter @fortune/core typecheck`（D-024；已知 JSDoc 型別債，尚未納入 CI）。
 - CI：`.github/workflows/ci.yml`（test + build）；部署：`deploy.yml` 上傳 `apps/web/dist` 到 GitHub Pages。
 
 ## 7. 里程碑總覽
