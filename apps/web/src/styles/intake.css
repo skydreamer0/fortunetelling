@@ -201,6 +201,16 @@ fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
 .shichen__unknown { display: inline-flex; align-items: center; gap: 0.5rem; width: fit-content; font-size: var(--text-sm); color: var(--ink-2); cursor: pointer; }
 .shichen__unknown input { accent-color: var(--zhu); }
 
+/* Clock time + accuracy, birthplace. */
+.ledger__time { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.ledger__time .segmented__track { display: grid; grid-template-columns: repeat(4, auto); }
+.ledger__time .segmented__option span { min-width: 0; padding: 0.45rem 0.75rem; letter-spacing: 0.05em; text-indent: 0; white-space: nowrap; }
+
+.city { display: grid; gap: 0.4rem; }
+.city__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 1rem; align-items: end; }
+.city__search { font-size: var(--text-md); }
+.city__search::-webkit-search-cancel-button { cursor: pointer; }
+
 .form-error { min-height: 1.2em; color: var(--zhu); font-size: var(--text-sm); }
 .form-error:empty { display: none; }
 
@@ -270,6 +280,10 @@ fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
 @media (max-width: 560px) {
   .shichen__grid { grid-template-columns: repeat(4, 1fr); }
   .ledger__date { grid-template-columns: 1fr; gap: 1rem; }
+  .ledger__time { grid-template-columns: 1fr; gap: 1rem; }
+  .ledger__time .segmented__track { width: 100%; grid-template-columns: repeat(4, 1fr); }
+  .ledger__time .segmented__option span { padding: 0.45rem 0.2rem; }
+  .city__row { grid-template-columns: 1fr; gap: 0.5rem; }
   .pair { grid-template-columns: 1fr; }
   .pair__join { writing-mode: horizontal-tb; justify-self: center; }
   .mode__option span { padding: 0.6rem 1rem; }

@@ -1,4 +1,4 @@
-/** 伍 運程 — 八字大運 and 紫微大限 as horizontal decade strips. */
+/** 陸 運程 — 八字大運 and 紫微大限 as horizontal decade strips. */
 
 import { useState } from 'react';
 import { periodsBySystem } from '../../model/selectors';
@@ -52,7 +52,7 @@ function Strip({ title, periods }: { title: string; periods: Period[] }) {
 export function Periods({ report }: { report: Report }) {
   const groups = periodsBySystem(report);
   return (
-    <Section id="ch-periods" index="伍" title="運程" lede="十年一段的長期背景。點選任一段查看當期的五行／宮位輪廓變化。">
+    <Section id="ch-periods" index="陸" title="運程" lede="十年一段的長期背景。點選任一段查看當期的五行／宮位輪廓變化。">
       {groups.length === 0
         ? <EmptyNote>目前沒有可呈現的時期演化資料（通常是出生時辰不確定）。</EmptyNote>
         : groups.map(group => <Strip key={group.system} title={group.title} periods={group.periods} />)}
