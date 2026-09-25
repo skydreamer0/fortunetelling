@@ -100,7 +100,12 @@ export function normalizeChart(chart: BaziRuleChart): BaziRuleChart {
     })
     .sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : a.index - b.index));
   const out: BaziRuleChart = {
-    pillars: { year: null, month: null, day: null, hour: null, ...chart.pillars },
+    pillars: {
+      year: chart.pillars?.year ?? null,
+      month: chart.pillars?.month ?? null,
+      day: chart.pillars?.day ?? null,
+      hour: chart.pillars?.hour ?? null,
+    },
     luckCycles,
     natalComponentId: chart.natalComponentId ?? 'natal',
   };

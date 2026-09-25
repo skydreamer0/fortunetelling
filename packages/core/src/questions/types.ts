@@ -24,7 +24,7 @@ export interface QuestionRequest {
 }
 
 /** Both variants carry every field so callers can read them without narrowing (core is not `strict`). */
-export type ValidationResult =
+export type QuestionValidationResult =
   | { ok: true; value: QuestionRequest; unsupported: false; errors: [] }
   | { ok: false; value?: undefined; unsupported: boolean; errors: string[] };
 

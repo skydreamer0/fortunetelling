@@ -81,7 +81,7 @@ export function lunarYearOf(iso: string): number {
 // ─── Time → timeIndex ───────────────────────────────────────────────────────
 
 /** Map a wall reading 'YYYY-MM-DDTHH:mm:ss' to (date, timeIndex). */
-export function resolveWallTime(
+export function resolveZiweiWallTime(
   wall: string,
   convention: ZiweiZiHourConvention,
 ): { date: string; timeIndex: number } {
@@ -103,7 +103,7 @@ function wallOf(ctx: TimeContext, basis: TimeBasis): string {
 }
 
 function resolution(wall: string, basis: TimeBasis, ziHourConvention: ZiweiZiHourConvention): ZiweiTimeResolution {
-  return { ...resolveWallTime(wall, ziHourConvention), basis, wallTime: wall, ziHourConvention };
+  return { ...resolveZiweiWallTime(wall, ziHourConvention), basis, wallTime: wall, ziHourConvention };
 }
 
 /**

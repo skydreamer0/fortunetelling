@@ -41,7 +41,7 @@ import type {
   QuestionRequest,
   RankedWindow,
   SignalProvider,
-  ValidationResult,
+  QuestionValidationResult,
 } from './types';
 
 export const QUESTION_CATALOG: QuestionCatalog = catalogJson as unknown as QuestionCatalog;
@@ -103,7 +103,7 @@ function isLeap(y: number): boolean {
 export function validateQuestionRequest(
   input: unknown,
   catalog: QuestionCatalog = QUESTION_CATALOG,
-): ValidationResult {
+): QuestionValidationResult {
   const errors: string[] = [];
   let unsupported = false;
   if (!isPlainObject(input)) return { ok: false, unsupported: false, errors: ['request must be an object'] };

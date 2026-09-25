@@ -70,3 +70,8 @@ export * from './signals/index';
 // ② 純函式計算器（V1-06／V1-07）；以命名空間匯出，避免同名 helper 衝突
 export * as Numerology from './calculators/numerology/numerology';
 export * as Tzolkin from './calculators/tzolkin/tzolkin';
+// ② 計算器契約與各系統計算器（V1-03 起）
+export * from './calculators/index';
+// ⑤ Timeline（V1-13）與 ⑥ 問事引擎（V5-01/02）
+export * from './timeline/index';
+export * from './questions/index';
