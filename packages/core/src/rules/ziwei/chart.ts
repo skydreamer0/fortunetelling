@@ -5,10 +5,14 @@
  *
  * Period dates (大限 / 流年) are derived from the chart's own data:
  *   - Birth lunar year comes from `natal_summary.lunarDate` (e.g. 一九九一年…).
- *   - 虛歲 n ↔ lunar year (birthLunarYear + n − 1); a 大限 [s, e] is mapped to the
- *     ISO span `${Y+s−1}-01-01 … ${Y+e−1}-12-31`. The lunar-new-year boundary is
- *     approximated by the Gregorian year boundary until V1-05 (TimeContext) lands.
+ *   - 虛歲 n ↔ lunar year (birthLunarYear + n − 1); a lunar year Y spans
+ *     春節(Y) … 春節(Y+1) − 1 day when `options.lunarNewYear` supplies 春節 dates
+ *     (V1-05: `calculators/ziwei/toZiweiRuleChart`). Without it — or for a year it
+ *     cannot resolve — the Gregorian year boundary is used as a fallback
+ *     (`${Y}-01-01 … ${Y}-12-31`), the pre-V1-05 approximation.
  *   - 流年 year is recovered from its 干支 (the year nearest the component's asOf).
+ *   - Multi-year 流年 and 流月 sequences are not engine components; they are
+ *     passed in via `options.sequences` (chart-level ids such as 'liuNian_2027').
  */
 
 export type MutagenKind = '祿' | '權' | '科' | '忌';
@@ -49,6 +53,10 @@ export interface ZiweiPeriod {
   /** ISO dates; null when the birth year is unknown. */
   start: string | null;
   end: string | null;
+  /** Lunar year of a 流年 / 流月 period (null / absent for 大限). */
+  lunarYear?: number | null;
+  /** Lunar month 1–12 of a 流月 period. */
+  lunarMonth?: number;
 }
 
 export interface ZiweiRuleChart {
@@ -62,9 +70,13 @@ export interface ZiweiRuleChart {
   natalMutagenComponentIds: Partial<Record<MutagenKind, string>>;
   /** Full 大限 sequence, sorted by start age. */
   decades: ZiweiPeriod[];
-  /** 流年 at the engine's asOf (only one year is exposed before V1-05). */
+  /** 流年 at the engine's asOf (component `flyingStars_yearly`). */
   yearly: ZiweiPeriod | null;
-  /** Every component id seen, for evidence validation. */
+  /** 流年 sequence (V1-05), sorted by lunar year; [] when not supplied. */
+  yearlySequence: ZiweiPeriod[];
+  /** 流月 sequence (V1-05), sorted by start; [] when not supplied. */
+  monthlySequence: ZiweiPeriod[];
+  /** Every component id seen plus the ids of supplied sequences, for evidence validation. */
   componentIds: string[];
 }
 
@@ -78,6 +90,13 @@ export interface ZiweiComponentLike {
 export interface FromZiweiComponentsOptions {
   /** Override the lunar birth year (otherwise parsed from natal_summary.lunarDate). */
   birthLunarYear?: number;
+  /**
+   * 春節 ISO date of a lunar year (null if unknown). When given, 大限 / 流年
+   * spans use lunar-year boundaries instead of the Gregorian approximation.
+   */
+  lunarNewYear?: (lunarYear: number) => string | null;
+  /** Flow sequences not present as engine components (V1-05). */
+  sequences?: { yearly?: readonly ZiweiPeriod[]; monthly?: readonly ZiweiPeriod[] };
 }
 
 const CN_DIGITS: Record<string, number> = {
@@ -132,6 +151,26 @@ function toStar(raw: any, kind: 'major' | 'minor'): ZiweiStar {
 }
 
 const pad4 = (y: number) => String(y).padStart(4, '0');
+
+/** ISO date `days` after `iso` (UTC arithmetic, host-zone independent). */
+function addDaysIso(iso: string, days: number): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d) + days * 86_400_000).toISOString().slice(0, 10);
+}
+
+/** ISO span of lunar years [from, to]: precise when 春節 dates resolve, else Gregorian fallback. */
+function lunarYearSpan(
+  from: number,
+  to: number,
+  lunarNewYear: FromZiweiComponentsOptions['lunarNewYear'],
+): { start: string; end: string } {
+  const startLny = lunarNewYear?.(from) ?? null;
+  const nextLny = lunarNewYear?.(to + 1) ?? null;
+  return {
+    start: startLny ?? `${pad4(from)}-01-01`,
+    end: nextLny !== null ? addDaysIso(nextLny, -1) : `${pad4(to)}-12-31`,
+  };
+}
 
 /**
  * Build a `ZiweiRuleChart` from ZiweiEngine components (the `components` array of
@@ -199,7 +238,7 @@ export function fromZiweiComponents(
     .map(({ c }) => {
       const v = c.value;
       const [s, e] = v.range as [number, number];
-      const known = birthLunarYear !== null;
+      const span = birthLunarYear !== null ? lunarYearSpan(birthLunarYear + s - 1, birthLunarYear + e - 1, options.lunarNewYear) : null;
       return {
         componentId: c.id,
         label: `第${v.index}大限（虛歲 ${s}–${e}）`,
@@ -207,8 +246,8 @@ export function fromZiweiComponents(
         heavenlyStem: v.heavenlyStem,
         earthlyBranch: v.earthlyBranch,
         mutagen: toMutagenRecord(v.mutagen),
-        start: known ? `${pad4(birthLunarYear + s - 1)}-01-01` : null,
-        end: known ? `${pad4(birthLunarYear + e - 1)}-12-31` : null,
+        start: span?.start ?? null,
+        end: span?.end ?? null,
       };
     });
 
@@ -217,6 +256,7 @@ export function fromZiweiComponents(
     const v = yearlyRaw.value;
     const asOfYear = typeof v.asOf === 'string' ? Number(v.asOf.slice(0, 4)) : NaN;
     const y = Number.isFinite(asOfYear) ? yearOfGanZhi(v.heavenlyStem, v.earthlyBranch, asOfYear) : null;
+    const span = y !== null ? lunarYearSpan(y, y, options.lunarNewYear) : null;
     yearly = {
       componentId: yearlyRaw.id,
       label: `${v.heavenlyStem}${v.earthlyBranch}流年${y !== null ? `（${y}）` : ''}`,
@@ -224,10 +264,21 @@ export function fromZiweiComponents(
       heavenlyStem: v.heavenlyStem,
       earthlyBranch: v.earthlyBranch,
       mutagen: toMutagenRecord(v.mutagen),
-      start: y !== null ? `${pad4(y)}-01-01` : null,
-      end: y !== null ? `${pad4(y)}-12-31` : null,
+      start: span?.start ?? null,
+      end: span?.end ?? null,
+      lunarYear: y,
     };
   }
+
+  const yearlySequence = [...(options.sequences?.yearly ?? [])].sort((a, b) => (a.lunarYear ?? 0) - (b.lunarYear ?? 0));
+  const monthlySequence = [...(options.sequences?.monthly ?? [])].sort((a, b) =>
+    (a.start ?? '') < (b.start ?? '') ? -1 : (a.start ?? '') > (b.start ?? '') ? 1 : 0,
+  );
+  const ids = [
+    ...components.map((c) => c.id),
+    ...yearlySequence.map((p) => p.componentId),
+    ...monthlySequence.map((p) => p.componentId),
+  ];
 
   return {
     birthLunarYear,
@@ -236,7 +287,9 @@ export function fromZiweiComponents(
     natalMutagenComponentIds,
     decades,
     yearly,
-    componentIds: [...new Set(components.map((c) => c.id))].sort(),
+    yearlySequence,
+    monthlySequence,
+    componentIds: [...new Set(ids)].sort(),
   };
 }
 

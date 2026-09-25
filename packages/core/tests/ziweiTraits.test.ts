@@ -119,7 +119,7 @@ describe('traits/ziweiModifiers.json schema', () => {
 });
 
 describe('rules/ziwei/catalog.json', () => {
-  test('ids unique; active rules implemented; pending rules flagged for V1-05', () => {
+  test('ids unique; active rules implemented; V1-05 rules activated', () => {
     const ids = ZIWEI_CATALOG.rules.map((r) => r.id);
     expect(new Set(ids).size).toBe(ids.length);
     const active = ZIWEI_CATALOG.rules.filter((r) => r.status === 'active').map((r) => r.id).sort();
@@ -134,9 +134,10 @@ describe('rules/ziwei/catalog.json', () => {
       expect(r.description.length).toBeGreaterThan(0);
       expect(r.source.length).toBeGreaterThan(0);
     }
+    // V1-05 activated the three rules that were pending (sequence data now exists).
     const pending = ZIWEI_CATALOG.rules.filter((r) => r.status === 'pending_v1_05').map((r) => r.id);
-    expect(pending).toContain('ziwei.month.mutagen');
-    expect(pending).toContain('ziwei.month.palace_overlay');
+    expect(pending).toEqual([]);
+    for (const id of ['ziwei.year.sequence', 'ziwei.month.mutagen', 'ziwei.month.palace_overlay']) expect(active).toContain(id);
   });
 });
 
@@ -255,7 +256,11 @@ describe('real chart 1991-10-05 14:00 female, asOf 2026-07-11', () => {
 
   test('every active rule fires at least once', () => {
     const fired = new Set(signals.map((s) => s.ruleId));
-    for (const r of ZIWEI_RULES) expect(fired.has(r.id)).toBe(true);
+    // Sequence rules need the V1-05 calculator chart (engine components carry no
+    // 流年/流月 sequences); they are covered in ziweiTimeContext.test.ts.
+    const SEQUENCE_RULES = ['ziwei.year.sequence', 'ziwei.month.mutagen', 'ziwei.month.palace_overlay'];
+    for (const r of ZIWEI_RULES) if (!SEQUENCE_RULES.includes(r.id)) expect(fired.has(r.id)).toBe(true);
+    for (const id of SEQUENCE_RULES) expect(fired.has(id)).toBe(false);
   });
 
   test('all signals valid: ids recompute, ranges hold, enums closed', () => {
