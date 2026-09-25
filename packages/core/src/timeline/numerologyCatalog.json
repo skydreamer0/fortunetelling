@@ -1,0 +1,89 @@
+{
+  "$comment": "生命靈數時間軸規則目錄（V1-13；ARCHITECTURE-V2 §5、D-028）。只以資料表示 domain × trait × intensity × valence，不含任何定性評語字串。數字意義採畢達哥拉斯派通行的個人流年說法（開始、合作、表達、打基礎、變動、責任、內省、成果、收尾；11／22／33 為大師數），權重為本專案資料、尚未回驗。版本一經發布不可改參數，只能遞增 version。Tzolkin 與命卦不在此目錄：兩者在本專案只有出生時固定的值（Kin、命卦），沒有隨時間變化的成分，放進時間軸只會在每一格加上相同的常數。",
+  "version": 1,
+  "system": "numerology",
+  "conventions": {
+    "personalYear": "個人流年數 = reduce(reduce(出生月) + reduce(出生日) + reduce(西元年))，保留 11/22/33；以西元曆年（1/1–12/31）為單位（與 NumerologyEngine 的 personalYear 相同）。",
+    "personalMonth": "個人流月數 = reduce(個人流年數 + 西元月份)，保留 11/22/33（與 NumerologyEngine 的 personalMonth 相同）。流月沿用流年的數字意義表，強度乘上 personal_month 規則的 params.factor。"
+  },
+  "numbers": {
+    "1": [
+      { "domain": "self", "trait": "independence", "intensity": 0.55, "valence": 0.3 },
+      { "domain": "career", "trait": "change", "intensity": 0.5, "valence": 0.2 },
+      { "domain": "career", "trait": "leadership", "intensity": 0.4, "valence": 0.2 }
+    ],
+    "2": [
+      { "domain": "relationship", "trait": "connection", "intensity": 0.55, "valence": 0.3 },
+      { "domain": "contract", "trait": "support", "intensity": 0.45, "valence": 0.2 },
+      { "domain": "self", "trait": "stability", "intensity": 0.3, "valence": 0 }
+    ],
+    "3": [
+      { "domain": "self", "trait": "visibility", "intensity": 0.5, "valence": 0.3 },
+      { "domain": "learning", "trait": "growth", "intensity": 0.4, "valence": 0.2 },
+      { "domain": "relationship", "trait": "connection", "intensity": 0.4, "valence": 0.2 }
+    ],
+    "4": [
+      { "domain": "career", "trait": "stability", "intensity": 0.5, "valence": 0.1 },
+      { "domain": "property", "trait": "stability", "intensity": 0.45, "valence": 0.1 },
+      { "domain": "health", "trait": "pressure", "intensity": 0.35, "valence": -0.2 }
+    ],
+    "5": [
+      { "domain": "movement", "trait": "change", "intensity": 0.6, "valence": 0 },
+      { "domain": "self", "trait": "change", "intensity": 0.5, "valence": 0 },
+      { "domain": "contract", "trait": "risk", "intensity": 0.3, "valence": -0.2 }
+    ],
+    "6": [
+      { "domain": "family", "trait": "support", "intensity": 0.55, "valence": 0.3 },
+      { "domain": "relationship", "trait": "connection", "intensity": 0.45, "valence": 0.2 },
+      { "domain": "family", "trait": "pressure", "intensity": 0.3, "valence": -0.1 }
+    ],
+    "7": [
+      { "domain": "learning", "trait": "growth", "intensity": 0.55, "valence": 0.2 },
+      { "domain": "self", "trait": "independence", "intensity": 0.4, "valence": 0 },
+      { "domain": "relationship", "trait": "separation", "intensity": 0.3, "valence": -0.1 }
+    ],
+    "8": [
+      { "domain": "wealth", "trait": "opportunity", "intensity": 0.55, "valence": 0.2 },
+      { "domain": "career", "trait": "leadership", "intensity": 0.5, "valence": 0.2 },
+      { "domain": "career", "trait": "pressure", "intensity": 0.35, "valence": -0.2 }
+    ],
+    "9": [
+      { "domain": "self", "trait": "change", "intensity": 0.45, "valence": 0 },
+      { "domain": "relationship", "trait": "separation", "intensity": 0.4, "valence": -0.2 },
+      { "domain": "learning", "trait": "growth", "intensity": 0.35, "valence": 0.1 }
+    ],
+    "11": [
+      { "domain": "self", "trait": "visibility", "intensity": 0.5, "valence": 0.1 },
+      { "domain": "learning", "trait": "growth", "intensity": 0.45, "valence": 0.2 },
+      { "domain": "health", "trait": "pressure", "intensity": 0.35, "valence": -0.2 }
+    ],
+    "22": [
+      { "domain": "career", "trait": "growth", "intensity": 0.55, "valence": 0.2 },
+      { "domain": "property", "trait": "opportunity", "intensity": 0.45, "valence": 0.2 },
+      { "domain": "career", "trait": "pressure", "intensity": 0.45, "valence": -0.2 }
+    ],
+    "33": [
+      { "domain": "family", "trait": "support", "intensity": 0.55, "valence": 0.2 },
+      { "domain": "learning", "trait": "connection", "intensity": 0.4, "valence": 0.2 },
+      { "domain": "family", "trait": "pressure", "intensity": 0.35, "valence": -0.2 }
+    ]
+  },
+  "rules": [
+    {
+      "id": "numerology.personal_year",
+      "version": 1,
+      "scope": "year",
+      "description": "窗口涵蓋的每個西元曆年，依個人流年數輸出 numbers 表的特徵權重。",
+      "source": "畢達哥拉斯派個人流年通行說法（例：Hans Decoz, Numerology: Key to Your Inner Self；Faith Javane & Dusty Bunker, Numerology and the Divine Triangle）；權重為本專案資料。",
+      "params": { "factor": 1 }
+    },
+    {
+      "id": "numerology.personal_month",
+      "version": 1,
+      "scope": "month",
+      "description": "窗口涵蓋的每個西元月份，依個人流月數輸出 numbers 表的特徵權重（強度 × factor）。",
+      "source": "同上（個人流月為個人流年的細分，通行說法強度較流年弱）；factor 為本專案資料。",
+      "params": { "factor": 0.6 }
+    }
+  ]
+}
