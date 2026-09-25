@@ -58,6 +58,14 @@ describe('signalId', () => {
     expect(signalId({ ...base })).toBe(id);
   });
 
+  test('id is recomputable from a stored signal', () => {
+    const sig = createSignal({ ...base, intensity: 0.6, valence: -0.3 });
+    expect(sig.target).toBe(base.target);
+    const { system, ruleId, ruleVersion, window, target, domain, trait } = sig;
+    expect(signalId({ system, ruleId, ruleVersion, window, target, domain, trait })).toBe(sig.id);
+    expect(createSignal({ ...base, target: undefined, intensity: 0.6, valence: 0 }).target).toBeNull();
+  });
+
   test('key order irrelevant', () => {
     const reordered = {
       trait: base.trait,

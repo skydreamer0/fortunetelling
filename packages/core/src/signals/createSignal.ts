@@ -21,7 +21,7 @@ export interface CreateSignalParams {
   intensity: number;
   valence: number;
   window: SignalWindow;
-  /** Rule hit target; contributes to the id but is not stored on the Signal (§6 shape). */
+  /** Rule hit target; contributes to the id and is stored on the Signal. */
   target?: string | null;
   evidence?: { componentIds?: string[]; text?: string; modifiers?: Modifier[] };
 }
@@ -64,11 +64,13 @@ export function createSignal(params: CreateSignalParams): Signal {
   });
 
   const win: SignalWindow = { grain: window.grain, start: window.start, end: window.end };
+  const target = params.target ?? null;
   return {
-    id: signalId({ system, ruleId, ruleVersion, window: win, target: params.target, domain, trait }),
+    id: signalId({ system, ruleId, ruleVersion, window: win, target, domain, trait }),
     system,
     ruleId,
     ruleVersion,
+    target,
     domain,
     trait,
     intensity,

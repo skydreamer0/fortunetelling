@@ -81,6 +81,8 @@ export interface Signal {
   system: SystemId;
   ruleId: string;
   ruleVersion: number;
+  /** Rule hit target (e.g. 'day_pillar'); stored so `id` can be recomputed from the signal alone. */
+  target: string | null;
   domain: Domain;
   trait: Trait;
   /** 0–1: how strong the signal is. */
