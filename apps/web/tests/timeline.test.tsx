@@ -73,9 +73,13 @@ describe('timeline selectors', () => {
   });
 
   test('a domain with no signals is marked empty rather than just 低', () => {
-    const wealth2026 = findTimelineCell('year:2026-01-01:wealth', years)!;
-    expect(wealth2026.score).toBe(0);
-    expect(wealth2026.empty).toBe(true);
+    // 不寫死特定格子：規則集擴充（如 V1-10b 十神）會改變哪些格子沒有訊號。
+    const empty = allCells().filter(cell => cell.topSignals.length === 0);
+    expect(empty.length).toBeGreaterThan(0);
+    for (const cell of empty) {
+      expect(cell.score).toBe(0);
+      expect(cell.empty).toBe(true);
+    }
     expect(allCells().some(cell => cell.band === '低' && !cell.empty)).toBe(true);
   });
 
@@ -86,10 +90,18 @@ describe('timeline selectors', () => {
       expect(cell.conflict!.positive.length).toBeGreaterThan(0);
       expect(cell.conflict!.negative.length).toBeGreaterThan(0);
     }
-    const relationship2029 = findTimelineCell('year:2029-01-01:relationship', years)!;
-    expect(relationship2029.conflict!.positive.map(side => side.systemName)).toEqual(['紫微斗數']);
-    expect(relationship2029.conflict!.negative.map(side => side.systemName)).toEqual(['生命靈數']);
-    expect(relationship2029.conflict!.negative[0].text).toContain('個人流年數');
+    // 每一側都能解析回系統中文名稱與證據文字，且兩側來自不同系統（跨系統矛盾）。
+    const known = ['八字', '紫微斗數', '生命靈數'];
+    for (const cell of conflicted) {
+      const sides = [...cell.conflict!.positive, ...cell.conflict!.negative];
+      for (const side of sides) {
+        expect(known).toContain(side.systemName);
+        expect(side.text.length).toBeGreaterThan(0);
+      }
+      const pos = new Set(cell.conflict!.positive.map(side => side.systemName));
+      const neg = new Set(cell.conflict!.negative.map(side => side.systemName));
+      expect([...pos].some(name => !neg.has(name)) || [...neg].some(name => !pos.has(name))).toBe(true);
+    }
   });
 
   test('high consensus is exposed', () => {
