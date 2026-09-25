@@ -11,8 +11,9 @@
  * - `annualSequence` (asOf year −1 … +9 by default) and `monthly` (asOf solar year).
  *
  * `components` are still the legacy `BaZiEngine` output (civil Taipei wall time,
- * sect=2) so that `analyze()` / Report v3 and the LayerClassifier stay
- * byte-identical. When the chart pillars differ from those civil pillars the
+ * sect=2). Report v4 `analyze()` no longer uses them: it runs
+ * `core/timeContextEngines#TimeContextBaZiEngine` (true solar / exact 節); with
+ * `useTrueSolarTime: false` a UTC+8 birth gives the same components as here. When the chart pillars differ from those civil pillars the
  * warning `pillars_differ_from_civil` is emitted and both are in the chart
  * (`pillars` vs `civilPillars`).
  *
@@ -221,7 +222,7 @@ export const baziCalculator: Calculator<BaziChart, BaziCalculatorConfig> = {
   calculate(ctx: TimeContext, config: BaziCalculatorConfig = {}): ChartResult<BaziChart> {
     const { ymd } = normalizeAsOf(config.asOf, 'bazi');
     const birth = timeContextToBirthData(ctx, { name: config.name });
-    // Legacy components (civil clock) — unchanged so analyze()/Report v3 stay identical.
+    // Legacy components (civil clock); analyze() v4 uses TimeContextBaZiEngine instead.
     const result = new BaZiEngine({ asOf: ymd }).run(birth);
     const components = result.components as Component[];
     const legacy = extractBaziChart(components);

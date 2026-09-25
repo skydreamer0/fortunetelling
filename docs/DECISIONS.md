@@ -188,6 +188,32 @@ D-016 規定 iztro／lunar-javascript 只能出現在 `engines/`。V1-02 TimeCon
 - 套件沒有型別宣告，由 `src/types/lunar-javascript.d.ts` 以 any 宣告，呼叫端負責轉成強型別。
 - TimeContext 的邊界容忍值（時辰 5／15／60 分、節氣 30／30／60 分，依 `timeAccuracy`）是匯出常數，屬資料而非寫死規則。
 
+## D-032 Report Schema v4：TimeContext 進入 analyze()（2026-09-25）✅
+依 D-012 升版條款，`REPORT_SCHEMA_VERSION` bump 至 4、函式庫 semver bump 至 0.4.0。v3 全部欄位與形狀保留，
+只新增 `timeContext`、`signals`、`timeline` 三個頂層欄位（ARCHITECTURE-V2 §11；形狀見 ARCHITECTURE §4.3）。
+`analyze()` 維持同步；jyotish／humanDesign 需要非同步星曆，一律不進 `analyze()` 的 timeline（`buildTimelineAsync` 另取）。
+不新增 `meta`／`conventions` 頂層欄位：採用的時間約定寫在 `timeContext.conventions` 與各引擎 `meta.timeConvention`。
+`signals` 取 timeline `topSignals` 的去重聯集（非全部訊號），控制報告大小（約 0.5 MB）。
+
+**行為變更（償還 D-026 記錄的債務，刻意為之）：**
+- **真太陽時預設開啟**：八字日／時柱、紫微時辰改以出生地真太陽時判定（`useTrueSolarTime: false` 可回到民用時）。
+  例：台北 2026-02-15 13:03 → 真太陽時 12:55 → 時柱 壬午（v3：癸未）。
+- **晚子時**：23:00–24:00 出生，紫微改用晚子（iztro timeIndex 12，同日），v3 誤用同日早子。
+  新增 `ziHourConvention: 'early'`（子初換日：八字 sect=1、紫微次日早子）。
+- **非 UTC+8 出生**：八字年／月柱以出生瞬間對精確交節瞬間判定，不再把外地牆鐘當成 UTC+8 比對節氣。
+  例：紐約 2026-03-05 12:00（17:00Z，驚蟄 13:59Z 之後）→ 月柱 辛卯（v3：庚寅）。大運方向、干支與起運同步修正。
+  同理修正台灣日治時期（UTC+9）與夏令時間出生的交節前後判斷。
+- **一月流年**：`liuNian.year` 改為立春年。asOf 2027-01-15 → `{ year: 2026, ganZhi: '丙午' }`（v3 為 `{ 2027, 丙午 }`，年份與干支不一致）。
+- **預設出生地**：未給 `birthplace`／`cityId`／經緯度時為台北市政府（121.5637°E, 25.0375°N），
+  `input.longitude/latitude` echo 改為實際採用座標（v3 為 BirthData 預設 121.5/25.05）。
+  舊 `longitude/latitude` 仍以 Asia/Taipei 民用時解讀；距 120°E 超過 15° 時標 warning——海外出生請改傳 `birthplace`／`cityId`。
+- 八字 `elements.limitation` 在真太陽時模式下不再宣稱「未做真太陽時校正」。
+- 命卦、靈數、Kin 不變（民用日期；命卦仍以民用時刻視為 UTC+8）。timeline 固定使用計算器預設（真太陽時、晚子），
+  不跟隨 `useTrueSolarTime`／`ziHourConvention`（已知限制，需 timeline 開放 calculator config 才能修正）。
+
+**隱私（D-029）：** `timeContext.profile` 不含姓名；保留出生地標籤供顯示。送 AI 的 payload 仍須移除 `input.name`
+與 `birthplace.label`。
+
 ## D-033 跨系統分數維持「只平均有訊號的系統」，權重與切點待回驗再調 ✅（2026-09-25）
 `aggregateSignals` 的跨系統分數只平均對該 `(domain, window)` 發出訊號的系統，沒發訊號的系統不算 0。
 - 已知後果：只有一套系統觸及的領域，分數就等於該系統的強度；沒有系統觸及的領域為 0，

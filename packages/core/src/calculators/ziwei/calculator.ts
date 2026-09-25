@@ -8,7 +8,8 @@
  * - `components`: still serialised by the v1 `ZiweiEngine` (single source of the
  *   component shape), fed the resolved (date, timeIndex). With
  *   `useTrueSolarTime: false` and a birth outside 23:00–24:00 they are
- *   byte-identical to the engine inside `analyze()`.
+ *   byte-identical to the v3 engine output. Report v4 `analyze()` runs this same
+ *   path (`core/timeContextEngines#TimeContextZiweiEngine`).
  * - `chart`: natal part from the iztro astrolabe (typed), plus 三方四正 index,
  *   precise 大限 spans, 流年 (asOf lunar year −1 … +9) and 流月 (asOf lunar year).
  *
@@ -138,8 +139,9 @@ export function extractZiweiChart(components: readonly Component[]): ZiweiEngine
  * BirthData whose iztro inputs (solar date, timeIndex) are the resolved ones.
  * ZiweiEngine reads only `solarDateStr`, `timeIndex`, `genderZh`, `year` and
  * `timeKnown`; the legacy getter cannot express 晚子 (timeIndex 12), hence the override.
+ * Exported for `core/timeContextEngines` (Report v4).
  */
-class ResolvedBirthData extends BirthData {
+export class ResolvedBirthData extends BirthData {
   #timeIndex: number;
 
   constructor(base: BirthData, time: ZiweiTimeResolution) {

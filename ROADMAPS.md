@@ -93,7 +93,7 @@
 | V1-10b ✅ | 八字十神／神煞規則 | 十神（財星、官殺、食傷、印星、比劫）、驛馬、財庫、桃花、沖動 → 補上 wealth／contract／movement／property 領域 | V1-10 |
 | V1-12 ✅ | 單系統彙整（含 Numerology 流年／流月規則） | `aggregateSignals()` 第 1 步（系統內 noisy-OR）＋第 2 步（系統權重，先固定） | V1-10, V1-11 |
 | V1-13 ✅ | **Timeline Engine** | `timeline/`：`asOf` 起 5 年＋當年 12 個月 × 領域分數 0–100，每格附 `topSignals[]`；UI 分四段（低／中／中高／高，切點是資料） | V1-12 |
-| V1-14 | Report v4 | 新增頂層 `timeContext`、`signals`、`timeline`，其餘沿用 v3 | V1-13 |
+| V1-14 ✅ | Report v4 | 新增頂層 `timeContext`、`signals`、`timeline`，其餘沿用 v3；八字／紫微改吃 TimeContext（D-032） | V1-13 |
 | V1-15 ✅ | UI：Timeline 視圖 | 年度卡片（❤️ 感情／💰 財運／💼 事業／🚗 移動）＋月份展開＋點開看來源規則；出生地輸入改為城市選擇 | V1-14 |
 | V1-16 | 核心轉 TypeScript | 新程式直接寫 `.ts`；舊檔搬進 calculators 時一併轉，清掉 31 筆型別錯誤 | 貫穿 |
 

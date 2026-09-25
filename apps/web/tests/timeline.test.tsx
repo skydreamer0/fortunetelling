@@ -27,7 +27,9 @@ const INPUT: BirthInput = {
   name: '', year: 1995, month: 7, day: 16, hour: 22, minute: 0, timeKnown: true,
   gender: 'male', calendarType: 'solar', cityId: 'tainan', timeAccuracy: 'exact',
 };
-const v3 = analyze(INPUT);
+// Report v4 起 analyze() 自帶 timeline；這裡明確移除 v4 欄位來模擬舊的 v3 報告（例如最近查詢裡存的舊結果）。
+const { timeline: _timeline, timeContext: _timeContext, signals: _signals, ...v3Fields } = analyze(INPUT);
+const v3: Report = { ...v3Fields, schemaVersion: 3 };
 const v4: Report = { ...v3, input: { ...v3.input, cityId: 'tainan' }, asOf: ASOF, schemaVersion: 4, timeline };
 
 const years = selectTimelineYears(v4)!;
