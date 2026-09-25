@@ -1,6 +1,6 @@
 /** Browser-only persistence for recent queries. No report data leaves the device. */
 
-import type { BirthInput } from '../model/types';
+import type { BirthInput, TimeAccuracy } from '../model/types';
 
 export const REPORT_STORE_KEY = 'fortunetelling:queries:v1';
 export const COMPATIBILITY_STORE_KEY = 'fortunetelling:compatibility:v1';
@@ -12,6 +12,9 @@ export interface RecentQuery {
   asOf: string | null;
   input: BirthInput;
 }
+
+const TIME_ACCURACIES: readonly TimeAccuracy[] = ['exact', 'approx15m', 'approx1h', 'unknown'];
+const CITY_ID = /^[a-z0-9-]{1,64}$/;
 
 type KeyValueStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
@@ -27,6 +30,8 @@ export function normalizeInput(input: Partial<BirthInput> = {}): BirthInput {
     gender: input.gender === 'female' ? 'female' : 'male',
     calendarType: input.calendarType === 'lunar' ? 'lunar' : 'solar',
     ...(input.lunarInput ? { lunarInput: input.lunarInput } : {}),
+    ...(typeof input.cityId === 'string' && CITY_ID.test(input.cityId) ? { cityId: input.cityId } : {}),
+    ...(input.timeAccuracy && TIME_ACCURACIES.includes(input.timeAccuracy) ? { timeAccuracy: input.timeAccuracy } : {}),
   };
 }
 
@@ -74,7 +79,7 @@ export function createReportStore(storage: KeyValueStorage | undefined = safeLoc
       const normalized = normalizeInput(input);
       if (!isUsable(normalized)) return false;
       const fingerprint = [normalized.name, normalized.year, normalized.month, normalized.day,
-        normalized.hour, normalized.timeKnown, normalized.gender].join('|');
+        normalized.hour, normalized.minute, normalized.timeKnown, normalized.gender, normalized.cityId ?? ''].join('|');
       const next = read().filter(item => item.fingerprint !== fingerprint);
       next.unshift({ fingerprint, savedAt: new Date().toISOString(), asOf, input: normalized });
       return write(next);

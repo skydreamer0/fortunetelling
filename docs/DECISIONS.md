@@ -79,9 +79,13 @@ iztro / lunar-javascript 只允許在 `engines/` 出現。EvolutionCalculator �
 「全部大限/大運序列」必須由引擎以 components 形式輸出（任務 B2、D3），
 analysis 層只做聚合計算。這保持 analysis 可獨立測試、可被替換。
 
-## D-017 命卦立春邊界：Feb-4 近似 ✅（已知精度債，V1 由 D-026 TimeContext 償還）
-未用精確節氣時刻。`BirthData.solarTermInfo` 已有資料可日後精修；
-生於 2/3–2/5 的使用者結果需標註不確定性。暫不排任務。
+## D-017 命卦立春邊界：~~Feb-4 近似~~ → 精確立春 ✅（V1-08 已償還，2026-09-25）
+原本以 2/4 為界。V1-08 起改用 `time/solarTerms.ts` 的精確立春時刻（`calculators/mingGua/mingGua.ts`），
+出生時刻恰在立春時刻視為新年。
+- BirthData 尚無時區，MingGuaEngine 暫以 UTC+8（Asia/Taipei）解讀民用時間，與 BaZiEngine 一致；
+  改吃 TimeContext 後移除此假設（D-026）。
+- 時間未知時以當地正午判定；若出生日正是立春當天，發出警告並設 `meta.boundaryAmbiguous: true`。
+- 影響：每年 2/4 00:00 與精確立春之間（數小時到近兩天）出生者的命卦可能改變，其餘不變。
 
 ## D-018 B3 十神顯隱採三態與可稽核明細 ✅
 tenGodsContext 的 presence 採「顯／隱／無」三態。
@@ -146,7 +150,13 @@ Jyotish／Human Design 的行星位置、ayanamsa、月交點（Rahu/Ketu）一�
 缺檔時退回內建 Moshier 模式並寫入 warnings。
 授權：AGPL，本專案為非商業使用。注意 AGPL 的條件看的是「是否透過網路提供給他人使用」，
 不是「是否商用」——若網站公開給他人使用，須同時公開原始碼（公開 repo 即滿足）。
-Swiss Ephemeris 僅允許出現在 `calculators/jyotish`、`calculators/humanDesign` 與共用的 `time/ephemeris` 模組。
+Swiss Ephemeris 僅允許出現在 `calculators/jyotish`、`calculators/humanDesign` 與共用的 `calculators/astro` 模組（V2-01 起取代原訂的 `time/ephemeris`）。
+- 套件（V2-01）：`@swisseph/browser@1.3.1`（Swiss Ephemeris 2.10.03 WASM，AGPL-3.0），版本鎖定。
+  約 227 KB gzip，由 `initEphemeris()` 動態載入，不進首頁 bundle；初始化後全部同步呼叫。
+- 目前使用內建 Moshier 星曆（行星 < 1″、月亮數角秒，1800–2200 足夠），尚未附 .se1 檔；
+  計算器須在 warnings 帶 `ephemeris:moshier_fallback`。
+- 太陽黃經回傳**視黃經**（J2000 = 280.369°，非平黃經 280.46°）；Lahiri ayanamsa 取含章動值。
+- Vite dev 模式接入時預期需要 `optimizeDeps.exclude: ['@swisseph/browser']`。
 
 ## D-028 解讀以特徵權重資料表示，不 hardcode 定性文字 ✅
 星曜、十神、宮位等只輸出 `traits { change, leadership, risk, ... }` 權重，存於版本化資料表；
@@ -169,3 +179,44 @@ Swiss Ephemeris 僅允許出現在 `calculators/jyotish`、`calculators/humanDes
 - 視覺方向「通書」：宣紙底、墨色字、朱砂印章色；Chiron Sung HK（標題）、Noto Sans TC（內文）、
   霞鶩文楷（摘要）、Cormorant Garamond（數字）。規格見 `design-system/fortune-telling-platform/MASTER.md`。
 - D-015（UI 只消費 Report）維持不變。
+
+## D-031 時間層可使用 lunar-javascript（修訂 D-016）✅（2026-09-25）
+D-016 規定 iztro／lunar-javascript 只能出現在 `engines/`。V1-02 TimeContext 需要精確節氣時刻與農曆，
+因此放寬為：**`engines/`、`calculators/`、`time/` 可使用；`analysis/`、`signals/`、`timeline/` 仍禁止**。
+- lunar-javascript 的節氣時刻為中國標準時間（UTC+8），`time/solarTerms.ts` 固定減 8 小時轉 UTC。
+  驗證：立春 2026 = 2026-02-03T20:02:08Z；冬至 1999 與公開值 07:44 UT 相差 1 分鐘內。
+- 套件沒有型別宣告，由 `src/types/lunar-javascript.d.ts` 以 any 宣告，呼叫端負責轉成強型別。
+- TimeContext 的邊界容忍值（時辰 5／15／60 分、節氣 30／30／60 分，依 `timeAccuracy`）是匯出常數，屬資料而非寫死規則。
+
+## D-032 Report Schema v4：TimeContext 進入 analyze()（2026-09-25）✅
+依 D-012 升版條款，`REPORT_SCHEMA_VERSION` bump 至 4、函式庫 semver bump 至 0.4.0。v3 全部欄位與形狀保留，
+只新增 `timeContext`、`signals`、`timeline` 三個頂層欄位（ARCHITECTURE-V2 §11；形狀見 ARCHITECTURE §4.3）。
+`analyze()` 維持同步；jyotish／humanDesign 需要非同步星曆，一律不進 `analyze()` 的 timeline（`buildTimelineAsync` 另取）。
+不新增 `meta`／`conventions` 頂層欄位：採用的時間約定寫在 `timeContext.conventions` 與各引擎 `meta.timeConvention`。
+`signals` 取 timeline `topSignals` 的去重聯集（非全部訊號），控制報告大小（約 0.5 MB）。
+
+**行為變更（償還 D-026 記錄的債務，刻意為之）：**
+- **真太陽時預設開啟**：八字日／時柱、紫微時辰改以出生地真太陽時判定（`useTrueSolarTime: false` 可回到民用時）。
+  例：台北 2026-02-15 13:03 → 真太陽時 12:55 → 時柱 壬午（v3：癸未）。
+- **晚子時**：23:00–24:00 出生，紫微改用晚子（iztro timeIndex 12，同日），v3 誤用同日早子。
+  新增 `ziHourConvention: 'early'`（子初換日：八字 sect=1、紫微次日早子）。
+- **非 UTC+8 出生**：八字年／月柱以出生瞬間對精確交節瞬間判定，不再把外地牆鐘當成 UTC+8 比對節氣。
+  例：紐約 2026-03-05 12:00（17:00Z，驚蟄 13:59Z 之後）→ 月柱 辛卯（v3：庚寅）。大運方向、干支與起運同步修正。
+  同理修正台灣日治時期（UTC+9）與夏令時間出生的交節前後判斷。
+- **一月流年**：`liuNian.year` 改為立春年。asOf 2027-01-15 → `{ year: 2026, ganZhi: '丙午' }`（v3 為 `{ 2027, 丙午 }`，年份與干支不一致）。
+- **預設出生地**：未給 `birthplace`／`cityId`／經緯度時為台北市政府（121.5637°E, 25.0375°N），
+  `input.longitude/latitude` echo 改為實際採用座標（v3 為 BirthData 預設 121.5/25.05）。
+  舊 `longitude/latitude` 仍以 Asia/Taipei 民用時解讀；距 120°E 超過 15° 時標 warning——海外出生請改傳 `birthplace`／`cityId`。
+- 八字 `elements.limitation` 在真太陽時模式下不再宣稱「未做真太陽時校正」。
+- 命卦、靈數、Kin 不變（民用日期；命卦仍以民用時刻視為 UTC+8）。timeline 固定使用計算器預設（真太陽時、晚子），
+  不跟隨 `useTrueSolarTime`／`ziHourConvention`（已知限制，需 timeline 開放 calculator config 才能修正）。
+
+**隱私（D-029）：** `timeContext.profile` 不含姓名；保留出生地標籤供顯示。送 AI 的 payload 仍須移除 `input.name`
+與 `birthplace.label`。
+
+## D-033 跨系統分數維持「只平均有訊號的系統」，權重與切點待回驗再調 ✅（2026-09-25）
+`aggregateSignals` 的跨系統分數只平均對該 `(domain, window)` 發出訊號的系統，沒發訊號的系統不算 0。
+- 已知後果：只有一套系統觸及的領域，分數就等於該系統的強度；沒有系統觸及的領域為 0，
+  因此逐年會跳動（例：移動 0 ↔ 50），不同領域間的分數也不可直接比較。UI 必須標示「未校準」。
+- 不在沒有資料的情況下憑感覺改公式或權重。系統權重（目前皆 1）、四段切點（35／55／75）、
+  是否把未發訊號系統計為 0，全部留到 V4 以 `life_events` 回驗後決定，調整只產生新版本（D-028）。

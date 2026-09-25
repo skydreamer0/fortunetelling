@@ -85,7 +85,7 @@ Monorepo（Bun workspaces）：`packages/core`（`@fortune/core`，框架無關�
 - **驗證**：核心、整合、曆法、洞見、合盤與視覺化契約由 `bun test` 覆蓋；正式版本以 `bun run build` 驗證。
 - **後續效能項目**：命理計算套件（約 850 kB）已拆成獨立 chunk；下一步可改為延遲載入，讓首頁先顯示。
 
-更詳細的系統架構、評分規則設計與未來的開發階段規劃，請參閱 [`ROADMAPS.md`](./ROADMAPS.md) 文件。
+規劃與實作的差距、V1–V5 里程碑與任務拆解，請參閱 [`ROADMAPS.md`](./ROADMAPS.md)。
 
 ## 📝 授權條款
 

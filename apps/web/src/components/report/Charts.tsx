@@ -1,4 +1,4 @@
-/** 肆 命盤 — one tab per system, each with its own chart and transparent scoring. */
+/** 伍 命盤 — one tab per system, each with its own chart and transparent scoring. */
 
 import { useState } from 'react';
 import {
@@ -261,7 +261,7 @@ export function Charts({ report }: { report: Report }) {
     { id: 'gua', label: '八宅命卦' },
   ];
   return (
-    <Section id="ch-charts" index="肆" title="命盤" lede="各系統分開呈現；圖上的每個數值都能展開看到計算方式。">
+    <Section id="ch-charts" index="伍" title="命盤" lede="各系統分開呈現；圖上的每個數值都能展開看到計算方式。">
       <Tabs label="命盤系統" tabs={tabs} active={tab} onChange={setTab} idPrefix={prefix} />
       <TabPanel prefix={prefix} id="ziwei" active={tab === 'ziwei'}><ZiweiPanel report={report} rules={rules} /></TabPanel>
       <TabPanel prefix={prefix} id="bazi" active={tab === 'bazi'}><BaziPanel report={report} rules={rules} /></TabPanel>

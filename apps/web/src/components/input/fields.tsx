@@ -1,6 +1,8 @@
 /** Form controls shared by the single and two-person forms. */
 
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
+import { cityById, cityLabel, searchCities, type City } from '../../lib/cities';
+import type { TimeAccuracy } from '../../model/types';
 
 export const SHICHEN: { hour: number; name: string; range: string }[] = [
   { hour: 0, name: '子', range: '23–01' }, { hour: 2, name: '丑', range: '01–03' },
@@ -103,6 +105,76 @@ export function ShichenPicker({ name, hour, timeKnown, onChange }: ShichenPicker
       {!timeKnown && (
         <p className="field__hint">仍會計算生命靈數、馬雅曆與八宅命卦；八字與紫微需要時辰，會標示為未計算。</p>
       )}
+    </fieldset>
+  );
+}
+
+export const TIME_ACCURACY_OPTIONS: { value: TimeAccuracy; label: string }[] = [
+  { value: 'exact', label: '精確' },
+  { value: 'approx15m', label: '約15分' },
+  { value: 'approx1h', label: '約1小時' },
+  { value: 'unknown', label: '不知道' },
+];
+
+const degrees = (value: number, positive: string, negative: string) =>
+  `${Math.abs(value).toFixed(2)}°${value >= 0 ? positive : negative}`;
+
+interface CityPickerProps {
+  id: string;
+  value: string;
+  onChange: (cityId: string) => void;
+}
+
+/**
+ * Birthplace: a search box that filters a native select grouped 台灣 / 海外.
+ * Typing picks the first match when the current city no longer matches, so
+ * 「台南」 or 「tokyo」 alone is enough; the select stays usable without typing.
+ */
+export function CityPicker({ id, value, onChange }: CityPickerProps) {
+  const [query, setQuery] = useState('');
+  const results = searchCities(query);
+  const selected = cityById(value);
+  const matches = [...results.taiwan, ...results.overseas];
+  const withSelected = (list: City[], taiwan: boolean) =>
+    selected && (selected.country === 'TW') === taiwan && !list.includes(selected) ? [selected, ...list] : list;
+  const taiwan = withSelected(results.taiwan, true);
+  const overseas = withSelected(results.overseas, false);
+
+  function search(next: string) {
+    setQuery(next);
+    const found = searchCities(next);
+    const all = [...found.taiwan, ...found.overseas];
+    if (all.length && !all.some(city => city.id === value)) onChange(all[0].id);
+  }
+
+  return (
+    <fieldset className="city">
+      <legend className="field__label">出生地</legend>
+      <div className="city__row">
+        <input type="search" className="input city__search" value={query} onChange={event => search(event.target.value)}
+          placeholder="搜尋：台南、Tokyo…" aria-label="搜尋出生城市（中文或英文）" aria-controls={id} autoComplete="off" />
+        <select id={id} className="input city__select" value={value} onChange={event => onChange(event.target.value)} aria-label="出生城市">
+          {taiwan.length > 0 && (
+            <optgroup label="台灣">
+              {taiwan.map(city => <option key={city.id} value={city.id}>{cityLabel(city)}</option>)}
+            </optgroup>
+          )}
+          {overseas.length > 0 && (
+            <optgroup label="海外">
+              {overseas.map(city => <option key={city.id} value={city.id}>{`${cityLabel(city)}　${city.nameEn}`}</option>)}
+            </optgroup>
+          )}
+        </select>
+      </div>
+      {query && matches.length === 0 && (
+        <p className="field__hint" role="status">找不到「{query}」。可改用英文，或選擇最近的城市。</p>
+      )}
+      <p className="field__hint">
+        {selected
+          ? `${selected.nameZh}・${selected.nameEn}・${degrees(selected.lng, 'E', 'W')} ${degrees(selected.lat, 'N', 'S')}・${selected.timezone}。`
+          : ''}
+        出生地決定時區與經度；找不到時選最近的城市即可。
+      </p>
     </fieldset>
   );
 }

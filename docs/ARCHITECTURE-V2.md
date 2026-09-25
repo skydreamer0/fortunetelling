@@ -291,7 +291,7 @@ backtest_runs         -- 規則版本、樣本數、命中率、日期
 
 ## 11. Report Schema 演進
 
-- **v4**（V1 完成時）：新增 `timeContext`、`signals`、`timeline` 三個頂層欄位，其餘沿用 v3（依 D-012 升版條款）。
+- **v4**（V1 完成時）：新增 `timeContext`、`signals`、`timeline` 三個頂層欄位，其餘沿用 v3（依 D-012 升版條款）。 ✅ V1-14 已實作（D-032，ARCHITECTURE §4.3）。
 - **v5**（V3）：新增 `consensus`（跨系統共識／矛盾摘要）。
 - AI 輸出**不進** Report，而是獨立的 `Interpretation` 物件，引用 Report 的 `schemaVersion` 與 `generatedAt`。
 

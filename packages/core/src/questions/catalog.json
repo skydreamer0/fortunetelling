@@ -1,0 +1,182 @@
+{
+  "$comment": "問事類別目錄（V5-01，ARCHITECTURE-V2 §8）。全部是資料（D-028）：類別 → 領域權重、特徵偏好（支撐／風險）、各系統相關規則。不含任何定性判語；舊版本不得修改，只能新增版本（D-014 可重現）。",
+  "schemaVersion": 1,
+  "version": 1,
+  "conventions": {
+    "window": "逐月時間窗：grain = 'month'，start = 該月第一天，end = 該月最後一天（公曆，YYYY-MM-DD）。",
+    "filter": "provider 回傳的訊號只保留 domain 屬於類別 domains 者；ruleIds 內某系統的清單非空時，該系統只保留清單內規則，清單為空或未列出的系統保留全部規則。",
+    "aggregation": "過濾後的訊號視為在該月生效，時間窗統一改記為該月後交給 aggregateSignals（訊號 id 不變）；每個領域得到 activity = 系統內 noisy-OR、跨系統加權平均（0–100）。support／risk 以同樣方式只對 traitPreferences.supportive／risky 的訊號計算，但除以該領域全部出現系統的權重和，因此 0 ≤ risk ≤ activity、0 ≤ support ≤ activity。",
+    "formula": "domainScore_d = clamp(0,100, a·activity_d + s·support_d − r·risk_d)，a/s/r = scoring.activityWeight/supportWeight/riskWeight；score = Σ w_d·domainScore_d / Σ w_d（沒有訊號的領域以 0 計入）。預設 a = s = r = 0.5：只有支撐特徵的訊號得滿分權重，中性特徵得一半，風險特徵不加分；分數四捨五入到小數 4 位。",
+    "valence": "valence 不直接進分數（方向由類別的 traitPreferences 資料決定）；valence 只用於 aggregateSignals 的矛盾偵測。系統間方向相反時保留 conflict 並列出雙方訊號，不平均抵銷（D-023）。",
+    "ranking": "依 score 由高到低排序，同分時較早的月份在前；top 取前 3 名並附來源訊號。",
+    "unsupported": "類別不在目錄內一律回 unsupported，不排名、不即興發揮（§8）。"
+  },
+  "scoring": {
+    "activityWeight": 0.5,
+    "supportWeight": 0.5,
+    "riskWeight": 0.5
+  },
+  "defaults": {
+    "grain": "month",
+    "minMonths": 1,
+    "maxMonths": 36
+  },
+  "categories": [
+    {
+      "id": "vehicle_purchase",
+      "version": 1,
+      "name": "購車時機",
+      "examples": ["2026～2027 何時適合買車？", "明年哪幾個月適合換車？", "我想買第一台車，什麼時候比較好？"],
+      "domains": [
+        { "domain": "wealth", "weight": 3 },
+        { "domain": "contract", "weight": 2 },
+        { "domain": "movement", "weight": 2 },
+        { "domain": "property", "weight": 1 }
+      ],
+      "traitPreferences": {
+        "supportive": ["opportunity", "support", "stability", "growth"],
+        "risky": ["risk", "pressure", "conflict", "separation"]
+      },
+      "ruleIds": {
+        "bazi": [],
+        "ziwei": ["ziwei.star.tianma", "ziwei.star.lucun", "ziwei.decade.mutagen", "ziwei.year.sequence", "ziwei.month.mutagen", "ziwei.month.palace_overlay"],
+        "jyotish": ["jyotish.dasha.maha", "jyotish.dasha.antar", "jyotish.transit.slow"]
+      },
+      "defaultGrain": "month",
+      "minMonths": 1,
+      "maxMonths": 36
+    },
+    {
+      "id": "job_change",
+      "version": 1,
+      "name": "轉職時機",
+      "examples": ["今年適合換工作嗎？哪幾個月比較好？", "我想在 2027 年轉職，什麼時候提離職？", "什麼時候適合跳槽？"],
+      "domains": [
+        { "domain": "career", "weight": 3 },
+        { "domain": "movement", "weight": 1 },
+        { "domain": "contract", "weight": 2 }
+      ],
+      "traitPreferences": {
+        "supportive": ["opportunity", "growth", "visibility", "support", "change"],
+        "risky": ["pressure", "conflict", "risk"]
+      },
+      "ruleIds": {},
+      "defaultGrain": "month",
+      "minMonths": 1,
+      "maxMonths": 36
+    },
+    {
+      "id": "relationship_timing",
+      "version": 1,
+      "name": "感情時機",
+      "examples": ["什麼時候比較容易遇到對象？", "明年哪幾個月適合告白？", "我們打算結婚，哪段時間比較適合？"],
+      "domains": [
+        { "domain": "relationship", "weight": 3 },
+        { "domain": "self", "weight": 1 }
+      ],
+      "traitPreferences": {
+        "supportive": ["connection", "support", "opportunity", "stability"],
+        "risky": ["separation", "conflict", "pressure"]
+      },
+      "ruleIds": {},
+      "defaultGrain": "month",
+      "minMonths": 1,
+      "maxMonths": 36
+    },
+    {
+      "id": "startup_timing",
+      "version": 1,
+      "name": "創業時機",
+      "examples": ["我想自己開店，什麼時候開始比較好？", "2027 年哪幾個月適合創業？", "什麼時候適合成立公司？"],
+      "domains": [
+        { "domain": "career", "weight": 3 },
+        { "domain": "wealth", "weight": 2 },
+        { "domain": "contract", "weight": 2 },
+        { "domain": "self", "weight": 1 }
+      ],
+      "traitPreferences": {
+        "supportive": ["opportunity", "growth", "leadership", "independence", "visibility", "support"],
+        "risky": ["risk", "pressure", "conflict"]
+      },
+      "ruleIds": {},
+      "defaultGrain": "month",
+      "minMonths": 1,
+      "maxMonths": 36
+    },
+    {
+      "id": "property_purchase",
+      "version": 1,
+      "name": "購屋時機",
+      "examples": ["什麼時候適合買房？", "未來兩年哪幾個月適合簽購屋合約？", "我想換房子，什麼時候比較好？"],
+      "domains": [
+        { "domain": "property", "weight": 3 },
+        { "domain": "wealth", "weight": 2 },
+        { "domain": "contract", "weight": 2 },
+        { "domain": "family", "weight": 1 }
+      ],
+      "traitPreferences": {
+        "supportive": ["stability", "support", "opportunity", "growth"],
+        "risky": ["risk", "pressure", "conflict", "separation"]
+      },
+      "ruleIds": {},
+      "defaultGrain": "month",
+      "minMonths": 1,
+      "maxMonths": 36
+    },
+    {
+      "id": "relocation",
+      "version": 1,
+      "name": "搬家／遷居時機",
+      "examples": ["什麼時候適合搬家？", "我打算搬到外地，哪幾個月比較好？", "明年適合出國定居嗎？"],
+      "domains": [
+        { "domain": "movement", "weight": 3 },
+        { "domain": "property", "weight": 2 },
+        { "domain": "family", "weight": 1 }
+      ],
+      "traitPreferences": {
+        "supportive": ["change", "opportunity", "support", "stability"],
+        "risky": ["pressure", "conflict", "separation", "risk"]
+      },
+      "ruleIds": {},
+      "defaultGrain": "month",
+      "minMonths": 1,
+      "maxMonths": 36
+    },
+    {
+      "id": "study_exam",
+      "version": 1,
+      "name": "進修／考試時機",
+      "examples": ["什麼時候適合準備考試？", "我想進修研究所，哪一年比較好？", "明年哪幾個月適合考證照？"],
+      "domains": [
+        { "domain": "learning", "weight": 3 },
+        { "domain": "career", "weight": 1 }
+      ],
+      "traitPreferences": {
+        "supportive": ["growth", "support", "visibility", "opportunity", "stability"],
+        "risky": ["pressure", "conflict", "separation"]
+      },
+      "ruleIds": {},
+      "defaultGrain": "month",
+      "minMonths": 1,
+      "maxMonths": 36
+    },
+    {
+      "id": "investment",
+      "version": 1,
+      "name": "投資時機",
+      "examples": ["什麼時候適合進場投資？", "今年下半年適合做較大的投資嗎？", "哪幾個月適合簽投資合約？"],
+      "domains": [
+        { "domain": "wealth", "weight": 3 },
+        { "domain": "contract", "weight": 2 }
+      ],
+      "traitPreferences": {
+        "supportive": ["opportunity", "growth", "support", "stability"],
+        "risky": ["risk", "pressure", "conflict"]
+      },
+      "ruleIds": {},
+      "defaultGrain": "month",
+      "minMonths": 1,
+      "maxMonths": 36
+    }
+  ]
+}

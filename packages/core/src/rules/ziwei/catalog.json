@@ -1,0 +1,163 @@
+{
+  "$comment": "紫微規則目錄（ARCHITECTURE-V2 §5）。每條規則登錄 id / version / 說明 / 慣例出處；params 為規則專屬資料。status: active = 已實作（pending_v1_05 = 待 V1-05 資料；V1-05 起已全部啟用）。版本一經發布不可改參數，只能遞增 version（D-028）。",
+  "version": 1,
+  "system": "ziwei",
+  "rules": [
+    {
+      "id": "ziwei.natal.star_traits",
+      "version": 1,
+      "scope": "natal",
+      "status": "active",
+      "description": "原局：每宮的主星、輔佐星、六煞、祿存、天馬依 traits/ziwei.json 的特徵權重產生訊號；領域由宮位決定。修正鏈：宮位 × 旺陷 × 生年四化 × 煞曜同宮（空宮借對宮主星再乘借星因子）。",
+      "source": "《紫微斗數全書》星性描述；旺陷七級依 D-005；空宮借對宮為通行慣例。",
+      "params": {}
+    },
+    {
+      "id": "ziwei.decade.mutagen",
+      "version": 1,
+      "scope": "decade",
+      "status": "active",
+      "description": "大限四化飛入：大限宮干化出的祿權科忌落在原局哪一宮，該宮對應領域即產生對應特徵訊號。",
+      "source": "飛星派四化慣例（大限宮干四化）；四化對照由 iztro 提供，經 ZiweiEngine daXian_n.mutagen 輸出。",
+      "params": {
+        "templates": {
+          "祿": { "trait": "opportunity", "intensity": 0.6, "valence": 0.5 },
+          "權": { "trait": "leadership", "intensity": 0.55, "valence": 0.2 },
+          "科": { "trait": "visibility", "intensity": 0.5, "valence": 0.3 },
+          "忌": { "trait": "pressure", "intensity": 0.6, "valence": -0.5 }
+        }
+      }
+    },
+    {
+      "id": "ziwei.decade.palace_overlay",
+      "version": 1,
+      "scope": "decade",
+      "status": "active",
+      "description": "大限命宮疊宮：大限命宮落在原局某宮，該宮星曜的特徵以 overlayFactor 疊加到本期 self 領域；原局該宮對應領域另產生一條焦點轉移（change）訊號。",
+      "source": "大限疊宮（運限宮位與本命宮位重疊論斷）通行慣例。",
+      "params": {
+        "overlayFactor": 0.6,
+        "overlayDomain": "self",
+        "focus": { "trait": "change", "intensity": 0.4, "valence": 0 }
+      }
+    },
+    {
+      "id": "ziwei.sanfang.sha",
+      "version": 1,
+      "scope": "natal",
+      "status": "active",
+      "description": "三方四正煞曜會照：對每一宮，統計本宮、對宮、兩三合宮中的六煞，依會照權重加總後乘上基礎強度，產生壓力與風險訊號。",
+      "source": "三方四正會照論法；會照權重見 traits/ziweiModifiers.json sanfang。",
+      "params": {
+        "templates": [
+          { "trait": "pressure", "intensity": 0.3, "valence": -0.4 },
+          { "trait": "risk", "intensity": 0.2, "valence": -0.3 }
+        ]
+      }
+    },
+    {
+      "id": "ziwei.star.tianma",
+      "version": 1,
+      "scope": "natal",
+      "status": "active",
+      "description": "天馬：不論落宮，產生移動領域的變動訊號；落命宮、遷移宮時宮位因子較高；三方四正會祿存（祿馬交馳）時強度與傾向上調；煞曜同宮套用同宮修正。",
+      "source": "驛馬慣例；祿馬交馳見《紫微斗數全書》格局。",
+      "params": {
+        "template": { "domain": "movement", "trait": "change", "intensity": 0.6, "valence": 0 },
+        "palaceFactors": { "命宮": 1.0, "遷移": 1.0, "default": 0.7 },
+        "withLucun": { "factor": 1.2, "valenceShift": 0.2 }
+      }
+    },
+    {
+      "id": "ziwei.star.lucun",
+      "version": 1,
+      "scope": "natal",
+      "status": "active",
+      "description": "祿存：不論落宮，產生財務領域的穩定訊號；落命宮、財帛、田宅時宮位因子較高；煞曜同宮套用同宮修正。",
+      "source": "祿存為祿星之慣例（主財祿、守成）。",
+      "params": {
+        "template": { "domain": "wealth", "trait": "stability", "intensity": 0.55, "valence": 0.3 },
+        "palaceFactors": { "命宮": 1.0, "財帛": 1.0, "田宅": 1.0, "default": 0.7 }
+      }
+    },
+    {
+      "id": "ziwei.year.mutagen",
+      "version": 1,
+      "scope": "year",
+      "status": "active",
+      "description": "流年四化飛入：流年天干化出的祿權科忌落在原局哪一宮，該宮領域產生對應特徵訊號。只涵蓋引擎 asOf 當年（flyingStars_yearly）；其他年份見 ziwei.year.sequence。",
+      "source": "流年四化慣例；資料來自 ZiweiEngine flyingStars_yearly。",
+      "params": {
+        "templates": {
+          "祿": { "trait": "opportunity", "intensity": 0.5, "valence": 0.5 },
+          "權": { "trait": "leadership", "intensity": 0.45, "valence": 0.2 },
+          "科": { "trait": "visibility", "intensity": 0.4, "valence": 0.3 },
+          "忌": { "trait": "pressure", "intensity": 0.5, "valence": -0.5 }
+        }
+      }
+    },
+    {
+      "id": "ziwei.year.palace_overlay",
+      "version": 1,
+      "scope": "year",
+      "status": "active",
+      "description": "流年命宮疊宮：流年命宮落在原局某宮，該宮星曜特徵以 overlayFactor 疊加到當年 self 領域，並產生該宮領域的焦點轉移訊號。只涵蓋 asOf 當年；其他年份見 ziwei.year.sequence。",
+      "source": "流年疊宮通行慣例；資料來自 ZiweiEngine flyingStars_yearly.palaceIndex。",
+      "params": {
+        "overlayFactor": 0.5,
+        "overlayDomain": "self",
+        "focus": { "trait": "change", "intensity": 0.35, "valence": 0 }
+      }
+    },
+    {
+      "id": "ziwei.year.sequence",
+      "version": 1,
+      "scope": "year",
+      "status": "active",
+      "description": "流年序列：對與視窗重疊的每個流年（春節到下一個春節）評估流年四化飛入與流年命宮疊宮，判定方式同 ziwei.year.mutagen／ziwei.year.palace_overlay。與 flyingStars_yearly 同一農曆年者略過，避免重複計入。",
+      "source": "流年四化、流年疊宮通行慣例；序列由 calculators/ziwei（iztro horoscope）輸出，農曆年界取 lunar-javascript 春節日期。",
+      "params": {
+        "templates": {
+          "祿": { "trait": "opportunity", "intensity": 0.5, "valence": 0.5 },
+          "權": { "trait": "leadership", "intensity": 0.45, "valence": 0.2 },
+          "科": { "trait": "visibility", "intensity": 0.4, "valence": 0.3 },
+          "忌": { "trait": "pressure", "intensity": 0.5, "valence": -0.5 }
+        },
+        "overlay": {
+          "overlayFactor": 0.5,
+          "overlayDomain": "self",
+          "focus": { "trait": "change", "intensity": 0.35, "valence": 0 }
+        }
+      }
+    },
+    {
+      "id": "ziwei.month.mutagen",
+      "version": 1,
+      "scope": "month",
+      "status": "active",
+      "description": "流月四化飛入：流月天干化出的祿權科忌落在原局哪一宮，該宮領域產生對應特徵訊號。只評估與視窗重疊的流月（農曆月；閏月前半併入前月、後半併入次月，同 iztro）。",
+      "source": "流月四化慣例；流月干支、宮位由 iztro horoscope 提供，經 calculators/ziwei monthlySequence 輸出。",
+      "params": {
+        "templates": {
+          "祿": { "trait": "opportunity", "intensity": 0.4, "valence": 0.5 },
+          "權": { "trait": "leadership", "intensity": 0.35, "valence": 0.2 },
+          "科": { "trait": "visibility", "intensity": 0.3, "valence": 0.3 },
+          "忌": { "trait": "pressure", "intensity": 0.4, "valence": -0.5 }
+        }
+      }
+    },
+    {
+      "id": "ziwei.month.palace_overlay",
+      "version": 1,
+      "scope": "month",
+      "status": "active",
+      "description": "流月命宮疊宮：流月命宮落在原局某宮，該宮星曜特徵以 overlayFactor 疊加到當月 self 領域，並產生該宮領域的焦點轉移訊號。",
+      "source": "流月疊宮通行慣例（流年地支逆數生月、順數生時定正月）；宮位由 iztro horoscope 提供。",
+      "params": {
+        "overlayFactor": 0.4,
+        "overlayDomain": "self",
+        "focus": { "trait": "change", "intensity": 0.3, "valence": 0 }
+      }
+    }
+  ]
+}

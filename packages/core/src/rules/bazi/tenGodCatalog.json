@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "system": "bazi",
+  "conventions": {
+    "tenGods": "十神以日主（日干）五行與陰陽判定：同我＝比肩／劫財、我生＝食神／傷官、我剋＝偏財／正財、剋我＝七殺／正官、生我＝偏印／正印（同陰陽取前者）。分為五組：比劫、食傷、財星、官殺、印星。",
+    "hiddenStems": "地支取藏干（本氣、中氣、餘氣，與 lunar-javascript ZHI_HIDE_GAN 相同；巳＝丙庚戊、申＝庚壬戊）。天干權重 stemWeight，藏干權重 hiddenStemWeights；權重不為 1 時記為 modifier。",
+    "groupWeight": "同一外部干支中，每個十神取其最強來源權重（天干 > 本氣 > 中氣 > 餘氣，同權重時依此順序），一組十神取組內最強者。組別 emits 以組權重縮放；個別十神 emits（tenGodEmits）以該十神自身權重縮放。同 domain×trait 取縮放後最強者。",
+    "domainMapping": "財星 → wealth（機會）＋contract＋property；官殺 → career（規範、責任）＋contract；食傷 → career（表現、曝光）＋learning＋wealth（食傷生財）；印星 → learning（支援）＋property（文書、資產）＋self；比劫 → self（自主）＋wealth（分財、競爭壓力）。個別十神另有補充：正財 → contract 穩定、偏財 → wealth 風險、劫財 → wealth 風險、正官 → career 穩定、七殺 → self 壓力、傷官 → career 衝突、偏印 → learning 變動、正印 → family 支援。",
+    "shensha": "驛馬：年支／日支所屬三合局之長生支的對沖支（申子辰→寅、寅午戌→申、巳酉丑→亥、亥卯未→巳）。桃花（咸池）：三合局之沐浴支（申子辰→酉、寅午戌→卯、巳酉丑→午、亥卯未→子）。年支、日支各自起算，兩者得同一支時合為一個命中（target 以 + 連接）。財庫：日主所剋五行（財星五行）的墓庫支，墓庫取長生十二宮之墓，土隨水：甲乙→辰、丙丁→丑、戊己→辰、庚辛→未、壬癸→戌。",
+    "activation": "外部（流年／大運／流月）地支觸動神煞：appear＝外部地支即為該支；clash＝外部地支沖該支；punish＝相刑；combine＝六合。每條規則列出允許的觸動方式與順序，同一外部地支只取第一個成立者；各方式的強度係數見 activations。神煞支不在原局四支中時，另乘 natalAbsent 係數（虛沖、虛合）。",
+    "clashMovement": "bazi.clash.movement：流年／流月地支沖原局日支或月支時，另外輸出 movement 領域的變動訊號（沖動）；原有 bazi.branch.clash 規則不變。",
+    "scopes": "每條規則只在所列 scope 評估；scopeFactors 為各 grain 的強度係數（不為 1 時記為 modifier）。大運取與時間窗重疊者，流年取 chart.annual（須與時間窗重疊），流月取與時間窗重疊的 chart.monthly；同一時間窗有多個大運／流月時 target 加 @起始時間。",
+    "targets": "十神：<外部>.tengod.<組>，例如 year.tengod.財星、decade.tengod.印星、month@<start>.tengod.官殺。神煞：<外部>×natal.<神煞>@<起算支>，例如 year×natal.yima@日支、month×natal.taohua@年支+日支、year×natal.caiku。沖動：<外部>×natal.<日|月>，例如 year×natal.day。",
+    "componentIds": "外部來源（daYun_N／liuNian／流月 componentId，流月未提供時為 liuYue）在前，原局（natal，提供日主與神煞起算支）在後。",
+    "valence": "domain／trait／intensity／valence 皆為資料（D-028），程式碼不寫定性判語。"
+  },
+  "stemWeight": 1,
+  "hiddenStemWeights": {
+    "main": 1,
+    "middle": 0.5,
+    "residual": 0.3
+  },
+  "groupEmits": {
+    "比劫": [
+      { "domain": "self", "trait": "independence", "intensity": 0.4, "valence": 0.2 },
+      { "domain": "wealth", "trait": "pressure", "intensity": 0.3, "valence": -0.3 }
+    ],
+    "食傷": [
+      { "domain": "career", "trait": "visibility", "intensity": 0.4, "valence": 0.2 },
+      { "domain": "learning", "trait": "growth", "intensity": 0.35, "valence": 0.3 },
+      { "domain": "wealth", "trait": "growth", "intensity": 0.2, "valence": 0.2 }
+    ],
+    "財星": [
+      { "domain": "wealth", "trait": "opportunity", "intensity": 0.5, "valence": 0.3 },
+      { "domain": "contract", "trait": "opportunity", "intensity": 0.3, "valence": 0.2 },
+      { "domain": "property", "trait": "growth", "intensity": 0.2, "valence": 0.1 }
+    ],
+    "官殺": [
+      { "domain": "career", "trait": "leadership", "intensity": 0.35, "valence": 0.1 },
+      { "domain": "career", "trait": "pressure", "intensity": 0.35, "valence": -0.2 },
+      { "domain": "contract", "trait": "stability", "intensity": 0.3, "valence": 0.1 }
+    ],
+    "印星": [
+      { "domain": "learning", "trait": "support", "intensity": 0.45, "valence": 0.3 },
+      { "domain": "property", "trait": "support", "intensity": 0.3, "valence": 0.2 },
+      { "domain": "self", "trait": "support", "intensity": 0.25, "valence": 0.2 }
+    ]
+  },
+  "tenGodEmits": {
+    "劫財": [{ "domain": "wealth", "trait": "risk", "intensity": 0.3, "valence": -0.3 }],
+    "傷官": [{ "domain": "career", "trait": "conflict", "intensity": 0.25, "valence": -0.2 }],
+    "偏財": [{ "domain": "wealth", "trait": "risk", "intensity": 0.2, "valence": -0.1 }],
+    "正財": [{ "domain": "contract", "trait": "stability", "intensity": 0.35, "valence": 0.2 }],
+    "七殺": [{ "domain": "self", "trait": "pressure", "intensity": 0.3, "valence": -0.3 }],
+    "正官": [{ "domain": "career", "trait": "stability", "intensity": 0.3, "valence": 0.2 }],
+    "偏印": [{ "domain": "learning", "trait": "change", "intensity": 0.2, "valence": 0 }],
+    "正印": [{ "domain": "family", "trait": "support", "intensity": 0.2, "valence": 0.2 }]
+  },
+  "rules": [
+    {
+      "id": "bazi.tengod.annual",
+      "version": 1,
+      "kind": "tenGod",
+      "name": "流年十神",
+      "label": "流年十神",
+      "description": "流年天干與地支藏干相對日主的十神，依十神組別映射到領域。",
+      "source": "《子平真詮》論十神；流年干支取十神為子平通例。藏干權重為本專案慣例資料。",
+      "scopes": ["year"],
+      "scopeFactors": { "year": 1 }
+    },
+    {
+      "id": "bazi.tengod.decade",
+      "version": 1,
+      "kind": "tenGod",
+      "name": "大運十神",
+      "label": "大運十神",
+      "description": "與時間窗重疊之大運的天干與地支藏干相對日主的十神；大運作用期長、單一時間窗內較平緩，強度係數較低。",
+      "source": "《子平真詮》論行運；大運干支取十神為子平通例。強度係數為本專案慣例資料。",
+      "scopes": ["decade"],
+      "scopeFactors": { "decade": 0.6 }
+    },
+    {
+      "id": "bazi.tengod.monthly",
+      "version": 1,
+      "kind": "tenGod",
+      "name": "流月十神",
+      "label": "流月十神",
+      "description": "與時間窗重疊之流月的天干與地支藏干相對日主的十神。",
+      "source": "流月干支取十神為子平通例（月建依節氣）。強度係數為本專案慣例資料。",
+      "scopes": ["month"],
+      "scopeFactors": { "month": 0.7 }
+    },
+    {
+      "id": "bazi.shensha.yima",
+      "version": 1,
+      "kind": "yima",
+      "name": "驛馬",
+      "label": "驛馬",
+      "description": "以年支、日支所屬三合局起驛馬（申子辰→寅、寅午戌→申、巳酉丑→亥、亥卯未→巳）；外部地支即為驛馬，或沖驛馬時，映射到 movement。",
+      "source": "《三命通會》論驛馬：「申子辰馬在寅，寅午戌馬在申，巳酉丑馬在亥，亥卯未馬在巳」。",
+      "scopes": ["decade", "year", "month"],
+      "scopeFactors": { "decade": 0.6, "year": 1, "month": 0.7 },
+      "bases": ["year", "day"],
+      "activations": {
+        "appear": { "factor": 1, "label": "逢驛馬" },
+        "clash": { "factor": 0.8, "label": "沖驛馬" }
+      },
+      "natalAbsent": { "factor": 0.8, "reason": "驛馬支不在原局四支（虛沖）", "appliesTo": ["clash"] },
+      "emits": [
+        { "domain": "movement", "trait": "change", "intensity": 0.5, "valence": 0 },
+        { "domain": "movement", "trait": "opportunity", "intensity": 0.3, "valence": 0.2 },
+        { "domain": "career", "trait": "change", "intensity": 0.2, "valence": 0 }
+      ]
+    },
+    {
+      "id": "bazi.shensha.taohua",
+      "version": 1,
+      "kind": "taohua",
+      "name": "桃花（咸池）",
+      "label": "桃花",
+      "description": "以年支、日支所屬三合局起桃花（申子辰→酉、寅午戌→卯、巳酉丑→午、亥卯未→子）；外部地支即為桃花，或沖桃花時，映射到 relationship。",
+      "source": "《三命通會》論咸池：寅午戌見卯、巳酉丑見午、申子辰見酉、亥卯未見子（三合局沐浴之地）。",
+      "scopes": ["decade", "year", "month"],
+      "scopeFactors": { "decade": 0.6, "year": 1, "month": 0.7 },
+      "bases": ["year", "day"],
+      "activations": {
+        "appear": { "factor": 1, "label": "逢桃花" },
+        "clash": { "factor": 0.7, "label": "沖桃花" }
+      },
+      "natalAbsent": { "factor": 0.8, "reason": "桃花支不在原局四支（虛沖）", "appliesTo": ["clash"] },
+      "emits": [
+        { "domain": "relationship", "trait": "connection", "intensity": 0.45, "valence": 0.3 },
+        { "domain": "relationship", "trait": "opportunity", "intensity": 0.3, "valence": 0.2 },
+        { "domain": "self", "trait": "visibility", "intensity": 0.2, "valence": 0.1 }
+      ]
+    },
+    {
+      "id": "bazi.shensha.caiku",
+      "version": 1,
+      "kind": "caiku",
+      "name": "財庫",
+      "label": "財庫",
+      "description": "財庫＝日主財星五行的墓庫支（甲乙→辰、丙丁→丑、戊己→辰、庚辛→未、壬癸→戌；土隨水墓於辰）。外部地支沖、逢、刑、合財庫時映射到 wealth 與 property。",
+      "source": "長生十二宮墓庫（《淵海子平》）；「財庫逢沖則開」為子平通例。土墓取「土隨水」為本專案慣例。",
+      "scopes": ["decade", "year", "month"],
+      "scopeFactors": { "decade": 0.6, "year": 1, "month": 0.7 },
+      "activations": {
+        "clash": { "factor": 1, "label": "沖財庫" },
+        "appear": { "factor": 0.8, "label": "逢財庫" },
+        "punish": { "factor": 0.7, "label": "刑財庫" },
+        "combine": { "factor": 0.6, "label": "合財庫" }
+      },
+      "natalAbsent": { "factor": 0.8, "reason": "財庫支不在原局四支", "appliesTo": ["clash", "appear", "punish", "combine"] },
+      "emits": [
+        { "domain": "wealth", "trait": "opportunity", "intensity": 0.45, "valence": 0.3 },
+        { "domain": "wealth", "trait": "change", "intensity": 0.35, "valence": 0 },
+        { "domain": "property", "trait": "opportunity", "intensity": 0.3, "valence": 0.2 }
+      ]
+    },
+    {
+      "id": "bazi.clash.movement",
+      "version": 1,
+      "kind": "clashMovement",
+      "name": "沖動",
+      "label": "沖動",
+      "description": "流年／流月地支沖原局日支或月支時，另外輸出 movement 變動訊號（遷移、動象）；與 bazi.branch.clash 並存，不取代。",
+      "source": "「沖則動」為子平通例（日支、月令逢沖主變動）。",
+      "scopes": ["year", "month"],
+      "scopeFactors": { "year": 1, "month": 0.7 },
+      "positions": {
+        "natal.day.branch": [
+          { "domain": "movement", "trait": "change", "intensity": 0.45, "valence": 0 },
+          { "domain": "movement", "trait": "separation", "intensity": 0.2, "valence": -0.2 }
+        ],
+        "natal.month.branch": [
+          { "domain": "movement", "trait": "change", "intensity": 0.4, "valence": 0 },
+          { "domain": "movement", "trait": "separation", "intensity": 0.15, "valence": -0.2 }
+        ]
+      }
+    }
+  ]
+}

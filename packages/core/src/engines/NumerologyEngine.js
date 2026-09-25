@@ -12,6 +12,14 @@
  *   digitFrequency  → L0  生命靈數九宮格頻次（出生日期數字分布）
  *   personalYear    → L2  個人流年數（隨年變）
  *   personalMonth   → L2  個人流月數（隨月變）
+ *   birthdayNumber  → L0  生日數（出生日）
+ *   attitude        → L0  態度數（出生月＋日）
+ *   pinnacles       → L1  巔峰數 ×4（各帶起訖年齡）
+ *   challenges      → L1  挑戰數 ×4（各帶起訖年齡）
+ *   personalYears   → L2  個人流年數序列（自 asOf 年起 9 年）
+ *
+ * The newer components (birthdayNumber … personalYears) are computed by the
+ * pure functions in `calculators/numerology/numerology.ts`.
  *
  * All numbers use the Pythagorean reduction, preserving the master numbers
  * 11/22/33. Scoring/interpretation lives in the analysis layer; this engine only
@@ -21,6 +29,16 @@
  */
 
 import { BaseEngine } from '../core/BaseEngine.js';
+import {
+  calculateAttitude,
+  calculateBirthdayNumber,
+  calculateChallenges,
+  calculatePersonalYears,
+  calculatePinnacles,
+} from '../calculators/numerology/numerology';
+
+/** Number of consecutive years emitted in the `personalYears` component. */
+const PERSONAL_YEARS_SPAN = 9;
 
 /**
  * Vowels used to split a name into 靈魂數 (vowels) vs 人格數 (consonants).
@@ -96,6 +114,9 @@ export class NumerologyEngine extends BaseEngine {
     this.#addNameNumbers(result, birth);
     this.#addDigitFrequency(result, birth);
     this.#addPersonalPeriods(result, birth);
+    this.#addBirthdayAndAttitude(result, birth);
+    this.#addPinnaclesAndChallenges(result, birth);
+    this.#addPersonalYears(result, birth);
 
     result.meta = {
       name: birth.name,
@@ -211,9 +232,11 @@ export class NumerologyEngine extends BaseEngine {
    * @param {BirthData} birth
    */
   #addPersonalPeriods(result, birth) {
-    const target = this.asOf ? new Date(this.asOf) : new Date();
-    const currentYear = target.getFullYear();
-    const currentMonth = target.getMonth() + 1;
+    const target = this.#evaluationDate();
+    // UTC getters: analyze() derives asOf as a UTC date (toISOString), so the
+    // personal year/month must not depend on the host timezone (D-014).
+    const currentYear = target.getUTCFullYear();
+    const currentMonth = target.getUTCMonth() + 1;
 
     const personalYear = reduceNumber(
       reduceNumber(birth.month) + reduceNumber(birth.day) + reduceNumber(currentYear),
@@ -234,6 +257,83 @@ export class NumerologyEngine extends BaseEngine {
     });
   }
 
+  // ─── L0: Birthday / attitude (生日數/態度數) ─────────────────────────────
+
+  /**
+   * @param {SystemResult} result
+   * @param {BirthData} birth
+   */
+  #addBirthdayAndAttitude(result, birth) {
+    const date = { year: birth.year, month: birth.month, day: birth.day };
+    const birthday = calculateBirthdayNumber(date);
+    result.add({
+      id: 'birthday_number',
+      name: '生日數',
+      category: 'birthdayNumber',
+      value: { number: birthday, isMaster: this.#isMaster(birthday) },
+    });
+    const attitude = calculateAttitude(date);
+    result.add({
+      id: 'attitude',
+      name: '態度數',
+      category: 'attitude',
+      value: { number: attitude, isMaster: this.#isMaster(attitude) },
+    });
+  }
+
+  // ─── L1: Pinnacles / challenges (巔峰數/挑戰數) ───────────────────────────
+
+  /**
+   * Four pinnacles and four challenges, each with its age span
+   * (`endAge` is the age the next period begins; `null` = rest of life).
+   *
+   * @param {SystemResult} result
+   * @param {BirthData} birth
+   */
+  #addPinnaclesAndChallenges(result, birth) {
+    const date = { year: birth.year, month: birth.month, day: birth.day };
+    for (const p of calculatePinnacles(date)) {
+      result.add({
+        id: `pinnacle_${p.index}`,
+        name: `第${p.index}巔峰數`,
+        category: 'pinnacles',
+        value: { ...p, isMaster: this.#isMaster(p.number) },
+      });
+    }
+    for (const c of calculateChallenges(date)) {
+      result.add({
+        id: `challenge_${c.index}`,
+        name: `第${c.index}挑戰數`,
+        category: 'challenges',
+        value: { ...c },
+      });
+    }
+  }
+
+  // ─── L2: Personal-year sequence (個人流年序列) ───────────────────────────
+
+  /**
+   * Personal-year numbers for {@link PERSONAL_YEARS_SPAN} years starting at
+   * the evaluation year (same year source as {@link #addPersonalPeriods}).
+   *
+   * @param {SystemResult} result
+   * @param {BirthData} birth
+   */
+  #addPersonalYears(result, birth) {
+    const fromYear = this.#evaluationDate().getUTCFullYear();
+    const date = { year: birth.year, month: birth.month, day: birth.day };
+    result.add({
+      id: 'personal_years',
+      name: '個人流年數序列',
+      category: 'personalYears',
+      value: {
+        fromYear,
+        count: PERSONAL_YEARS_SPAN,
+        years: calculatePersonalYears(date, fromYear, PERSONAL_YEARS_SPAN),
+      },
+    });
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────────────
 
   /**
@@ -247,6 +347,16 @@ export class NumerologyEngine extends BaseEngine {
     if (typeof name !== 'string') return [];
     const matches = name.toUpperCase().match(/[A-Z]/g);
     return matches ?? [];
+  }
+
+  /**
+   * The evaluation date: `asOf` when given (D-014: tests and reproducible runs
+   * always pass it); the "now" fallback is the engine's pre-existing behaviour.
+   *
+   * @returns {Date}
+   */
+  #evaluationDate() {
+    return this.asOf ? new Date(this.asOf) : new Date();
   }
 
   /**

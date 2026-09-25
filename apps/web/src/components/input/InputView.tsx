@@ -1,6 +1,7 @@
 /** Landing / intake page: introduction, mode switch, form and recent queries. */
 
 import { useState } from 'react';
+import { cityById, cityLabel } from '../../lib/cities';
 import type { RecentQuery } from '../../lib/store';
 import type { BirthInput } from '../../model/types';
 import { BirthForm, EXAMPLE_INPUT } from './BirthForm';
@@ -85,12 +86,16 @@ export function InputView({ mode, onModeChange, lastInput, lastPair, recent, onA
             <ul className="recent__list">
               {recent.map(item => {
                 const input = item.input;
+                const city = cityById(input.cityId);
+                const clock = input.timeAccuracy === 'exact' || input.timeAccuracy === 'approx15m'
+                  ? `${String(input.hour).padStart(2, '0')}:${String(input.minute).padStart(2, '0')}`
+                  : shichenLabel(input.hour);
                 return (
                   <li key={item.fingerprint}>
                     <button type="button" className="recent__item" onClick={() => load(input)}>
                       <span className="recent__name">{input.name || `${input.gender === 'female' ? '女' : '男'}命`}</span>
                       <span className="recent__meta">
-                        {`${input.year}.${String(input.month).padStart(2, '0')}.${String(input.day).padStart(2, '0')}　${input.timeKnown ? shichenLabel(input.hour) : '時辰不確定'}`}
+                        {`${input.year}.${String(input.month).padStart(2, '0')}.${String(input.day).padStart(2, '0')}　${input.timeKnown ? clock : '時辰不確定'}${city ? `　${cityLabel(city)}` : ''}`}
                       </span>
                     </button>
                   </li>

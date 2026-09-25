@@ -4,7 +4,8 @@
  * testable place.
  */
 
-import type { Component, EngineResult, Period, Radar, Report, ScoringRule, SystemId } from './types';
+import type { Domain as CoreDomain, TimelineCell } from '@fortune/core';
+import type { Component, EngineResult, Period, Radar, Report, ScoringRule, Signal, SystemId, Timeline } from './types';
 
 export const SYSTEM_NAMES: Record<string, string> = {
   bazi: '八字',
@@ -351,4 +352,317 @@ export function notices(report: Report) {
       .filter(message => !INFORMATIONAL.some(pattern => pattern.test(message)))
       .map(message => `${item.engineName}：${message}`)),
   };
+}
+
+// ─── Timeline (Report v4, ARCHITECTURE-V2 §7) ───────────────────────────────
+
+export type TimelineDomain = CoreDomain;
+
+export interface DomainMeta { domain: TimelineDomain; label: string; icon: string; headline: boolean }
+
+/** Display order: the four headline domains first, then the rest in core DOMAINS order. */
+export const TIMELINE_DOMAINS: readonly DomainMeta[] = [
+  { domain: 'relationship', label: '感情', icon: '❤️', headline: true },
+  { domain: 'wealth', label: '財運', icon: '💰', headline: true },
+  { domain: 'career', label: '事業', icon: '💼', headline: true },
+  { domain: 'movement', label: '移動', icon: '🚗', headline: true },
+  { domain: 'self', label: '自我', icon: '🧭', headline: false },
+  { domain: 'family', label: '家庭', icon: '🏠', headline: false },
+  { domain: 'property', label: '不動產', icon: '🏡', headline: false },
+  { domain: 'learning', label: '學習', icon: '📚', headline: false },
+  { domain: 'contract', label: '合約', icon: '📝', headline: false },
+  { domain: 'health', label: '身心', icon: '🌿', headline: false },
+];
+
+export const HEADLINE_DOMAINS: readonly TimelineDomain[] = TIMELINE_DOMAINS.filter(item => item.headline).map(item => item.domain);
+
+/** Core `SystemId`s (V2 signal layer) → 繁中. Differs from the legacy engine ids above. */
+export const SIGNAL_SYSTEM_NAMES: Record<string, string> = {
+  bazi: '八字',
+  ziwei: '紫微斗數',
+  numerology: '生命靈數',
+  tzolkin: '馬雅曆',
+  mingGua: '八宅命卦',
+  jyotish: '印度占星',
+  humanDesign: '人類圖',
+};
+
+export const TRAIT_LABELS: Record<string, string> = {
+  change: '變動', growth: '成長', stability: '穩定', pressure: '壓力', opportunity: '機會',
+  connection: '連結', separation: '分離', visibility: '能見度', leadership: '主導', risk: '風險',
+  independence: '獨立', support: '支援', conflict: '衝突',
+};
+
+/** Rule id → short human label. Unknown ids fall back to the id itself (still auditable). */
+export const RULE_LABELS: Record<string, string> = {
+  'bazi.branch.break': '地支相破',
+  'bazi.branch.clash': '地支相沖',
+  'bazi.branch.directional': '地支三會',
+  'bazi.branch.harm': '地支相害',
+  'bazi.branch.harmony': '地支六合',
+  'bazi.branch.punishment': '地支相刑',
+  'bazi.branch.trine': '地支三合',
+  'bazi.pillar.fanyin': '反吟',
+  'bazi.pillar.fuyin': '伏吟',
+  'bazi.stem.combine': '天干五合',
+  'bazi.stem.control': '天干相剋',
+  'bazi.stem.produce': '天干相生',
+  'bazi.suiyun.binglin': '歲運並臨',
+  'bazi.tengod.annual': '流年十神',
+  'bazi.tengod.decade': '大運十神',
+  'bazi.tengod.monthly': '流月十神',
+  'bazi.shensha.yima': '驛馬',
+  'bazi.shensha.taohua': '桃花',
+  'bazi.shensha.caiku': '財庫',
+  'bazi.clash.movement': '沖動',
+  'ziwei.year.sequence': '紫微流年',
+  'ziwei.year.mutagen': '流年四化',
+  'ziwei.year.palace_overlay': '流年命宮疊宮',
+  'ziwei.month.mutagen': '流月四化',
+  'ziwei.month.palace_overlay': '流月命宮疊宮',
+  'ziwei.decade.mutagen': '大限四化',
+  'ziwei.decade.palace_overlay': '大限疊宮',
+  'ziwei.natal.star_traits': '本命星曜',
+  'ziwei.sanfang.sha': '三方煞星',
+  'ziwei.star.lucun': '祿存',
+  'ziwei.star.tianma': '天馬',
+  'numerology.personal_year': '個人流年數',
+  'numerology.personal_month': '個人流月數',
+  'jyotish.dasha.maha': '大運期（Mahadasha）',
+  'jyotish.dasha.antar': '子運期（Antardasha）',
+  'jyotish.transit.sade_sati': '土星七年半（Sade Sati）',
+  'jyotish.transit.slow': '慢行星過境',
+  'humanDesign.natal.type': '人類圖類型',
+  'humanDesign.natal.authority': '人類圖內在權威',
+  'humanDesign.natal.channel_centers': '人類圖通道與中心',
+  'humanDesign.transit.gates': '人類圖過境閘門',
+};
+
+export const SKIP_REASON_LABELS: Record<string, string> = {
+  time_unknown: '需要出生時間',
+  ephemeris_not_initialised: '星曆未載入',
+  no_timeline_rules: '沒有隨時間變化的規則',
+};
+
+export const BAND_ORDER = ['低', '中', '中高', '高'] as const;
+export type BandLabel = (typeof BAND_ORDER)[number];
+
+export interface TimelineSignalView {
+  id: string;
+  system: string;
+  systemName: string;
+  ruleId: string;
+  ruleLabel: string;
+  trait: string;
+  traitLabel: string;
+  text: string;
+  /** 0–1. */
+  intensity: number;
+  /** −1–1. */
+  valence: number;
+  /** Neutral reading of valence: 支持 (+), 壓力 (−), 變動 (≈0). Never 吉/凶. */
+  direction: '支持' | '壓力' | '變動';
+}
+
+export interface TimelineConflictSide {
+  id: string;
+  systemName: string;
+  label: string;
+  text: string | null;
+}
+
+export interface TimelineCellView {
+  /** Stable key `${grain}:${start}:${domain}` used for selection. */
+  key: string;
+  domain: TimelineDomain;
+  domainLabel: string;
+  icon: string;
+  grain: 'year' | 'month';
+  periodLabel: string;
+  start: string;
+  end: string;
+  isCurrent: boolean;
+  score: number;
+  band: BandLabel;
+  /** No rule fired for this domain in this window (score 0 by convention). */
+  empty: boolean;
+  consensus: number;
+  highConsensus: boolean;
+  conflict: null | { positive: TimelineConflictSide[]; negative: TimelineConflictSide[] };
+  /** Systems that emitted signals for this cell (繁中). */
+  systems: string[];
+  topSignals: TimelineSignalView[];
+}
+
+export interface TimelineRow extends DomainMeta { cells: TimelineCellView[] }
+
+export interface TimelineGrid {
+  grain: 'year' | 'month';
+  periods: { start: string; label: string; isCurrent: boolean }[];
+  rows: TimelineRow[];
+}
+
+export interface TimelineMeta {
+  asOf: string;
+  systems: string[];
+  skipped: { system: string; name: string; reason: string }[];
+  bandCuts: [number, number, number];
+}
+
+const isBand = (value: unknown): value is BandLabel => BAND_ORDER.includes(value as BandLabel);
+
+function timelineOf(report: Report): Timeline | null {
+  const timeline = report.timeline;
+  return timeline && Array.isArray(timeline.years) ? timeline : null;
+}
+
+function bandCutsOf(timeline: Timeline): [number, number, number] {
+  const cuts = timeline.bandCuts;
+  return Array.isArray(cuts) && cuts.length === 3 ? [cuts[0], cuts[1], cuts[2]] : [35, 55, 75];
+}
+
+/** Same rule as core `toBand`; used only when a cell lacks a band. */
+export function bandOf(score: number, cuts: readonly [number, number, number] = [35, 55, 75]): BandLabel {
+  if (score >= cuts[2]) return '高';
+  if (score >= cuts[1]) return '中高';
+  if (score >= cuts[0]) return '中';
+  return '低';
+}
+
+export function ruleLabel(ruleId: string): string {
+  return RULE_LABELS[ruleId] ?? ruleId;
+}
+
+function toSignalView(signal: Signal): TimelineSignalView {
+  const valence = Number(signal.valence) || 0;
+  return {
+    id: signal.id,
+    system: signal.system,
+    systemName: SIGNAL_SYSTEM_NAMES[signal.system] ?? signal.system,
+    ruleId: signal.ruleId,
+    ruleLabel: ruleLabel(signal.ruleId),
+    trait: signal.trait,
+    traitLabel: TRAIT_LABELS[signal.trait] ?? signal.trait,
+    text: signal.evidence?.text ?? '',
+    intensity: Number(signal.intensity) || 0,
+    valence,
+    direction: valence > 0.05 ? '支持' : valence < -0.05 ? '壓力' : '變動',
+  };
+}
+
+/** Signals from a v4 report's flat `signals` list, when it is one (the shape may still evolve). */
+function reportSignals(report: Report): Map<string, Signal> {
+  const list: Signal[] = Array.isArray(report.signals) ? report.signals : [];
+  return new Map(list.filter(item => item && typeof item.id === 'string').map(item => [item.id, item]));
+}
+
+type CoreDomainCell = TimelineCell['domains'][number];
+
+function conflictSide(ids: string[], cell: CoreDomainCell, lookup: Map<string, Signal>): TimelineConflictSide[] {
+  return ids.map(id => {
+    const signal = cell.topSignals.find(item => item.id === id) ?? lookup.get(id);
+    if (signal) {
+      const view = toSignalView(signal);
+      return { id, systemName: view.systemName, label: `${view.ruleLabel}・${view.traitLabel}`, text: view.text || null };
+    }
+    // Not among the cell's top signals: still name the system that emitted it.
+    const system = Object.entries(cell.perSystem ?? {}).find(([, value]) => value?.signalIds?.includes(id))?.[0];
+    return { id, systemName: system ? SIGNAL_SYSTEM_NAMES[system] ?? system : '未知系統', label: `訊號 ${id}`, text: null };
+  });
+}
+
+function periodLabel(grain: 'year' | 'month', start: string): string {
+  return grain === 'year' ? start.slice(0, 4) : `${Number(start.slice(5, 7))}月`;
+}
+
+function isCurrentPeriod(grain: 'year' | 'month', start: string, asOf: string): boolean {
+  return grain === 'year' ? start.slice(0, 4) === asOf.slice(0, 4) : start.slice(0, 7) === asOf.slice(0, 7);
+}
+
+function buildGrid(report: Report, grain: 'year' | 'month'): TimelineGrid | null {
+  const timeline = timelineOf(report);
+  if (!timeline) return null;
+  const cells = (grain === 'year' ? timeline.years : timeline.months) ?? [];
+  if (!cells.length) return null;
+  const cuts = bandCutsOf(timeline);
+  const lookup = reportSignals(report);
+  const asOf = timeline.asOf ?? report.asOf;
+
+  const periods = cells.map(cell => ({
+    start: cell.window.start,
+    label: periodLabel(grain, cell.window.start),
+    isCurrent: isCurrentPeriod(grain, cell.window.start, asOf),
+  }));
+
+  const rows = TIMELINE_DOMAINS.map(meta => ({
+    ...meta,
+    cells: cells.map((cell, index): TimelineCellView => {
+      const found = cell.domains.find(item => item.domain === meta.domain);
+      const score = Number(found?.score) || 0;
+      const systems = Object.entries(found?.perSystem ?? {})
+        .filter(([, value]) => (value?.signalIds?.length ?? 0) > 0)
+        .map(([system]) => SIGNAL_SYSTEM_NAMES[system] ?? system);
+      const topSignals = (found?.topSignals ?? []).map(toSignalView);
+      return {
+        key: `${grain}:${cell.window.start}:${meta.domain}`,
+        domain: meta.domain,
+        domainLabel: meta.label,
+        icon: meta.icon,
+        grain,
+        periodLabel: periods[index].label,
+        start: cell.window.start,
+        end: cell.window.end,
+        isCurrent: periods[index].isCurrent,
+        score,
+        band: isBand(found?.band) ? found.band : bandOf(score, cuts),
+        empty: !found || (systems.length === 0 && topSignals.length === 0),
+        consensus: found?.consensus ?? 0,
+        highConsensus: Boolean(found?.highConsensus),
+        conflict: found?.conflict
+          ? { positive: conflictSide(found.conflict.positive, found, lookup), negative: conflictSide(found.conflict.negative, found, lookup) }
+          : null,
+        systems,
+        topSignals,
+      };
+    }),
+  }));
+
+  return { grain, periods, rows };
+}
+
+/** Year grid: one row per domain (headline first) × the timeline's year cells (normally 5). */
+export function selectTimelineYears(report: Report): TimelineGrid | null {
+  return buildGrid(report, 'year');
+}
+
+/** Month grid of the asOf year (normally 12 cells), same row order as the year grid. */
+export function selectTimelineMonths(report: Report): TimelineGrid | null {
+  return buildGrid(report, 'month');
+}
+
+export function selectTimelineMeta(report: Report): TimelineMeta | null {
+  const timeline = timelineOf(report);
+  if (!timeline) return null;
+  return {
+    asOf: timeline.asOf ?? report.asOf,
+    systems: (timeline.systems ?? []).map(system => SIGNAL_SYSTEM_NAMES[system] ?? system),
+    skipped: (timeline.skippedSystems ?? []).map(item => ({
+      system: item.system,
+      name: SIGNAL_SYSTEM_NAMES[item.system] ?? item.system,
+      reason: SKIP_REASON_LABELS[item.reason] ?? item.reason,
+    })),
+    bandCuts: bandCutsOf(timeline),
+  };
+}
+
+/** Find a cell by key in any of the grids (used by the detail panel). */
+export function findTimelineCell(key: string | null, ...grids: (TimelineGrid | null)[]): TimelineCellView | null {
+  if (!key) return null;
+  for (const grid of grids) {
+    for (const row of grid?.rows ?? []) {
+      const cell = row.cells.find(item => item.key === key);
+      if (cell) return cell;
+    }
+  }
+  return null;
 }

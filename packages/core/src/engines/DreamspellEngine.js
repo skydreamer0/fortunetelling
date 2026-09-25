@@ -14,10 +14,10 @@
  *   D(date)  = gregorianDayNumber(date) − (# of 29 Feb on-or-before date)
  *   kin      = ((D(date) − D(epoch)) mod 260 + (kinEpoch − 1)) mod 260 + 1
  *
- * where the epoch is 1987-07-26 = Kin 34 (白電力巫師 / White Electric Wizard).
+ * where the epoch is 1987-07-26 = Kin 34 (白銀河星系巫師 / White Galactic Wizard).
  *
  * Validated to reproduce both of the task's reference signatures exactly:
- *   - 1987-07-26 → Kin 34  = 電力巫師 (White Electric Wizard) — tone 3, seal 14
+ *   - 1987-07-26 → Kin 34  = 銀河星系巫師 (White Galactic Wizard) — tone 8, seal 14
  *   - 1939-01-24 → Kin 11  = 光譜猴  (Blue Spectral Monkey)   — tone 11, seal 11
  * (José Argüelles' own signature, Kin 11, is the canonical cross-check.)
  *
@@ -33,6 +33,7 @@
  */
 
 import { BaseEngine } from '../core/BaseEngine.js';
+import { wavespellOf, castleOf, oracleOf } from '../calculators/tzolkin/tzolkin.js';
 
 // ─── Dreamspell name tables (zh-TW) ─────────────────────────────────────────
 
@@ -69,7 +70,7 @@ export const SEAL_COLORS = Object.freeze({ 1: '紅', 2: '白', 3: '藍', 0: '黃
 /** Length of the Tzolk'in / Dreamspell cycle. */
 const CYCLE = 260;
 
-/** Dreamspell epoch: 1987-07-26 is Kin 34 (白電力巫師 / White Electric Wizard). */
+/** Dreamspell epoch: 1987-07-26 is Kin 34 (白銀河星系巫師 / White Galactic Wizard). */
 const EPOCH = Object.freeze({ year: 1987, month: 7, day: 26, kin: 34 });
 
 /** Milliseconds in one day. */
@@ -132,6 +133,44 @@ export class DreamspellEngine extends BaseEngine {
       name: '圖騰',
       category: 'seal',
       value: { number: sealNumber, name: sealName, color: sealColor },
+    });
+
+    // ─── L0: 波符 (wavespell, V1-07) ─────────────────────────────────────
+    const wavespell = wavespellOf(kin);
+    result.add({
+      id: 'wavespell',
+      name: '波符',
+      category: 'wavespell',
+      value: { ...wavespell, name: `${SEAL_NAMES[wavespell.seal]}波符` },
+    });
+
+    // ─── L0: 城堡 (castle, V1-07) ─────────────────────────────────────────
+    const castle = castleOf(kin);
+    result.add({
+      id: 'castle',
+      name: '城堡',
+      category: 'castle',
+      value: castle,
+    });
+
+    // ─── L0: 第五力神諭 (oracle, V1-07) ──────────────────────────────────
+    /** @param {{kin:number, seal:number, tone:number}} r */
+    const describe = r => ({
+      ...r,
+      name: `${SEAL_COLORS[r.seal % 4]}${TONE_NAMES[r.tone]}${SEAL_NAMES[r.seal].slice(1)}`,
+    });
+    const oracle = oracleOf(kin);
+    result.add({
+      id: 'oracle',
+      name: '第五力神諭',
+      category: 'oracle',
+      value: {
+        destiny: describe(oracle.destiny),
+        guide: describe(oracle.guide),
+        analog: describe(oracle.analog),
+        antipode: describe(oracle.antipode),
+        occult: describe(oracle.occult),
+      },
     });
 
     result.meta = {

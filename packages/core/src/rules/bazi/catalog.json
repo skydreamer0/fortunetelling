@@ -1,0 +1,1499 @@
+{
+  "schemaVersion": 1,
+  "system": "bazi",
+  "conventions": {
+    "domainMapping": "訊號的 domain 取自關係中「原局」一側的位置（多個原局位置時各自映射並對同一 domain×trait 取最大強度）；關係只涉及大運與流年（無原局位置）時取大運位置。映射表見 positionDomains，weight 乘上規則基礎強度即為 emits 強度。",
+    "positionDomains": "年柱＝祖上、早年 → family；月干＝事業門戶 → career，月支（月令）→ career＋family；日干＝日主 → self；日支＝配偶宮 → relationship＋self；時干 → learning；時支＝子女、晚景 → family＋learning；大運 → self。",
+    "luckCycleSpan": "BaZiEngine 只輸出大運起訖年，故大運期間取 startYear-01-01 至 endYear-12-31（年精度）；流年預設為該公曆年。",
+    "targets": "命中 target 以「外部位置 × 原局位置」表示，例如 year×natal.day、decade×natal.month、year×decade；多個原局位置以 + 連接；原局內部命中以 × 連接各原局位置。外部位置：year＝流年、decade＝大運、month＝流月；同一時間窗有多個大運／流月重疊時加上 @起始日 以區分。",
+    "valence": "valence 與 trait 皆為資料，不在程式碼中寫入吉凶判斷（D-028）。"
+  },
+  "positionDomains": {
+    "natal.year.stem": [
+      {
+        "domain": "family",
+        "weight": 1
+      }
+    ],
+    "natal.year.branch": [
+      {
+        "domain": "family",
+        "weight": 1
+      }
+    ],
+    "natal.month.stem": [
+      {
+        "domain": "career",
+        "weight": 1
+      }
+    ],
+    "natal.month.branch": [
+      {
+        "domain": "career",
+        "weight": 1
+      },
+      {
+        "domain": "family",
+        "weight": 0.7
+      }
+    ],
+    "natal.day.stem": [
+      {
+        "domain": "self",
+        "weight": 1
+      }
+    ],
+    "natal.day.branch": [
+      {
+        "domain": "relationship",
+        "weight": 1
+      },
+      {
+        "domain": "self",
+        "weight": 0.6
+      }
+    ],
+    "natal.hour.stem": [
+      {
+        "domain": "learning",
+        "weight": 1
+      }
+    ],
+    "natal.hour.branch": [
+      {
+        "domain": "family",
+        "weight": 1
+      },
+      {
+        "domain": "learning",
+        "weight": 0.6
+      }
+    ],
+    "decade.stem": [
+      {
+        "domain": "self",
+        "weight": 1
+      }
+    ],
+    "decade.branch": [
+      {
+        "domain": "self",
+        "weight": 1
+      }
+    ],
+    "natal.year": [
+      {
+        "domain": "family",
+        "weight": 1
+      }
+    ],
+    "natal.month": [
+      {
+        "domain": "career",
+        "weight": 1
+      },
+      {
+        "domain": "family",
+        "weight": 0.7
+      }
+    ],
+    "natal.day": [
+      {
+        "domain": "self",
+        "weight": 1
+      },
+      {
+        "domain": "relationship",
+        "weight": 0.8
+      }
+    ],
+    "natal.hour": [
+      {
+        "domain": "family",
+        "weight": 1
+      },
+      {
+        "domain": "learning",
+        "weight": 0.6
+      }
+    ],
+    "decade": [
+      {
+        "domain": "self",
+        "weight": 1
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "bazi.stem.combine",
+      "version": 1,
+      "name": "天干五合",
+      "label": "天干五合",
+      "relation": "stemCombine",
+      "level": "stem",
+      "description": "兩天干構成五合（甲己、乙庚、丙辛、丁壬、戊癸），並標示合化五行。",
+      "source": "《淵海子平》天干五合。只標示合化五行，不判定是否真化（需月令等條件）。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "emits": [
+        {
+          "position": "natal.year.stem",
+          "domain": "family",
+          "trait": "connection",
+          "intensity": 0.4,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.month.stem",
+          "domain": "career",
+          "trait": "connection",
+          "intensity": 0.4,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.day.stem",
+          "domain": "self",
+          "trait": "connection",
+          "intensity": 0.4,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.hour.stem",
+          "domain": "learning",
+          "trait": "connection",
+          "intensity": 0.4,
+          "valence": 0.3
+        },
+        {
+          "position": "decade.stem",
+          "domain": "self",
+          "trait": "connection",
+          "intensity": 0.4,
+          "valence": 0.3
+        }
+      ]
+    },
+    {
+      "id": "bazi.stem.control",
+      "version": 1,
+      "name": "天干相剋",
+      "label": "天干相剋",
+      "relation": "stemControl",
+      "level": "stem",
+      "description": "一天干之五行剋另一天干之五行（木剋土、土剋水、水剋火、火剋金、金剋木）。",
+      "source": "五行生剋（《五行大義》），以天干本身五行判定；與五合並存時兩者皆列出，不互相抵銷。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "emits": [
+        {
+          "position": "natal.year.stem",
+          "domain": "family",
+          "trait": "pressure",
+          "intensity": 0.3,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.month.stem",
+          "domain": "career",
+          "trait": "pressure",
+          "intensity": 0.3,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.day.stem",
+          "domain": "self",
+          "trait": "pressure",
+          "intensity": 0.3,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.hour.stem",
+          "domain": "learning",
+          "trait": "pressure",
+          "intensity": 0.3,
+          "valence": -0.3
+        },
+        {
+          "position": "decade.stem",
+          "domain": "self",
+          "trait": "pressure",
+          "intensity": 0.3,
+          "valence": -0.3
+        }
+      ]
+    },
+    {
+      "id": "bazi.stem.produce",
+      "version": 1,
+      "name": "天干相生",
+      "label": "天干相生",
+      "relation": "stemProduce",
+      "level": "stem",
+      "description": "一天干之五行生另一天干之五行（木生火、火生土、土生金、金生水、水生木）。",
+      "source": "五行生剋（《五行大義》），以天干本身五行判定。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "emits": [
+        {
+          "position": "natal.year.stem",
+          "domain": "family",
+          "trait": "support",
+          "intensity": 0.3,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.month.stem",
+          "domain": "career",
+          "trait": "support",
+          "intensity": 0.3,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.day.stem",
+          "domain": "self",
+          "trait": "support",
+          "intensity": 0.3,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.hour.stem",
+          "domain": "learning",
+          "trait": "support",
+          "intensity": 0.3,
+          "valence": 0.3
+        },
+        {
+          "position": "decade.stem",
+          "domain": "self",
+          "trait": "support",
+          "intensity": 0.3,
+          "valence": 0.3
+        }
+      ]
+    },
+    {
+      "id": "bazi.branch.harmony",
+      "version": 1,
+      "name": "地支六合",
+      "label": "地支六合",
+      "relation": "branchHarmony",
+      "level": "branch",
+      "description": "兩地支構成六合（子丑、寅亥、卯戌、辰酉、巳申、午未），並標示合化五行。",
+      "source": "《三命通會》論支元六合；午未合依常見慣例標土。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "emits": [
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "connection",
+          "intensity": 0.5,
+          "valence": 0.4
+        },
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "stability",
+          "intensity": 0.3,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "connection",
+          "intensity": 0.5,
+          "valence": 0.4
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "stability",
+          "intensity": 0.3,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "connection",
+          "intensity": 0.35,
+          "valence": 0.4
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "stability",
+          "intensity": 0.21,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "connection",
+          "intensity": 0.5,
+          "valence": 0.4
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "stability",
+          "intensity": 0.3,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "connection",
+          "intensity": 0.3,
+          "valence": 0.4
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "stability",
+          "intensity": 0.18,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "connection",
+          "intensity": 0.5,
+          "valence": 0.4
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "stability",
+          "intensity": 0.3,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "connection",
+          "intensity": 0.3,
+          "valence": 0.4
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "stability",
+          "intensity": 0.18,
+          "valence": 0.2
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "connection",
+          "intensity": 0.5,
+          "valence": 0.4
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "stability",
+          "intensity": 0.3,
+          "valence": 0.2
+        }
+      ]
+    },
+    {
+      "id": "bazi.branch.clash",
+      "version": 1,
+      "name": "地支六沖",
+      "label": "地支六沖",
+      "relation": "branchClash",
+      "level": "branch",
+      "description": "兩地支相對沖（子午、丑未、寅申、卯酉、辰戌、巳亥）。",
+      "source": "《三命通會》論地支六沖。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "emits": [
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.6,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "conflict",
+          "intensity": 0.4,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "change",
+          "intensity": 0.6,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "conflict",
+          "intensity": 0.4,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.42,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "conflict",
+          "intensity": 0.28,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "change",
+          "intensity": 0.6,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "conflict",
+          "intensity": 0.4,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "change",
+          "intensity": 0.36,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "conflict",
+          "intensity": 0.24,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.6,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "conflict",
+          "intensity": 0.4,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "change",
+          "intensity": 0.36,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "conflict",
+          "intensity": 0.24,
+          "valence": -0.4
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "change",
+          "intensity": 0.6,
+          "valence": -0.2
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "conflict",
+          "intensity": 0.4,
+          "valence": -0.4
+        }
+      ]
+    },
+    {
+      "id": "bazi.branch.trine",
+      "version": 1,
+      "name": "地支三合／半合",
+      "label": "地支三合",
+      "relation": "branchTrine",
+      "level": "branch",
+      "description": "三地支構成三合局（申子辰、亥卯未、寅午戌、巳酉丑）；只見含旺支的兩支為半合。",
+      "source": "《三命通會》論三合。半合只取含旺支（子午卯酉）的生旺、旺墓兩支；不含旺支的拱合不計。被完整三合涵蓋的兩支不另報半合。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "modifiers": {
+        "partial": {
+          "factor": 0.6,
+          "reason": "半合（三合局缺一支）"
+        }
+      },
+      "emits": [
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "connection",
+          "intensity": 0.5,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "growth",
+          "intensity": 0.4,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "connection",
+          "intensity": 0.5,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "growth",
+          "intensity": 0.4,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "connection",
+          "intensity": 0.35,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "growth",
+          "intensity": 0.28,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "connection",
+          "intensity": 0.5,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "growth",
+          "intensity": 0.4,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "connection",
+          "intensity": 0.3,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "growth",
+          "intensity": 0.24,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "connection",
+          "intensity": 0.5,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "growth",
+          "intensity": 0.4,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "connection",
+          "intensity": 0.3,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "growth",
+          "intensity": 0.24,
+          "valence": 0.3
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "connection",
+          "intensity": 0.5,
+          "valence": 0.3
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "growth",
+          "intensity": 0.4,
+          "valence": 0.3
+        }
+      ]
+    },
+    {
+      "id": "bazi.branch.directional",
+      "version": 1,
+      "name": "地支三會",
+      "label": "地支三會",
+      "relation": "branchDirectional",
+      "level": "branch",
+      "description": "三地支構成方局（寅卯辰、巳午未、申酉戌、亥子丑），只計三支俱全。",
+      "source": "《三命通會》論方局（三會）。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "emits": [
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "growth",
+          "intensity": 0.6,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "stability",
+          "intensity": 0.4,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "growth",
+          "intensity": 0.6,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "stability",
+          "intensity": 0.4,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "growth",
+          "intensity": 0.42,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "stability",
+          "intensity": 0.28,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "growth",
+          "intensity": 0.6,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "stability",
+          "intensity": 0.4,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "growth",
+          "intensity": 0.36,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "stability",
+          "intensity": 0.24,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "growth",
+          "intensity": 0.6,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "stability",
+          "intensity": 0.4,
+          "valence": 0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "growth",
+          "intensity": 0.36,
+          "valence": 0.3
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "stability",
+          "intensity": 0.24,
+          "valence": 0.2
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "growth",
+          "intensity": 0.6,
+          "valence": 0.3
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "stability",
+          "intensity": 0.4,
+          "valence": 0.2
+        }
+      ]
+    },
+    {
+      "id": "bazi.branch.punishment",
+      "version": 1,
+      "name": "地支三刑／相刑／自刑",
+      "label": "地支相刑",
+      "relation": "branchPunishment",
+      "level": "branch",
+      "description": "寅巳申、丑戌未三刑（只見兩支為缺一），子卯相刑，辰午酉亥同支重見為自刑。",
+      "source": "《三命通會》論三刑：寅巳申無恩之刑、丑戌未恃勢之刑、子卯無禮之刑、辰午酉亥自刑。自刑需同一地支出現兩次。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "modifiers": {
+        "partial": {
+          "factor": 0.6,
+          "reason": "三刑缺一支"
+        }
+      },
+      "emits": [
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "pressure",
+          "intensity": 0.5,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "conflict",
+          "intensity": 0.3,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "pressure",
+          "intensity": 0.5,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "conflict",
+          "intensity": 0.3,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "pressure",
+          "intensity": 0.35,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "conflict",
+          "intensity": 0.21,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "pressure",
+          "intensity": 0.5,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "conflict",
+          "intensity": 0.3,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "pressure",
+          "intensity": 0.3,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "conflict",
+          "intensity": 0.18,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "pressure",
+          "intensity": 0.5,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "conflict",
+          "intensity": 0.3,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "pressure",
+          "intensity": 0.3,
+          "valence": -0.4
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "conflict",
+          "intensity": 0.18,
+          "valence": -0.3
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "pressure",
+          "intensity": 0.5,
+          "valence": -0.4
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "conflict",
+          "intensity": 0.3,
+          "valence": -0.3
+        }
+      ]
+    },
+    {
+      "id": "bazi.branch.harm",
+      "version": 1,
+      "name": "地支六害",
+      "label": "地支六害",
+      "relation": "branchHarm",
+      "level": "branch",
+      "description": "兩地支相害（子未、丑午、寅巳、卯辰、申亥、酉戌）。",
+      "source": "《三命通會》論六害（相穿）。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "emits": [
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "pressure",
+          "intensity": 0.4,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "separation",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "pressure",
+          "intensity": 0.4,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "separation",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "pressure",
+          "intensity": 0.28,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "separation",
+          "intensity": 0.21,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "pressure",
+          "intensity": 0.4,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "separation",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "pressure",
+          "intensity": 0.24,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "separation",
+          "intensity": 0.18,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "pressure",
+          "intensity": 0.4,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "separation",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "pressure",
+          "intensity": 0.24,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "separation",
+          "intensity": 0.18,
+          "valence": -0.2
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "pressure",
+          "intensity": 0.4,
+          "valence": -0.3
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "separation",
+          "intensity": 0.3,
+          "valence": -0.2
+        }
+      ]
+    },
+    {
+      "id": "bazi.branch.break",
+      "version": 1,
+      "name": "地支六破",
+      "label": "地支六破",
+      "relation": "branchBreak",
+      "level": "branch",
+      "description": "兩地支相破（子酉、卯午、辰丑、未戌、寅亥、巳申）。",
+      "source": "子平常見慣例之六破表。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "emits": [
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.year.branch",
+          "domain": "family",
+          "trait": "separation",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "change",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "career",
+          "trait": "separation",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.21,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.month.branch",
+          "domain": "family",
+          "trait": "separation",
+          "intensity": 0.21,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "change",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "relationship",
+          "trait": "separation",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "change",
+          "intensity": 0.18,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.day.branch",
+          "domain": "self",
+          "trait": "separation",
+          "intensity": 0.18,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "family",
+          "trait": "separation",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "change",
+          "intensity": 0.18,
+          "valence": -0.2
+        },
+        {
+          "position": "natal.hour.branch",
+          "domain": "learning",
+          "trait": "separation",
+          "intensity": 0.18,
+          "valence": -0.2
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "change",
+          "intensity": 0.3,
+          "valence": -0.2
+        },
+        {
+          "position": "decade.branch",
+          "domain": "self",
+          "trait": "separation",
+          "intensity": 0.3,
+          "valence": -0.2
+        }
+      ]
+    },
+    {
+      "id": "bazi.pillar.fuyin",
+      "version": 1,
+      "name": "伏吟",
+      "label": "伏吟",
+      "relation": "pillarFuyin",
+      "level": "pillar",
+      "description": "大運、流年或流月的干支與原局某柱完全相同；原局內兩柱相同亦列出。",
+      "source": "子平慣例：運歲干支與原局某柱相同為伏吟。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "emits": [
+        {
+          "position": "natal.year",
+          "domain": "family",
+          "trait": "pressure",
+          "intensity": 0.5,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.year",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.3,
+          "valence": -0.1
+        },
+        {
+          "position": "natal.month",
+          "domain": "career",
+          "trait": "pressure",
+          "intensity": 0.5,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.month",
+          "domain": "career",
+          "trait": "change",
+          "intensity": 0.3,
+          "valence": -0.1
+        },
+        {
+          "position": "natal.month",
+          "domain": "family",
+          "trait": "pressure",
+          "intensity": 0.35,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.month",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.21,
+          "valence": -0.1
+        },
+        {
+          "position": "natal.day",
+          "domain": "self",
+          "trait": "pressure",
+          "intensity": 0.5,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.day",
+          "domain": "self",
+          "trait": "change",
+          "intensity": 0.3,
+          "valence": -0.1
+        },
+        {
+          "position": "natal.day",
+          "domain": "relationship",
+          "trait": "pressure",
+          "intensity": 0.4,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.day",
+          "domain": "relationship",
+          "trait": "change",
+          "intensity": 0.24,
+          "valence": -0.1
+        },
+        {
+          "position": "natal.hour",
+          "domain": "family",
+          "trait": "pressure",
+          "intensity": 0.5,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.hour",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.3,
+          "valence": -0.1
+        },
+        {
+          "position": "natal.hour",
+          "domain": "learning",
+          "trait": "pressure",
+          "intensity": 0.3,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.hour",
+          "domain": "learning",
+          "trait": "change",
+          "intensity": 0.18,
+          "valence": -0.1
+        },
+        {
+          "position": "decade",
+          "domain": "self",
+          "trait": "pressure",
+          "intensity": 0.5,
+          "valence": -0.3
+        },
+        {
+          "position": "decade",
+          "domain": "self",
+          "trait": "change",
+          "intensity": 0.3,
+          "valence": -0.1
+        }
+      ]
+    },
+    {
+      "id": "bazi.pillar.fanyin",
+      "version": 1,
+      "name": "反吟（天沖地沖）",
+      "label": "反吟",
+      "relation": "pillarFanyin",
+      "level": "pillar",
+      "description": "大運、流年或流月與原局某柱天干相沖（甲庚、乙辛、丙壬、丁癸）且地支六沖；原局內兩柱亦列出。",
+      "source": "子平慣例：天干相沖且地支相沖為反吟。戊己無天干相沖，故不構成反吟（本版不採「天剋地沖」寬鬆定義）。",
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "emits": [
+        {
+          "position": "natal.year",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.8,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.year",
+          "domain": "family",
+          "trait": "conflict",
+          "intensity": 0.6,
+          "valence": -0.5
+        },
+        {
+          "position": "natal.month",
+          "domain": "career",
+          "trait": "change",
+          "intensity": 0.8,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.month",
+          "domain": "career",
+          "trait": "conflict",
+          "intensity": 0.6,
+          "valence": -0.5
+        },
+        {
+          "position": "natal.month",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.56,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.month",
+          "domain": "family",
+          "trait": "conflict",
+          "intensity": 0.42,
+          "valence": -0.5
+        },
+        {
+          "position": "natal.day",
+          "domain": "self",
+          "trait": "change",
+          "intensity": 0.8,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.day",
+          "domain": "self",
+          "trait": "conflict",
+          "intensity": 0.6,
+          "valence": -0.5
+        },
+        {
+          "position": "natal.day",
+          "domain": "relationship",
+          "trait": "change",
+          "intensity": 0.64,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.day",
+          "domain": "relationship",
+          "trait": "conflict",
+          "intensity": 0.48,
+          "valence": -0.5
+        },
+        {
+          "position": "natal.hour",
+          "domain": "family",
+          "trait": "change",
+          "intensity": 0.8,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.hour",
+          "domain": "family",
+          "trait": "conflict",
+          "intensity": 0.6,
+          "valence": -0.5
+        },
+        {
+          "position": "natal.hour",
+          "domain": "learning",
+          "trait": "change",
+          "intensity": 0.48,
+          "valence": -0.3
+        },
+        {
+          "position": "natal.hour",
+          "domain": "learning",
+          "trait": "conflict",
+          "intensity": 0.36,
+          "valence": -0.5
+        },
+        {
+          "position": "decade",
+          "domain": "self",
+          "trait": "change",
+          "intensity": 0.8,
+          "valence": -0.3
+        },
+        {
+          "position": "decade",
+          "domain": "self",
+          "trait": "conflict",
+          "intensity": 0.6,
+          "valence": -0.5
+        }
+      ]
+    },
+    {
+      "id": "bazi.suiyun.binglin",
+      "version": 1,
+      "name": "歲運並臨",
+      "label": "歲運並臨",
+      "relation": "suiyunBinglin",
+      "level": "pillar",
+      "description": "流年干支與當行大運干支完全相同。",
+      "source": "《三命通會》／子平慣例：流年與大運同一干支為歲運並臨。",
+      "scopes": [
+        "year"
+      ],
+      "emits": [
+        {
+          "position": "decade",
+          "domain": "self",
+          "trait": "change",
+          "intensity": 0.7,
+          "valence": -0.2
+        },
+        {
+          "position": "decade",
+          "domain": "self",
+          "trait": "pressure",
+          "intensity": 0.5,
+          "valence": -0.3
+        }
+      ]
+    }
+  ]
+}

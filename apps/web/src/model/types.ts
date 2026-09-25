@@ -1,7 +1,13 @@
 /**
- * UI-side view of the core `Report` (schema v3) and compatibility result.
+ * UI-side view of the core `Report` (schema v3, and the v4 additions the UI
+ * reads: `timeline`, `timeContext`, `signals`) and compatibility result.
  * Only the fields the UI reads are typed; the core remains the source of truth.
+ * Every v4 field is optional so a v3 report still type-checks and renders.
  */
+
+import type { Signal, Timeline, TimeAccuracy } from '@fortune/core';
+
+export type { Signal, Timeline, TimeAccuracy };
 
 export type SystemId = 'bazi' | 'ziwei' | 'numerology' | 'minggua' | 'dreamspell';
 export type Gender = 'male' | 'female';
@@ -25,6 +31,10 @@ export interface BirthInput {
   gender: Gender;
   calendarType: 'solar' | 'lunar';
   lunarInput?: LunarInput;
+  /** Birthplace city id from the core city table (`CITIES`); read by analyze v4, ignored by v3. */
+  cityId?: string;
+  /** Birth-time precision; read by analyze v4, ignored by v3. */
+  timeAccuracy?: TimeAccuracy;
 }
 
 export interface Component<V = any> {
@@ -146,7 +156,8 @@ export interface LayerDefinition {
 
 export interface Report {
   version: string;
-  schemaVersion: number;
+  /** 3 = legacy engines report; 4 adds `timeline`, `timeContext`, `signals`. */
+  schemaVersion: 3 | 4 | number;
   generatedAt: string;
   asOf: string;
   input: BirthInput & { longitude: number; latitude: number };
@@ -174,6 +185,12 @@ export interface Report {
   stateTable: { scenarios: Scenario[]; pending: boolean };
   evolution: { periods: Period[]; narrative: string; pending: boolean };
   honesty: { violations: unknown[]; pending: boolean };
+  /** v4: ⑤ Timeline (years × domains + months of the asOf year). Absent on v3 reports. */
+  timeline?: Timeline | null;
+  /** v4: normalised time context. Only read loosely by the UI. */
+  timeContext?: Record<string, unknown> | null;
+  /** v4: flat signal list; used to resolve conflict signal ids outside a cell's topSignals. */
+  signals?: Signal[] | Record<string, unknown> | null;
 }
 
 export interface CompatibilityPerson {

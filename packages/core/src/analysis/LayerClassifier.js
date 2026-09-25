@@ -144,6 +144,11 @@ const CLASSIFICATION_RULES = [
   { sourceSystem: 'numerology', category: 'digitFrequency', layer: 'L0', rationale: '數字頻率分佈終生不變。' },
   { sourceSystem: 'numerology', category: 'personalYear',  layer: 'L2', rationale: '個人年數字每年變化。' },
   { sourceSystem: 'numerology', category: 'personalMonth', layer: 'L2', rationale: '個人月數字每月變化。' },
+  { sourceSystem: 'numerology', category: 'birthdayNumber', layer: 'L0', rationale: '生日數由出生日決定，終生不變。' },
+  { sourceSystem: 'numerology', category: 'attitude',      layer: 'L0', rationale: '態度數由出生月日決定，終生不變。' },
+  { sourceSystem: 'numerology', category: 'pinnacles',     layer: 'L1', rationale: '巔峰數分四段人生時期（約9年以上一段），為慢變週期。' },
+  { sourceSystem: 'numerology', category: 'challenges',    layer: 'L1', rationale: '挑戰數與巔峰數同段落切換，為慢變週期。' },
+  { sourceSystem: 'numerology', category: 'personalYears', layer: 'L2', rationale: '個人流年數序列每年一變。' },
 
   // ── Human Design ────────────────────────────────────────────────────
   { sourceSystem: 'humandesign', category: 'type',            layer: 'L0', rationale: '人類圖類型終生不變。' },
@@ -162,6 +167,9 @@ const CLASSIFICATION_RULES = [
   { sourceSystem: 'dreamspell', category: 'kin',  layer: 'L0', rationale: 'Kin 印記由出生日期計算，終生不變。' },
   { sourceSystem: 'dreamspell', category: 'tone', layer: 'L0', rationale: '銀河音階由 Kin 決定，終生不變。' },
   { sourceSystem: 'dreamspell', category: 'seal', layer: 'L0', rationale: '圖騰由 Kin 決定，終生不變。' },
+  { sourceSystem: 'dreamspell', category: 'wavespell', layer: 'L0', rationale: '波符為 Kin 所在的 13 日週期，由 Kin 決定，終生不變。' },
+  { sourceSystem: 'dreamspell', category: 'castle',    layer: 'L0', rationale: '城堡為 Kin 所在的 52 日區段，由 Kin 決定，終生不變。' },
+  { sourceSystem: 'dreamspell', category: 'oracle',    layer: 'L0', rationale: '第五力神諭（引導/類比/對立/隱藏）由 Kin 決定，終生不變。' },
 
   // ── Cross-System Context ────────────────────────────────────────────
   { sourceSystem: 'vedic',       category: 'ascendant',    layer: 'L3', rationale: '上升星座代表社交面具，在初識場合較為顯著。' },

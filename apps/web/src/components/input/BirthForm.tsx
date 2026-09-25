@@ -1,14 +1,62 @@
-/** Single-person birth-data form (solar or lunar date, 時辰 or unknown time). */
+/** Single-person birth-data form (solar or lunar date, 時辰 or unknown time, birthplace, time accuracy). */
 
 import { useState, type FormEvent } from 'react';
+import { DEFAULT_CITY_ID } from '../../lib/cities';
 import { lunarToSolarDate, parseIsoDate, solarToLunarDate, toIsoDate } from '../../lib/core';
-import type { BirthInput, Gender, LunarInput } from '../../model/types';
-import { Field, Segmented, ShichenPicker } from './fields';
+import type { BirthInput, Gender, LunarInput, TimeAccuracy } from '../../model/types';
+import { CityPicker, Field, Segmented, ShichenPicker, TIME_ACCURACY_OPTIONS, representativeHour } from './fields';
 
 export const EXAMPLE_INPUT: BirthInput = {
   name: 'Wang Xiaoming', year: 1991, month: 10, day: 5, hour: 14, minute: 0,
-  timeKnown: true, gender: 'female', calendarType: 'solar',
+  timeKnown: true, gender: 'female', calendarType: 'solar', cityId: DEFAULT_CITY_ID, timeAccuracy: 'approx1h',
 };
+
+const pad = (value: number) => String(value).padStart(2, '0');
+
+/** Saved inputs from before timeAccuracy existed: a 時辰 choice is ±1 hour. */
+function initialAccuracy(input: BirthInput): TimeAccuracy {
+  if (!input.timeKnown) return 'unknown';
+  return input.timeAccuracy && input.timeAccuracy !== 'unknown' ? input.timeAccuracy : 'approx1h';
+}
+
+const ACCURACY_HINTS: Record<TimeAccuracy, string> = {
+  exact: '以出生證明或醫院紀錄上的時刻為準。',
+  approx15m: '誤差約 15 分鐘內；接近時辰或節氣交界時，相關結論會視為不確定。',
+  approx1h: '只知道大約時辰；接近交界時，相關結論會視為不確定。',
+  unknown: '',
+};
+
+export interface BirthFormState {
+  name: string;
+  gender: Gender;
+  calendar: 'solar' | 'lunar';
+  solarDate: string;
+  lunar: LunarInput;
+  time: { hour: number; timeKnown: boolean };
+  accuracy: TimeAccuracy;
+  /** 'HH:mm' or '' (only the 時辰 is known). */
+  clock: string;
+  cityId: string;
+}
+
+/** Form state → `analyze()` input. Throws on an invalid date (shown as the form error). */
+export function formToInput(state: BirthFormState): BirthInput {
+  const date = state.calendar === 'solar' ? parseIsoDate(state.solarDate) : lunarToSolarDate(state.lunar);
+  const timeKnown = state.time.timeKnown && state.accuracy !== 'unknown';
+  const exact = timeKnown && /^\d{2}:\d{2}$/.test(state.clock);
+  return {
+    name: state.name.trim(),
+    year: date.year, month: date.month, day: date.day,
+    hour: exact ? Number(state.clock.slice(0, 2)) : timeKnown ? state.time.hour : 12,
+    minute: exact ? Number(state.clock.slice(3, 5)) : 0,
+    timeKnown,
+    gender: state.gender,
+    calendarType: state.calendar,
+    ...(state.calendar === 'lunar' ? { lunarInput: state.lunar } : {}),
+    cityId: state.cityId,
+    timeAccuracy: timeKnown ? state.accuracy : 'unknown',
+  };
+}
 
 interface BirthFormProps {
   initial: BirthInput | null;
@@ -24,7 +72,42 @@ export function BirthForm({ initial, onSubmit, onExample }: BirthFormProps) {
   const [solarDate, setSolarDate] = useState(toIsoDate(start));
   const [lunar, setLunar] = useState<LunarInput>(start.lunarInput ?? solarToLunarDate(start));
   const [time, setTime] = useState({ hour: start.hour, timeKnown: start.timeKnown });
+  const [accuracy, setAccuracy] = useState<TimeAccuracy>(initialAccuracy(start));
+  const [clock, setClock] = useState(
+    start.timeKnown && (start.timeAccuracy === 'exact' || start.timeAccuracy === 'approx15m' || start.minute)
+      ? `${pad(start.hour)}:${pad(start.minute ?? 0)}` : '');
+  const [cityId, setCityId] = useState(start.cityId ?? DEFAULT_CITY_ID);
   const [error, setError] = useState('');
+
+  // 時辰 grid → clears a clock time from another 時辰; "unknown" ↔ accuracy 'unknown'.
+  function pickShichen(next: { hour: number; timeKnown: boolean }) {
+    setTime(next);
+    if (!next.timeKnown) {
+      setAccuracy('unknown');
+      setClock('');
+      return;
+    }
+    if (accuracy === 'unknown') setAccuracy('approx1h');
+    if (clock && representativeHour(Number(clock.slice(0, 2))) !== next.hour) setClock('');
+  }
+
+  // Exact clock time → selects its 時辰; typing minutes implies better than ±1 hour.
+  function pickClock(value: string) {
+    setClock(value);
+    if (!/^\d{2}:\d{2}$/.test(value)) return;
+    setTime({ hour: representativeHour(Number(value.slice(0, 2))), timeKnown: true });
+    if (accuracy === 'unknown' || accuracy === 'approx1h') setAccuracy('exact');
+  }
+
+  function pickAccuracy(next: TimeAccuracy) {
+    setAccuracy(next);
+    if (next === 'unknown') {
+      setTime(previous => ({ ...previous, timeKnown: false }));
+      setClock('');
+    } else {
+      setTime(previous => ({ ...previous, timeKnown: true }));
+    }
+  }
 
   function switchCalendar(next: 'solar' | 'lunar') {
     setError('');
@@ -41,17 +124,7 @@ export function BirthForm({ initial, onSubmit, onExample }: BirthFormProps) {
     event.preventDefault();
     setError('');
     try {
-      const date = calendar === 'solar' ? parseIsoDate(solarDate) : lunarToSolarDate(lunar);
-      onSubmit({
-        name: name.trim(),
-        year: date.year, month: date.month, day: date.day,
-        hour: time.timeKnown ? time.hour : 12,
-        minute: 0,
-        timeKnown: time.timeKnown,
-        gender,
-        calendarType: calendar,
-        ...(calendar === 'lunar' ? { lunarInput: lunar } : {}),
-      });
+      onSubmit(formToInput({ name, gender, calendar, solarDate, lunar, time, accuracy, clock, cityId }));
     } catch (caught) {
       setError((caught as Error).message);
     }
@@ -108,7 +181,21 @@ export function BirthForm({ initial, onSubmit, onExample }: BirthFormProps) {
         )}
       </div>
 
-      <ShichenPicker name="shichen" hour={time.hour} timeKnown={time.timeKnown} onChange={setTime} />
+      <ShichenPicker name="shichen" hour={time.hour} timeKnown={time.timeKnown} onChange={pickShichen} />
+
+      <div className="ledger__time">
+        <Field label="出生時刻（選填）" htmlFor="f-clock" hint="知道幾點幾分時填寫；只知道時辰可以留空。">
+          <input id="f-clock" className="input input--date" type="time" value={clock}
+            onChange={event => pickClock(event.target.value)} disabled={!time.timeKnown} />
+        </Field>
+        <div className="field">
+          <Segmented legend="時間精確度" name="time-accuracy" value={accuracy} onChange={pickAccuracy}
+            options={TIME_ACCURACY_OPTIONS} />
+          {ACCURACY_HINTS[accuracy] && <p className="field__hint">{ACCURACY_HINTS[accuracy]}</p>}
+        </div>
+      </div>
+
+      <CityPicker id="f-city" value={cityId} onChange={setCityId} />
 
       <p className="form-error" role="alert">{error}</p>
 
