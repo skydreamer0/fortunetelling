@@ -51,11 +51,25 @@ function monthlyPeriod(m: ZiweiMonthlyPeriod): ZiweiPeriod {
   };
 }
 
+export interface ToZiweiRuleChartOptions {
+  /**
+   * Replace the chart's 流年 sequence (default: `chart.yearlySequence`, asOf −1 … +9).
+   * Added for the timeline (V1-13), which needs years outside that range.
+   */
+  yearlySequence?: readonly ZiweiYearlyPeriod[];
+  /**
+   * Replace the chart's 流月 sequence (default: `chart.monthlySequence`, the asOf
+   * lunar year only). Added for the timeline (V1-13): Gregorian January/February
+   * fall in the previous lunar year.
+   */
+  monthlySequence?: readonly ZiweiMonthlyPeriod[];
+}
+
 /**
  * Rule chart for a ziwei calculator result. Throws (like `fromZiweiComponents`)
  * when the chart has no palaces, i.e. the birth time is unknown.
  */
-export function toZiweiRuleChart(result: ChartResult<ZiweiChart>): ZiweiRuleChart {
+export function toZiweiRuleChart(result: ChartResult<ZiweiChart>, opts: ToZiweiRuleChartOptions = {}): ZiweiRuleChart {
   const { chart } = result;
   const cache = new Map<number, string>();
   return fromZiweiComponents(result.components, {
@@ -69,8 +83,8 @@ export function toZiweiRuleChart(result: ChartResult<ZiweiChart>): ZiweiRuleChar
       return iso;
     },
     sequences: {
-      yearly: chart.yearlySequence.map(yearlyPeriod),
-      monthly: chart.monthlySequence.map(monthlyPeriod),
+      yearly: (opts.yearlySequence ?? chart.yearlySequence).map(yearlyPeriod),
+      monthly: (opts.monthlySequence ?? chart.monthlySequence).map(monthlyPeriod),
     },
   });
 }
