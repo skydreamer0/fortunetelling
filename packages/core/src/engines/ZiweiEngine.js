@@ -260,7 +260,9 @@ export class ZiweiEngine extends BaseEngine {
         result.warn('命宮或身宮定位失敗，略過 soulVsBody（L3）部件。');
       }
 
-      for (const [facetId, palace] of [['soul', soulPalace], ['body', bodyPalace]]) {
+      /** @type {Array<[string, typeof soulPalace]>} */
+      const facets = [['soul', soulPalace], ['body', bodyPalace]];
+      for (const [facetId, palace] of facets) {
         if (!palace) continue;
         // 命身同宮時兩組三方四正相同，只輸出一組
         if (facetId === 'body' && soulPalace && palace.index === soulPalace.index) continue;

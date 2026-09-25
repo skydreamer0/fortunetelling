@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { pwa } from './pwa/plugin';
 
 // GitHub Pages serves the site from /<repo-name>/.
 export default defineConfig({
   base: '/fortunetelling/',
-  plugins: [react()],
+  plugins: [react(), pwa()],
   build: {
     rolldownOptions: {
       output: {

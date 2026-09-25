@@ -1,0 +1,21 @@
+{
+  "id": "./",
+  "name": "命理綜合分析平台",
+  "short_name": "命理分析",
+  "description": "八字、紫微斗數、生命靈數、馬雅曆與八宅命卦的綜合命盤；計算在裝置內完成。",
+  "lang": "zh-TW",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F3EDE1",
+  "theme_color": "#F3EDE1",
+  "categories": ["lifestyle", "entertainment"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,4 +1,9 @@
-export const INTEGRATION_CASES = Object.freeze([
+/**
+ * @typedef {import('../../src/core/models/BirthData.js').BirthDataParams} BirthDataParams
+ * @typedef {{ id: string, kind: string, input: BirthDataParams, asOf: string, provenance: Object, expected: Object }} IntegrationCase
+ */
+
+export const INTEGRATION_CASES = Object.freeze(/** @type {IntegrationCase[]} */ ([
   {
     id: 'golden-1986-05-29-taipei',
     kind: 'golden',
@@ -103,4 +108,4 @@ export const INTEGRATION_CASES = Object.freeze([
       digitFrequency: { 1: 1, 2: 2, 3: 0, 4: 1, 5: 2, 6: 0, 7: 0, 8: 0, 9: 1 },
     },
   },
-]);
+]));

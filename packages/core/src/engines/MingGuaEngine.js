@@ -55,9 +55,10 @@ const COMPASS_ZH = Object.freeze({
 /**
  * Kua number → trigram info. Central 5 has no trigram, so it is absent here
  * (it is remapped to 2/8 before lookup).
- * @type {Record<number, { name: string, elementEn: string, elementZh: string, code: string, group: 'east'|'west' }>}
+ * @typedef {{ name: string, elementEn: string, elementZh: string, code: string, group: 'east'|'west' }} GuaInfo
+ * @type {Readonly<Record<number, GuaInfo>>}
  */
-const GUA_INFO = Object.freeze({
+const GUA_INFO = Object.freeze(/** @type {Record<number, GuaInfo>} */ ({
   1: { name: '坎', elementEn: 'water', elementZh: '水', code: 'N', group: 'east' },
   2: { name: '坤', elementEn: 'earth', elementZh: '土', code: 'SW', group: 'west' },
   3: { name: '震', elementEn: 'wood', elementZh: '木', code: 'E', group: 'east' },
@@ -66,7 +67,7 @@ const GUA_INFO = Object.freeze({
   7: { name: '兌', elementEn: 'metal', elementZh: '金', code: 'W', group: 'west' },
   8: { name: '艮', elementEn: 'earth', elementZh: '土', code: 'NE', group: 'west' },
   9: { name: '離', elementEn: 'fire', elementZh: '火', code: 'S', group: 'east' },
-});
+}));
 
 /**
  * Group key → Chinese name (東四命 / 西四命).

@@ -56,6 +56,24 @@ bun run build
 
 建置完成的檔案將會輸出於 `apps/web/dist` 目錄中，這是一組純靜態網頁，可部署至任何靜態託管平台（如 GitHub Pages, Vercel, Netlify）。
 
+## 📱 安裝到 iPhone（PWA）
+
+正式版本是可安裝的 PWA：部署到 GitHub Pages（HTTPS）後，
+
+1. 用 iPhone 的 Safari 開啟網站（iOS 16.4 以上的 Chrome／Edge 也可以）。
+2. 點「分享」按鈕 → 「加入主畫面」。
+3. 從主畫面圖示開啟時會全螢幕執行；第一次開啟後，排盤與合盤在飛航模式下也能使用。
+
+實作位置：
+
+- `apps/web/public/manifest.webmanifest`、`apps/web/public/icons/`：App 名稱、圖示（iOS 使用 180×180 的 `apple-touch-icon.png`）。
+- `apps/web/pwa/sw.js`：Service Worker——預先快取 App 外殼與打包檔；頁面採網路優先（新版部署後下次開啟即更新），離線時改用快取；Google Fonts 於執行期快取。
+- `apps/web/pwa/plugin.ts`：建置時依打包結果產生 `dist/sw.js` 與快取清單，不需額外套件。
+- `apps/web/src/lib/pwa.ts`、`InstallHint`：只在正式版註冊 Service Worker；iOS 沒有安裝提示，所以在 iPhone／iPad 顯示一次可關閉的「加入主畫面」說明。
+- 版面使用 `env(safe-area-inset-*)`，避開瀏海與底部 Home 列。
+
+> Service Worker 只在 HTTPS 或 `localhost` 生效；`bun run dev` 不會註冊，請用 `bun run build && bun run preview` 測試。
+
 ## 📂 專案架構與開發狀態
 
 Monorepo（Bun workspaces）：`packages/core`（`@fortune/core`，框架無關的計算核心）與 `apps/web`（`@fortune/web`，Vite UI）。目標架構見 [docs/ARCHITECTURE-V2.md](docs/ARCHITECTURE-V2.md)。

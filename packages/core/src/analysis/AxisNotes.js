@@ -15,8 +15,8 @@
 
 /**
  * @typedef {Object} AxisNote
- * @property {string[]} assets      - 資產面（高佔比時的可用資源描述）
- * @property {string[]} liabilities - 負債面（高佔比時的常見成本描述）
+ * @property {readonly string[]} assets      - 資產面（高佔比時的可用資源描述）
+ * @property {readonly string[]} liabilities - 負債面（高佔比時的常見成本描述）
  */
 
 /**

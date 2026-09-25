@@ -141,7 +141,7 @@ test('D-010：兩軸同值輸入 → 同高（不做跨軸正規化）', () => {
       value: { counts: { 木: 2, 火: 2, 土: 1, 金: 0, 水: 0 }, total: 5 },
     }],
   };
-  const radar = buildElementBalanceRadar(synthetic);
+  const radar = buildElementBalanceRadar(/** @type {any} */ (synthetic));
   const byLabel = Object.fromEntries(radar.axes.map(a => [a.label, a.value]));
   assert.equal(byLabel.木, byLabel.火, '同值輸入的兩軸高度不同');
   assert.equal(byLabel.木, 40);
