@@ -9,7 +9,7 @@
  * @module calculators/mingGua/calculator
  */
 
-import { MingGuaEngine } from '../../engines/MingGuaEngine.js';
+import { MingGuaEngine } from '../../engines/MingGuaEngine';
 import type { TimeContext } from '../../time/types';
 import { componentValue, timeContextToBirthData } from '../birthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';

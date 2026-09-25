@@ -1,0 +1,61 @@
+/* 驗 人生事件 — event form, list and backtest table (V4-03/V4-04). */
+
+.life__privacy,
+.life__warning {
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--zhu);
+  background: var(--paper-sunk);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+.life__privacy strong,
+.life__warning strong { margin-right: 0.75rem; color: var(--ink); letter-spacing: 0.1em; }
+
+.life__form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: 1.25rem 1.5rem;
+  align-items: end;
+  margin-bottom: 1.75rem;
+}
+.life__domains,
+.life__note,
+.life__actions,
+.life__error { grid-column: 1 / -1; }
+.life__checks { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; }
+.life__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.life__error { margin: 0; color: var(--zhu); font-size: var(--text-sm); }
+
+.life__list { list-style: none; margin: 0 0 1rem; padding: 0; border-top: 1px solid var(--rule-strong); }
+.life__item {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr) auto;
+  gap: 0.5rem 1rem;
+  align-items: center;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.life__date { font-family: var(--font-numeral); letter-spacing: 0.05em; }
+.life__what { min-width: 0; overflow-wrap: anywhere; }
+.life__item-actions { display: flex; gap: 0.5rem; }
+@media (max-width: 36rem) {
+  .life__item { grid-template-columns: minmax(0, 1fr); }
+}
+
+.life__backtest { margin-top: 1.75rem; display: grid; gap: 1rem; }
+.life__table-wrap { overflow-x: auto; }
+.life__table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.life__table caption { text-align: left; padding-bottom: 0.5rem; color: var(--ink-2); }
+.life__table th,
+.life__table td { padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--rule); text-align: right; white-space: nowrap; }
+.life__table th[scope='row'],
+.life__table thead th:first-child { text-align: left; }
+.life__table .life__status { text-align: left; white-space: normal; }
+.life__table tr[data-insufficient] td { color: var(--ink-3); }
+.life__table tr[data-insufficient] .life__status { color: var(--zhu); }
+.life__sub { display: block; color: var(--ink-3); font-size: var(--text-xs); }
+.life__more summary { cursor: pointer; color: var(--ink-2); }
+.life__trials { margin: 0.75rem 0 0; padding-left: 1.25rem; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.8; }
+.life__method { margin: 0; color: var(--ink-3); font-size: var(--text-xs); line-height: 1.8; }

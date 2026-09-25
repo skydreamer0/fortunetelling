@@ -20,8 +20,8 @@
  * @module calculators/ziwei/calculator
  */
 
-import { BirthData } from '../../core/models/BirthData.js';
-import { ZiweiEngine } from '../../engines/ZiweiEngine.js';
+import { BirthData } from '../../core/models/BirthData';
+import { ZiweiEngine } from '../../engines/ZiweiEngine';
 import type { TimeBasis, TimeContext } from '../../time/types';
 import { categoryValues, componentValue, normalizeAsOf, timeContextToBirthData } from '../birthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';

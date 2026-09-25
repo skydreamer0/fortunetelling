@@ -220,3 +220,35 @@ D-016 規定 iztro／lunar-javascript 只能出現在 `engines/`。V1-02 TimeCon
   因此逐年會跳動（例：移動 0 ↔ 50），不同領域間的分數也不可直接比較。UI 必須標示「未校準」。
 - 不在沒有資料的情況下憑感覺改公式或權重。系統權重（目前皆 1）、四段切點（35／55／75）、
   是否把未發訊號系統計為 0，全部留到 V4 以 `life_events` 回驗後決定，調整只產生新版本（D-028）。
+
+## D-034 Report Schema v5：跨系統共識摘要 `consensus`（V3，2026-09-25）✅
+依 D-012 升版條款，`REPORT_SCHEMA_VERSION` bump 至 5、函式庫 semver bump 至 0.5.0（`VERSION`）。v4 全部欄位與形狀保留，
+只新增頂層 `consensus = buildConsensus(timeline)`（形狀見 ARCHITECTURE §4.4；ARCHITECTURE-V2 §11）。
+- **只重排、不另算**：共識數、高共識旗標、矛盾雙方都照抄 `aggregateSignals` 在 timeline 各格的判定（§6.1 第 3 步），
+  `buildConsensus` 只補上「哪些系統」與「哪些 signal id」，並排序出 headlines。沒有新的分數公式或權重（D-033 不動）。
+- **矛盾永不截斷**（D-023）：`headlines.conflicts` 列出全部年格的矛盾；`headlines.agreements` 只取最強的 5 筆，
+  排序固定為 共識系統數↓、分數↓、DOMAINS 順序、年份，確保決定論。
+- **覆蓋度 `coverage`**：每個領域 × 年／月格記錄「可發訊號的系統數（timeline.systems）／實際發訊號的系統數」。
+  這是對 D-033 稀疏問題的**揭露**而非修正：UI 顯示「n／m 系統」，只有 1 個系統時註明分數即該系統強度，分數本身不變。
+- 列出「達門檻系統」用的 θ 預設 0.5，必須與建 timeline 時的 θ 相同（timeline 目前不記錄 θ，由 `buildConsensus` 參數傳入並寫入輸出）。
+- `analyze()` 仍為同步，`consensus` 因此只涵蓋八字／紫微／靈數（與 v4 timeline 相同）；jyotish／humanDesign 需以
+  `buildConsensus(await buildTimelineAsync(ctx, { asOf }))` 取得。
+- `packages/core/package.json` 的 `version` 已同步為 0.5.0。
+
+## D-035 AI 解讀的執行位置：複製 prompt 到使用者自己的 AI ✅（2026-09-25）
+`apps/web` 是 GitHub Pages 靜態站，不得內嵌任何 API key，也不架伺服器。**決定：網站不呼叫任何模型**，改為組出一段
+自足的 prompt，由使用者複製、貼到自己慣用的聊天 AI（ChatGPT、Claude、Gemini…）。沒有金鑰、沒有伺服器、資料要不要送出由使用者決定（D-029）。
+- **組 prompt**：`@fortune/ai` 的 `buildCopyPrompt(report, { question?, questionAnswer?, focus?, maxChars = 24000 })`，
+  純函式、決定論（`copy-v1`）。內容依序：(a) 由 ARCHITECTURE-V2 §9 系統指令改寫的角色與規則（只用資料、禁止重新排盤、
+  每個重要結論引用〔sig_…〕、三套以上系統同向才說「高共識」、保留矛盾、時間性內容是傾向不是命定、分數未校準（D-033）、
+  資料無法回答就直說）；(b) 輸出格式（總覽／本年與未來五年／各領域／共識與分歧／問題的回答／資料限制）；
+  (c) 去識別化資料：沿用 `buildInterpretationPayload`，以聊天長度為預算，依序精簡命盤細節、逐月資料，並先丟強度最低的訊號，
+  prompt 內明寫省略了什麼；(d) 使用者的問題，以及（若關鍵字對應到問事目錄）網站本地以 `answerQuestion` 算出的月份排名，
+  標明「確定性計算，不是 AI 產生」。問題的分類只用關鍵字比對，不用 AI。
+- **後驗證**：網站攔截不到外部 AI 的輸出，所以後驗證改為**建議性**的「貼回檢查」：`checkPastedAnswer(payload, text)`
+  逐段標示「引用不存在」「提到資料中沒有的干支／星曜／行星」「沒有引用來源」「宿命論用語」（重用 `vocab`／HonestyGuard／
+  `validate` 的規則），只提示、不刪改。`validateSections` 的強制後驗證仍適用於日後由程式呼叫模型的路徑。
+- **瀏覽器端不含 SDK**：網站只 import `@fortune/ai/copy`（`copyPrompt`＋`pasteCheck`），建置產物不得含 `@anthropic-ai`。
+- **日後仍可加**：Serverless 代理（函式持有 key，只收去識別化 payload，伺服器端組固定 prompt、`validateSections`、快取、限流）
+  或 BYOK（使用者自備 key、只存 `sessionStorage`）都可以直接用 `@fortune/ai` 的 `interpret()`；皆為選用層（D-029）。
+  程式呼叫時預設模型 `claude-fable-5-1`（可用 `{ model }` 覆寫）。

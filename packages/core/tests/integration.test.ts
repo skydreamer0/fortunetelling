@@ -1,0 +1,196 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { analyze } from '../src/index';
+import { INTEGRATION_CASES, type IntegrationCase } from './fixtures/integrationCases';
+import type { Report } from '../src/core/analyze';
+import type { ScoringRule } from '../src/analysis/ScoringRules';
+
+const REQUIRED_INPUT_KEYS = [
+  'year', 'month', 'day', 'hour', 'minute',
+  'gender', 'name', 'longitude', 'latitude',
+];
+
+// Report v5 (D-034) = v4 (D-032: v3 keys + timeContext / signals / timeline) + consensus.
+const REPORT_KEYS = [
+  'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input',
+  'insights', 'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'summary', 'version',
+  'signals', 'timeContext', 'timeline', 'consensus',
+];
+
+// analyze() takes ~1 s since v4 (sync timeline); these tests run several reports.
+const SLOW = { timeout: 60_000 };
+
+/** The v3 input keys echoed in `report.input` (the v4 `birthplace` is echoed in timeContext.profile). */
+function v3Input(input: IntegrationCase['input']) {
+  const { birthplace: _birthplace, ...rest } = input;
+  return rest;
+}
+
+const RUNTIME_METADATA_KEYS = new Set([
+  'generatedAt', 'computedAt', 'durationMs', 'classifiedAt', 'exportedAt',
+]);
+
+function rulesById(report: Report): Map<string, ScoringRule> {
+  return new Map(
+    Object.values(report.scoringRules.byRadarType)
+      .flat()
+      .map(rule => [rule.id, rule] as const),
+  );
+}
+
+function engineComponent(report: Report, engineId: string, category: string) {
+  return report.engines
+    .find(engine => engine.engineId === engineId)
+    ?.components.find(component => component.category === category);
+}
+
+function stableReport(report: Report) {
+  const stable = structuredClone(report);
+  const removeRuntimeMetadata = (value: any): void => {
+    if (!value || typeof value !== 'object') return;
+    if (Array.isArray(value)) {
+      value.forEach(removeRuntimeMetadata);
+      return;
+    }
+    for (const key of Object.keys(value)) {
+      if (RUNTIME_METADATA_KEYS.has(key)) delete value[key];
+      else removeRuntimeMetadata(value[key]);
+    }
+  };
+  removeRuntimeMetadata(stable);
+  return stable;
+}
+
+function reduceIndependent(number: number): number {
+  let reduced = number;
+  while (reduced > 9 && ![11, 22, 33].includes(reduced)) {
+    reduced = [...String(reduced)].reduce((sum, digit) => sum + Number(digit), 0);
+  }
+  return reduced;
+}
+
+function independentLifePath({ year, month, day }: { year: number; month: number; day: number }) {
+  return reduceIndependent(
+    reduceIndependent(year) + reduceIndependent(month) + reduceIndependent(day),
+  );
+}
+
+function independentDigitFrequency({ year, month, day }: { year: number; month: number; day: number }) {
+  const counts: Record<string, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+  for (const digit of `${year}${month}${day}`) {
+    if (digit !== '0') counts[digit] += 1;
+  }
+  return counts;
+}
+
+test('integration fixtures have safe, reproducible provenance metadata', () => {
+  assert.ok(INTEGRATION_CASES.length >= 4);
+
+  const ids = new Set();
+  for (const fixture of INTEGRATION_CASES) {
+    assert.match(fixture.id, /^[a-z0-9-]+$/);
+    assert.ok(!ids.has(fixture.id), `duplicate fixture id: ${fixture.id}`);
+    ids.add(fixture.id);
+
+    assert.ok(['golden', 'public-reference'].includes(fixture.kind));
+    assert.deepEqual(Object.keys(v3Input(fixture.input)).sort(), [...REQUIRED_INPUT_KEYS].sort());
+    if (fixture.input.birthplace) {
+      // echo coordinates must agree with the birthplace that wins resolution
+      assert.equal(fixture.input.birthplace.lng, fixture.input.longitude);
+      assert.equal(fixture.input.birthplace.lat, fixture.input.latitude);
+    }
+    assert.match(fixture.asOf, /^\d{4}-\d{2}-\d{2}$/);
+    assert.ok(fixture.expected && typeof fixture.expected === 'object');
+
+    const { provenance } = fixture;
+    assert.ok(provenance && typeof provenance === 'object');
+    assert.match(provenance.accessedOn, /^\d{4}-\d{2}-\d{2}$/);
+    assert.ok(['exact', 'approximate', 'unknown'].includes(provenance.birthTimeConfidence));
+    assert.ok(typeof provenance.notes === 'string' && provenance.notes.length > 0);
+
+    if (fixture.kind === 'public-reference') {
+      assert.match(provenance.sourceUrl, /^https:\/\//);
+    }
+
+    const serialized = JSON.stringify(fixture).toLowerCase();
+    for (const privateField of ['email', 'address', 'password', 'token']) {
+      assert.equal(serialized.includes(`"${privateField}"`), false);
+    }
+  }
+});
+
+test('public analyze contract holds for golden and sourced celebrity charts', SLOW, () => {
+  for (const fixture of INTEGRATION_CASES) {
+    const report = analyze(fixture.input, { asOf: fixture.asOf });
+    const expected = fixture.expected;
+
+    assert.deepEqual(Object.keys(report).sort(), [...REPORT_KEYS].sort(), fixture.id);
+    assert.equal(report.schemaVersion, 5, fixture.id);
+    assert.ok(report.summary.sentences.length >= 3, fixture.id);
+    assert.equal(report.asOf, fixture.asOf, fixture.id);
+    assert.deepEqual(report.input, v3Input(fixture.input), fixture.id);
+    if (expected.utcIso) assert.equal(report.timeContext.utc!.iso, expected.utcIso, fixture.id);
+    assert.deepEqual(
+      report.engines.map(engine => engine.engineId).sort(),
+      ['bazi', 'dreamspell', 'minggua', 'numerology', 'ziwei'],
+      fixture.id,
+    );
+
+    for (const engine of report.engines) {
+      assert.deepEqual(engine.errors, [], `${fixture.id}/${engine.engineId}`);
+    }
+
+    if (fixture.provenance.birthTimeConfidence === 'exact') {
+      assert.ok(report.radars.length >= 3, fixture.id);
+    }
+
+    const rules = rulesById(report);
+    for (const radar of report.radars) {
+      for (const axis of radar.axes) {
+        assert.ok(rules.has(axis.ruleId), `${fixture.id}/${radar.id}/${axis.ruleId}`);
+      }
+    }
+
+    assert.equal(report.stateTable.pending, false, fixture.id);
+    assert.equal(report.evolution.pending, false, fixture.id);
+    assert.equal(report.honesty.pending, false, fixture.id);
+    assert.deepEqual(report.honesty.violations, [], fixture.id);
+
+    assert.equal(expected.lifePath, independentLifePath(fixture.input), fixture.id);
+    assert.equal(
+      engineComponent(report, 'numerology', 'lifePath')?.value.number,
+      expected.lifePath,
+      fixture.id,
+    );
+
+    if (expected.digitFrequency) {
+      assert.deepEqual(expected.digitFrequency, independentDigitFrequency(fixture.input), fixture.id);
+      assert.deepEqual(
+        engineComponent(report, 'numerology', 'digitFrequency')?.value,
+        expected.digitFrequency,
+        fixture.id,
+      );
+    }
+
+    // Golden Taipei vectors are unchanged by true solar time (08:00 → 08:09, 14:00 → 14:18
+    // stay in 辰/未). The celebrity vectors now carry their real birthplace and their
+    // hour pillar moves to 酉 under true solar time — see the fixture comments.
+    if (expected.baziNatal) {
+      const { convention: _convention, ...natal } = engineComponent(report, 'bazi', 'natal')!.value;
+      assert.deepEqual(natal, expected.baziNatal, fixture.id);
+    }
+  }
+});
+
+test('explicit asOf makes celebrity and golden reports deterministic', SLOW, () => {
+  for (const fixture of INTEGRATION_CASES) {
+    const first = analyze(fixture.input, { asOf: fixture.asOf });
+    const generatedAt = Date.now();
+    while (Date.now() === generatedAt) {
+      // Ensure the regression proof observes distinct generation timestamps.
+    }
+    const second = analyze(fixture.input, { asOf: fixture.asOf });
+
+    assert.deepEqual(stableReport(first), stableReport(second), fixture.id);
+  }
+});

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { Solar } from 'lunar-javascript';
-import { BaZiEngine } from '../src/engines/BaZiEngine.js';
+import { BaZiEngine } from '../src/engines/BaZiEngine';
 import {
   BAZI_CALCULATOR_VERSION,
   baziCalculator,

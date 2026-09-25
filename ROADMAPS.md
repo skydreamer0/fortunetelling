@@ -44,8 +44,8 @@
 | 10 | 年度 Timeline | ❌ 未開始 | UI 的「本年」只顯示當年主題文字，沒有逐年／逐月的領域分數（感情／財運／事業／移動） | V1 |
 | 11 | Event Rule Engine（問事） | ❌ 未開始 | 沒有問事類別目錄、沒有逐月排名 | V5 |
 | 12 | AI 解讀層 | ❌ 未開始 | 沒有 `packages/ai`、prompt、citation 後驗證 | V5 |
-| — | 資料庫（users／charts／signals／life_events） | ❌ 未開始 | 目前是純前端，只用 localStorage | V4 |
-| — | Backtesting | ❌ 未開始 | — | V4 |
+| — | 資料庫（users／charts／signals／life_events） | 🟡 設計稿 | `docs/db/schema.sql`（未執行）；目前純前端，人生事件只存 localStorage | V4 |
+| — | Backtesting | 🟡 本地版 | `packages/core/src/backtest/`（事先固定命中定義、基準線、樣本門檻、訓練／驗證）＋「人生事件」面板；權重未調整（樣本不足） | V4 |
 
 ### 已完成的基礎（v1 架構，保留並沿用）
 
@@ -95,7 +95,7 @@
 | V1-13 ✅ | **Timeline Engine** | `timeline/`：`asOf` 起 5 年＋當年 12 個月 × 領域分數 0–100，每格附 `topSignals[]`；UI 分四段（低／中／中高／高，切點是資料） | V1-12 |
 | V1-14 ✅ | Report v4 | 新增頂層 `timeContext`、`signals`、`timeline`，其餘沿用 v3；八字／紫微改吃 TimeContext（D-032） | V1-13 |
 | V1-15 ✅ | UI：Timeline 視圖 | 年度卡片（❤️ 感情／💰 財運／💼 事業／🚗 移動）＋月份展開＋點開看來源規則；出生地輸入改為城市選擇 | V1-14 |
-| V1-16 | 核心轉 TypeScript | 新程式直接寫 `.ts`；舊檔搬進 calculators 時一併轉，清掉 31 筆型別錯誤 | 貫穿 |
+| V1-16 ✅ | 核心轉 TypeScript | `packages/core` 已無 `.js`：舊 core／engines／analysis／visualization 與其測試全數轉 `.ts`（純重構，公開匯出名不變；`exports` → `src/index.ts`）。core `tsconfig` 拿掉 `allowJs/checkJs`，改 `strict: true`＋`noUnusedLocals/Parameters`，0 錯誤。行為一致性以 `tests/reportGolden.test.ts` 鎖住（轉換前錄製的 11 份 Report＋2 份合盤，位元相同）。剩餘寬鬆處：`Component.value`／`meta` 仍為 `any`（各引擎自訂 payload），`HonestyGuard.auditReport` 與 LayerClassifier 以寬鬆物件走訪 | 貫穿 |
 
 **V1 完成條件**
 - 黃金測試：台灣 DST 年份（例：1974 年夏季）、時辰交界 ±2 分、節氣交節前後、早晚子時、`time_unknown`
@@ -119,9 +119,9 @@
 
 | ID | 任務 |
 |---|---|
-| V3-01 | `aggregateSignals()` 第 3 步：`consensus`（強度 ≥ θ 的系統數，≥ 3 標記「高共識」）、`conflict`（方向相反時保留並列出雙方 signal id，不做平均抵銷） |
-| V3-02 | Report v5：新增 `consensus` 頂層欄位 |
-| V3-03 | UI：每年每領域顯示共識徽章與矛盾說明 |
+| V3-01 ✅ | `aggregateSignals()` 第 3 步：`consensus`（強度 ≥ θ 的系統數，≥ 3 標記「高共識」）、`conflict`（方向相反時保留並列出雙方 signal id，不做平均抵銷） |
+| V3-02 ✅ | Report v5：新增 `consensus` 頂層欄位（`buildConsensus(timeline)`：各年高共識／矛盾、headlines、覆蓋度；D-034） |
+| V3-03 ✅ | UI：每年每領域顯示共識徽章與矛盾說明；時序章節新增「共識與分歧」摘要與每格「n／m 系統」覆蓋度 |
 | V3-04 | 評估 Next.js（Vercel）遷移；`@fortune/core` 保持框架無關，可同時給 Web、App、API 使用 |
 
 **完成條件**：共識與矛盾各有單元測試，包含「兩系統正、一系統負」的案例。
@@ -130,11 +130,11 @@
 
 | ID | 任務 |
 |---|---|
-| V4-01 | `apps/api` + Postgres（Supabase）；資料表：`users`、`birth_profiles`（RLS、欄位加密、一鍵刪除）、`chart_snapshots`、`signals`、`rules`／`trait_weights`（版本化，只增不改）、`annual_cycles`／`monthly_cycles`、`interpretations`、`life_events`、`backtest_runs` |
-| V4-02 | 帳號與同步；**沒登入也能用**（D-029 本地優先） |
-| V4-03 | `life_events` 輸入 UI（例：2018 畢業／北上、2022 化療藥局、2024 離職、2025 藥廠、2026 回台南／KAM） |
-| V4-04 | Backtesting（同時決定 D-033 懸而未決的：系統權重、四段切點、未發訊號系統是否計 0）：命中定義事先固定（事件落在個人時間軸前 25%）、以隨機時間窗作基準線、樣本 < 30 只顯示「樣本不足」、訓練與驗證分開 |
-| V4-05 | 權重調整只產生新版 `trait_weights`，舊報告可用舊版本重現 |
+| V4-01 | 🟡 schema 設計稿 `docs/db/schema.sql`（未執行，無 `apps/api`）。`apps/api` + Postgres（Supabase）；資料表：`users`、`birth_profiles`（RLS、欄位加密、一鍵刪除）、`chart_snapshots`、`signals`、`rules`／`trait_weights`（版本化，只增不改）、`annual_cycles`／`monthly_cycles`、`interpretations`、`life_events`、`backtest_runs` |
+| V4-02 | ❌ 未開始（無帳號憑證）。帳號與同步；**沒登入也能用**（D-029 本地優先） |
+| V4-03 | ✅ 本地版：報告「驗 人生事件」面板，新增／編輯／刪除／刪除全部，依命盤指紋存於 localStorage（不上傳）。`life_events` 輸入 UI（例：2018 畢業／北上、2022 化療藥局、2024 離職、2025 藥廠、2026 回台南／KAM） |
+| V4-04 | ✅ 方法與本地執行：`buildBacktestTimeline`／`runBacktest`（決定論、seed 切分、驗證集分開報告）；D-033 的權重／切點仍待多人 n ≥ 30 資料才決定。Backtesting（同時決定 D-033 懸而未決的：系統權重、四段切點、未發訊號系統是否計 0）：命中定義事先固定（事件落在個人時間軸前 25%）、以隨機時間窗作基準線、樣本 < 30 只顯示「樣本不足」、訓練與驗證分開 |
+| V4-05 | 🟡 `proposeWeights` 只從驗證集 n ≥ 30 產生新版本提案（凍結物件、不改舊版）；單人資料一律回「樣本不足」。權重調整只產生新版 `trait_weights`，舊報告可用舊版本重現 |
 
 **完成條件**：回驗報告可重現（同版本、同樣本 → 同命中率）。
 
@@ -144,9 +144,10 @@
 |---|---|
 | V5-01 ✅ | `questions/catalog.json`：`vehicle_purchase`、`job_change`、`relationship_timing`、`startup_timing`… → domains → 各系統相關規則 |
 | V5-02 ✅ | Question Engine：逐月計算 signals → 排名 → 前 3 個月份，每個月份附 source；不在目錄內的問題回「目前不支援」 |
-| V5-03 | `packages/ai`：AI 只做兩件事：(a) 自然語言 → `{category, range}`（schema 驗證）；(b) 讀 JSON 寫解讀。固定系統指令：禁止重新排盤、每個結論都要引用 `signal.id`、三套以上同向才能說「高共識」、保留矛盾 |
-| V5-04 | 程式後驗證（不靠 AI 自律）：citation id 必須存在；文字中出現的干支、星名、宮名、行星名必須出現在輸入 charts；通過 HonestyGuard；以 `hash(input, promptVersion, model)` 快取 |
-| V5-05 | UI：問事輸入、月份排名、解讀段落點開就能看到引用的訊號 |
+| V5-03 ✅ | `packages/ai`：AI 只做兩件事：(a) 自然語言 → `{category, range}`（schema 驗證）；(b) 讀 JSON 寫解讀。固定系統指令：禁止重新排盤、每個結論都要引用 `signal.id`、三套以上同向才能說「高共識」、保留矛盾 |
+| V5-04 ✅ | 程式後驗證（不靠 AI 自律）：citation id 必須存在；文字中出現的干支、星名、宮名、行星名必須出現在輸入 charts；通過 HonestyGuard；以 `hash(input, promptVersion, model)` 快取 |
+| V5-05 ✅ | 複製 prompt UI（D-035）：報告「問 AI 解讀」章節——解讀重點（總覽／本年／我有問題）、問題以關鍵字對應問事目錄並在本機跑 `answerQuestion` 附上月份排名、prompt 預覽＋字數＋「複製 prompt」、隱私說明；「貼回 AI 的回答來檢查」逐段標示引用不存在／資料外的干支星曜行星／沒有引用／宿命論用語。不需金鑰、不經伺服器 |
+| V5-06 | UI：問事輸入、月份排名、解讀段落點開就能看到引用的訊號（網站內直接呈現；Serverless／BYOK 呼叫 `interpret()` 為選用） |
 
 **完成條件**：攔截率測試。故意餵入錯誤干支或錯誤星曜的 AI 輸出，必須 100% 被丟棄。
 

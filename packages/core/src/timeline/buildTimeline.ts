@@ -68,10 +68,22 @@ export interface SkippedSystem {
 }
 
 export interface TimelineOptions {
-  /** 'YYYY-MM-DD' (required, D-014). The first year cell is asOf's calendar year. */
+  /** 'YYYY-MM-DD' (required, D-014). The first year cell is asOf's calendar year unless `fromYear` is set. */
   asOf: string;
   /** Number of year cells, default 5. */
   years?: number;
+  /**
+   * First year cell (default: asOf's calendar year). Additive option for V4
+   * backtesting (`backtest/buildBacktestTimeline`), which needs cells across the
+   * person's past life. Month cells (if included) always stay in the asOf year.
+   */
+  fromYear?: number;
+  /**
+   * Max signals kept in each domain cell's `topSignals` (default 5 =
+   * TOP_SIGNALS_PER_DOMAIN). Backtesting passes `Infinity` to keep every signal
+   * so per-rule scores can be derived. Does not affect scores.
+   */
+  topSignalsPerDomain?: number;
   /** Include the 12 month cells of the asOf year (default true). */
   includeMonths?: boolean;
   /** Restrict to these systems (default: TIMELINE_SYSTEMS). */
@@ -326,7 +338,7 @@ function buildCell(
       .filter((s) => s.domain === domain)
       .map((s) => ({ s, k: s.intensity * weightOf(s.system) }))
       .sort((a, b) => b.k - a.k || cmp(a.s.id, b.s.id))
-      .slice(0, TOP_SIGNALS_PER_DOMAIN)
+      .slice(0, opts.topSignalsPerDomain ?? TOP_SIGNALS_PER_DOMAIN)
       .map(({ s }) => s);
     return {
       domain,
@@ -375,7 +387,14 @@ export function buildTimeline(ctx: TimeContext, opts: TimelineOptions): Timeline
     if (typeof w !== 'number' || !Number.isFinite(w) || w < 0) throw new Error(`buildTimeline: weight of ${s} must be a finite number ≥ 0`);
   }
 
-  const firstYear = Number(asOf.slice(0, 4));
+  const firstYear = opts.fromYear ?? Number(asOf.slice(0, 4));
+  if (!Number.isInteger(firstYear) || firstYear < 1 || firstYear > 9999 - years) {
+    throw new Error(`buildTimeline: fromYear must be an integer year, got ${opts.fromYear}`);
+  }
+  const topN = opts.topSignalsPerDomain;
+  if (topN !== undefined && !(topN === Infinity || (Number.isInteger(topN) && topN >= 0))) {
+    throw new Error(`buildTimeline: topSignalsPerDomain must be an integer ≥ 0 or Infinity, got ${topN}`);
+  }
   const { evaluators, skipped } = prepareSystems(ctx, requested, asOf, firstYear, years, opts.name);
   const weightOf = (s: SystemId) => opts.systemWeights?.[s] ?? 1;
   const systems = SYSTEM_IDS.filter((s) => evaluators[s] !== undefined);
@@ -386,7 +405,7 @@ export function buildTimeline(ctx: TimeContext, opts: TimelineOptions): Timeline
   const monthCells =
     opts.includeMonths === false
       ? []
-      : Array.from({ length: 12 }, (_, i) => buildCell(monthWindow(firstYear, i + 1), evaluators, weightOf, opts, bandCuts));
+      : Array.from({ length: 12 }, (_, i) => buildCell(monthWindow(Number(asOf.slice(0, 4)), i + 1), evaluators, weightOf, opts, bandCuts));
 
   return {
     schemaVersion: TIMELINE_SCHEMA_VERSION,

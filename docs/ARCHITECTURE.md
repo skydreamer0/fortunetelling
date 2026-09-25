@@ -9,7 +9,7 @@
 > 執行規則在 [HARNESS_SPEC.md](HARNESS_SPEC.md)；測試策略在 [TEST_PLAN.md](TEST_PLAN.md)。
 >
 > 定案(2026-07-11)：① 可重用核心函式庫 ② 5 系統(紫微/靈數/命卦/Kin/八字)
-> ③ JSDoc ④ Report Schema 以版本守護形狀（v1：D-012；v2：D-019；v3：D-020；目前 v4：D-032，見 §4.3）。
+> ③ JSDoc ④ Report Schema 以版本守護形狀（v1：D-012；v2：D-019；v3：D-020；v4：D-032，見 §4.3；目前 v5：D-034，見 §4.4）。
 
 ---
 
@@ -17,7 +17,7 @@
 
 1. **核心與 UI 分離**：`core / engines / analysis / visualization` 為框架無關 ES module；
    `ui` 只是消費核心的其中一個 App，**只吃 `Report`**（D-015）。
-2. **單一對外入口**：`@fortune/core`（`packages/core/src/index.js`）是唯一公開 API（package.json `exports` 鎖定）。
+2. **單一對外入口**：`@fortune/core`（`packages/core/src/index.ts`）是唯一公開 API（package.json `exports` 鎖定）。
 3. **穩定契約**：輸出以單一 `Report` 為準；`VERSION` semver；`REPORT_SCHEMA_VERSION` 守形狀。
 4. **外掛式引擎**：每系統一個 `BaseEngine` 子類；新增系統不改核心。
    命理函式庫（iztro/lunar-javascript）**只允許出現在 `engines/`**（D-016）。
@@ -222,6 +222,48 @@ analyze({
 natal L0、decade L1、year/month L2）、`timeContext.flags[].detail`（L2）。
 
 效能：單次 `analyze()` 約 1 秒（主要是 timeline 的紫微流年／流月序列），報告 JSON 約 0.5 MB。
+
+### 4.4 Report Schema v5（V3，D-034）
+
+v5 = v4 全部欄位與元素形狀**不變**，只新增一個頂層欄位 `consensus`；`schemaVersion` 恆為 5、
+函式庫 semver 0.5.0。`consensus = buildConsensus(report.timeline)`（`consensus/buildConsensus`），
+因此與 `timeline` 同樣只含同步系統（八字／紫微／靈數）；完整五系統版請對 `buildTimelineAsync` 的結果呼叫
+`buildConsensus`。它只**重排** timeline 已經算好的 `consensus`／`highConsensus`／`conflict`／`perSystem`，
+不引入任何新分數或權重（D-033）。純函式、決定論，約 30 KB。
+
+```ts
+type ConsensusSide = { systems: SystemId[]; signalIds: string[] }       // systems 依 SYSTEM_IDS 排序；ids 排序去重
+type ConsensusAgreement = ConsensusSide & {
+  domain: Domain; window: SignalWindow;
+  consensus: number;   // 強度 ≥ θ 的系統數（照抄 timeline 格）
+  score: number;       // 0–100（照抄 timeline 格）
+}                      // systems = perSystem.score ≥ θ 的系統；signalIds = 這些系統在該格的全部訊號
+type ConsensusConflict = { domain; window; score; positive: ConsensusSide; negative: ConsensusSide }
+                       // signalIds 照抄 timeline conflict；systems 由 perSystem.signalIds 反查
+type CoverageDomain = {
+  domain: Domain;
+  available: number;   // timeline.systems.length（可提供訊號的系統數）
+  speaking: number;    // 該格該領域實際發出訊號的系統數
+  systems: SystemId[]; silent: SystemId[];
+}
+type ConsensusSummary = {
+  schemaVersion: 1; asOf: string;
+  systems: SystemId[];                 // = timeline.systems
+  consensusThreshold: number;          // θ（預設 0.5），用來列出「達門檻」的系統
+  highConsensusMinSystems: number;     // 3
+  years: { window; highConsensus: ConsensusAgreement[]; conflicts: ConsensusConflict[] }[]  // 各年，領域依 DOMAINS 排序
+  headlines: {
+    agreements: ConsensusAgreement[];  // 全部年格的高共識，依 consensus↓、score↓、DOMAINS 順序、年份排序，取前 5
+    conflicts: ConsensusConflict[];    // 全部年格的矛盾，依年份、DOMAINS 順序；永不截斷（D-023）
+  };
+  coverage: { years: { window; domains: CoverageDomain[] }[]; months: { window; domains: CoverageDomain[] }[] };
+}
+```
+
+- 只有**年格**進入 `years`／`headlines`；`coverage` 同時涵蓋年格與月格（每格十個領域都在）。
+- `coverage` 讓 UI 可以寫「只有 1／3 系統」：D-033 下只有一個系統發訊號的格子，分數就等於該系統的強度。
+- `consensus` 不含自由文字，不進誠實稽核範圍；UI 顯示時沿用中性用語（支持／壓力，不用吉凶、不用「你是」）。
+- 舊報告（v3／v4）沒有 `consensus`：UI 必須把它當選填欄位，缺少時隱藏相關區塊。
 
 ## 5. 引擎外掛契約
 

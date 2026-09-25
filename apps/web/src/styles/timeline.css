@@ -229,6 +229,85 @@ td.is-current .tl-cell { border-bottom: 2px solid var(--zhu); }
 .tl-data td { font-family: var(--font-body) !important; font-size: var(--text-xs) !important; }
 .tl-footnote { display: grid; gap: 0.2rem; margin-top: 1rem; padding-left: 1.1rem; list-style: '※ '; }
 
+/* 共識與分歧 (Report v5) — summary above the grid */
+.tl-cons__lede { margin: -0.2rem 0 0.9rem; color: var(--ink-2); font-size: var(--text-xs); line-height: 1.7; }
+.tl-cons__cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem 1.5rem; }
+.tl-cons__col { min-width: 0; }
+.tl-cons__title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  letter-spacing: 0.15em;
+}
+.tl-cons__empty { color: var(--ink-3); font-size: var(--text-xs); }
+.tl-cons__list { display: grid; gap: 0; }
+.tl-cons__list > li { border-top: 1px solid var(--rule); }
+.tl-cons__list > li:last-child { border-bottom: 1px solid var(--rule); }
+.tl-cons__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.6rem;
+  width: 100%;
+  padding: 0.5rem 0.25rem;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+.tl-cons__item:hover { background: var(--paper-raised); }
+.tl-cons__item:focus-visible { outline: 2px solid var(--zhu); outline-offset: -2px; }
+.tl-cons__item[aria-pressed='true'] { box-shadow: inset 2px 0 0 var(--zhu); background: var(--paper-raised); }
+.tl-cons__where { display: inline-flex; align-items: baseline; gap: 0.35rem; font-family: var(--font-display); font-weight: 600; letter-spacing: 0.08em; }
+.tl-cons__year { font-family: var(--font-numeral); font-variant-numeric: lining-nums tabular-nums; color: var(--ink-3); letter-spacing: 0.04em; }
+.tl-cons__count { color: var(--qing); font-size: var(--text-xs); letter-spacing: 0.08em; }
+.tl-cons__conflict { padding-bottom: 0.5rem; }
+.tl-cons__conflict .tl-cons__item { padding-bottom: 0.25rem; }
+.tl-cons__sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.4rem 1rem;
+  margin: 0 0.25rem;
+  padding: 0.5rem 0.7rem;
+  border-left: 3px solid var(--zhu);
+  background: var(--zhu-wash);
+}
+.tl-cons__side { min-width: 0; }
+.tl-cons__side ul { margin-top: 0.25rem; }
+.tl-cons__side li { display: grid; gap: 0.05rem; padding: 0.2rem 0; border-top: 1px solid var(--rule); font-size: var(--text-xs); overflow-wrap: anywhere; }
+
+.tl-chips { display: inline-flex; flex-wrap: wrap; gap: 0.25rem; }
+.tl-chip {
+  display: inline-block;
+  padding: 0 0.4rem;
+  border: 1px solid var(--sys, var(--rule-strong));
+  color: var(--sys, var(--ink-2));
+  background: var(--paper);
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+/* Per-cell coverage (「2／3 系統」) in the detail panel */
+.tl-coverage {
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-2);
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: 0.08em;
+}
+.tl-detail__coverage-note { color: var(--ink-2); font-size: var(--text-xs); line-height: 1.7; padding-left: 0.6rem; border-left: 2px solid var(--rule-strong); }
+.tl-detail__silent { color: var(--ink-3); font-size: var(--text-xs); }
+
 @media (max-width: 960px) {
   .timeline {
     grid-template-columns: minmax(0, 1fr);
@@ -248,6 +327,7 @@ td.is-current .tl-cell { border-bottom: 2px solid var(--zhu); }
   .tl-cell__band { font-size: var(--text-xs); letter-spacing: 0; }
   .tl-cell__score { font-size: 0.65rem; }
   .tl-detail { padding: 1rem; }
+  .tl-cons__cols { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media print {
@@ -259,4 +339,5 @@ td.is-current .tl-cell { border-bottom: 2px solid var(--zhu); }
   .tl-cell { box-shadow: none !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   .tl-detail { box-shadow: none; break-inside: avoid; }
   .tl-grid { break-inside: avoid; }
+  .tl-cons__conflict { break-inside: avoid; }
 }

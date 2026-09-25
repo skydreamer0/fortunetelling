@@ -7,6 +7,8 @@ import './styles/intake.css';
 import './styles/report.css';
 import './styles/charts.css';
 import './styles/timeline.css';
+import './styles/lifeEvents.css';
+import './styles/askAi.css';
 import './styles/print.css';
 
 createRoot(document.getElementById('root')!).render(<App />);

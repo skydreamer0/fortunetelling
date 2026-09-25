@@ -12,7 +12,7 @@ bun test       # 所有 workspace 的測試
 
 ## 只重用計算核心（不要 UI）
 
-唯一公開 API 是 `@fortune/core`（`packages/core/src/index.js`）（package.json `exports`）。深路徑 import 不在 semver 保證內。
+唯一公開 API 是 `@fortune/core`（`packages/core/src/index.ts`）（package.json `exports`）。深路徑 import 不在 semver 保證內。
 
 ```js
 import { analyze, BirthData, VERSION } from 'fortunetelling';

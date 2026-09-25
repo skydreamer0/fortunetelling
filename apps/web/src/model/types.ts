@@ -1,13 +1,14 @@
 /**
- * UI-side view of the core `Report` (schema v3, and the v4 additions the UI
- * reads: `timeline`, `timeContext`, `signals`) and compatibility result.
+ * UI-side view of the core `Report` (schema v3, the v4 additions the UI
+ * reads: `timeline`, `timeContext`, `signals`, and the v5 `consensus`) and
+ * compatibility result.
  * Only the fields the UI reads are typed; the core remains the source of truth.
- * Every v4 field is optional so a v3 report still type-checks and renders.
+ * Every v4/v5 field is optional so older reports still type-check and render.
  */
 
-import type { Signal, Timeline, TimeAccuracy } from '@fortune/core';
+import type { ConsensusSummary, Signal, Timeline, TimeAccuracy } from '@fortune/core';
 
-export type { Signal, Timeline, TimeAccuracy };
+export type { ConsensusSummary, Signal, Timeline, TimeAccuracy };
 
 export type SystemId = 'bazi' | 'ziwei' | 'numerology' | 'minggua' | 'dreamspell';
 export type Gender = 'male' | 'female';
@@ -156,8 +157,8 @@ export interface LayerDefinition {
 
 export interface Report {
   version: string;
-  /** 3 = legacy engines report; 4 adds `timeline`, `timeContext`, `signals`. */
-  schemaVersion: 3 | 4 | number;
+  /** 3 = legacy engines report; 4 adds `timeline`, `timeContext`, `signals`; 5 adds `consensus`. */
+  schemaVersion: 3 | 4 | 5 | number;
   generatedAt: string;
   asOf: string;
   input: BirthInput & { longitude: number; latitude: number };
@@ -191,6 +192,8 @@ export interface Report {
   timeContext?: Record<string, unknown> | null;
   /** v4: flat signal list; used to resolve conflict signal ids outside a cell's topSignals. */
   signals?: Signal[] | Record<string, unknown> | null;
+  /** v5: cross-system agreements, conflicts and per-cell coverage. Absent on v3/v4 reports. */
+  consensus?: ConsensusSummary | null;
 }
 
 export interface CompatibilityPerson {
