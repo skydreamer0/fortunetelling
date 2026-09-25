@@ -64,16 +64,21 @@ describe('calculator adapters: parity with analyze()', () => {
     { label: 'time unknown', profile: { ...CASES[0].profile, time: null, timeAccuracy: 'unknown' } as BirthProfile },
   ]) {
     test(label, () => {
+      // Report v4 (D-032): analyze() runs 紫微 exactly like ziweiCalculator (true solar
+      // time by default), while baziCalculator.components are still the legacy
+      // civil-clock engine output — which analyze() reproduces with useTrueSolarTime:false.
       const report = analyze(rawInput(profile), { asOf: ASOF });
+      const civil = analyze({ ...rawInput(profile), useTrueSolarTime: false }, { asOf: ASOF });
       const results = runCalculators(createTimeContext(profile), { asOf: ASOF });
       expect(results.map((r) => r.system)).toEqual(['bazi', 'ziwei', 'numerology', 'tzolkin', 'mingGua']);
       for (const r of results) {
-        const engine = report.engines.find((e: { engineId: string }) => e.engineId === ENGINE_ID[r.system as keyof typeof ENGINE_ID]);
+        const source = r.system === 'bazi' ? civil : report;
+        const engine = source.engines.find((e: { engineId: string }) => e.engineId === ENGINE_ID[r.system as keyof typeof ENGINE_ID]);
         expect(engine).toBeDefined();
         expect(r.components).toEqual(engine.components);
         expect(r.components.length).toBe(engine.components.length);
       }
-    });
+    }, 30_000);
   }
 
   test('timeContextToBirthData mirrors the raw input', () => {

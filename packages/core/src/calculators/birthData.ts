@@ -9,9 +9,10 @@
  * - date/hour/minute come from the LOCAL CIVIL wall time of the birthplace
  *   (`ctx.local.iso`), NOT from true solar time. The engines themselves treat
  *   that wall time as Asia/Taipei civil time. Switching BaZi/Ziwei to true
- *   solar time is V1-04/05's job (with a calculator version bump); until then
- *   every adapter's `components` are byte-identical to the engine output
- *   inside `analyze()` for the same input and asOf.
+ *   solar time was V1-04/05's job; since Report v4 (D-032) `analyze()` runs
+ *   八字／紫微 on the TimeContext (`core/timeContextEngines`), so only the
+ *   numerology / tzolkin / mingGua adapters stay byte-identical to `analyze()`
+ *   by default (八字 with `useTrueSolarTime: false`, 紫微 = ziweiCalculator).
  * - time unknown → `hour: 12, minute: 0, timeKnown: false` (what the web intake
  *   sends); the time-dependent engines then skip their charts on their own.
  * - longitude/latitude come from the birthplace (the engines do not read them yet).

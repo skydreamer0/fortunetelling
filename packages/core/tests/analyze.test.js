@@ -8,6 +8,12 @@ import { analyze, VERSION, REPORT_SCHEMA_VERSION, BirthData } from '../src/index
 const INPUT = { year: 1991, month: 10, day: 5, hour: 14, gender: 'female', name: 'Test Person' };
 const AS_OF = '2026-07-11';
 
+const V3_KEYS = [
+  'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input', 'insights',
+  'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'summary', 'version',
+];
+const V4_KEYS = [...V3_KEYS, 'signals', 'timeContext', 'timeline'].sort();
+
 test('analyze() 回傳完整 Report 契約欄位', () => {
   const report = analyze(INPUT, { asOf: AS_OF });
 
@@ -50,20 +56,20 @@ test('analyze() 回傳完整 Report 契約欄位', () => {
   assert.ok(report.evolution.narrative.length > 0);
 });
 
-test('Report Schema v3 包含可追溯摘要與使用者問題視圖', () => {
+test('Report Schema v4 = v3 欄位 + timeContext／signals／timeline，且保留可追溯摘要', () => {
   const report = analyze(INPUT, { asOf: AS_OF });
   assert.deepEqual(
     Object.keys(report).sort(),
-    [
-      'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input', 'insights',
-      'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'summary', 'version',
-    ],
+    V4_KEYS,
   );
   // D1/D2/D4 已翻 honesty / stateTable / evolution 的 pending
   assert.equal(report.stateTable.pending, false);
   assert.equal(report.evolution.pending, false);
   assert.equal(report.honesty.pending, false);
-  assert.equal(report.schemaVersion, 3);
+  assert.equal(report.schemaVersion, 4);
+  assert.equal(REPORT_SCHEMA_VERSION, 4);
+  for (const key of V3_KEYS) assert.ok(key in report, `v3 key ${key} missing`);
+  assert.deepEqual(Object.keys(report).filter(k => !V3_KEYS.includes(k)).sort(), ['signals', 'timeContext', 'timeline']);
   for (const sentence of report.summary.sentences) {
     assert.ok(sentence.sources.length > 0, `${sentence.id} 缺少來源`);
   }
@@ -92,10 +98,7 @@ test('analyze() 只填入既有 radars 空殼，且每軸計分規則可解析',
 
   assert.deepEqual(
     Object.keys(report).sort(),
-    [
-      'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input', 'insights',
-      'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'summary', 'version',
-    ],
+    V4_KEYS,
   );
 });
 

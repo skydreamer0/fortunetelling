@@ -3,12 +3,15 @@
  *
  * Birth input is always interpreted as Asia/Taipei civil time. This engine
  * deliberately does not apply UTC conversion, longitude correction, or true
- * solar time; those need a future timezone/location-aware BirthData contract.
+ * solar time. Since Report v4 (D-032) `analyze()` runs the TimeContext-aware
+ * subclass `core/timeContextEngines#TimeContextBaZiEngine`, which feeds this
+ * engine the resolved wall clock and rebuilds the natal / 大運 / 流年
+ * components from exact-節, true-solar pillars (`buildBaziNatalComponents`).
  *
  * @module engines/BaZiEngine
  */
 
-import { Solar } from 'lunar-javascript';
+import { LunarUtil, Solar } from 'lunar-javascript';
 import { BaseEngine } from '../core/BaseEngine.js';
 
 const STEM_ELEMENTS = Object.freeze({
@@ -33,7 +36,7 @@ const TEN_GOD_GROUPS = Object.freeze([
   Object.freeze({ group: '比劫', context: '同儕與競合', tenGods: Object.freeze(['比肩', '劫財']) }),
 ]);
 
-const TAIPEI_CONVENTION = Object.freeze({
+export const TAIPEI_CONVENTION = Object.freeze({
   calendar: 'gregorian',
   timezone: 'Asia/Taipei',
   dayBoundary: 'lunar-javascript sect=2',
@@ -41,7 +44,7 @@ const TAIPEI_CONVENTION = Object.freeze({
   library: 'lunar-javascript@1.7.7',
 });
 
-const ASOF_CONVENTION = Object.freeze({
+export const ASOF_CONVENTION = Object.freeze({
   timezone: 'Asia/Taipei',
   time: '00:00:00',
   yearBoundary: 'liChun-exact',
@@ -70,6 +73,129 @@ function tenGodFor(dayStem, stem) {
   if (ELEMENT_CONTROLS[targetElement] === dayElement) return samePolarity ? '七殺' : '正官';
 
   throw new Error(`Cannot derive ten god for ${dayStem}/${stem}`);
+}
+
+/** Default wording of the `elements` limitation (civil clock, no true solar time). */
+export const ELEMENTS_LIMITATION = '此為五行出現次數，不代表旺衰、月令、藏干權重或真太陽時校正。';
+
+/**
+ * The five natal (L0/L3) components — 四柱, 日主, 五行出現次數, 十神統計,
+ * 十神關係角色 — derived purely from the four pillar strings. Hidden stems come
+ * from `LunarUtil.ZHI_HIDE_GAN`, which is exactly what lunar-javascript's
+ * `EightChar#get*HideGan()` return, so the engine output is unchanged.
+ *
+ * Exported so the TimeContext-aware engine (`core/timeContextEngines`) can
+ * rebuild these components from exact-節 / true-solar pillars.
+ *
+ * @param {{ year: string, month: string, day: string, time: string }} pillars
+ * @param {Object} [options]
+ * @param {Object} [options.convention=TAIPEI_CONVENTION] - echoed in natal value/meta
+ * @param {string} [options.elementsLimitation=ELEMENTS_LIMITATION]
+ * @returns {Array<{ id: string, name: string, category: string, value: any, meta?: any }>} component descriptors for `SystemResult#add`
+ */
+export function buildBaziNatalComponents(
+  pillars,
+  { convention = TAIPEI_CONVENTION, elementsLimitation = ELEMENTS_LIMITATION } = {},
+) {
+  const all = [pillars.year, pillars.month, pillars.day, pillars.time];
+  const dayStem = pillars.day[0];
+  const visibleStems = all.map(gz => gz[0]);
+  const contextVisibleStems = [pillars.year[0], pillars.month[0], pillars.time[0]];
+  const hiddenStems = all.flatMap(gz => LunarUtil.ZHI_HIDE_GAN[gz[1]]);
+  const allStems = [...visibleStems, ...hiddenStems];
+  const elementCounts = { 木: 0, 火: 0, 土: 0, 金: 0, 水: 0 };
+  const tenGodCounts = Object.fromEntries(TEN_GODS.map(name => [name, 0]));
+
+  for (const stem of allStems) {
+    elementCounts[STEM_ELEMENTS[stem]] += 1;
+    tenGodCounts[tenGodFor(dayStem, stem)] += 1;
+  }
+
+  const visibleTenGods = contextVisibleStems.map(stem => tenGodFor(dayStem, stem));
+  const hiddenTenGods = hiddenStems.map(stem => tenGodFor(dayStem, stem));
+  const contextGroups = TEN_GOD_GROUPS.map(definition => {
+    const breakdown = Object.fromEntries(definition.tenGods.map(name => [
+      name,
+      visibleTenGods.filter(tenGod => tenGod === name).length
+        + hiddenTenGods.filter(tenGod => tenGod === name).length,
+    ]));
+    const visibleCount = visibleTenGods.filter(tenGod => definition.tenGods.includes(tenGod)).length;
+    const hiddenCount = hiddenTenGods.filter(tenGod => definition.tenGods.includes(tenGod)).length;
+
+    return {
+      group: definition.group,
+      context: definition.context,
+      tenGods: [...definition.tenGods],
+      breakdown,
+      observedTenGods: definition.tenGods.filter(name => breakdown[name] > 0),
+      visibleCount,
+      hiddenCount,
+      count: visibleCount + hiddenCount,
+      /** @type {TenGodPresence} */
+      presence: visibleCount > 0 ? '顯' : (hiddenCount > 0 ? '隱' : '無'),
+    };
+  });
+  const tenGodsContextTotal = contextGroups.reduce((sum, group) => sum + group.count, 0);
+  const tenGodsContextGroups = contextGroups.map(group => ({
+    ...group,
+    share: tenGodsContextTotal > 0 ? group.count / tenGodsContextTotal : 0,
+  }));
+
+  return [
+    {
+      id: 'natal',
+      name: '四柱',
+      category: 'natal',
+      value: { ...pillars, convention },
+      meta: { convention },
+    },
+    {
+      id: 'day_master',
+      name: '日主',
+      category: 'dayMaster',
+      value: {
+        stem: dayStem,
+        element: STEM_ELEMENTS[dayStem],
+        yinYang: YANG_STEMS.has(dayStem) ? '陽' : '陰',
+      },
+    },
+    {
+      id: 'elements',
+      name: '五行出現次數',
+      category: 'elements',
+      value: {
+        counts: elementCounts,
+        total: allStems.length,
+        includesHiddenStems: true,
+        includesDayMaster: true,
+        metric: 'occurrence-count',
+        limitation: elementsLimitation,
+      },
+    },
+    {
+      id: 'ten_gods',
+      name: '十神統計',
+      category: 'tenGods',
+      value: {
+        counts: tenGodCounts,
+        total: allStems.length,
+        includesDayMaster: true,
+      },
+    },
+    {
+      id: 'tenGodsContext',
+      name: '十神關係角色',
+      category: 'tenGodsContext',
+      value: {
+        groups: tenGodsContextGroups,
+        total: tenGodsContextTotal,
+        includesHiddenStems: true,
+        includesDayMaster: false,
+        metric: 'occurrence-share',
+        presenceConvention: 'visible-hidden-absent',
+      },
+    },
+  ];
 }
 
 /**
@@ -144,62 +270,6 @@ export class BaZiEngine extends BaseEngine {
       day: eightChar.getDay(),
       time: eightChar.getTime(),
     };
-    const dayStem = eightChar.getDayGan();
-    const visibleStems = [
-      eightChar.getYearGan(),
-      eightChar.getMonthGan(),
-      dayStem,
-      eightChar.getTimeGan(),
-    ];
-    const contextVisibleStems = [
-      eightChar.getYearGan(),
-      eightChar.getMonthGan(),
-      eightChar.getTimeGan(),
-    ];
-    const hiddenStems = [
-      ...eightChar.getYearHideGan(),
-      ...eightChar.getMonthHideGan(),
-      ...eightChar.getDayHideGan(),
-      ...eightChar.getTimeHideGan(),
-    ];
-    const allStems = [...visibleStems, ...hiddenStems];
-    const elementCounts = { 木: 0, 火: 0, 土: 0, 金: 0, 水: 0 };
-    const tenGodCounts = Object.fromEntries(TEN_GODS.map(name => [name, 0]));
-
-    for (const stem of allStems) {
-      elementCounts[STEM_ELEMENTS[stem]] += 1;
-      tenGodCounts[tenGodFor(dayStem, stem)] += 1;
-    }
-
-    const visibleTenGods = contextVisibleStems.map(stem => tenGodFor(dayStem, stem));
-    const hiddenTenGods = hiddenStems.map(stem => tenGodFor(dayStem, stem));
-    const contextGroups = TEN_GOD_GROUPS.map(definition => {
-      const breakdown = Object.fromEntries(definition.tenGods.map(name => [
-        name,
-        visibleTenGods.filter(tenGod => tenGod === name).length
-          + hiddenTenGods.filter(tenGod => tenGod === name).length,
-      ]));
-      const visibleCount = visibleTenGods.filter(tenGod => definition.tenGods.includes(tenGod)).length;
-      const hiddenCount = hiddenTenGods.filter(tenGod => definition.tenGods.includes(tenGod)).length;
-
-      return {
-        group: definition.group,
-        context: definition.context,
-        tenGods: [...definition.tenGods],
-        breakdown,
-        observedTenGods: definition.tenGods.filter(name => breakdown[name] > 0),
-        visibleCount,
-        hiddenCount,
-        count: visibleCount + hiddenCount,
-        /** @type {TenGodPresence} */
-        presence: visibleCount > 0 ? '顯' : (hiddenCount > 0 ? '隱' : '無'),
-      };
-    });
-    const tenGodsContextTotal = contextGroups.reduce((sum, group) => sum + group.count, 0);
-    const tenGodsContextGroups = contextGroups.map(group => ({
-      ...group,
-      share: tenGodsContextTotal > 0 ? group.count / tenGodsContextTotal : 0,
-    }));
 
     const result = this.result();
     result.meta = {
@@ -207,60 +277,7 @@ export class BaZiEngine extends BaseEngine {
       dayBoundary: 'eight-char sect=2',
       yunCalculation: 'getYun sect=2',
     };
-
-    result.add({
-      id: 'natal',
-      name: '四柱',
-      category: 'natal',
-      value: { ...pillars, convention: TAIPEI_CONVENTION },
-      meta: { convention: TAIPEI_CONVENTION },
-    });
-    result.add({
-      id: 'day_master',
-      name: '日主',
-      category: 'dayMaster',
-      value: {
-        stem: dayStem,
-        element: STEM_ELEMENTS[dayStem],
-        yinYang: YANG_STEMS.has(dayStem) ? '陽' : '陰',
-      },
-    });
-    result.add({
-      id: 'elements',
-      name: '五行出現次數',
-      category: 'elements',
-      value: {
-        counts: elementCounts,
-        total: allStems.length,
-        includesHiddenStems: true,
-        includesDayMaster: true,
-        metric: 'occurrence-count',
-        limitation: '此為五行出現次數，不代表旺衰、月令、藏干權重或真太陽時校正。',
-      },
-    });
-    result.add({
-      id: 'ten_gods',
-      name: '十神統計',
-      category: 'tenGods',
-      value: {
-        counts: tenGodCounts,
-        total: allStems.length,
-        includesDayMaster: true,
-      },
-    });
-    result.add({
-      id: 'tenGodsContext',
-      name: '十神關係角色',
-      category: 'tenGodsContext',
-      value: {
-        groups: tenGodsContextGroups,
-        total: tenGodsContextTotal,
-        includesHiddenStems: true,
-        includesDayMaster: false,
-        metric: 'occurrence-share',
-        presenceConvention: 'visible-hidden-absent',
-      },
-    });
+    for (const component of buildBaziNatalComponents(pillars)) result.add(component);
 
     const daYuns = yun.getDaYun(11);
     const startSolarStr = yun.getStartSolar().toYmdHms();

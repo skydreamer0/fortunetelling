@@ -8,10 +8,21 @@ const REQUIRED_INPUT_KEYS = [
   'gender', 'name', 'longitude', 'latitude',
 ];
 
+// Report v4 (D-032) = v3 keys + timeContext / signals / timeline.
 const REPORT_KEYS = [
   'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input',
   'insights', 'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'summary', 'version',
+  'signals', 'timeContext', 'timeline',
 ];
+
+// analyze() takes ~1 s since v4 (sync timeline); these tests run several reports.
+const SLOW = { timeout: 60_000 };
+
+/** The v3 input keys echoed in `report.input` (the v4 `birthplace` is echoed in timeContext.profile). */
+function v3Input(input) {
+  const { birthplace: _birthplace, ...rest } = input;
+  return rest;
+}
 
 const RUNTIME_METADATA_KEYS = new Set([
   'generatedAt', 'computedAt', 'durationMs', 'classifiedAt', 'exportedAt',
@@ -80,7 +91,12 @@ test('integration fixtures have safe, reproducible provenance metadata', () => {
     ids.add(fixture.id);
 
     assert.ok(['golden', 'public-reference'].includes(fixture.kind));
-    assert.deepEqual(Object.keys(fixture.input).sort(), [...REQUIRED_INPUT_KEYS].sort());
+    assert.deepEqual(Object.keys(v3Input(fixture.input)).sort(), [...REQUIRED_INPUT_KEYS].sort());
+    if (fixture.input.birthplace) {
+      // echo coordinates must agree with the birthplace that wins resolution
+      assert.equal(fixture.input.birthplace.lng, fixture.input.longitude);
+      assert.equal(fixture.input.birthplace.lat, fixture.input.latitude);
+    }
     assert.match(fixture.asOf, /^\d{4}-\d{2}-\d{2}$/);
     assert.ok(fixture.expected && typeof fixture.expected === 'object');
 
@@ -101,16 +117,17 @@ test('integration fixtures have safe, reproducible provenance metadata', () => {
   }
 });
 
-test('public analyze contract holds for golden and sourced celebrity charts', () => {
+test('public analyze contract holds for golden and sourced celebrity charts', SLOW, () => {
   for (const fixture of INTEGRATION_CASES) {
     const report = analyze(fixture.input, { asOf: fixture.asOf });
     const expected = fixture.expected;
 
     assert.deepEqual(Object.keys(report).sort(), [...REPORT_KEYS].sort(), fixture.id);
-    assert.equal(report.schemaVersion, 3, fixture.id);
+    assert.equal(report.schemaVersion, 4, fixture.id);
     assert.ok(report.summary.sentences.length >= 3, fixture.id);
     assert.equal(report.asOf, fixture.asOf, fixture.id);
-    assert.deepEqual(report.input, fixture.input, fixture.id);
+    assert.deepEqual(report.input, v3Input(fixture.input), fixture.id);
+    if (expected.utcIso) assert.equal(report.timeContext.utc.iso, expected.utcIso, fixture.id);
     assert.deepEqual(
       report.engines.map(engine => engine.engineId).sort(),
       ['bazi', 'dreamspell', 'minggua', 'numerology', 'ziwei'],
@@ -153,6 +170,9 @@ test('public analyze contract holds for golden and sourced celebrity charts', ()
       );
     }
 
+    // Golden Taipei vectors are unchanged by true solar time (08:00 → 08:09, 14:00 → 14:18
+    // stay in 辰/未). The celebrity vectors now carry their real birthplace and their
+    // hour pillar moves to 酉 under true solar time — see the fixture comments.
     if (expected.baziNatal) {
       const { convention: _convention, ...natal } = engineComponent(report, 'bazi', 'natal').value;
       assert.deepEqual(natal, expected.baziNatal, fixture.id);
@@ -160,7 +180,7 @@ test('public analyze contract holds for golden and sourced celebrity charts', ()
   }
 });
 
-test('explicit asOf makes celebrity and golden reports deterministic', () => {
+test('explicit asOf makes celebrity and golden reports deterministic', SLOW, () => {
   for (const fixture of INTEGRATION_CASES) {
     const first = analyze(fixture.input, { asOf: fixture.asOf });
     const generatedAt = Date.now();

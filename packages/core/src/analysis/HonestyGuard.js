@@ -140,6 +140,9 @@ export class HonestyGuard {
    *   - `stateTable.scenarios[].cells[].expression` → L3（情境語氣）
    *   - `evolution.periods[].summary`（兩行摘要，逐行檢查）→ L1
    *   - `evolution.narrative` → L1
+   *   - `insights.*` 敘事 → L1／L2／L3
+   *   - v4：`signals[].evidence.text` 與 `modifiers[].reason` → 依 window.grain（natal L0、decade L1、year/month L2）
+   *   - v4：`timeContext.flags[].detail` → L2
    *
    * @param {Object} report - `analyze()` 產出的 Report（或同形狀物件）
    * @returns {Violation[]}
@@ -188,6 +191,22 @@ export class HonestyGuard {
       check(theme?.text, 'L2', `insights.annual.themes[${index}].text`);
     });
     check(report.insights?.guidance?.balance?.text, 'L3', 'insights.guidance.balance.text');
+
+    // ── Report v4（D-032）：訊號證據文字與時間旗標說明 ──
+    // 訊號依 window.grain 分層：natal→L0、decade→L1、year/month→L2。
+    // timeline 各格的 topSignals 與 `signals` 是同一批物件（signals 為其去重聯集），
+    // 另外逐格檢查只會重複回報，因此只稽核 `signals`。
+    const SIGNAL_LAYER = { natal: 'L0', decade: 'L1', year: 'L2', month: 'L2' };
+    (Array.isArray(report.signals) ? report.signals : []).forEach((signal, index) => {
+      const layer = SIGNAL_LAYER[signal?.window?.grain] ?? 'L2';
+      check(signal?.evidence?.text, layer, `signals[${index}].evidence.text`);
+      (signal?.evidence?.modifiers ?? []).forEach((modifier, mi) => {
+        check(modifier?.reason, layer, `signals[${index}].evidence.modifiers[${mi}].reason`);
+      });
+    });
+    (report.timeContext?.flags ?? []).forEach((flag, index) => {
+      check(flag?.detail, 'L2', `timeContext.flags[${index}].detail`);
+    });
 
     return violations;
   }

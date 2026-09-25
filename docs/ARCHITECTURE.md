@@ -9,7 +9,7 @@
 > 執行規則在 [HARNESS_SPEC.md](HARNESS_SPEC.md)；測試策略在 [TEST_PLAN.md](TEST_PLAN.md)。
 >
 > 定案(2026-07-11)：① 可重用核心函式庫 ② 5 系統(紫微/靈數/命卦/Kin/八字)
-> ③ JSDoc ④ Report Schema 以版本守護形狀（v1：D-012；v2：D-019；目前 v3：D-020）。
+> ③ JSDoc ④ Report Schema 以版本守護形狀（v1：D-012；v2：D-019；v3：D-020；目前 v4：D-032，見 §4.3）。
 
 ---
 
@@ -160,6 +160,68 @@ Violation {
   problem: string,       // 例如 'L2 內容使用了「你是」定性語氣'
 }
 ```
+
+### 4.3 Report Schema v4（V1-14，D-032）
+
+v4 = v3 全部欄位與元素形狀**不變**，另外只新增三個頂層欄位；`schemaVersion` 恆為 4、
+函式庫 semver 0.4.0。`analyze()` 仍是**同步**函式。
+
+```js
+analyze({
+  year, month, day, hour, minute, timeKnown, gender, name,   // v3 欄位照舊
+  longitude, latitude,                                      // v3：以 Asia/Taipei 民用時解讀
+  birthplace: { label, lat, lng, timezone },                // v4 選填（IANA 時區）
+  cityId: 'tainan',                                         // v4 選填，findCity() 可解析的鍵
+  timeAccuracy: 'exact' | 'approx15m' | 'approx1h',         // v4 選填；timeKnown:false → 'unknown'
+  ziHourConvention: 'late' | 'early',                       // v4 選填，預設 'late'（晚子不換日）
+  useTrueSolarTime: true,                                   // v4 選填，預設 true
+}, { asOf: '2026-07-11' });
+```
+
+出生地解析順序：`birthplace` → `cityId` → 舊 `longitude/latitude`（時區固定 Asia/Taipei，
+距 120°E 超過 15° 時在 `timeContext.conventions.warnings` 標 `legacy_coordinates_outside_utc+8_meridian`）
+→ 預設台北市（`DEFAULT_BIRTHPLACE`）。`input` echo 維持 v3 形狀，經緯度改為實際採用的出生地座標。
+
+| 新欄位 | 型別 | 內容 |
+|---|---|---|
+| `timeContext` | `TimeContext & { conventions }` | ① 時間層輸出（ARCHITECTURE-V2 §3.2）；`profile` **不含姓名**（姓名已在 `input`），保留 `birthplace.label`。送 AI 前仍須再移除 label（D-029）。 |
+| `timeline` | `Timeline`（`timeline/buildTimeline`） | 同步版：asOf 年起 5 個西曆年 + asOf 年 12 個月，系統 = 八字／紫微／靈數。jyotish／humanDesign 需要非同步載入的 Swiss Ephemeris，在 `analyze()` 中**一律略過**（`skippedSystems` 原因 `ephemeris_not_initialised`，時間未知時為 `time_unknown`），與他處是否已初始化星曆無關（D-014）。完整版請用 `buildTimelineAsync`。 |
+| `signals` | `Signal[]` | timeline 各格 `topSignals` 的**去重聯集**（依 id 排序），不是全部訊號：`perSystem.signalIds` 可能引用不在此陣列的 id（每格每領域只留前 5 名）。實測約 350 筆、150 KB。 |
+
+`timeContext.conventions`（實際採用的時間約定）：
+
+```js
+{
+  warnings: string[],
+  birthplaceSource: 'birthplace' | 'cityId' | 'legacyCoordinates' | 'default',
+  useTrueSolarTime: boolean, ziHourConvention: 'late' | 'early',
+  bazi:  { dayHourClock: 'trueSolar'|'civil', yearMonthBasis: 'jie-instant', ziHourConvention,
+           luckCycles: 'birth-instant-to-jie-instant', liuNian: 'liChun-solar-year-of-asOf' },
+  ziwei: { clock: 'trueSolar'|'civil', ziHourConvention: 'splitMidnight'|'nextDayAt23' },
+  numerology: 'civil-local-date', dreamspell: 'civil-local-date',
+  minggua: 'civil-local-time-read-as-utc+8',
+  timeline: { clock: 'trueSolar', baziZiHourConvention: 'late', ziweiZiHourConvention: 'splitMidnight',
+              followsOptions: false, skippedInSyncAnalyze: ['jyotish', 'humanDesign'] },
+}
+```
+
+引擎層（`engines[]` 形狀不變，部件 id／category 不變）：
+
+- **八字**：`core/timeContextEngines#TimeContextBaZiEngine`。引擎吃解析後的牆鐘（真太陽時或民用時），
+  四柱再以 `computePillars(ctx)`（年／月柱＝出生瞬間對精確交節瞬間；日／時柱＝所選時鐘與子時約定）覆寫並重算
+  日主／五行／十神／十神角色；`daYun_*` 由 `luckCycles(ctx)` 重建（方向、干支、起運皆依出生瞬間）；
+  `liuNian.year` 改為 asOf 的**立春年**。`engines[bazi].meta.timeConvention` 記錄時鐘、交節、
+  引擎牆鐘四柱與 `overriddenFields`、兩盤並算候選、起運資訊。`natal.convention` 反映實際時區／sect／真太陽時。
+- **紫微**：`TimeContextZiweiEngine`，與 `ziweiCalculator` 同路徑（`timeIndexFrom` → iztro），
+  23:00–24:00 為晚子（timeIndex 12）；`engines[ziwei].meta.timeConvention` 記錄時鐘、牆鐘、iztro 日期與候選。
+- 靈數／Kin／命卦：沿用民用日期（命卦仍以民用時刻視為 UTC+8 判立春，未改）。
+- `useTrueSolarTime: false` 且為 UTC+8（非日治 +9、非夏令時間）出生、asOf 不在 1/1～立春之間時，
+  全部 `engines[].components` 與 v3 逐位元相同（測試守護）。
+
+誠實稽核（D1）新增掃描：`signals[].evidence.text` 與 `modifiers[].reason`（依 window.grain：
+natal L0、decade L1、year/month L2）、`timeContext.flags[].detail`（L2）。
+
+效能：單次 `analyze()` 約 1 秒（主要是 timeline 的紫微流年／流月序列），報告 JSON 約 0.5 MB。
 
 ## 5. 引擎外掛契約
 
