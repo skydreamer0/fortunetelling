@@ -2,10 +2,10 @@ import { test, expect, describe } from 'bun:test';
 import {
   kinFromDate, toneOf, sealOf, kinOf, wavespellOf, castleOf, oracleOf,
   analogSeal, antipodeSeal, occultSeal,
-} from '../src/calculators/tzolkin/tzolkin.js';
-import { DreamspellEngine } from '../src/engines/DreamspellEngine.js';
-import { BirthData } from '../src/core/models/BirthData.js';
-import { analyze } from '../src/index.js';
+} from '../src/calculators/tzolkin/tzolkin';
+import { DreamspellEngine } from '../src/engines/DreamspellEngine';
+import { BirthData } from '../src/core/models/BirthData';
+import { analyze } from '../src/index';
 
 const ALL_KINS = Array.from({ length: 260 }, (_, i) => i + 1);
 

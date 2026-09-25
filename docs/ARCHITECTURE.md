@@ -17,7 +17,7 @@
 
 1. **核心與 UI 分離**：`core / engines / analysis / visualization` 為框架無關 ES module；
    `ui` 只是消費核心的其中一個 App，**只吃 `Report`**（D-015）。
-2. **單一對外入口**：`@fortune/core`（`packages/core/src/index.js`）是唯一公開 API（package.json `exports` 鎖定）。
+2. **單一對外入口**：`@fortune/core`（`packages/core/src/index.ts`）是唯一公開 API（package.json `exports` 鎖定）。
 3. **穩定契約**：輸出以單一 `Report` 為準；`VERSION` semver；`REPORT_SCHEMA_VERSION` 守形狀。
 4. **外掛式引擎**：每系統一個 `BaseEngine` 子類；新增系統不改核心。
    命理函式庫（iztro/lunar-javascript）**只允許出現在 `engines/`**（D-016）。

@@ -2,7 +2,7 @@
  * The ONLY runtime bridge from `@fortune/ai` into `@fortune/core` (D-021).
  *
  * Why deep relative imports instead of `import … from '@fortune/core'`:
- * the core barrel (`packages/core/src/index.js`) re-exports every calculator
+ * the core barrel (`packages/core/src/index.ts`) re-exports every calculator
  * and engine, so importing ANY runtime value from it would load iztro,
  * lunar-javascript and the Swiss Ephemeris into the AI layer — which D-021
  * forbids ("packages/ai 不得 import 命理函式庫或計算器"). Core only exposes
@@ -24,4 +24,4 @@ export {
   QUESTION_CATALOG,
   QUESTION_CATALOG_VERSION,
 } from '../../core/src/questions/engine';
-export { HonestyGuard } from '../../core/src/analysis/HonestyGuard.js';
+export { HonestyGuard } from '../../core/src/analysis/HonestyGuard';

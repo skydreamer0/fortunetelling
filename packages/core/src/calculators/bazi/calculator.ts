@@ -21,7 +21,7 @@
  */
 
 import { LunarUtil } from 'lunar-javascript';
-import { BaZiEngine } from '../../engines/BaZiEngine.js';
+import { BaZiEngine } from '../../engines/BaZiEngine';
 import type { TimeContext, TimeFlag } from '../../time/types';
 import { categoryValues, componentValue, normalizeAsOf, timeContextToBirthData } from '../birthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';
