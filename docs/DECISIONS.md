@@ -233,4 +233,4 @@ D-016 規定 iztro／lunar-javascript 只能出現在 `engines/`。V1-02 TimeCon
 - 列出「達門檻系統」用的 θ 預設 0.5，必須與建 timeline 時的 θ 相同（timeline 目前不記錄 θ，由 `buildConsensus` 參數傳入並寫入輸出）。
 - `analyze()` 仍為同步，`consensus` 因此只涵蓋八字／紫微／靈數（與 v4 timeline 相同）；jyotish／humanDesign 需以
   `buildConsensus(await buildTimelineAsync(ctx, { asOf }))` 取得。
-- 已知限制：`packages/core/package.json` 的 `version` 欄位未同步（仍為 0.4.0；私有套件，公開版本以 `VERSION` 常數為準）。
+- `packages/core/package.json` 的 `version` 已同步為 0.5.0。
