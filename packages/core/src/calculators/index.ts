@@ -35,6 +35,7 @@ export {
   solarYearOfAsOf,
 } from './bazi/pillars';
 export { ziweiCalculator, extractZiweiChart, ZIWEI_CALCULATOR_VERSION } from './ziwei/calculator';
+export * from './ziwei/index';
 export { numerologyCalculator, extractNumerologyChart, NUMEROLOGY_CALCULATOR_VERSION } from './numerology/calculator';
 export { tzolkinCalculator, extractTzolkinChart, TZOLKIN_CALCULATOR_VERSION } from './tzolkin/calculator';
 export { mingGuaCalculator, extractMingGuaChart, MINGGUA_CALCULATOR_VERSION } from './mingGua/calculator';

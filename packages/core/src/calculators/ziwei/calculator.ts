@@ -35,7 +35,7 @@ import {
   yearlySequence,
 } from './astrolabe';
 import type {
-  ZiHourConvention,
+  ZiweiZiHourConvention,
   ZiweiChart,
   ZiweiDecade,
   ZiweiEngineChart,
@@ -59,7 +59,7 @@ export interface ZiweiCalculatorConfig extends CalculatorConfig {
   /** Default true (ARCHITECTURE-V2 §3.4). */
   useTrueSolarTime?: boolean;
   /** Default 'splitMidnight'. */
-  ziHourConvention?: ZiHourConvention;
+  ziHourConvention?: ZiweiZiHourConvention;
 }
 
 type EnginePalace = {

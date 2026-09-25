@@ -83,7 +83,7 @@
 | V1-02 ✅ | **TimeContext** | `time/`：local→UTC（IANA tzdata，禁止手寫 DST 表）、JD(UT/TT, ΔT)、均時差→真太陽時、精確節氣時刻、農曆；`flags`：`dst_applied`／`dst_gap`／`dst_overlap`／`near_shichen_boundary`／`near_jie_boundary`／`zi_hour_convention`／`time_unknown` | V1-01 |
 | V1-03 ✅ | **Calculator 契約＋搬遷** | `calculators/<system>/`，`calculate(ctx, config) → ChartResult`；現有五引擎改包成 calculator，`components` 不變，以免破壞 Report v3 | V1-02 |
 | V1-04 ✅ | 八字改吃 TimeContext | 真太陽時（預設開）、`ziHourConvention`、起運精確到月、流月；邊界時兩盤並算 | V1-03 |
-| V1-05 | 紫微改吃 TimeContext＋強型別盤 | 身宮、五行局、命主身主、三方四正索引、流年／流月序列 | V1-03 |
+| V1-05 ✅ | 紫微改吃 TimeContext＋強型別盤 | 身宮、五行局、命主身主、三方四正索引、流年／流月序列 | V1-03 |
 | V1-06 ✅ | Numerology 補齊 | `11/2` 主數格式、Birthday、Attitude、Pinnacle×4、Challenge×4、`personalYears` 多年 | V1-03 |
 | V1-07 ✅ | Tzolkin 補齊 | Wavespell、Castle、Oracle 四位 | V1-03 |
 | V1-08 ✅ | 命卦改用精確立春 | 修正 D-017 近似 | V1-02 |

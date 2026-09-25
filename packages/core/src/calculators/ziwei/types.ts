@@ -110,13 +110,13 @@ export interface ZiweiNatalChart {
  *   (iztro timeIndex 12, iztro advances the lunar day internally); 00:00–01:00 is 早子 (0).
  * - `nextDayAt23`（子初換日）: 23:00 already starts the next day → next date, timeIndex 0.
  */
-export type ZiHourConvention = 'splitMidnight' | 'nextDayAt23';
+export type ZiweiZiHourConvention = 'splitMidnight' | 'nextDayAt23';
 
 export interface ZiweiTimeOptions {
   /** Use true solar time (default true); false = local civil wall time. */
   useTrueSolarTime?: boolean;
   /** Default 'splitMidnight'. */
-  ziHourConvention?: ZiHourConvention;
+  ziHourConvention?: ZiweiZiHourConvention;
 }
 
 /** The (date, timeIndex) pair handed to iztro `bySolar`. */
@@ -129,7 +129,7 @@ export interface ZiweiTimeResolution {
   basis: TimeBasis;
   /** Wall time on that clock, 'YYYY-MM-DDTHH:mm:ss'. */
   wallTime: string;
-  ziHourConvention: ZiHourConvention;
+  ziHourConvention: ZiweiZiHourConvention;
 }
 
 export type ZiweiAlternativeReason = 'near_shichen_boundary' | 'zi_hour_convention' | 'civil_time';

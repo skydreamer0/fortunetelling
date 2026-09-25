@@ -10,7 +10,7 @@
  *
  * Time (ARCHITECTURE-V2 §3.4): true solar time by default. The wall time on the
  * chosen clock is turned into (date, timeIndex); if true solar time crosses
- * midnight the date moves with it. 子時 handling follows `ZiHourConvention`.
+ * midnight the date moves with it. 子時 handling follows `ZiweiZiHourConvention`.
  *
  * Lunar calendar spans (春節, lunar month starts) come from lunar-javascript.
  *
@@ -22,7 +22,7 @@ import { Lunar, LunarYear, Solar } from 'lunar-javascript';
 import { brightnessScore } from '../../engines/ZiweiEngine.js';
 import type { TimeBasis, TimeContext } from '../../time/types';
 import type {
-  ZiHourConvention,
+  ZiweiZiHourConvention,
   ZiweiAlternativeReason,
   ZiweiDecadePeriod,
   ZiweiMonthlyPeriod,
@@ -83,7 +83,7 @@ export function lunarYearOf(iso: string): number {
 /** Map a wall reading 'YYYY-MM-DDTHH:mm:ss' to (date, timeIndex). */
 export function resolveWallTime(
   wall: string,
-  convention: ZiHourConvention,
+  convention: ZiweiZiHourConvention,
 ): { date: string; timeIndex: number } {
   const m = WALL.exec(wall);
   if (!m) throw new Error(`ziwei: unexpected wall time ${wall}`);
@@ -102,7 +102,7 @@ function wallOf(ctx: TimeContext, basis: TimeBasis): string {
   return basis === 'trueSolar' ? ctx.solar.trueSolarIso : ctx.local.iso.slice(0, 19);
 }
 
-function resolution(wall: string, basis: TimeBasis, ziHourConvention: ZiHourConvention): ZiweiTimeResolution {
+function resolution(wall: string, basis: TimeBasis, ziHourConvention: ZiweiZiHourConvention): ZiweiTimeResolution {
   return { ...resolveWallTime(wall, ziHourConvention), basis, wallTime: wall, ziHourConvention };
 }
 
