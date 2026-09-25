@@ -58,8 +58,7 @@ export type CalculatorWarningCode =
   | 'near_jie_boundary'
   | 'zi_hour_convention'
   | 'dst_gap'
-  | 'dst_overlap'
-  | 'lichun_approximation';
+  | 'dst_overlap';
 
 export interface ChartResult<TChart> {
   system: SystemId;

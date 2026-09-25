@@ -3,6 +3,7 @@
  * 所有向量皆手算於註解中；凡涉及年份者皆顯式傳入（D-014）。
  */
 import { test, expect } from 'bun:test';
+import { analyze } from '../src/core/analyze.js';
 import {
   calculateLifePath,
   calculateBirthdayNumber,
@@ -124,4 +125,18 @@ test('analyze()：新部件皆已分類、honesty 零違規', () => {
   expect(layerOf('pinnacles')).toBe('L1');
   expect(layerOf('challenges')).toBe('L1');
   expect(layerOf('personalYears')).toBe('L2');
+});
+
+// 回歸：asOf = 年初第一天時，個人流年／流月不得隨主機時區漂移（D-014）。
+// new Date('2027-01-01') 是 UTC 午夜；在 UTC−8 主機上本地 getter 會讀成 2026-12-31。
+test('personal year/month use the UTC date of asOf, independent of host timezone', () => {
+  const report = analyze(
+    { year: 1995, month: 7, day: 16, hour: 22, minute: 0, gender: 'male' },
+    { asOf: '2027-01-01' },
+  );
+  const numerology = report.engines.find((e: { engineId: string }) => e.engineId === 'numerology');
+  const value = (id: string) => numerology.components.find((c: { id: string }) => c.id === id).value;
+  expect(value('personal_year').year).toBe(2027);
+  expect(value('personal_month')).toMatchObject({ year: 2027, month: 1 });
+  expect(value('personal_years').fromYear).toBe(2027);
 });

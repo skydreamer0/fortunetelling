@@ -1,10 +1,10 @@
 /**
  * @fileoverview 八宅命卦 calculator — adapter over the v1 `MingGuaEngine` (V1-03).
  *
- * Behaviour is exactly the engine's, including the Feb-4 立春 approximation
- * (D-017). Births on Feb 3–5 (local civil date) get the
- * `lichun_approximation` warning, as D-017 requires; the exact 立春 instant
- * from the TimeContext is a later task (with a version bump).
+ * Behaviour is exactly the engine's. Since V1-08 the engine uses the exact
+ * 立春 instant (D-017 closed); when the birth time is unknown and the birth
+ * date is the 立春 day itself, the engine marks `meta.boundaryAmbiguous` and
+ * this adapter surfaces it as `near_jie_boundary`.
  *
  * @module calculators/mingGua/calculator
  */
@@ -78,13 +78,13 @@ export const mingGuaCalculator: Calculator<MingGuaChart> = {
     const birth = timeContextToBirthData(ctx, { name: config.name });
     const result = new MingGuaEngine().run(birth);
     const components = result.components as Component[];
-    const nearLichun = birth.month === 2 && birth.day >= 3 && birth.day <= 5;
+    const boundaryAmbiguous = Boolean((result.meta as { boundaryAmbiguous?: boolean } | undefined)?.boundaryAmbiguous);
     return {
       system: 'mingGua',
       version: MINGGUA_CALCULATOR_VERSION,
       chart: extractMingGuaChart(components),
       components,
-      warnings: [...(nearLichun ? ['lichun_approximation'] : []), ...result.errors],
+      warnings: [...(boundaryAmbiguous ? ['near_jie_boundary'] : []), ...result.errors],
     };
   },
 };

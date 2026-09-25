@@ -180,3 +180,15 @@ describe('determinism & time unknown', () => {
     expect(ziweiCalculator.calculate(ctx, { asOf: ASOF }).warnings).toContain('zi_hour_convention');
   });
 });
+
+describe('mingGua exact 立春 (V1-08) through the adapter', () => {
+  test('立春 day with unknown time warns near_jie_boundary; other days do not', () => {
+    const base: BirthProfile = { date: '2026-02-04', time: null, timeAccuracy: 'unknown', gender: 'female', birthplace: TAIPEI };
+    const onLichun = mingGuaCalculator.calculate(createTimeContext(base));
+    expect(onLichun.warnings).toContain('near_jie_boundary');
+    const known = mingGuaCalculator.calculate(createTimeContext({ ...base, time: '12:00', timeAccuracy: 'exact' }));
+    expect(known.warnings).not.toContain('near_jie_boundary');
+    const otherDay = mingGuaCalculator.calculate(createTimeContext({ ...base, date: '2026-02-06' }));
+    expect(otherDay.warnings).toEqual([]);
+  });
+});

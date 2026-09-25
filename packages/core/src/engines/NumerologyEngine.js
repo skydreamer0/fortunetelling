@@ -233,8 +233,10 @@ export class NumerologyEngine extends BaseEngine {
    */
   #addPersonalPeriods(result, birth) {
     const target = this.#evaluationDate();
-    const currentYear = target.getFullYear();
-    const currentMonth = target.getMonth() + 1;
+    // UTC getters: analyze() derives asOf as a UTC date (toISOString), so the
+    // personal year/month must not depend on the host timezone (D-014).
+    const currentYear = target.getUTCFullYear();
+    const currentMonth = target.getUTCMonth() + 1;
 
     const personalYear = reduceNumber(
       reduceNumber(birth.month) + reduceNumber(birth.day) + reduceNumber(currentYear),
@@ -318,7 +320,7 @@ export class NumerologyEngine extends BaseEngine {
    * @param {BirthData} birth
    */
   #addPersonalYears(result, birth) {
-    const fromYear = this.#evaluationDate().getFullYear();
+    const fromYear = this.#evaluationDate().getUTCFullYear();
     const date = { year: birth.year, month: birth.month, day: birth.day };
     result.add({
       id: 'personal_years',
