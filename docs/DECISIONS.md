@@ -140,14 +140,13 @@ Jyotish／Human Design 在 V2 實作；在引擎存在之前，D-002 的「接�
 不替使用者選邊。各系統採用的時間約定是顯式 config（見 ARCHITECTURE-V2 §3.4）。
 現行 BaZiEngine 的「固定 Asia/Taipei、不做真太陽時」是已知債務，V1 償還。
 
-## D-027 星曆函式庫選擇 ⚠️ 衝突待裁決
-Jyotish／Human Design 需要精確行星位置，禁止自行推算。候選方案：
-- **A. Swiss Ephemeris（WASM 版）**：業界標準、內建 ayanamsa／交點。**AGPL 授權**：
-  公開網站使用必須開源全部程式碼，否則需購買商業授權。
-- **B. astronomy-engine（MIT）**：純 JS、體積小、精度對命理用途足夠；Lahiri ayanamsa、
-  Rahu/Ketu（月交點）需要自行實作並用公開計算器交叉驗證。
-- **C. 伺服器端 Swiss Ephemeris + 商業授權**：精度最佳，但破壞本地優先（D-029）且有授權費。
-建議 B（授權乾淨、符合本地優先），但需使用者在 V2 開始前裁決。
+## D-027 星曆函式庫：Swiss Ephemeris（WASM）✅（2026-09-25 裁決）
+Jyotish／Human Design 的行星位置、ayanamsa、月交點（Rahu/Ketu）一律由 Swiss Ephemeris 計算，
+禁止自行推算。採 WASM 版，保持瀏覽器可執行（D-029）；星曆資料檔（.se1）隨 app 載入，
+缺檔時退回內建 Moshier 模式並寫入 warnings。
+授權：AGPL，本專案為非商業使用。注意 AGPL 的條件看的是「是否透過網路提供給他人使用」，
+不是「是否商用」——若網站公開給他人使用，須同時公開原始碼（公開 repo 即滿足）。
+Swiss Ephemeris 僅允許出現在 `calculators/jyotish`、`calculators/humanDesign` 與共用的 `time/ephemeris` 模組。
 
 ## D-028 解讀以特徵權重資料表示，不 hardcode 定性文字 ✅
 星曜、十神、宮位等只輸出 `traits { change, leadership, risk, ... }` 權重，存於版本化資料表；

@@ -44,7 +44,6 @@
 5. **保留矛盾**（新，D-023）：跨系統彙整時，系統間方向相反要標成 `conflict`，不得平均抵銷後假裝中性。
 6. **誠實語氣**（延續 D-007/HonestyGuard）：L0「你是」、L1/L2「這段時期」、L3「在某情境下」。AI 輸出也要通過 HonestyGuard。
 7. **本地優先**（延續 ROADMAPS 原則 1，D-029）：`core` 必須能在瀏覽器內獨立運作（不需伺服器、不需資料庫）。資料庫與 AI 都是**選用**的上層。
-8. **不做健康／醫療預測**：`health` 不列入領域；問事引擎遇到醫療、法律、投資決策類問題時，回傳「不提供」並建議尋求專業意見。
 
 ## 2. Repo 結構（Bun workspaces，D-024/D-025）
 
@@ -160,7 +159,7 @@ type ChartResult<TChart> = {
 - **Jyotish**（V2）：`lagna`、`planets[]`（sign／degree／nakshatra／pada／house／dignity）、`divisionalCharts{D1,D9,D10}`、`dasha[]`（maha／antar，精確到日）、`houseLords`。
 - **Human Design**（V2）：`personality`／`design` 兩組行星啟動（design = 出生前太陽黃經差 88° 的時刻，以數值求根算出）、`gates`、`channels`、`definedCenters`、`type`、`authority`、`profile`、`definition`、`incarnationCross`。
 
-行星位置一律交給成熟的星曆庫計算，**不自己推算**。使用哪個庫待 D-027 裁決。
+行星位置一律交給 Swiss Ephemeris（WASM 版，瀏覽器可跑）計算，**不自己推算**（D-027）。
 
 ## 5. ③ Rule Engine
 
@@ -194,7 +193,7 @@ type Rule = {
 
 ```ts
 type Domain = 'self' | 'career' | 'wealth' | 'relationship' | 'family'
-            | 'movement' | 'property' | 'learning' | 'contract'
+            | 'movement' | 'property' | 'learning' | 'contract' | 'health'
 type Trait  = 'change' | 'growth' | 'stability' | 'pressure' | 'opportunity'
             | 'connection' | 'separation' | 'visibility' | ...   // 封閉列舉，擴充要改版
 
@@ -302,7 +301,7 @@ backtest_runs         -- 規則版本、樣本數、命中率、日期
 |---|---|---|
 | **V0** | 清理重複檔 ✅；Bun workspace；搬遷到 `packages/core`；TS 設定（allowJs） | 既有 99 tests 全綠，UI 行為不變 |
 | **V1** | TimeContext；BirthProfile + 離線城市表；八字規則引擎；紫微特徵權重；Numerology 補 pinnacle/challenge；Tzolkin 補 wavespell/castle/oracle；Signal 模型 + 單系統彙整；Timeline；Schema v4 | 黃金測試：台灣 DST 年份、時辰／節氣邊界、早晚子時 |
-| **V2** | 星曆庫（D-027 裁決後）；Jyotish；Human Design | 與至少兩個公開計算器交叉驗證 ≥ 20 個案例 |
+| **V2** | Swiss Ephemeris 接入（D-027）；Jyotish；Human Design | 與至少兩個公開計算器交叉驗證 ≥ 20 個案例 |
 | **V3** | 跨系統共識／矛盾引擎；Schema v5；評估 Next.js | 共識、矛盾都有單元測試 |
 | **V4** | 資料庫、帳號、life_events、回驗 | 回驗報告可重現 |
 | **V5** | Question Engine + AI 解讀層 | 後驗證攔截率測試：故意餵入錯誤干支的輸出必須被丟棄 |
