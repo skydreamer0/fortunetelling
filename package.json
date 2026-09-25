@@ -3,22 +3,14 @@
   "version": "0.3.0",
   "private": true,
   "type": "module",
-  "main": "./src/index.js",
-  "exports": {
-    ".": "./src/index.js"
-  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "node --test \"tests/**/*.test.js\""
-  },
-  "devDependencies": {
-    "vite": "^8.1.1"
-  },
-  "dependencies": {
-    "chart.js": "^4.5.1",
-    "iztro": "^2.5.8",
-    "lunar-javascript": "^1.7.7"
+    "dev": "bun run --filter @fortune/web dev",
+    "build": "bun run --filter @fortune/web build",
+    "preview": "bun run --filter @fortune/web preview",
+    "test": "bun test"
   }
 }

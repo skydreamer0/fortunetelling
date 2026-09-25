@@ -1,13 +1,13 @@
 /**
  * @fileoverview App 進入點：把 UI 殼（index.html）接上核心 `analyze()`。
- * UI 只是核心函式庫的其中一個消費者——所有計算都在 `src/index.js` 公開 API 之後。
+ * UI 只是核心函式庫的其中一個消費者——所有計算都在 `@fortune/core` 公開 API 之後。
  */
 
 import './styles/index.css';
 import './styles/components.css';
 import './styles/charts.css';
 
-import { analyze, analyzeCompatibility } from './index.js';
+import { analyze, analyzeCompatibility } from '@fortune/core';
 import { renderInputForm } from './ui/InputForm.js';
 import { renderReport } from './ui/ReportView.js';
 import { renderCompatibilityForm } from './ui/CompatibilityForm.js';

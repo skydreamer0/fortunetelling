@@ -36,36 +36,35 @@
 
 2. **安裝依賴套件**：
    ```bash
-   npm install
+   bun install
    ```
-   *(如果使用 Bun: `bun install`)*
 
 3. **啟動本地開發伺服器**：
    ```bash
-   npm run dev
+   bun run dev
    ```
-   *(如果使用 Bun: `bun run dev`)*
 
 4. **開啟應用程式**：
-   伺服器啟動後，在瀏覽器中開啟終端機顯示的本地網址（通常為 `http://localhost:5173`）即可使用。
+   伺服器啟動後，在瀏覽器中開啟終端機顯示的本地網址（通常為 `http://localhost:5173/fortunetelling/`）即可使用。
 
 ### 建置正式版本
 
 若要打包為靜態檔案進行部署：
 ```bash
-npm run build
+bun run build
 ```
-*(如果使用 Bun: `bun run build`)*
 
-建置完成的檔案將會輸出於 `dist` 目錄中，這是一組純靜態網頁，可部署至任何靜態託管平台（如 GitHub Pages, Vercel, Netlify）。
+建置完成的檔案將會輸出於 `apps/web/dist` 目錄中，這是一組純靜態網頁，可部署至任何靜態託管平台（如 GitHub Pages, Vercel, Netlify）。
 
 ## 📂 專案架構與開發狀態
+
+Monorepo（Bun workspaces）：`packages/core`（`@fortune/core`，框架無關的計算核心）與 `apps/web`（`@fortune/web`，Vite UI）。目標架構見 [docs/ARCHITECTURE-V2.md](docs/ARCHITECTURE-V2.md)。
 
 本專案採用高度模組化的架構設計，將不同命理學派實作為獨立的計算引擎，並統一資料格式進行視覺化展示。
 
 **🟢 目前開發進度**
 - **已完成**：五套計算引擎、Report schema v3、透明雷達、白話摘要、十二宮盤、時期演化、本年／領域／建議視圖、國農曆與不確定時辰、最近查詢、列印、明暗主題及雙人合盤。
-- **驗證**：核心、整合、曆法、洞見、合盤與視覺化契約由 `node:test` 覆蓋；正式版本以 `npm run build` 驗證。
+- **驗證**：核心、整合、曆法、洞見、合盤與視覺化契約由 `bun test` 覆蓋；正式版本以 `bun run build` 驗證。
 - **後續效能項目**：依實際部署需求拆分大型命理套件與 Chart.js 的 production bundle。
 
 更詳細的系統架構、評分規則設計與未來的開發階段規劃，請參閱 [`ROADMAPS.md`](./ROADMAPS.md) 文件。

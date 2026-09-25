@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SummaryBuilder, SUMMARY_VERSION } from '../src/analysis/SummaryBuilder.js';
+import { SummaryBuilder, SUMMARY_VERSION } from '@fortune/core';
 import { buildSummarySection } from '../src/ui/ReportView.js';
 
 function component(id, name, category, value) {

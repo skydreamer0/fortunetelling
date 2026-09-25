@@ -1,6 +1,6 @@
 /** Accessible two-person entry form for compatibility comparison. */
 
-import { parseIsoDate, toIsoDate } from '../core/calendar.js';
+import { parseIsoDate, toIsoDate } from '@fortune/core';
 
 const PERIODS = Object.freeze([
   [0, '子時 23–01'], [2, '丑時 01–03'], [4, '寅時 03–05'], [6, '卯時 05–07'],

@@ -5,7 +5,7 @@ import {
   parseIsoDate,
   solarToLunarDate,
   toIsoDate,
-} from '../core/calendar.js';
+} from '@fortune/core';
 
 const TIME_PERIODS = Object.freeze([
   [0, '子時｜23:00–01:00'], [2, '丑時｜01:00–03:00'], [4, '寅時｜03:00–05:00'],

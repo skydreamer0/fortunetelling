@@ -1,6 +1,8 @@
 /** @fileoverview Compact, interactive timeline rendering for Report.evolution. */
 
-import { renderTextBar } from '../visualization/TextFallback.js';
+import { TextFallback } from '@fortune/core';
+
+const { renderTextBar } = TextFallback;
 
 function esc(text) {
   return String(text ?? '')

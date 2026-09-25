@@ -5,14 +5,14 @@
 ## 快速開始
 
 ```bash
-npm install
-npm run dev    # Vite dev server（UI App）
-npm test       # node --test（Bun 1.2+ 亦可直接 bun test）
+bun install
+bun run dev    # Vite dev server（apps/web）
+bun test       # 所有 workspace 的測試
 ```
 
 ## 只重用計算核心（不要 UI）
 
-唯一公開 API 是 `src/index.js`（package.json `exports`）。深路徑 import 不在 semver 保證內。
+唯一公開 API 是 `@fortune/core`（`packages/core/src/index.js`）（package.json `exports`）。深路徑 import 不在 semver 保證內。
 
 ```js
 import { analyze, BirthData, VERSION } from 'fortunetelling';
@@ -35,15 +35,15 @@ report.honesty;      // 語言規則已就位；違規稽核里程碑 D
 
 新增系統**不改動核心**，五步：
 
-1. **新增引擎檔** `src/engines/XxxEngine.js`：繼承 `BaseEngine`，宣告 `id`/`name`，
+1. **新增引擎檔** `packages/core/src/engines/XxxEngine.js`：繼承 `BaseEngine`，宣告 `id`/`name`，
    實作 `_compute(birth)` 回傳 `SystemResult`。每個 component 必須帶 `category`。
-2. **補分層規則**：在 `src/analysis/LayerClassifier.js` 的 `CLASSIFICATION_RULES`
+2. **補分層規則**：在 `packages/core/src/analysis/LayerClassifier.js` 的 `CLASSIFICATION_RULES`
    為每個 `(sourceSystem, category)` 配一條 L0–L3 規則＋理由。
    沒配規則的部件會被保守歸入 L3 並標 `unclassified`（不會進 L0）。
-3. **登錄計分公式**：在 `src/analysis/ScoringRules.js` 為每個雷達軸加一條
+3. **登錄計分公式**：在 `packages/core/src/analysis/ScoringRules.js` 為每個雷達軸加一條
    透明規則（formula/inputs/範圍/版本）。**計分規則不揭露，雷達就只是裝飾。**
-4. **註冊**：加進 `src/engines/index.js` 的 `createEngines()`。
-5. **加測試**：`tests/` 下用已知向量寫黃金測試（node:test）。
+4. **註冊**：加進 `packages/core/src/engines/index.js` 的 `createEngines()`。
+5. **加測試**：`packages/core/tests/` 下用已知向量寫黃金測試。
 
 ## 鐵律
 
@@ -53,7 +53,7 @@ report.honesty;      // 語言規則已就位；違規稽核里程碑 D
   禁止把流動狀態寫成人格本質。
 - 同一個計分尺度只能有一個出處（例：紫微亮度七級制以
   `ZiweiEngine.BRIGHTNESS_WEIGHTS` 為準，ScoringRules 的公式必須與之一致，
-  tests/scoringRules.test.js 有回歸測試守著）。
+  packages/core/tests/scoringRules.test.js 有回歸測試守著）。
 
 ## 版本
 

@@ -17,7 +17,7 @@
 
 1. **核心與 UI 分離**：`core / engines / analysis / visualization` 為框架無關 ES module；
    `ui` 只是消費核心的其中一個 App，**只吃 `Report`**（D-015）。
-2. **單一對外入口**：`src/index.js` 是唯一公開 API（package.json `exports` 鎖定）。
+2. **單一對外入口**：`@fortune/core`（`packages/core/src/index.js`）是唯一公開 API（package.json `exports` 鎖定）。
 3. **穩定契約**：輸出以單一 `Report` 為準；`VERSION` semver；`REPORT_SCHEMA_VERSION` 守形狀。
 4. **外掛式引擎**：每系統一個 `BaseEngine` 子類；新增系統不改核心。
    命理函式庫（iztro/lunar-javascript）**只允許出現在 `engines/`**（D-016）。
@@ -28,7 +28,7 @@
 ## 2. 分層依賴規則（import 方向）
 
 ```
-ui  ──────────►  src/index.js（只能 import 公開 API 與 visualization 的呈現輔助）
+apps/web ─────►  @fortune/core（只能 import 公開 API）＋ apps/web 自己的 visualization
 core/analyze ──► engines(index)、analysis
 engines ──────► core(models, BaseEngine)          ← 唯一可 import 命理函式庫的層
 analysis ─────► （無依賴；純函數，吃 components 吐結構）
@@ -40,31 +40,24 @@ visualization ► （無核心依賴；吃資料吐圖/文字）
 ## 3. 目錄結構與現況
 
 ```
-src/
-  index.js               ✅ 唯一公開 API(barrel + analyze + VERSION)
-  core/
-    analyze.js           ✅ 編排器：BirthData → Report
-    BaseEngine.js        ✅ 引擎基類(驗證/計時/容錯)
-    EngineRegistry.js    ✅ 註冊與調度
-    models/BirthData.js  ✅   models/SystemResult.js ✅
-  engines/
-    index.js             ✅ createEngines / createDefaultRegistry
-    ZiweiEngine.js       ✅（含 L3：soulVsBody / sanFangSiZheng）
-    NumerologyEngine.js  ✅  MingGuaEngine.js ✅  DreamspellEngine.js ✅
-    BaZiEngine.js        ⏳ 任務 B1–B3
-  analysis/
-    LayerClassifier.js   ✅（bazi 規則已預埋；unclassified 安全網）
-    ScoringRules.js      ✅（16 條；C1 需清理 5 條死規則, D-009）
-    RadarBuilder.js      ⏳ C1    StateSwitchTable.js ⏳ D2
-    EvolutionCalculator.js ⏳ D4  HonestyGuard.js ⏳ D1
-  visualization/
-    ChartTheme.js ✅  TextFallback.js ✅
-    RadarChart.js ⏳ C3  BarChart.js ⏳ C3
-  ui/                    （App 層，非核心）
-    InputForm.js ✅  ReportView.js ✅（C3 需修 D-015 違例）
-  main.js                ✅ App 進入點
-tests/                   ✅ 22 tests（node:test）
-docs/  ARCHITECTURE.md(本文件) DECISIONS.md HARNESS_SPEC.md TASKS.md TEST_PLAN.md
+packages/core/            @fortune/core — 框架無關核心（V0 起自 src/ 搬入）
+  src/
+    index.js             ✅ 唯一公開 API（barrel + analyze + VERSION）
+    core/                ✅ analyze / analyzeCompatibility / calendar / BaseEngine / EngineRegistry / models
+    engines/             ✅ Ziwei / Numerology / MingGua / Dreamspell / BaZi
+    analysis/            ✅ LayerClassifier / ScoringRules / RadarBuilder / AxisNotes / StateSwitchTable /
+                            EvolutionCalculator / HonestyGuard / SummaryBuilder / InsightBuilder
+    visualization/       ✅ TextFallback（純文字降級，無 DOM 依賴）
+  tests/                 ✅ 核心與整合測試（bun test）
+apps/web/                 @fortune/web — Vite UI App（只透過 @fortune/core 取用核心）
+  index.html  vite.config.js  public/
+  src/
+    main.js              ✅ App 進入點
+    ui/                  ✅ 表單、報告、合盤、面板
+    visualization/       ✅ ChartTheme / RadarChart / BarChart / CompatibilityChart（Chart.js）
+    styles/
+  tests/                 ✅ UI 與視覺化測試
+docs/  ARCHITECTURE.md(本文件) ARCHITECTURE-V2.md DECISIONS.md HARNESS_SPEC.md TASKS.md
        CONTRIBUTING.md PLAN-FOR-AUDIT.md
 ```
 
@@ -175,24 +168,13 @@ Violation {
 → `engines/index.js` 註冊 → tests/ 黃金測試。
 引擎**不得** import UI/visualization/analysis；失敗由 BaseEngine 接成該引擎 `errors`。
 
-## 6. 執行環境（D-013）
+## 6. 執行環境（D-025）
 
-- **權威 runtime：Node ≥ 22**（`package.json engines` 已宣告）。`npm test` = `node --test`。
-- **Bun 可選**（≥1.2，其 node:test 相容層）：`npm run test:bun`。不全域安裝、不寫入相依。
-- CI 建議（GitHub Actions，尚未建檔）：
-  ```yaml
-  jobs:
-    test:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-        - uses: actions/setup-node@v4
-          with: { node-version: 22 }
-        - run: npm ci
-        - run: npm test
-        - run: npm run build
-  ```
-  Bun job 可加為 non-blocking optional matrix。
+- **權威 runtime：Bun**，Bun workspaces 管理 `packages/*` 與 `apps/*`。
+- 根目錄指令：`bun install`、`bun test`（跑所有 workspace 的測試）、`bun run dev`、`bun run build`
+  （轉交 `@fortune/web`，輸出在 `apps/web/dist`）。
+- 型別檢查：`bun run --filter @fortune/core typecheck`（D-024；目前有已知 JSDoc 型別債，尚未納入 CI）。
+- CI：`.github/workflows/ci.yml`（test + build）；部署：`deploy.yml` 上傳 `apps/web/dist` 到 GitHub Pages。
 
 ## 7. 里程碑總覽
 

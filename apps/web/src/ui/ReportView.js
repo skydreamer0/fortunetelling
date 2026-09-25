@@ -7,7 +7,9 @@
  * @module ui/ReportView
  */
 
-import { renderTextBar } from '../visualization/TextFallback.js';
+import { TextFallback } from '@fortune/core';
+
+const { renderTextBar } = TextFallback;
 import { renderRadarChart } from '../visualization/RadarChart.js';
 import { renderBarChart } from '../visualization/BarChart.js';
 import { buildStateTablePanel } from './StateTablePanel.js';
@@ -493,7 +495,7 @@ export function buildRadarSection(report) {
 
 /**
  * @param {HTMLElement} container
- * @param {import('../core/analyze.js').Report} report
+ * @param {import('../../../../packages/core/src/core/analyze.js').Report} report
  * @param {Object} options
  * @param {() => void} options.onBack
  * @param {() => void} options.onPrint

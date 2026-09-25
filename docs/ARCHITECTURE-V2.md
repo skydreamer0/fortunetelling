@@ -299,7 +299,7 @@ backtest_runs         -- 規則版本、樣本數、命中率、日期
 
 | 版本 | 內容 | 完成條件 |
 |---|---|---|
-| **V0** | 清理重複檔 ✅；Bun workspace；搬遷到 `packages/core`；TS 設定（allowJs） | 既有 99 tests 全綠，UI 行為不變 |
+| **V0 ✅** | 清理重複檔 ✅；Bun workspace ✅；搬遷到 `packages/core` / `apps/web` ✅；TS 設定（allowJs）✅，既有 JSDoc 型別錯誤 31 筆留待 V1 轉 `.ts` 時清掉 | 既有 99 tests 全綠，UI 行為不變 |
 | **V1** | TimeContext；BirthProfile + 離線城市表；八字規則引擎；紫微特徵權重；Numerology 補 pinnacle/challenge；Tzolkin 補 wavespell/castle/oracle；Signal 模型 + 單系統彙整；Timeline；Schema v4 | 黃金測試：台灣 DST 年份、時辰／節氣邊界、早晚子時 |
 | **V2** | Swiss Ephemeris 接入（D-027）；Jyotish；Human Design | 與至少兩個公開計算器交叉驗證 ≥ 20 個案例 |
 | **V3** | 跨系統共識／矛盾引擎；Schema v5；評估 Next.js | 共識、矛盾都有單元測試 |

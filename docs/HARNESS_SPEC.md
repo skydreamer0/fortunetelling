@@ -15,7 +15,7 @@
    C/D 任務只能填入既有空殼並把對應 `pending` 翻 `false`。
    元素形狀必須逐字遵守 ARCHITECTURE.md §4.2。
 4. **禁止繞過公開 API**：
-   - `ui/` 只能 import `src/index.js` 與 `visualization/`。
+   - `apps/web` 只能 import `@fortune/core` 公開 API 與自己的 `visualization/`。
    - `analysis/` 不得 import `engines/` 或任何命理函式庫（iztro/lunar-javascript）。
    - 命理函式庫只允許出現在 `engines/`（D-016）。
    - 測試檔可以深路徑 import（in-repo 測試不受 exports 限制）。
@@ -65,7 +65,7 @@
 
 ## 五、環境事實
 
-- Windows 11、Bun ≥1.3（D-025；`bun test` 執行 `tests/**/*.test.js`）。
+- Windows 11、Bun ≥1.3（D-025；`bun test` 執行 `packages/*/tests` 與 `apps/*/tests`）。
 - 不得安裝任何全域工具。不得新增相依（任務條目明示者除外）。
 - dev server：`bun run dev`（Vite, port 5173）。UI 驗收才需要開。
 - 不得 commit / push——交付的是工作區變更＋回報文字，由人類決定提交。
