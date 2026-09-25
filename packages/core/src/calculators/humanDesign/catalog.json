@@ -1,0 +1,90 @@
+{
+  "$comment": "Human Design 規則目錄（ARCHITECTURE-V2 §5, D-028）。只輸出 domain × trait 權重，不含吉凶定性。valence 一律 0（純特徵、無支撐／壓力判斷）。status: active = 已實作；pending = 尚未實作。版本一經發布不可改參數，只能遞增 version。",
+  "version": 1,
+  "system": "humanDesign",
+  "rules": [
+    {
+      "id": "humanDesign.natal.type",
+      "version": 1,
+      "scope": "natal",
+      "status": "active",
+      "description": "類型（Type）→ self 領域特徵權重。",
+      "source": "Ra Uru Hu, The Definitive Book of Human Design（類型定義：薦骨／動力中心連到喉嚨）；權重為本專案資料。",
+      "params": {
+        "traits": {
+          "manifestor": [
+            { "domain": "self", "trait": "independence", "intensity": 0.6, "valence": 0 },
+            { "domain": "self", "trait": "leadership", "intensity": 0.45, "valence": 0 }
+          ],
+          "generator": [
+            { "domain": "self", "trait": "stability", "intensity": 0.5, "valence": 0 },
+            { "domain": "self", "trait": "growth", "intensity": 0.45, "valence": 0 }
+          ],
+          "manifestingGenerator": [
+            { "domain": "self", "trait": "change", "intensity": 0.5, "valence": 0 },
+            { "domain": "self", "trait": "growth", "intensity": 0.45, "valence": 0 }
+          ],
+          "projector": [
+            { "domain": "self", "trait": "connection", "intensity": 0.45, "valence": 0 },
+            { "domain": "self", "trait": "visibility", "intensity": 0.35, "valence": 0 }
+          ],
+          "reflector": [
+            { "domain": "self", "trait": "connection", "intensity": 0.4, "valence": 0 },
+            { "domain": "self", "trait": "change", "intensity": 0.4, "valence": 0 }
+          ]
+        }
+      }
+    },
+    {
+      "id": "humanDesign.natal.authority",
+      "version": 1,
+      "scope": "natal",
+      "status": "active",
+      "description": "內在權威（Authority）→ 特徵權重。",
+      "source": "權威優先序：情緒 > 薦骨 > 脾 > 意志（顯示／投射）> 自我投射 > 心智 > 月亮（通行慣例）；權重為本專案資料。",
+      "params": {
+        "traits": {
+          "emotional": [{ "domain": "self", "trait": "change", "intensity": 0.35, "valence": 0 }],
+          "sacral": [{ "domain": "self", "trait": "stability", "intensity": 0.35, "valence": 0 }],
+          "splenic": [{ "domain": "health", "trait": "stability", "intensity": 0.35, "valence": 0 }],
+          "egoManifested": [{ "domain": "self", "trait": "independence", "intensity": 0.35, "valence": 0 }],
+          "egoProjected": [{ "domain": "self", "trait": "independence", "intensity": 0.3, "valence": 0 }],
+          "selfProjected": [{ "domain": "self", "trait": "visibility", "intensity": 0.3, "valence": 0 }],
+          "mental": [{ "domain": "learning", "trait": "connection", "intensity": 0.3, "valence": 0 }],
+          "lunar": [{ "domain": "self", "trait": "change", "intensity": 0.3, "valence": 0 }]
+        }
+      }
+    },
+    {
+      "id": "humanDesign.natal.channel_centers",
+      "version": 1,
+      "scope": "natal",
+      "status": "active",
+      "description": "每條已定義通道，依其連接的兩個中心各產生一條 domain × trait 訊號（中心對照表見 params.centers）。",
+      "source": "九大中心功能的通行描述；對照表為本專案資料。",
+      "params": {
+        "intensity": 0.25,
+        "centers": {
+          "head": { "domain": "learning", "trait": "pressure" },
+          "ajna": { "domain": "learning", "trait": "stability" },
+          "throat": { "domain": "career", "trait": "visibility" },
+          "g": { "domain": "self", "trait": "stability" },
+          "heart": { "domain": "wealth", "trait": "leadership" },
+          "sacral": { "domain": "career", "trait": "growth" },
+          "solarPlexus": { "domain": "relationship", "trait": "change" },
+          "spleen": { "domain": "health", "trait": "stability" },
+          "root": { "domain": "self", "trait": "pressure" }
+        }
+      }
+    },
+    {
+      "id": "humanDesign.transit.gates",
+      "version": 1,
+      "scope": "year",
+      "status": "pending",
+      "description": "流年行運閘門觸發原局通道（待實作）。",
+      "source": "—",
+      "params": {}
+    }
+  ]
+}
