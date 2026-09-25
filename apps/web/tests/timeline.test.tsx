@@ -96,7 +96,7 @@ describe('timeline selectors', () => {
       const sides = [...cell.conflict!.positive, ...cell.conflict!.negative];
       for (const side of sides) {
         expect(known).toContain(side.systemName);
-        expect(side.text.length).toBeGreaterThan(0);
+        expect(side.text ?? '').not.toBe('');
       }
       const pos = new Set(cell.conflict!.positive.map(side => side.systemName));
       const neg = new Set(cell.conflict!.negative.map(side => side.systemName));
