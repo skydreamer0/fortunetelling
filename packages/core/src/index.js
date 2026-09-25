@@ -75,3 +75,5 @@ export * from './calculators/index';
 // ⑤ Timeline（V1-13）與 ⑥ 問事引擎（V5-01/02）
 export * from './timeline/index';
 export * from './questions/index';
+// ⑧ 人生事件與回驗（V4-03／V4-04／V4-05）
+export * from './backtest/index';

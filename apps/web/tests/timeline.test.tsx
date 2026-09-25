@@ -152,7 +152,7 @@ const viewProps = (selected: string | null) => ({
 
 describe('timeline chapter', () => {
   test('report v4 renders the 時序 chapter in the nav and the full grid', () => {
-    expect(CHAPTERS.map(chapter => chapter.label)).toEqual(['命格', '本年', '時序', '領域', '命盤', '運程', '情境', '建議', '方法']);
+    expect(CHAPTERS.map(chapter => chapter.label)).toEqual(['命格', '本年', '時序', '事件', '領域', '命盤', '運程', '情境', '建議', '方法']);
     const html = renderToStaticMarkup(<ReportView report={v4} onBack={() => {}} />);
     expect(html).toContain('href="#ch-timeline"');
     expect(html).toContain('id="ch-timeline"');
