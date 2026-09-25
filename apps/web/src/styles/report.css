@@ -35,8 +35,8 @@
   position: sticky;
   top: var(--masthead-h);
   z-index: 20;
-  margin: 0 calc(var(--gutter) * -1) 2rem;
-  padding: 0 var(--gutter);
+  margin: 0 calc(var(--gutter-end) * -1) 2rem calc(var(--gutter-start) * -1);
+  padding: 0 var(--gutter-end) 0 var(--gutter-start);
   background: color-mix(in srgb, var(--paper) 92%, transparent);
   backdrop-filter: blur(8px);
   border-top: 1px solid var(--ink);

@@ -73,6 +73,12 @@ code { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-siz
 }
 .skip:focus { top: 0.5rem; }
 
+/* iPhone notch / home indicator: viewport-fit=cover lets content reach the edges, so keep text clear of them. */
+:root {
+  --gutter-start: max(var(--gutter), env(safe-area-inset-left));
+  --gutter-end: max(var(--gutter), env(safe-area-inset-right));
+}
+
 /* ── Masthead ─────────────────────────────────────────── */
 
 .masthead {
@@ -83,7 +89,7 @@ code { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-siz
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--gutter);
+  padding: 0 var(--gutter-end) 0 var(--gutter-start);
   background: color-mix(in srgb, var(--paper) 88%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--rule);
@@ -137,11 +143,11 @@ code { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-siz
 .page {
   width: min(100%, var(--page));
   margin: 0 auto;
-  padding: clamp(1.5rem, 1rem + 3vw, 4rem) var(--gutter) 4rem;
+  padding: clamp(1.5rem, 1rem + 3vw, 4rem) var(--gutter-end) 4rem var(--gutter-start);
 }
 
 .colophon {
-  padding: 2rem var(--gutter) 3rem;
+  padding: 2rem var(--gutter-end) calc(3rem + env(safe-area-inset-bottom)) var(--gutter-start);
   text-align: center;
   color: var(--ink-3);
   font-size: var(--text-xs);
@@ -349,8 +355,8 @@ code { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-siz
 
 .toasts {
   position: fixed;
-  right: var(--gutter);
-  bottom: 1.5rem;
+  right: var(--gutter-end);
+  bottom: calc(1.5rem + env(safe-area-inset-bottom));
   z-index: 60;
   display: grid;
   gap: 0.5rem;
@@ -366,3 +372,34 @@ code { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-siz
   animation: rise 0.25s var(--ease);
 }
 .toast--error { border-left-color: var(--zhu); }
+
+/* ── Add to Home Screen hint (iOS) ────────────────────── */
+
+.install-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: min(100% - var(--gutter-start) - var(--gutter-end), var(--measure));
+  margin: 0 auto 2rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+.install-hint__text { flex: 1; }
+.install-hint__text strong { display: block; color: var(--ink); font-family: var(--font-display); letter-spacing: 0.12em; }
+.install-hint__glyph { display: inline-block; width: 1em; height: 1em; margin: 0 0.15em; vertical-align: -0.12em; color: var(--qing); }
+.install-hint__close {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: -0.4rem -0.4rem 0 0;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.install-hint__close:hover { color: var(--ink); }
