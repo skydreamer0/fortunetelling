@@ -1,0 +1,202 @@
+{
+  "$comment": "紫微星曜特徵權重表（ARCHITECTURE-V2 §5.1、D-028）。trait 鍵僅限 signals/types.ts 的 TRAITS 封閉列舉；值 0–1 表示該星曜在慣例描述中呈現此特徵的程度，不表示好壞。舊版本權重不可修改，只能新增版本（D-028）。notes 為慣例出處摘要，以中性語氣描述。",
+  "version": 1,
+  "stars": [
+    {
+      "id": "ziwei.star.紫微",
+      "name": "紫微",
+      "group": "major",
+      "traits": { "leadership": 0.85, "visibility": 0.7, "stability": 0.6, "independence": 0.5 },
+      "notes": "北斗主星，《紫微斗數全書》稱帝座，慣例描述為統御、尊貴、重視地位與主導權。"
+    },
+    {
+      "id": "ziwei.star.天機",
+      "name": "天機",
+      "group": "major",
+      "traits": { "change": 0.8, "growth": 0.5, "opportunity": 0.4, "connection": 0.3 },
+      "notes": "南斗善星，慣例描述為思慮、謀劃、機變、多動，常與變動與學習調整相關。"
+    },
+    {
+      "id": "ziwei.star.太陽",
+      "name": "太陽",
+      "group": "major",
+      "traits": { "visibility": 0.85, "leadership": 0.6, "support": 0.5, "growth": 0.4 },
+      "notes": "中天主星，慣例描述為光明外放、施予、公眾性，重名聲與付出。"
+    },
+    {
+      "id": "ziwei.star.武曲",
+      "name": "武曲",
+      "group": "major",
+      "traits": { "independence": 0.7, "stability": 0.6, "leadership": 0.5, "separation": 0.3 },
+      "notes": "北斗財星，慣例描述為剛毅果決、務實、重執行；部分流派提及寡宿傾向（以 separation 低權重表示）。"
+    },
+    {
+      "id": "ziwei.star.天同",
+      "name": "天同",
+      "group": "major",
+      "traits": { "stability": 0.6, "support": 0.6, "connection": 0.5, "change": 0.2 },
+      "notes": "南斗福星，慣例描述為溫和、隨和、重享受與人情，節奏偏緩。"
+    },
+    {
+      "id": "ziwei.star.廉貞",
+      "name": "廉貞",
+      "group": "major",
+      "traits": { "change": 0.6, "conflict": 0.5, "risk": 0.5, "visibility": 0.5, "connection": 0.4 },
+      "notes": "北斗囚星，慣例描述為複雜、多面、情緒張力大，兼具公關與次桃花性質。"
+    },
+    {
+      "id": "ziwei.star.天府",
+      "name": "天府",
+      "group": "major",
+      "traits": { "stability": 0.85, "support": 0.6, "leadership": 0.5 },
+      "notes": "南斗主星，慣例稱庫星，描述為保守、穩健、重積累與守成。"
+    },
+    {
+      "id": "ziwei.star.太陰",
+      "name": "太陰",
+      "group": "major",
+      "traits": { "stability": 0.6, "support": 0.5, "connection": 0.5, "growth": 0.4 },
+      "notes": "中天星，慣例描述為內斂、細膩、重積蓄，常與田宅、財務累積並提。"
+    },
+    {
+      "id": "ziwei.star.貪狼",
+      "name": "貪狼",
+      "group": "major",
+      "traits": { "connection": 0.75, "opportunity": 0.7, "change": 0.6, "risk": 0.45 },
+      "notes": "北斗星，慣例描述為多才多藝、慾望與社交活躍，常與人際吸引及機會追求並提。"
+    },
+    {
+      "id": "ziwei.star.巨門",
+      "name": "巨門",
+      "group": "major",
+      "traits": { "conflict": 0.7, "pressure": 0.5, "visibility": 0.35, "independence": 0.3 },
+      "notes": "北斗暗星，慣例描述為口才、辯論、疑慮與是非議題，重言語表達。"
+    },
+    {
+      "id": "ziwei.star.天相",
+      "name": "天相",
+      "group": "major",
+      "traits": { "support": 0.7, "stability": 0.65, "connection": 0.5 },
+      "notes": "南斗印星，慣例描述為協調、輔佐、重規範與公正。"
+    },
+    {
+      "id": "ziwei.star.天梁",
+      "name": "天梁",
+      "group": "major",
+      "traits": { "support": 0.75, "stability": 0.6, "leadership": 0.4 },
+      "notes": "南斗蔭星，慣例描述為庇蔭、老成、照顧他人，重原則。"
+    },
+    {
+      "id": "ziwei.star.七殺",
+      "name": "七殺",
+      "group": "major",
+      "traits": { "change": 0.8, "leadership": 0.7, "risk": 0.65, "independence": 0.8 },
+      "notes": "南斗將星，慣例描述為開創、衝勁、獨立行動，變動幅度大。"
+    },
+    {
+      "id": "ziwei.star.破軍",
+      "name": "破軍",
+      "group": "major",
+      "traits": { "change": 0.9, "risk": 0.7, "separation": 0.6, "independence": 0.6 },
+      "notes": "北斗耗星，慣例描述為破舊立新、消耗與重組，變動與結束後再開始。"
+    },
+    {
+      "id": "ziwei.star.左輔",
+      "name": "左輔",
+      "group": "auxiliary",
+      "traits": { "support": 0.7, "connection": 0.5 },
+      "notes": "輔佐類星曜（傳統六輔佐星之一），慣例描述為助力、合作、平輩支援。"
+    },
+    {
+      "id": "ziwei.star.右弼",
+      "name": "右弼",
+      "group": "auxiliary",
+      "traits": { "support": 0.7, "connection": 0.5 },
+      "notes": "輔佐類星曜，與左輔成對，慣例描述為助力、協調、人緣支援。"
+    },
+    {
+      "id": "ziwei.star.文昌",
+      "name": "文昌",
+      "group": "auxiliary",
+      "traits": { "growth": 0.5, "visibility": 0.5, "opportunity": 0.3 },
+      "notes": "輔佐類星曜，慣例主科甲文書，描述為學習、考試、文字表達。"
+    },
+    {
+      "id": "ziwei.star.文曲",
+      "name": "文曲",
+      "group": "auxiliary",
+      "traits": { "connection": 0.5, "visibility": 0.5, "growth": 0.4 },
+      "notes": "輔佐類星曜，慣例主才藝口才，描述為表達、藝術與交際。"
+    },
+    {
+      "id": "ziwei.star.天魁",
+      "name": "天魁",
+      "group": "auxiliary",
+      "traits": { "support": 0.7, "opportunity": 0.5 },
+      "notes": "輔佐類星曜（天乙貴人，陽貴），慣例描述為長輩或上位者的提攜機會。"
+    },
+    {
+      "id": "ziwei.star.天鉞",
+      "name": "天鉞",
+      "group": "auxiliary",
+      "traits": { "support": 0.7, "opportunity": 0.5 },
+      "notes": "輔佐類星曜（天乙貴人，陰貴），與天魁成對，慣例描述為隱性支援與機會。"
+    },
+    {
+      "id": "ziwei.star.擎羊",
+      "name": "擎羊",
+      "group": "sha",
+      "traits": { "conflict": 0.7, "pressure": 0.6, "change": 0.5, "risk": 0.5 },
+      "notes": "六煞之一（羊陀火鈴空劫），慣例描述為剛烈、直接衝突、競爭壓力。"
+    },
+    {
+      "id": "ziwei.star.陀羅",
+      "name": "陀羅",
+      "group": "sha",
+      "traits": { "pressure": 0.7, "conflict": 0.4, "change": 0.3 },
+      "notes": "六煞之一，慣例描述為拖延、糾纏、進度受阻的持續性壓力。"
+    },
+    {
+      "id": "ziwei.star.火星",
+      "name": "火星",
+      "group": "sha",
+      "traits": { "change": 0.7, "conflict": 0.6, "risk": 0.5 },
+      "notes": "六煞之一，慣例描述為急促、突發、爆發性的變化。"
+    },
+    {
+      "id": "ziwei.star.鈴星",
+      "name": "鈴星",
+      "group": "sha",
+      "traits": { "pressure": 0.6, "conflict": 0.5, "risk": 0.4 },
+      "notes": "六煞之一，與火星成對，慣例描述為內隱、持續性的緊張與摩擦。"
+    },
+    {
+      "id": "ziwei.star.地空",
+      "name": "地空",
+      "group": "sha",
+      "traits": { "separation": 0.6, "risk": 0.5, "change": 0.5 },
+      "notes": "六煞之一（空劫），慣例描述為落空、理想化、非常規思路，與失去或脫離並提。"
+    },
+    {
+      "id": "ziwei.star.地劫",
+      "name": "地劫",
+      "group": "sha",
+      "traits": { "separation": 0.6, "risk": 0.6, "pressure": 0.4 },
+      "notes": "六煞之一，與地空成對，慣例描述為波折、耗損、資源流失。"
+    },
+    {
+      "id": "ziwei.star.祿存",
+      "name": "祿存",
+      "group": "lucun",
+      "traits": { "stability": 0.7, "support": 0.5, "opportunity": 0.3 },
+      "notes": "祿星，慣例描述為財祿、保守守成、積累；前後必有擎羊、陀羅相夾（羊陀夾）。"
+    },
+    {
+      "id": "ziwei.star.天馬",
+      "name": "天馬",
+      "group": "tianma",
+      "traits": { "change": 0.8, "opportunity": 0.4 },
+      "notes": "驛馬星，慣例描述為遷動、奔波、出行與環境轉換。"
+    }
+  ]
+}
