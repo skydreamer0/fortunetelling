@@ -35,6 +35,9 @@ jobs:
       - name: Run tests
         run: bun test
 
+      - name: Typecheck core
+        run: bun run --filter @fortune/core typecheck
+
       - name: Typecheck web app
         run: bun run --filter @fortune/web typecheck
 

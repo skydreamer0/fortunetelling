@@ -254,6 +254,11 @@ function buildGuidance(engines) {
 }
 
 export class InsightBuilder {
+  /**
+   * @param {Object[]} engines
+   * @param {Object[]} radars
+   * @param {{ asOf?: Date|string }} [options]
+   */
   static build(engines, radars, { asOf } = {}) {
     return {
       version: INSIGHT_VERSION,

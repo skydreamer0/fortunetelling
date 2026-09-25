@@ -128,6 +128,7 @@ function starTraitPhrase(stars) {
   return [...new Set(traits)].join('，也帶有');
 }
 
+/** @returns {SummarySentence|null} */
 function buildDayMasterSentence(engine) {
   const component = componentByCategory(engine, 'dayMaster');
   const { stem, element, yinYang } = component?.value ?? {};
@@ -148,6 +149,11 @@ function buildDayMasterSentence(engine) {
   };
 }
 
+/**
+ * @param {Object} engine
+ * @param {string} name
+ * @param {(palace: any) => boolean} [predicate]
+ */
 function fallbackPalaceFacet(engine, name, predicate = () => false) {
   const component = componentsByCategory(engine, 'palaces')
     .find(item => item?.value?.name === name || predicate(item?.value));
@@ -155,6 +161,7 @@ function fallbackPalaceFacet(engine, name, predicate = () => false) {
   return { component, facet: component.value };
 }
 
+/** @returns {SummarySentence|null} */
 function buildZiweiSentence(engine) {
   const soulVsBody = componentByCategory(engine, 'soulVsBody');
   const soulFallback = fallbackPalaceFacet(engine, '命宮');
@@ -208,6 +215,7 @@ function buildZiweiSentence(engine) {
   };
 }
 
+/** @returns {SummarySentence|null} */
 function buildLifePathSentence(engine) {
   const component = componentByCategory(engine, 'lifePath');
   const number = component?.value?.number;
@@ -227,6 +235,7 @@ function percentage(count, total) {
   return Math.round((count / total) * 100);
 }
 
+/** @returns {SummarySentence|null} */
 function buildElementDistributionSentence(engine) {
   const component = componentByCategory(engine, 'elements');
   const rawCounts = component?.value?.counts;

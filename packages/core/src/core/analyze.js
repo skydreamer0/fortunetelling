@@ -67,7 +67,7 @@ export const REPORT_SCHEMA_VERSION = 3;
  *   failures do NOT throw — they surface as `errors` on that engine's result.
  */
 export function analyze(input, { asOf = null } = {}) {
-  const birth = input instanceof BirthData ? input : new BirthData(input ?? {});
+  const birth = input instanceof BirthData ? input : new BirthData(input ?? /** @type {any} */ ({}));
   birth.validate(); // fail fast with a clear message before running engines
 
   const asOfDate = asOf ? new Date(asOf) : new Date();

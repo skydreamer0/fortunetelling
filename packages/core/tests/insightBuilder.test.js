@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { analyze, HonestyGuard } from '../src/index.js';
 
+/** @type {import('../src/core/models/BirthData.js').BirthDataParams} */
 const INPUT = { year: 1991, month: 10, day: 5, hour: 14, gender: 'female', name: 'Test Person' };
 const AS_OF = '2026-07-18';
 
