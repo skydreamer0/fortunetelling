@@ -162,6 +162,9 @@ const CLASSIFICATION_RULES = [
   { sourceSystem: 'dreamspell', category: 'kin',  layer: 'L0', rationale: 'Kin 印記由出生日期計算，終生不變。' },
   { sourceSystem: 'dreamspell', category: 'tone', layer: 'L0', rationale: '銀河音階由 Kin 決定，終生不變。' },
   { sourceSystem: 'dreamspell', category: 'seal', layer: 'L0', rationale: '圖騰由 Kin 決定，終生不變。' },
+  { sourceSystem: 'dreamspell', category: 'wavespell', layer: 'L0', rationale: '波符為 Kin 所在的 13 日週期，由 Kin 決定，終生不變。' },
+  { sourceSystem: 'dreamspell', category: 'castle',    layer: 'L0', rationale: '城堡為 Kin 所在的 52 日區段，由 Kin 決定，終生不變。' },
+  { sourceSystem: 'dreamspell', category: 'oracle',    layer: 'L0', rationale: '第五力神諭（引導/類比/對立/隱藏）由 Kin 決定，終生不變。' },
 
   // ── Cross-System Context ────────────────────────────────────────────
   { sourceSystem: 'vedic',       category: 'ascendant',    layer: 'L3', rationale: '上升星座代表社交面具，在初識場合較為顯著。' },
