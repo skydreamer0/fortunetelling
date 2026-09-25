@@ -8,6 +8,7 @@ import { Annual } from './Annual';
 import { Charts } from './Charts';
 import { Domains } from './Domains';
 import { Guidance } from './Guidance';
+import { LifeEvents } from './LifeEvents';
 import { Method } from './Method';
 import { Overview } from './Overview';
 import { Periods } from './Periods';
@@ -18,6 +19,7 @@ export const CHAPTERS = [
   { id: 'ch-overview', index: '壹', label: '命格' },
   { id: 'ch-year', index: '貳', label: '本年' },
   { id: 'ch-timeline', index: '參', label: '時序' },
+  { id: 'ch-events', index: '驗', label: '事件' },
   { id: 'ch-domains', index: '肆', label: '領域' },
   { id: 'ch-charts', index: '伍', label: '命盤' },
   { id: 'ch-periods', index: '陸', label: '運程' },
@@ -96,6 +98,7 @@ export function ReportView({ report, onBack }: { report: Report; onBack: () => v
       <Overview report={report} />
       <Annual report={report} />
       <Timeline report={report} />
+      <LifeEvents report={report} />
       <Domains report={report} />
       <Charts report={report} />
       <Periods report={report} />

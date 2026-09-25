@@ -77,3 +77,5 @@ export * from './timeline/index';
 export * from './questions/index';
 // V3 跨系統共識摘要（Report v5 `consensus`，D-034）
 export * from './consensus/index';
+// ⑧ 人生事件與回驗（V4-03／V4-04／V4-05）
+export * from './backtest/index';

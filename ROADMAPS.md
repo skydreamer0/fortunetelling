@@ -44,8 +44,8 @@
 | 10 | 年度 Timeline | ❌ 未開始 | UI 的「本年」只顯示當年主題文字，沒有逐年／逐月的領域分數（感情／財運／事業／移動） | V1 |
 | 11 | Event Rule Engine（問事） | ❌ 未開始 | 沒有問事類別目錄、沒有逐月排名 | V5 |
 | 12 | AI 解讀層 | ❌ 未開始 | 沒有 `packages/ai`、prompt、citation 後驗證 | V5 |
-| — | 資料庫（users／charts／signals／life_events） | ❌ 未開始 | 目前是純前端，只用 localStorage | V4 |
-| — | Backtesting | ❌ 未開始 | — | V4 |
+| — | 資料庫（users／charts／signals／life_events） | 🟡 設計稿 | `docs/db/schema.sql`（未執行）；目前純前端，人生事件只存 localStorage | V4 |
+| — | Backtesting | 🟡 本地版 | `packages/core/src/backtest/`（事先固定命中定義、基準線、樣本門檻、訓練／驗證）＋「人生事件」面板；權重未調整（樣本不足） | V4 |
 
 ### 已完成的基礎（v1 架構，保留並沿用）
 
@@ -130,11 +130,11 @@
 
 | ID | 任務 |
 |---|---|
-| V4-01 | `apps/api` + Postgres（Supabase）；資料表：`users`、`birth_profiles`（RLS、欄位加密、一鍵刪除）、`chart_snapshots`、`signals`、`rules`／`trait_weights`（版本化，只增不改）、`annual_cycles`／`monthly_cycles`、`interpretations`、`life_events`、`backtest_runs` |
-| V4-02 | 帳號與同步；**沒登入也能用**（D-029 本地優先） |
-| V4-03 | `life_events` 輸入 UI（例：2018 畢業／北上、2022 化療藥局、2024 離職、2025 藥廠、2026 回台南／KAM） |
-| V4-04 | Backtesting（同時決定 D-033 懸而未決的：系統權重、四段切點、未發訊號系統是否計 0）：命中定義事先固定（事件落在個人時間軸前 25%）、以隨機時間窗作基準線、樣本 < 30 只顯示「樣本不足」、訓練與驗證分開 |
-| V4-05 | 權重調整只產生新版 `trait_weights`，舊報告可用舊版本重現 |
+| V4-01 | 🟡 schema 設計稿 `docs/db/schema.sql`（未執行，無 `apps/api`）。`apps/api` + Postgres（Supabase）；資料表：`users`、`birth_profiles`（RLS、欄位加密、一鍵刪除）、`chart_snapshots`、`signals`、`rules`／`trait_weights`（版本化，只增不改）、`annual_cycles`／`monthly_cycles`、`interpretations`、`life_events`、`backtest_runs` |
+| V4-02 | ❌ 未開始（無帳號憑證）。帳號與同步；**沒登入也能用**（D-029 本地優先） |
+| V4-03 | ✅ 本地版：報告「驗 人生事件」面板，新增／編輯／刪除／刪除全部，依命盤指紋存於 localStorage（不上傳）。`life_events` 輸入 UI（例：2018 畢業／北上、2022 化療藥局、2024 離職、2025 藥廠、2026 回台南／KAM） |
+| V4-04 | ✅ 方法與本地執行：`buildBacktestTimeline`／`runBacktest`（決定論、seed 切分、驗證集分開報告）；D-033 的權重／切點仍待多人 n ≥ 30 資料才決定。Backtesting（同時決定 D-033 懸而未決的：系統權重、四段切點、未發訊號系統是否計 0）：命中定義事先固定（事件落在個人時間軸前 25%）、以隨機時間窗作基準線、樣本 < 30 只顯示「樣本不足」、訓練與驗證分開 |
+| V4-05 | 🟡 `proposeWeights` 只從驗證集 n ≥ 30 產生新版本提案（凍結物件、不改舊版）；單人資料一律回「樣本不足」。權重調整只產生新版 `trait_weights`，舊報告可用舊版本重現 |
 
 **完成條件**：回驗報告可重現（同版本、同樣本 → 同命中率）。
 
