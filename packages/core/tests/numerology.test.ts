@@ -3,7 +3,6 @@
  * 所有向量皆手算於註解中；凡涉及年份者皆顯式傳入（D-014）。
  */
 import { test, expect } from 'bun:test';
-import { analyze } from '../src/core/analyze.js';
 import {
   calculateLifePath,
   calculateBirthdayNumber,

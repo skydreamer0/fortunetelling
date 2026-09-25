@@ -150,7 +150,13 @@ Jyotish／Human Design 的行星位置、ayanamsa、月交點（Rahu/Ketu）一�
 缺檔時退回內建 Moshier 模式並寫入 warnings。
 授權：AGPL，本專案為非商業使用。注意 AGPL 的條件看的是「是否透過網路提供給他人使用」，
 不是「是否商用」——若網站公開給他人使用，須同時公開原始碼（公開 repo 即滿足）。
-Swiss Ephemeris 僅允許出現在 `calculators/jyotish`、`calculators/humanDesign` 與共用的 `time/ephemeris` 模組。
+Swiss Ephemeris 僅允許出現在 `calculators/jyotish`、`calculators/humanDesign` 與共用的 `calculators/astro` 模組（V2-01 起取代原訂的 `time/ephemeris`）。
+- 套件（V2-01）：`@swisseph/browser@1.3.1`（Swiss Ephemeris 2.10.03 WASM，AGPL-3.0），版本鎖定。
+  約 227 KB gzip，由 `initEphemeris()` 動態載入，不進首頁 bundle；初始化後全部同步呼叫。
+- 目前使用內建 Moshier 星曆（行星 < 1″、月亮數角秒，1800–2200 足夠），尚未附 .se1 檔；
+  計算器須在 warnings 帶 `ephemeris:moshier_fallback`。
+- 太陽黃經回傳**視黃經**（J2000 = 280.369°，非平黃經 280.46°）；Lahiri ayanamsa 取含章動值。
+- Vite dev 模式接入時預期需要 `optimizeDeps.exclude: ['@swisseph/browser']`。
 
 ## D-028 解讀以特徵權重資料表示，不 hardcode 定性文字 ✅
 星曜、十神、宮位等只輸出 `traits { change, leadership, risk, ... }` 權重，存於版本化資料表；

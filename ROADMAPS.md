@@ -81,7 +81,7 @@
 |---|---|---|---|
 | V1-01 ✅ | **BirthProfile＋離線城市表** | `profile/`：驗證、IANA 時區、台灣各縣市與常見海外城市的經緯度（離線 JSON） | — |
 | V1-02 ✅ | **TimeContext** | `time/`：local→UTC（IANA tzdata，禁止手寫 DST 表）、JD(UT/TT, ΔT)、均時差→真太陽時、精確節氣時刻、農曆；`flags`：`dst_applied`／`dst_gap`／`dst_overlap`／`near_shichen_boundary`／`near_jie_boundary`／`zi_hour_convention`／`time_unknown` | V1-01 |
-| V1-03 | **Calculator 契約＋搬遷** | `calculators/<system>/`，`calculate(ctx, config) → ChartResult`；現有五引擎改包成 calculator，`components` 不變，以免破壞 Report v3 | V1-02 |
+| V1-03 ✅ | **Calculator 契約＋搬遷** | `calculators/<system>/`，`calculate(ctx, config) → ChartResult`；現有五引擎改包成 calculator，`components` 不變，以免破壞 Report v3 | V1-02 |
 | V1-04 | 八字改吃 TimeContext | 真太陽時（預設開）、`ziHourConvention`、起運精確到月、流月；邊界時兩盤並算 | V1-03 |
 | V1-05 | 紫微改吃 TimeContext＋強型別盤 | 身宮、五行局、命主身主、三方四正索引、流年／流月序列 | V1-03 |
 | V1-06 ✅ | Numerology 補齊 | `11/2` 主數格式、Birthday、Attitude、Pinnacle×4、Challenge×4、`personalYears` 多年 | V1-03 |
@@ -106,8 +106,8 @@
 
 | ID | 任務 |
 |---|---|
-| V2-01 | 接入 Swiss Ephemeris WASM（瀏覽器可跑，D-027）；ephemeris 檔延遲載入 |
-| V2-02 | `calculators/astro-core`：Sun～Saturn、Rahu/Ketu、Ascendant，UT 輸入 |
+| V2-01 ✅ | 接入 Swiss Ephemeris WASM（瀏覽器可跑，D-027）；ephemeris 檔延遲載入 |
+| V2-02 ✅ | `calculators/astro`：Sun～Saturn、Rahu/Ketu、Ascendant，UT 輸入 |
 | V2-03 | Jyotish：ayanamsa 設定、D1/D9/D10、Nakshatra/Pada、House Lord、Vimshottari Maha/Antar Dasha（精確到日）、Transit |
 | V2-04 | Human Design：Personality／Design（88° 求根）、Gate/Line、Channel、Center、Type、Authority、Profile、Definition、Incarnation Cross |
 | V2-05 | Jyotish／HD 規則 → Signal（Dasha 主星、2H/4H/7H/10H/11H 過運等） |
