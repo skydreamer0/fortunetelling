@@ -141,8 +141,8 @@
 
 | ID | 任務 |
 |---|---|
-| V5-01 | `questions/catalog.json`：`vehicle_purchase`、`job_change`、`relationship_timing`、`startup_timing`… → domains → 各系統相關規則 |
-| V5-02 | Question Engine：逐月計算 signals → 排名 → 前 3 個月份，每個月份附 source；不在目錄內的問題回「目前不支援」 |
+| V5-01 ✅ | `questions/catalog.json`：`vehicle_purchase`、`job_change`、`relationship_timing`、`startup_timing`… → domains → 各系統相關規則 |
+| V5-02 ✅ | Question Engine：逐月計算 signals → 排名 → 前 3 個月份，每個月份附 source；不在目錄內的問題回「目前不支援」 |
 | V5-03 | `packages/ai`：AI 只做兩件事：(a) 自然語言 → `{category, range}`（schema 驗證）；(b) 讀 JSON 寫解讀。固定系統指令：禁止重新排盤、每個結論都要引用 `signal.id`、三套以上同向才能說「高共識」、保留矛盾 |
 | V5-04 | 程式後驗證（不靠 AI 自律）：citation id 必須存在；文字中出現的干支、星名、宮名、行星名必須出現在輸入 charts；通過 HonestyGuard；以 `hash(input, promptVersion, model)` 快取 |
 | V5-05 | UI：問事輸入、月份排名、解讀段落點開就能看到引用的訊號 |
