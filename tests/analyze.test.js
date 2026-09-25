@@ -20,8 +20,13 @@ test('analyze() 回傳完整 Report 契約欄位', () => {
     { year: 1991, month: 10, day: 5, gender: 'female' },
   );
 
-  // G/H 進階欄位：穩定空殼必須存在（shape 從第一天就定案）
+  // G/H 進階欄位、白話摘要與 v3 生活洞見必須存在
   assert.ok(Array.isArray(report.radars));
+  assert.ok(Array.isArray(report.summary.sentences));
+  assert.ok(report.summary.sentences.length >= 3);
+  assert.equal(report.insights.domains.length, 4);
+  assert.ok(report.insights.annual.themes.length >= 2);
+  assert.ok(report.insights.guidance.directions.length > 0);
   assert.ok(Array.isArray(report.stateTable.scenarios));
   assert.ok(Array.isArray(report.evolution.periods));
   assert.ok(Array.isArray(report.honesty.violations));
@@ -45,19 +50,23 @@ test('analyze() 回傳完整 Report 契約欄位', () => {
   assert.ok(report.evolution.narrative.length > 0);
 });
 
-test('Report 頂層欄位集合完全不變（Schema v1 凍結，D-012）', () => {
+test('Report Schema v3 包含可追溯摘要與使用者問題視圖', () => {
   const report = analyze(INPUT, { asOf: AS_OF });
   assert.deepEqual(
     Object.keys(report).sort(),
     [
-      'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input',
-      'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'version',
+      'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input', 'insights',
+      'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'summary', 'version',
     ],
   );
   // D1/D2/D4 已翻 honesty / stateTable / evolution 的 pending
   assert.equal(report.stateTable.pending, false);
   assert.equal(report.evolution.pending, false);
   assert.equal(report.honesty.pending, false);
+  assert.equal(report.schemaVersion, 3);
+  for (const sentence of report.summary.sentences) {
+    assert.ok(sentence.sources.length > 0, `${sentence.id} 缺少來源`);
+  }
 });
 
 test('analyze() 只填入既有 radars 空殼，且每軸計分規則可解析', () => {
@@ -84,8 +93,8 @@ test('analyze() 只填入既有 radars 空殼，且每軸計分規則可解析',
   assert.deepEqual(
     Object.keys(report).sort(),
     [
-      'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input',
-      'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'version',
+      'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input', 'insights',
+      'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'summary', 'version',
     ],
   );
 });

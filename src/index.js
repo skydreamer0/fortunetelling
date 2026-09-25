@@ -18,9 +18,11 @@
 
 // ── Orchestrator ──
 export { analyze, VERSION, REPORT_SCHEMA_VERSION } from './core/analyze.js';
+export { analyzeCompatibility, COMPATIBILITY_SCHEMA_VERSION } from './core/analyzeCompatibility.js';
 
 // ── Core models & engine framework（自建引擎/自組管線用）──
 export { BirthData } from './core/models/BirthData.js';
+export { lunarToSolarDate, solarToLunarDate, parseIsoDate, toIsoDate } from './core/calendar.js';
 export { SystemResult } from './core/models/SystemResult.js';
 export { BaseEngine } from './core/BaseEngine.js';
 export { EngineRegistry } from './core/EngineRegistry.js';
@@ -47,7 +49,14 @@ export {
   TEN_GOD_GROUP_SCENARIO_MAP,
   TEN_GOD_GROUP_EXPRESSIONS,
 } from './analysis/StateSwitchTable.js';
-export { EvolutionCalculator, DAYUN_OVERLAY_PER_CHAR } from './analysis/EvolutionCalculator.js';
+export {
+  EvolutionCalculator,
+  DAYUN_OVERLAY_PER_CHAR,
+  DAYUN_STEM_WEIGHT,
+  DAYUN_BRANCH_WEIGHT,
+} from './analysis/EvolutionCalculator.js';
+export { SummaryBuilder, SUMMARY_VERSION } from './analysis/SummaryBuilder.js';
+export { InsightBuilder, INSIGHT_VERSION } from './analysis/InsightBuilder.js';
 
 // ── Visualization（框架無關的文字降級輸出）──
 export * as TextFallback from './visualization/TextFallback.js';

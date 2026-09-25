@@ -87,6 +87,14 @@ export class ZiweiEngine extends BaseEngine {
    * @returns {SystemResult}
    */
   _compute(birth) {
+    if (birth.timeKnown === false) {
+      const unavailable = this.result();
+      unavailable.meta = {
+        unavailableReason: 'unknown-time',
+        unavailableMessage: '出生時辰不確定，因此紫微十二宮、命身宮與大限未計算。',
+      };
+      return unavailable;
+    }
     const astrolabe = astro.bySolar(
       birth.solarDateStr,
       birth.timeIndex,

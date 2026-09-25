@@ -11,7 +11,10 @@ import { renderTextBar } from '../visualization/TextFallback.js';
 import { renderRadarChart } from '../visualization/RadarChart.js';
 import { renderBarChart } from '../visualization/BarChart.js';
 import { buildStateTablePanel } from './StateTablePanel.js';
-import { buildEvolutionPanel } from './EvolutionPanel.js';
+import { buildEvolutionPanel, initEvolutionPanel } from './EvolutionPanel.js';
+import { buildZiweiChart, initZiweiChart } from './ZiweiChart.js';
+import { buildAnnualPanel, buildDomainPanel, buildGuidancePanel } from './InsightPanel.js';
+import { initGlossary } from './Glossary.js';
 
 const SYSTEM_NAMES = Object.freeze({
   bazi: '八字',
@@ -40,15 +43,81 @@ function firstValue(engine, category) {
   return engine?.components.find(c => c.category === category)?.value ?? null;
 }
 
+const SUMMARY_INDEX = Object.freeze(['一', '二', '三', '四', '五']);
+const SUMMARY_SYSTEM_CLASSES = new Set(['bazi', 'ziwei', 'numerology', 'minggua', 'dreamspell']);
+
+/** Render the cross-system plain-language overview as an editorial opening note. */
+export function buildSummarySection(summary) {
+  const sentences = Array.isArray(summary?.sentences) ? summary.sentences : [];
+  if (sentences.length === 0) {
+    return `
+      <section class="fate-summary fate-summary--empty" aria-labelledby="summary-title">
+        <div class="fate-summary__heading">
+          <p class="fate-summary__eyebrow">跨系統提要</p>
+          <h3 id="summary-title">命格提要</h3>
+        </div>
+        <p class="fate-summary__empty-text">目前可用的結構資料不足，因此不補寫推論。</p>
+      </section>
+    `;
+  }
+
+  const sentenceHtml = sentences.map((sentence, index) => {
+    const sources = Array.isArray(sentence?.sources) ? sentence.sources : [];
+    const sourceHtml = sources.map(source => {
+      const systemClass = SUMMARY_SYSTEM_CLASSES.has(source.engineId) ? source.engineId : 'other';
+      const systemName = source.engineName || SYSTEM_NAMES[source.engineId] || source.engineId;
+      return `
+        <span class="fate-summary__source fate-summary__source--${systemClass}"
+          title="來源部件：${esc(source.componentId)}">
+          ${esc(systemName)} · ${esc(source.componentName)}
+        </span>
+      `;
+    }).join('');
+
+    return `
+      <li class="fate-summary__item">
+        <span class="fate-summary__index" aria-hidden="true">${SUMMARY_INDEX[index] ?? index + 1}</span>
+        <div class="fate-summary__sentence-wrap">
+          <p class="fate-summary__sentence">${esc(sentence.text)}</p>
+          <div class="fate-summary__sources" aria-label="本句資料來源">${sourceHtml}</div>
+        </div>
+      </li>
+    `;
+  }).join('');
+
+  const limitations = Array.isArray(summary?.limitations) ? summary.limitations.filter(Boolean) : [];
+  const limitationText = limitations.length > 0
+    ? limitations.join(' ')
+    : '本段由既有命盤部件規則式整理。';
+
+  return `
+    <section class="fate-summary" aria-labelledby="summary-title">
+      <span class="fate-summary__seal" aria-hidden="true">命</span>
+      <div class="fate-summary__heading">
+        <p class="fate-summary__eyebrow">跨系統提要 · 可追溯來源</p>
+        <h3 id="summary-title">命格提要</h3>
+        <p>先讀整體輪廓，再往下核對各系統的計算細節。</p>
+      </div>
+      <ol class="fate-summary__list">${sentenceHtml}</ol>
+      <p class="fate-summary__limitation"><span aria-hidden="true">※</span> ${esc(limitationText)}</p>
+    </section>
+  `;
+}
+
 // ─── Overview cards ─────────────────────────────────────────────────────────
 
 function buildOverviewCards(report) {
   const cards = [];
 
   const ziwei = engineById(report, 'ziwei');
-  if (ziwei) {
+  if (ziwei?.components?.length) {
     const svb = firstValue(ziwei, 'soulVsBody');
-    const soulStars = svb?.soul.majorStars.map(s => s.name).join('、') || '（無主星，借對宮）';
+    const directStars = svb?.soul.majorStars.map(s => s.name).join('、');
+    const soulSanfang = ziwei.components.find(item => item.category === 'sanFangSiZheng' && item.value?.anchor === '命宮');
+    const borrowedStars = soulSanfang?.value?.opposite?.majorStars?.map(star => star.name).join('、');
+    const soulStars = directStars || (borrowedStars
+      ? `借${soulSanfang.value.opposite.name}：${borrowedStars}`
+      : '命宮星曜資料不足');
     cards.push({
       icon: '✦', label: '紫微斗數', value: soulStars,
       sub: `五行局：${esc(ziwei.meta.fiveElementsClass ?? '')}｜身宮：${esc(svb?.body.name ?? '')}`,
@@ -56,7 +125,7 @@ function buildOverviewCards(report) {
   }
 
   const bazi = engineById(report, 'bazi');
-  if (bazi) {
+  if (bazi?.components?.length) {
     const dm = firstValue(bazi, 'dayMaster');
     const natal = firstValue(bazi, 'natal');
     if (dm && natal) {
@@ -82,9 +151,12 @@ function buildOverviewCards(report) {
   const minggua = engineById(report, 'minggua');
   if (minggua) {
     const gua = firstValue(minggua, 'mingGua');
+    const directions = firstValue(minggua, 'directions');
+    const restDirection = directions?.auspicious?.伏位?.zh;
+    const directionZh = ['東', '西', '南', '北'].includes(restDirection) ? `正${restDirection}` : restDirection;
     cards.push({
       icon: '☰', label: '八宅命卦', value: gua ? `${gua.name}卦（${gua.elementZh}）` : '—',
-      sub: gua ? `${gua.groupName}｜伏位 ${gua.bestDirection}` : '',
+      sub: gua ? `${gua.groupName}｜伏位 ${directionZh ?? gua.bestDirection}` : '',
     });
   }
 
@@ -296,11 +368,11 @@ function buildHighAxisNotes(radar) {
       <h5 class="axis-note-title">${esc(axis.label)} ${esc(axis.value)}${esc(axis.unit)}</h5>
       <div class="axis-note-columns">
         <div class="axis-note-column axis-note-column--assets">
-          <span class="axis-note-badge badge-assets">✦ 資產面 (天賦優勢)</span>
+          <span class="axis-note-badge badge-assets">✦ 天賦面</span>
           <p class="axis-note-content">${(axis.assets ?? []).map(esc).join('、') || '—'}</p>
         </div>
         <div class="axis-note-column axis-note-column--liabilities">
-          <span class="axis-note-badge badge-liabilities">⇌ 負債面 (潛在挑戰)</span>
+          <span class="axis-note-badge badge-liabilities">⇌ 課題面</span>
           <p class="axis-note-content">${(axis.liabilities ?? []).map(esc).join('、') || '—'}</p>
         </div>
       </div>
@@ -424,23 +496,42 @@ export function buildRadarSection(report) {
  * @param {import('../core/analyze.js').Report} report
  * @param {Object} options
  * @param {() => void} options.onBack
+ * @param {() => void} options.onPrint
  */
-export function renderReport(container, report, { onBack }) {
-  const warnings = report.engines.flatMap(e => e.errors.map(msg => `[${e.engineName}] ${msg}`));
+export function renderReport(container, report, { onBack, onPrint = () => window.print() }) {
+  if (container.__compatThemeHandler) document.removeEventListener('fortune-theme-change', container.__compatThemeHandler);
+  container.__compatChart?.destroy();
+  if (container.__themeChartHandler) document.removeEventListener('fortune-theme-change', container.__themeChartHandler);
+  for (const chart of container.__chartInstances ?? []) chart.destroy();
+  const informationalPatterns = [/姓名無拉丁字母/, /無姓名/, /略過表達數/];
+  const warnings = report.engines.flatMap(e => e.errors
+    .filter(message => !informationalPatterns.some(pattern => pattern.test(message)))
+    .map(msg => `[${e.engineName}] ${msg}`));
+  const unavailable = report.engines.filter(engine => engine.meta?.unavailableReason === 'unknown-time');
+  const birthTime = report.input.timeKnown === false
+    ? '時辰不確定'
+    : `${String(report.input.hour).padStart(2, '0')}:${String(report.input.minute).padStart(2, '0')}`;
 
   container.innerHTML = `
     <div class="report-header">
-      <button type="button" class="report-back-btn" id="report-back">← 重新輸入</button>
+      <div class="report-actions">
+        <button type="button" class="report-back-btn" id="report-back">← 重新輸入</button>
+        <button type="button" class="report-print-btn" id="report-print">列印／儲存 PDF</button>
+      </div>
       <h2 class="report-title">命理綜合分析報告${report.input.name ? `：${esc(report.input.name)}` : ''}</h2>
       <div class="report-meta">
         <span class="report-meta-item">評估基準日 ${report.asOf}</span>
-        <span class="report-meta-item">生日 ${report.input.year}-${String(report.input.month).padStart(2, '0')}-${String(report.input.day).padStart(2, '0')} ${String(report.input.hour).padStart(2, '0')}:${String(report.input.minute).padStart(2, '0')}</span>
+        <span class="report-meta-item">生日 ${report.input.year}-${String(report.input.month).padStart(2, '0')}-${String(report.input.day).padStart(2, '0')} · ${birthTime}</span>
         <span class="report-meta-item">v${report.version}｜schema ${report.schemaVersion}</span>
       </div>
     </div>
 
     <nav class="report-toc" aria-label="報告目錄">
       <a href="#sec-overview" class="report-toc__link report-toc__link--active">總覽</a>
+      <a href="#sec-now" class="report-toc__link">本年</a>
+      <a href="#sec-domains" class="report-toc__link">領域</a>
+      <a href="#sec-guidance" class="report-toc__link">建議</a>
+      <a href="#sec-chart" class="report-toc__link">紫微命盤</a>
       <a href="#sec-layers" class="report-toc__link">動靜屬性</a>
       <a href="#sec-charts" class="report-toc__link">量化呈現</a>
       <a href="#sec-states" class="report-toc__link">狀態切換</a>
@@ -453,8 +544,33 @@ export function renderReport(container, report, { onBack }) {
         <p class="report-warning-box__text">${warnings.map(esc).join('<br />')}</p>
       </div>` : ''}
 
+    ${unavailable.length > 0 ? `
+      <div class="report-scope-note" role="note">
+        <strong>本次報告的計算範圍</strong>
+        <p>${unavailable.map(engine => esc(engine.meta.unavailableMessage)).join(' ')}</p>
+      </div>` : ''}
+
     <div id="sec-overview" class="report-anchor"></div>
+    ${buildSummarySection(report.summary)}
     <div class="overview-grid">${buildOverviewCards(report)}</div>
+
+    <div id="sec-now" class="report-anchor"></div>
+    ${buildAnnualPanel(report.insights?.annual)}
+
+    <div id="sec-domains" class="report-anchor"></div>
+    <h3 class="section-title"><span class="title-accent" aria-hidden="true">◇</span> 人生領域綜合</h3>
+    <p class="section-subtitle">把官祿、夫妻、財帛與疾厄宮，和八字結構、目前大限放在同一張卡上閱讀。</p>
+    ${buildDomainPanel(report.insights?.domains)}
+
+    <div id="sec-guidance" class="report-anchor"></div>
+    <h3 class="section-title"><span class="title-accent" aria-hidden="true">◌</span> 平衡與行動建議</h3>
+    <p class="section-subtitle">以低風險的色彩、空間與生活習慣作為提醒；不把開運元素當成結果保證。</p>
+    ${buildGuidancePanel(report.insights?.guidance)}
+
+    <div id="sec-chart" class="report-anchor"></div>
+    <h3 class="section-title"><span class="title-accent" aria-hidden="true">◇</span> 紫微十二宮命盤</h3>
+    <p class="section-subtitle">點選宮位查看主星、四化與力量分數；色階同時搭配亮度文字，不只依靠顏色判讀。</p>
+    ${buildZiweiChart(report)}
 
     <div id="sec-layers" class="report-anchor"></div>
     <h3 class="section-title"><span class="title-accent" aria-hidden="true">◈</span> 系統動靜屬性表</h3>
@@ -478,6 +594,10 @@ export function renderReport(container, report, { onBack }) {
   `;
 
   container.querySelector('#report-back').addEventListener('click', onBack);
+  container.querySelector('#report-print').addEventListener('click', onPrint);
+  initGlossary(container);
+  initEvolutionPanel(container);
+  initZiweiChart(container);
 
   const tocLinks = container.querySelectorAll('.report-toc__link');
   const anchors = container.querySelectorAll('.report-anchor');
@@ -492,11 +612,18 @@ export function renderReport(container, report, { onBack }) {
   }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
   for (const anchor of anchors) observer.observe(anchor);
 
-  for (const radar of report.radars ?? []) {
-    const canvas = [...container.querySelectorAll('canvas[data-radar-id]')]
-      .find(node => node.dataset.radarId === radar.id);
-    if (!canvas) continue;
-    if (radar.kind === 'bar') renderBarChart(canvas, radar);
-    else renderRadarChart(canvas, radar);
-  }
+  const renderCharts = () => {
+    for (const chart of container.__chartInstances ?? []) chart.destroy();
+    container.__chartInstances = [];
+    for (const radar of report.radars ?? []) {
+      const canvas = [...container.querySelectorAll('canvas[data-radar-id]')]
+        .find(node => node.dataset.radarId === radar.id);
+      if (!canvas) continue;
+      const chart = radar.kind === 'bar' ? renderBarChart(canvas, radar) : renderRadarChart(canvas, radar);
+      container.__chartInstances.push(chart);
+    }
+  };
+  container.__themeChartHandler = renderCharts;
+  document.addEventListener('fortune-theme-change', renderCharts);
+  renderCharts();
 }

@@ -40,6 +40,9 @@
           </div>
           <nav class="header-nav" aria-label="主導航">
             <span class="header-badge">多引擎 · 綜合分析</span>
+            <button type="button" class="theme-toggle" id="theme-toggle" aria-label="切換為深色模式" aria-pressed="false">
+              <span data-theme-icon aria-hidden="true">月</span><span data-theme-label>深色</span>
+            </button>
           </nav>
         </div>
       </header>
@@ -48,11 +51,11 @@
       <main id="app-main" class="app-main container">
 
         <!-- Input Section -->
-        <section id="input-section" class="input-section" aria-label="出生資料輸入">
+        <section id="input-section" class="input-section" aria-label="出生資料輸入" tabindex="-1">
           <div class="section-intro">
             <h2 class="section-title">
               <span class="title-accent" aria-hidden="true">◈</span>
-              輸入出生資料
+              <span id="input-title-text">輸入出生資料</span>
             </h2>
             <p class="section-subtitle">請輸入您的出生資訊，系統將透過紫微斗數、八字、數字學等多引擎進行綜合命理分析</p>
           </div>
@@ -60,7 +63,7 @@
         </section>
 
         <!-- Report Section (hidden initially) -->
-        <section id="report-section" class="report-section" aria-label="命理分析報告" hidden>
+        <section id="report-section" class="report-section" aria-label="命理分析報告" tabindex="-1" hidden>
           <div id="report-container"></div>
         </section>
 
@@ -73,7 +76,7 @@
             命理綜合分析平台 &copy; 2026 — 僅供參考，不構成任何決策建議
           </p>
           <p class="footer-disclaimer">
-            所有分析結果均帶有「⚠️ 待驗證」標記，使用者應保持理性判斷
+            命理解讀屬於可供自我觀察的假說；計算異常才會以警告標示
           </p>
         </div>
       </footer>
@@ -84,7 +87,7 @@
     <div id="loading-overlay" class="loading-overlay" hidden aria-live="polite">
       <div class="loading-spinner">
         <div class="spinner-ring"></div>
-        <p class="loading-text">命理引擎計算中…</p>
+        <p class="loading-text">排盤中… 正在校對星曜與干支</p>
       </div>
     </div>
 

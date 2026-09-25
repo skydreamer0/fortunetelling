@@ -1,162 +1,264 @@
-/**
- * @fileoverview 出生資料輸入表單（App 層，非核心）。
- *
- * 只負責收集輸入並回呼 `onSubmit(params)`；所有計算都在核心的 `analyze()`。
- * Markup 對應 `src/styles/components.css` 既有的 design-system class。
- *
- * @module ui/InputForm
- */
+/** @fileoverview Accessible solar/lunar birth-data input form. */
 
-/**
- * @param {HTMLElement} container
- * @param {Object} options
- * @param {(params: Object) => void} options.onSubmit - 收到合法輸入時回呼
- */
-export function renderInputForm(container, { onSubmit }) {
+import {
+  lunarToSolarDate,
+  parseIsoDate,
+  solarToLunarDate,
+  toIsoDate,
+} from '../core/calendar.js';
+
+const TIME_PERIODS = Object.freeze([
+  [0, '子時｜23:00–01:00'], [2, '丑時｜01:00–03:00'], [4, '寅時｜03:00–05:00'],
+  [6, '卯時｜05:00–07:00'], [8, '辰時｜07:00–09:00'], [10, '巳時｜09:00–11:00'],
+  [12, '午時｜11:00–13:00'], [14, '未時｜13:00–15:00'], [16, '申時｜15:00–17:00'],
+  [18, '酉時｜17:00–19:00'], [20, '戌時｜19:00–21:00'], [22, '亥時｜21:00–23:00'],
+]);
+
+function esc(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+}
+
+function representativeHour(hour = 12) {
+  if (hour >= 23 || hour < 1) return 0;
+  return Math.floor((hour + 1) / 2) * 2;
+}
+
+function recentMarkup(recentQueries) {
+  if (!recentQueries.length) return '';
+  return `
+    <aside class="recent-queries" aria-labelledby="recent-title">
+      <div class="recent-queries__header">
+        <div><p class="recent-queries__eyebrow">僅儲存在這台裝置</p><h3 id="recent-title">最近查詢</h3></div>
+        <button type="button" class="recent-queries__clear" id="clear-recent">清除</button>
+      </div>
+      <div class="recent-queries__list">
+        ${recentQueries.map((item, index) => {
+          const input = item.input;
+          const identity = input.name || `${input.gender === 'female' ? '女' : '男'}命`;
+          const time = input.timeKnown === false ? '時辰不確定' : TIME_PERIODS.find(([hour]) => hour === representativeHour(input.hour))?.[1].split('｜')[0];
+          return `<button type="button" class="recent-query" data-recent-index="${index}">
+            <span class="recent-query__name">${esc(identity)}</span>
+            <span class="recent-query__meta">${input.year}.${String(input.month).padStart(2, '0')}.${String(input.day).padStart(2, '0')} · ${esc(time)}</span>
+          </button>`;
+        }).join('')}
+      </div>
+    </aside>`;
+}
+
+/** Render the input form and wire its local-only interactions. */
+export function renderInputForm(container, {
+  onSubmit,
+  initialValues = {},
+  recentQueries = [],
+  onClearRecent = () => {},
+} = {}) {
+  const initialDate = Number.isInteger(Number(initialValues.year))
+    ? toIsoDate(initialValues)
+    : '1991-10-05';
+  const initialCalendar = initialValues.calendarType === 'lunar' ? 'lunar' : 'solar';
+  const fallbackLunar = solarToLunarDate(parseIsoDate(initialDate));
+  const initialLunar = initialValues.lunarInput ?? fallbackLunar;
+  const initialGender = initialValues.gender === 'female' ? 'female' : 'male';
+  const initialTimeKnown = initialValues.timeKnown !== false;
+  const selectedHour = representativeHour(Number(initialValues.hour ?? 14));
+
   container.innerHTML = `
-    <div class="input-form-card">
-      <form id="birth-form" novalidate>
-        <p class="form-section-label">基本資料</p>
-        <div class="form-grid">
-          <div class="form-group form-group--full">
-            <label class="form-group__label" for="f-name">
-              <span class="form-group__label-icon">✎</span>姓名（選填，拉丁字母才計靈數）
-            </label>
-            <input class="form-group__input" id="f-name" name="name" type="text"
-                   placeholder="e.g. Wang Xiaoming" autocomplete="name" />
+    <div class="input-layout">
+      <div class="input-form-card">
+        <form id="birth-form" novalidate>
+          <div class="form-privacy-note">
+            <span aria-hidden="true">◇</span>
+            <span><strong>資料只存在你的瀏覽器。</strong>不需登入，也不會上傳出生資料。</span>
           </div>
 
-          <div class="form-group">
-            <label class="form-group__label" for="f-gender">
-              <span class="form-group__label-icon">☯</span>性別
-            </label>
-            <div class="gender-toggle" id="f-gender" role="radiogroup" aria-label="性別">
-              <button type="button" class="gender-toggle__option gender-toggle__option--active"
-                      data-gender="male" role="radio" aria-checked="true" tabindex="0">男</button>
-              <button type="button" class="gender-toggle__option"
-                      data-gender="female" role="radio" aria-checked="false" tabindex="-1">女</button>
+          <p class="form-section-label">基本資料</p>
+          <div class="form-grid">
+            <div class="form-group form-group--full">
+              <label class="form-group__label" for="f-name">姓名（選填）</label>
+              <input class="form-group__input" id="f-name" name="name" type="text"
+                     value="${esc(initialValues.name)}" placeholder="輸入英文拼音可加算表達數" autocomplete="name" />
+              <p class="form-field-hint">中文姓名仍可作為報告標題；英文拼音會額外計算姓名靈數。</p>
+            </div>
+            <fieldset class="form-group form-fieldset">
+              <legend class="form-group__label">性別</legend>
+              <div class="gender-toggle" role="radiogroup" aria-label="性別">
+                <button type="button" class="gender-toggle__option${initialGender === 'male' ? ' gender-toggle__option--active' : ''}"
+                        data-gender="male" role="radio" aria-checked="${initialGender === 'male'}" tabindex="${initialGender === 'male' ? 0 : -1}">男</button>
+                <button type="button" class="gender-toggle__option${initialGender === 'female' ? ' gender-toggle__option--active' : ''}"
+                        data-gender="female" role="radio" aria-checked="${initialGender === 'female'}" tabindex="${initialGender === 'female' ? 0 : -1}">女</button>
+              </div>
+            </fieldset>
+          </div>
+
+          <div class="form-section-heading">
+            <p class="form-section-label">出生日期</p>
+            <div class="calendar-toggle" role="radiogroup" aria-label="曆法">
+              <button type="button" data-calendar="solar" role="radio" aria-checked="${initialCalendar === 'solar'}" class="calendar-toggle__option${initialCalendar === 'solar' ? ' is-active' : ''}">國曆</button>
+              <button type="button" data-calendar="lunar" role="radio" aria-checked="${initialCalendar === 'lunar'}" class="calendar-toggle__option${initialCalendar === 'lunar' ? ' is-active' : ''}">農曆</button>
             </div>
           </div>
-        </div>
 
-        <p class="form-section-label">出生日期（國曆）</p>
-        <div class="form-datetime-row">
-          <div class="form-group">
-            <label class="form-group__label" for="f-year">年</label>
-            <input class="form-group__input" id="f-year" name="year" type="number"
-                   min="1900" max="2100" placeholder="1991" required />
+          <div id="solar-fields"${initialCalendar === 'lunar' ? ' hidden' : ''}>
+            <div class="form-group">
+              <label class="form-group__label" for="f-date">國曆生日</label>
+              <input class="form-group__input" id="f-date" name="date" type="date"
+                     min="1900-01-01" max="2100-12-31" value="${esc(initialDate)}" required />
+            </div>
           </div>
-          <div class="form-group">
-            <label class="form-group__label" for="f-month">月</label>
-            <input class="form-group__input" id="f-month" name="month" type="number"
-                   min="1" max="12" placeholder="10" required />
-          </div>
-          <div class="form-group">
-            <label class="form-group__label" for="f-day">日</label>
-            <input class="form-group__input" id="f-day" name="day" type="number"
-                   min="1" max="31" placeholder="5" required />
-          </div>
-        </div>
 
-        <p class="form-section-label">出生時間</p>
-        <div class="form-time-row">
-          <div class="form-group">
-            <label class="form-group__label" for="f-hour">時（0–23）</label>
-            <input class="form-group__input" id="f-hour" name="hour" type="number"
-                   min="0" max="23" placeholder="14" required />
+          <div id="lunar-fields"${initialCalendar === 'solar' ? ' hidden' : ''}>
+            <div class="form-lunar-row">
+              <div class="form-group"><label class="form-group__label" for="f-lunar-year">農曆年</label>
+                <input class="form-group__input" id="f-lunar-year" type="number" min="1900" max="2100" value="${esc(initialLunar.year)}" /></div>
+              <div class="form-group"><label class="form-group__label" for="f-lunar-month">月</label>
+                <select class="form-group__input" id="f-lunar-month">${Array.from({ length: 12 }, (_, index) => `<option value="${index + 1}"${Number(initialLunar.month) === index + 1 ? ' selected' : ''}>${index + 1} 月</option>`).join('')}</select></div>
+              <div class="form-group"><label class="form-group__label" for="f-lunar-day">日</label>
+                <select class="form-group__input" id="f-lunar-day">${Array.from({ length: 30 }, (_, index) => `<option value="${index + 1}"${Number(initialLunar.day) === index + 1 ? ' selected' : ''}>${index + 1} 日</option>`).join('')}</select></div>
+            </div>
+            <label class="form-check"><input id="f-lunar-leap" type="checkbox"${initialLunar.isLeap ? ' checked' : ''} /> 此月為閏月</label>
           </div>
-          <div class="form-group">
-            <label class="form-group__label" for="f-minute">分</label>
-            <input class="form-group__input" id="f-minute" name="minute" type="number"
-                   min="0" max="59" placeholder="0" value="0" />
+
+          <p class="form-section-label">出生時辰</p>
+          <div class="form-time-row">
+            <div class="form-group">
+              <label class="form-group__label" for="f-hour">十二時辰</label>
+              <select class="form-group__input" id="f-hour"${initialTimeKnown ? '' : ' disabled'}>
+                ${TIME_PERIODS.map(([hour, label]) => `<option value="${hour}"${selectedHour === hour ? ' selected' : ''}>${label}</option>`).join('')}
+              </select>
+            </div>
+            <label class="form-check form-check--time"><input id="f-time-unknown" type="checkbox"${initialTimeKnown ? '' : ' checked'} /> 我不確定出生時辰</label>
           </div>
-        </div>
+          <p class="form-field-hint" id="time-scope-note"${initialTimeKnown ? ' hidden' : ''}>仍可查看生命靈數、八宅命卦與不依賴時辰的內容；八字、紫微會標示為未計算。</p>
 
-        <p class="form-group__error" id="form-error" role="alert"></p>
-
-        <div class="form-actions">
-          <button type="submit" class="form-submit">
-            <span class="form-submit__text">✦ 開始綜合分析</span>
-          </button>
-          <button type="button" class="form-example-btn" id="fill-example">
-            使用範例資料
-          </button>
-        </div>
-      </form>
-    </div>
-  `;
+          <p class="form-group__error" id="form-error" role="alert"></p>
+          <div class="form-actions">
+            <button type="submit" class="form-submit"><span class="form-submit__text">開始綜合分析</span></button>
+            <button type="button" class="form-example-btn" id="fill-example">使用範例資料</button>
+          </div>
+        </form>
+      </div>
+      ${recentMarkup(recentQueries)}
+    </div>`;
 
   const form = container.querySelector('#birth-form');
   const errorEl = container.querySelector('#form-error');
-  let gender = 'male';
+  const dateInput = container.querySelector('#f-date');
+  const solarFields = container.querySelector('#solar-fields');
+  const lunarFields = container.querySelector('#lunar-fields');
+  const hourSelect = container.querySelector('#f-hour');
+  const unknownTime = container.querySelector('#f-time-unknown');
+  const timeScopeNote = container.querySelector('#time-scope-note');
+  let gender = initialGender;
+  let calendarType = initialCalendar;
 
-  const genderBtns = [...container.querySelectorAll('.gender-toggle__option')];
-  function selectGender(btn) {
-    gender = btn.dataset.gender;
-    for (const b of genderBtns) {
-      const active = b === btn;
-      b.classList.toggle('gender-toggle__option--active', active);
-      b.setAttribute('aria-checked', String(active));
-      b.tabIndex = active ? 0 : -1;
-    }
-    btn.focus();
+  function showError(message) {
+    errorEl.textContent = message;
+    errorEl.classList.toggle('form-group__error--visible', Boolean(message));
   }
-  for (const btn of genderBtns) {
-    btn.addEventListener('click', () => selectGender(btn));
-    btn.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        e.preventDefault();
-        const idx = genderBtns.indexOf(btn);
-        const next = genderBtns[(idx + (e.key === 'ArrowRight' ? 1 : genderBtns.length - 1)) % genderBtns.length];
-        selectGender(next);
-      }
+
+  const genderButtons = [...container.querySelectorAll('[data-gender]')];
+  function selectGender(button, focus = true) {
+    gender = button.dataset.gender;
+    for (const item of genderButtons) {
+      const active = item === button;
+      item.classList.toggle('gender-toggle__option--active', active);
+      item.setAttribute('aria-checked', String(active));
+      item.tabIndex = active ? 0 : -1;
+    }
+    if (focus) button.focus();
+  }
+  for (const button of genderButtons) {
+    button.addEventListener('click', () => selectGender(button));
+    button.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      event.preventDefault();
+      const offset = event.key === 'ArrowRight' ? 1 : genderButtons.length - 1;
+      selectGender(genderButtons[(genderButtons.indexOf(button) + offset) % genderButtons.length]);
     });
   }
 
-  form.addEventListener('submit', (event) => {
-    event.preventDefault();
-    errorEl.classList.remove('form-group__error--visible');
-
-    const num = (id) => Number.parseInt(container.querySelector(id).value, 10);
-    const params = {
-      name: container.querySelector('#f-name').value.trim(),
-      year: num('#f-year'),
-      month: num('#f-month'),
-      day: num('#f-day'),
-      hour: num('#f-hour'),
-      minute: Number.parseInt(container.querySelector('#f-minute').value, 10) || 0,
-      gender,
+  function readLunar() {
+    return {
+      year: Number.parseInt(container.querySelector('#f-lunar-year').value, 10),
+      month: Number.parseInt(container.querySelector('#f-lunar-month').value, 10),
+      day: Number.parseInt(container.querySelector('#f-lunar-day').value, 10),
+      isLeap: container.querySelector('#f-lunar-leap').checked,
     };
+  }
 
-    const problems = [];
-    if (!Number.isInteger(params.year) || params.year < 1900 || params.year > 2100) problems.push('年份需在 1900–2100');
-    if (!Number.isInteger(params.month) || params.month < 1 || params.month > 12) problems.push('月份需在 1–12');
-    if (!Number.isInteger(params.day) || params.day < 1 || params.day > 31) {
-      problems.push('日期需在 1–31');
-    } else if (problems.length === 0) {
-      const testDate = new Date(params.year, params.month - 1, params.day);
-      if (testDate.getFullYear() !== params.year || testDate.getMonth() !== params.month - 1 || testDate.getDate() !== params.day) {
-        problems.push(`${params.year}年${params.month}月沒有${params.day}日`);
+  const calendarButtons = [...container.querySelectorAll('[data-calendar]')];
+  function setCalendar(type) {
+    try {
+      if (type === 'lunar' && calendarType === 'solar') {
+        const lunar = solarToLunarDate(parseIsoDate(dateInput.value));
+        container.querySelector('#f-lunar-year').value = lunar.year;
+        container.querySelector('#f-lunar-month').value = lunar.month;
+        container.querySelector('#f-lunar-day').value = lunar.day;
+        container.querySelector('#f-lunar-leap').checked = lunar.isLeap;
+      } else if (type === 'solar' && calendarType === 'lunar') {
+        dateInput.value = lunarToSolarDate(readLunar()).iso;
       }
+      calendarType = type;
+      solarFields.hidden = type !== 'solar';
+      lunarFields.hidden = type !== 'lunar';
+      for (const button of calendarButtons) {
+        const active = button.dataset.calendar === type;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-checked', String(active));
+      }
+      showError('');
+    } catch (error) {
+      showError(error.message);
     }
-    if (!Number.isInteger(params.hour) || params.hour < 0 || params.hour > 23) problems.push('小時需在 0–23');
+  }
+  for (const button of calendarButtons) button.addEventListener('click', () => setCalendar(button.dataset.calendar));
 
-    if (problems.length > 0) {
-      errorEl.textContent = problems.join('；');
-      errorEl.classList.add('form-group__error--visible');
-      return;
+  unknownTime.addEventListener('change', () => {
+    hourSelect.disabled = unknownTime.checked;
+    timeScopeNote.hidden = !unknownTime.checked;
+  });
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    showError('');
+    try {
+      const lunarInput = calendarType === 'lunar' ? readLunar() : null;
+      const date = calendarType === 'solar'
+        ? parseIsoDate(dateInput.value)
+        : lunarToSolarDate(lunarInput);
+      onSubmit({
+        name: container.querySelector('#f-name').value.trim(),
+        ...date,
+        hour: unknownTime.checked ? 12 : Number.parseInt(hourSelect.value, 10),
+        minute: 0,
+        timeKnown: !unknownTime.checked,
+        gender,
+        calendarType,
+        ...(lunarInput ? { lunarInput } : {}),
+      });
+    } catch (error) {
+      showError(error.message);
     }
-
-    onSubmit(params);
   });
 
   container.querySelector('#fill-example').addEventListener('click', () => {
     container.querySelector('#f-name').value = 'Wang Xiaoming';
-    container.querySelector('#f-year').value = '1991';
-    container.querySelector('#f-month').value = '10';
-    container.querySelector('#f-day').value = '5';
-    container.querySelector('#f-hour').value = '14';
-    container.querySelector('#f-minute').value = '0';
-    selectGender(genderBtns[0]);
+    dateInput.value = '1991-10-05';
+    hourSelect.value = '14';
+    unknownTime.checked = false;
+    hourSelect.disabled = false;
+    timeScopeNote.hidden = true;
+    selectGender(genderButtons.find(button => button.dataset.gender === 'female'), false);
+    setCalendar('solar');
   });
+
+  for (const button of container.querySelectorAll('[data-recent-index]')) {
+    button.addEventListener('click', () => {
+      const selected = recentQueries[Number(button.dataset.recentIndex)]?.input;
+      if (selected) renderInputForm(container, { onSubmit, initialValues: selected, recentQueries, onClearRecent });
+    });
+  }
+  container.querySelector('#clear-recent')?.addEventListener('click', () => onClearRecent());
 }

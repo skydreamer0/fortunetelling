@@ -5,7 +5,7 @@
 > 執行規則在 [HARNESS_SPEC.md](HARNESS_SPEC.md)；測試策略在 [TEST_PLAN.md](TEST_PLAN.md)。
 >
 > 定案(2026-07-11)：① 可重用核心函式庫 ② 5 系統(紫微/靈數/命卦/Kin/八字)
-> ③ JSDoc + `checkJs` ④ Report Schema v1 凍結(D-012)。
+> ③ JSDoc ④ Report Schema 以版本守護形狀（v1：D-012；v2：D-019；目前 v3：D-020）。
 
 ---
 
@@ -64,7 +64,10 @@ docs/  ARCHITECTURE.md(本文件) DECISIONS.md HARNESS_SPEC.md TASKS.md TEST_PLA
        CONTRIBUTING.md PLAN-FOR-AUDIT.md
 ```
 
-## 4. Report Schema v1（凍結，D-012）
+## 4. Report Schema v3
+
+Schema v3 在 v2 的可追溯 `summary` 之外新增 `insights`，把既有引擎資料重新組成
+人生領域、本年觀察與平衡建議。每段內容仍須保留來源與限制，不補寫缺失資料。
 
 ```js
 import { analyze } from 'fortunetelling';
@@ -76,7 +79,7 @@ const report = analyze(input, { asOf: '2026-07-11' }); // 測試必須顯式傳 
 | 欄位 | 型別 | 狀態 |
 |---|---|---|
 | `version` | string | ✅ 函式庫 semver |
-| `schemaVersion` | number | ✅ 恆為 1，改形狀才 bump |
+| `schemaVersion` | number | ✅ v3 恆為 3 |
 | `generatedAt` | string(ISO) | ✅ |
 | `asOf` | string(YYYY-MM-DD) | ✅ L1/L2/演化的評估基準日 |
 | `input` | object | ✅ 正規化出生資料 echo |
@@ -84,13 +87,34 @@ const report = analyze(input, { asOf: '2026-07-11' }); // 測試必須顯式傳 
 | `layers` | LayerClassification | ✅ H①（含 `unclassified[]`） |
 | `scoringRules` | RulesExport | ✅ G 透明計分全量匯出 |
 | `radars` | Radar[] | 空殼→C2 填入 |
+| `summary` | `{ version, sentences[], sourceSystems[], limitations[] }` | ✅ 規則式跨系統白話提要 |
+| `insights` | `{ version, domains[], annual, guidance }` | ✅ 領域／本年／平衡建議 |
 | `stateTable` | `{ scenarios: Scenario[], pending: bool }` | 空殼→D2 填入 |
 | `evolution` | `{ periods: Period[], narrative: string, pending: bool }` | 空殼→D4 填入 |
 | `honesty` | `{ languageRules[], violations[], pending: bool }` | 規則✅ 稽核→D1 |
 
-### 4.2 進階欄位的元素形狀（C/D 任務照此實作，不得自創）
+### 4.2 進階欄位的元素形狀
 
 ```js
+/** Summary — 每句均引用真實引擎部件，缺資料時略過而不補寫 */
+Summary {
+  version: number,
+  sentences: SummarySentence[], // 目前 3–5 句；可用部件不足時允許較少
+  sourceSystems: string[],
+  limitations: string[],
+}
+SummarySentence {
+  id: string,
+  text: string,
+  layer: 'L0',
+  sources: {
+    engineId: string,
+    engineName: string,
+    componentId: string,
+    componentName: string,
+  }[],
+}
+
 /** Radar — 每系統一張(D-009)，軸獨立 0–100%，允許多軸同高(D-010) */
 Radar {
   id: string,            // 'bazi_element_balance' | 'ziwei_palace_strength' | 'numerology_digit_frequency'

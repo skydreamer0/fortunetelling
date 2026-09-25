@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    Design System — 命理綜合分析平台
-   Warm light-mode with glassmorphism, gradients, micro-animations
+   Adaptive warm light/dark themes with glassmorphism and restrained motion
    ═══════════════════════════════════════════════════════════════ */
 
 /* ─── Reset ──────────────────────────────────────────────── */
@@ -25,12 +25,13 @@
   --bg-input: #ffffff;
   --bg-input-focus: #ffffff;
   --bg-overlay: rgba(247, 244, 239, 0.95);
+  --bg-sticky: rgba(247, 244, 239, 0.92);
 
   /* ── Text ── */
   --text-primary: #2c2a29;
   --text-secondary: #5c5346;
   --text-tertiary: #706354;
-  --text-accent: #9e7a36;
+  --text-accent: #76581f;
   --text-inverse: #f7f4ef;
 
   /* ── Accent Colors ── */
@@ -43,7 +44,7 @@
 
   /* Compatibility Mapping to layout variables */
   --accent-primary: var(--accent-red);
-  --accent-primary-light: #c25952;
+  --accent-primary-light: #92362f;
   --accent-primary-rgb: var(--accent-red-rgb);
   --accent-secondary: var(--accent-gold);
   --accent-secondary-rgb: var(--accent-gold-rgb);
@@ -64,13 +65,13 @@
   --gradient-card-border: linear-gradient(135deg, var(--border-soft), rgba(168, 63, 57, 0.1), rgba(92, 83, 70, 0.05));
 
   /* ── System-Specific Colors ── */
-  --sys-ziwei: #b79552;
+  --sys-ziwei: #76581f;
   --sys-ziwei-bg: rgba(183, 149, 82, 0.06);
   --sys-ziwei-border: rgba(183, 149, 82, 0.28);
   --sys-bazi: #a83f39;
   --sys-bazi-bg: rgba(168, 63, 57, 0.06);
   --sys-bazi-border: rgba(168, 63, 57, 0.28);
-  --sys-bazi-gold: #b79552;
+  --sys-bazi-gold: #8f3028;
   --sys-numerology: #4f7660;
   --sys-numerology-bg: rgba(79, 118, 96, 0.06);
   --sys-numerology-border: rgba(79, 118, 96, 0.28);
@@ -172,6 +173,67 @@
   --z-overlay: 500;
   --z-modal: 600;
   --z-toast: 700;
+}
+
+[data-theme="dark"] {
+  --bg-primary: #181714;
+  --bg-secondary: #22201c;
+  --bg-card: rgba(37, 34, 29, 0.9);
+  --bg-card-solid: #25221d;
+  --bg-glass: rgba(255, 248, 232, 0.055);
+  --bg-glass-hover: rgba(255, 248, 232, 0.1);
+  --bg-elevated: #2c2822;
+  --bg-input: #211f1b;
+  --bg-input-focus: #29251f;
+  --bg-overlay: rgba(24, 23, 20, 0.94);
+  --bg-sticky: rgba(24, 23, 20, 0.92);
+
+  --text-primary: #f2eadc;
+  --text-secondary: #cec2ae;
+  --text-tertiary: #aa9d89;
+  --text-accent: #dfbd78;
+  --text-inverse: #1b1916;
+
+  --accent-gold: #d0ad67;
+  --accent-gold-rgb: 208, 173, 103;
+  --accent-red: #d06b61;
+  --accent-red-rgb: 208, 107, 97;
+  --accent-jade: #76a984;
+  --accent-jade-rgb: 118, 169, 132;
+  --accent-primary-light: #ec9389;
+  --accent-info: #83acad;
+
+  --sys-ziwei: #dfbd78;
+  --sys-ziwei-bg: rgba(223, 189, 120, 0.1);
+  --sys-ziwei-border: rgba(223, 189, 120, 0.34);
+  --sys-bazi: #e17b71;
+  --sys-bazi-gold: #e17b71;
+  --sys-bazi-bg: rgba(225, 123, 113, 0.1);
+  --sys-bazi-border: rgba(225, 123, 113, 0.34);
+  --sys-numerology: #8fbea0;
+  --sys-numerology-bg: rgba(143, 190, 160, 0.1);
+  --sys-numerology-border: rgba(143, 190, 160, 0.34);
+  --sys-composite: #dfbd78;
+  --sys-evolution: #dfbd78;
+  --sys-minggua: #8fbea0;
+  --sys-dreamspell: #89b8ba;
+
+  --border-subtle: rgba(229, 214, 188, 0.12);
+  --border-soft: rgba(208, 173, 103, 0.3);
+  --border-default: var(--border-soft);
+  --border-strong: rgba(223, 189, 120, 0.62);
+  --border-accent: rgba(223, 189, 120, 0.5);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 5px 18px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 14px 34px rgba(0, 0, 0, 0.32);
+  --shadow-xl: 0 24px 54px rgba(0, 0, 0, 0.4);
+  --shadow-inset: inset 0 1px 0 rgba(255, 244, 222, 0.08);
+
+  --gradient-primary: linear-gradient(135deg, #b9534a 0%, #d67469 100%);
+  --gradient-secondary: linear-gradient(135deg, #b78d48 0%, #d0ad67 100%);
+  --gradient-accent: linear-gradient(135deg, #d0ad67 0%, #d06b61 100%);
+  --gradient-cosmic: linear-gradient(180deg, #181714 0%, #211e1a 100%);
 }
 
 /* ─── Base Styles ────────────────────────────────────────── */
@@ -798,7 +860,7 @@ code {
   top: 0;
   z-index: var(--z-sticky);
   height: var(--header-height);
-  background: rgba(247, 244, 239, 0.88);
+  background: var(--bg-sticky);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-soft);
@@ -855,6 +917,28 @@ code {
   letter-spacing: 0.05em;
 }
 
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-width: 72px;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  color: var(--text-secondary);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-full);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
 /* ─── Main Content ───────────────────────────────────────── */
 .app-main {
   position: relative;
@@ -900,6 +984,7 @@ code {
 /* ─── Report Section ─────────────────────────────────────── */
 .report-section {
   animation: fadeIn var(--duration-slow) var(--ease-default) both;
+  scroll-margin-top: calc(var(--header-height) + var(--space-4));
 }
 
 .report-section[hidden] {
@@ -1096,6 +1181,31 @@ code {
   .toast {
     max-width: 100%;
   }
+
+  .header-badge,
+  .theme-toggle [data-theme-label] {
+    display: none;
+  }
+
+  .theme-toggle {
+    min-width: 44px;
+    padding-inline: var(--space-2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @media (min-width: 640px) and (max-width: 767px) {
@@ -1135,7 +1245,11 @@ code {
   .toast-container,
   .report-toc,
   .report-back-btn,
+  .report-print-btn,
+  .report-actions,
   .input-section,
+  .analysis-mode-switch,
+  .compat-form-card,
   .form-example-btn {
     display: none !important;
   }
@@ -1154,6 +1268,7 @@ code {
   }
 
   .glass-panel,
+  .fate-summary,
   .overview-card,
   .radar-card,
   .state-table__scenario,

@@ -97,6 +97,14 @@ export class BaZiEngine extends BaseEngine {
    * @returns {import('../core/models/SystemResult.js').SystemResult}
    */
   _compute(birth) {
+    if (birth.timeKnown === false) {
+      const unavailable = this.result();
+      unavailable.meta = {
+        unavailableReason: 'unknown-time',
+        unavailableMessage: '出生時辰不確定，因此八字四柱、十神與大運未計算。',
+      };
+      return unavailable;
+    }
     if (!this.asOf || typeof this.asOf !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(this.asOf)) {
       throw new Error(`BaZiEngine requires asOf in YYYY-MM-DD format, got: ${this.asOf}`);
     }

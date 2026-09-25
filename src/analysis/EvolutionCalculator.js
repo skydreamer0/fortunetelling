@@ -4,7 +4,7 @@
  * 吃 `SystemResult[]` ＋ asOf，產出 `{ periods: Period[], narrative: string }`
  * （形狀見 ARCHITECTURE.md §4.2 Period）：
  *
- *   - 八字：本命 `elements.counts` → 每步大運把大運干支兩字各依其五行計 1.0
+ *   - 八字：本命 `elements.counts` → 每步大運把天干本氣計 3、地支本氣計 2
  *     疊加 → 每十年一張五行雷達（重算佔比）。計分規則
  *     `bazi_element_balance_dayun`（ScoringRules，公式寫明疊加法）。
  *   - 紫微：每個大限把 `ziwei_palace_strength` 的四化加成改用**該大限 mutagen**
@@ -60,8 +60,11 @@ const ELEMENT_AXES = Object.freeze([
   { key: 'water', label: '水' },
 ]);
 
-/** 每步大運疊加的固定權重（干、支各一字，各計 1.0）。 */
-export const DAYUN_OVERLAY_PER_CHAR = 1.0;
+/** 大運本氣權重：天干較直接，地支次之；兩者合計固定為 5。 */
+export const DAYUN_STEM_WEIGHT = 3;
+export const DAYUN_BRANCH_WEIGHT = 2;
+/** @deprecated v0.3 起改用 DAYUN_STEM_WEIGHT / DAYUN_BRANCH_WEIGHT。 */
+export const DAYUN_OVERLAY_PER_CHAR = 1;
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
@@ -120,13 +123,11 @@ function topAndLow(radar) {
  */
 export function buildDaYunElementRadar(natalCounts, natalTotal, daYunValue) {
   const { index, ganZhi } = daYunValue;
-  /** @type {Record<string, number>} */
-  const overlay = {};
-  for (const char of ganZhi) {
-    const element = STEM_ELEMENTS[char] ?? BRANCH_ELEMENTS[char];
-    if (element) overlay[element] = (overlay[element] ?? 0) + DAYUN_OVERLAY_PER_CHAR;
-  }
-  const overlayTotal = Object.values(overlay).reduce((sum, n) => sum + n, 0);
+  const [stem, branch] = [...ganZhi];
+  const stemElement = STEM_ELEMENTS[stem];
+  const branchElement = BRANCH_ELEMENTS[branch];
+  const overlayTotal = (stemElement ? DAYUN_STEM_WEIGHT : 0)
+    + (branchElement ? DAYUN_BRANCH_WEIGHT : 0);
   const total = natalTotal + overlayTotal;
 
   return {
@@ -136,14 +137,16 @@ export function buildDaYunElementRadar(natalCounts, natalTotal, daYunValue) {
     kind: 'radar',
     axes: ELEMENT_AXES.map(({ key, label }) => {
       const natalCount = natalCounts[label] ?? 0;
-      const daYunOverlay = overlay[label] ?? 0;
+      const stemOverlay = stemElement === label ? DAYUN_STEM_WEIGHT : 0;
+      const branchOverlay = branchElement === label ? DAYUN_BRANCH_WEIGHT : 0;
+      const daYunOverlay = stemOverlay + branchOverlay;
       return {
         key,
         label,
         value: round2(((natalCount + daYunOverlay) / total) * 100),
         unit: '%',
         ruleId: 'bazi_element_balance_dayun',
-        inputs: { natalCount, daYunOverlay, natalTotal },
+        inputs: { natalCount, stemOverlay, branchOverlay, daYunOverlay, natalTotal, overlayTotal },
         ...getAxisNotes('bazi_element_balance', label),
       };
     }),
@@ -341,16 +344,36 @@ function buildNarrative(baziPeriods, ziweiPeriods, asOf) {
 
   const parts = [];
   if (baziPeriods.length > 0) {
-    const sequence = baziPeriods.map((p) => topAndLow(p.radar).top).join('→');
-    parts.push(`八字 ${baziPeriods.length} 步大運的五行重心依序為 ${sequence}`);
+    parts.push(`八字大運：${summarizeDominantRuns(baziPeriods, '步')}`);
   }
   if (ziweiPeriods.length > 0) {
-    const first = topAndLow(ziweiPeriods[0].radar).top;
-    const last = topAndLow(ziweiPeriods[ziweiPeriods.length - 1].radar).top;
-    parts.push(`紫微 ${ziweiPeriods.length} 個大限的宮位重心自「${first}」逐步移向「${last}」`);
+    parts.push(`紫微大限：${summarizeDominantRuns(ziweiPeriods, '限')}`);
   }
   const asOfNote = asOf ? `以 ${asOf} 為基準日觀察，` : '';
   return lintedL1(
     `${asOfNote}${parts.join('；')}。這些是隨十年尺度推移的時期性傾向，會隨階段切換而改變，並非固定不變的性格判決；每張時期雷達的軸值都可由其計分規則與輸入值覆核。`,
   );
+}
+
+/** Merge consecutive periods that share the same dominant axis. */
+function summarizeDominantRuns(periods, unit) {
+  const runs = [];
+  for (const period of periods) {
+    const top = topAndLow(period.radar).top;
+    const previous = runs[runs.length - 1];
+    if (previous?.top === top && previous.end + 1 >= period.range[0]) {
+      previous.end = period.range[1];
+      previous.count += 1;
+    } else {
+      runs.push({ top, start: period.range[0], end: period.range[1], count: 1 });
+    }
+  }
+
+  if (runs.length === 1) {
+    const run = runs[0];
+    return `${run.start}–${run.end} 共 ${run.count} ${unit}皆以「${run.top}」為重心`;
+  }
+  return runs
+    .map(run => `${run.start}–${run.end} ${run.count} ${unit}以「${run.top}」為重心`)
+    .join('，其後 ');
 }

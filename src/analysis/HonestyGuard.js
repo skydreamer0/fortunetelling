@@ -133,7 +133,7 @@ export class HonestyGuard {
   }
 
   /**
-   * 稽核整份 Report 中 D2/D4 填入的產文欄位。
+   * 稽核整份 Report 中狀態、演化與使用者問題視圖的產文欄位。
    * 空殼 Report（scenarios/periods 為空、narrative 為空字串）回傳 `[]`。
    *
    * 掃描範圍與各自分層：
@@ -179,6 +179,15 @@ export class HonestyGuard {
     });
 
     check(report.evolution?.narrative, 'L1', 'evolution.narrative');
+
+    (report.insights?.domains ?? []).forEach((domain, index) => {
+      check(domain?.insight, 'L3', `insights.domains[${index}].insight`);
+      check(domain?.stage, 'L1', `insights.domains[${index}].stage`);
+    });
+    (report.insights?.annual?.themes ?? []).forEach((theme, index) => {
+      check(theme?.text, 'L2', `insights.annual.themes[${index}].text`);
+    });
+    check(report.insights?.guidance?.balance?.text, 'L3', 'insights.guidance.balance.text');
 
     return violations;
   }

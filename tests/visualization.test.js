@@ -60,8 +60,8 @@ test('ReportView 為每張 Radar 產生 canvas、規則與文字降級內容', (
   assert.match(html, /wood \/ total × 100/);
   assert.match(html, /<details/);
   assert.match(html, /文字長條/);
-  assert.match(html, /資產面/);
-  assert.match(html, /負債面/);
+  assert.match(html, /天賦面/);
+  assert.match(html, /課題面/);
 });
 
 test('ReportView.buildRadarSection 針對生命靈數數字頻次產生九宮格 HTML 與無百分比的文字降級內容', () => {
@@ -151,5 +151,4 @@ test('ReportView.buildRadarSection 針對五行與宮位力量產生易讀的「
   assert.ok(!html.includes('<code>(woodCount / totalElements) * 100</code>'));
   assert.ok(!html.includes('<code>(mainStarBrightness * 0.6)</code>'));
 });
-
 

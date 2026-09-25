@@ -42,7 +42,7 @@ function scenarioBody(scenario) {
     <div class="state-cell">
       <div class="state-cell__sources">${sourceChips(cell.sources)}</div>
       <p class="state-cell__expression">${esc(cell.expression)}</p>
-      <span class="tag tag--unverified">⚠ 待驗證</span>
+      <p class="state-cell__source-note">來源部件見上方標籤</p>
     </div>
   `).join('');
 }
@@ -56,6 +56,9 @@ export function buildStateTablePanel(stateTable) {
   const scenarios = stateTable?.scenarios ?? [];
   return `
     <div class="state-table-container">
+      <div class="state-table__notice" role="note">
+        <strong>以下皆為待驗證假說。</strong>請用實際經驗核對；標籤只顯示推論來源，不代表事件必然發生。
+      </div>
       <div class="state-table" aria-label="狀態切換表">
         ${scenarios.map(scenario => `
           <section class="state-table__scenario" data-scenario-id="${esc(scenario.id)}">

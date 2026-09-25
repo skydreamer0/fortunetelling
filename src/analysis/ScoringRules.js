@@ -117,13 +117,13 @@ const DEFAULT_RULES = [
     radarType: 'element_balance_dayun',
     axisName: '五行（大運疊加）',
     sourceSystem: 'bazi',
-    formula: '((natalCount + daYunOverlay) / (natalTotal + 2)) * 100 where daYunOverlay = 該步大運干支兩字中屬該五行的字數 × 1.0',
-    description: '疊加法：本命五行出現次數（天干地支藏干均計入）加上該步大運干支的臨時疊加——大運天干與地支各依其五行計 1.0（兩字同五行則該軸 +2.0），總數固定增加 2.0，重算各五行佔比。僅反映出現占比的時期位移，不代表旺衰強弱。',
-    inputs: ['natalCount', 'daYunOverlay', 'natalTotal'],
+    formula: '((natalCount + stemOverlay + branchOverlay) / (natalTotal + overlayTotal)) * 100，天干本氣權重 3、地支本氣權重 2',
+    description: '疊加法：本命五行出現次數加上該步大運的本氣權重；天干依五行加 3、地支依五行加 2，總數固定增加 5，再重算各五行佔比。此權重讓變動中的大運干支足以形成差異，但仍只反映出現占比，不代表旺衰強弱。',
+    inputs: ['natalCount', 'stemOverlay', 'branchOverlay', 'daYunOverlay', 'natalTotal', 'overlayTotal'],
     maxValue: 100,
     minValue: 0,
     unit: '%',
-    version: '1.0.0'
+    version: '2.0.0'
   },
 
   // ── ZiWei Star Brightness Radar ───────────────────────────────────────

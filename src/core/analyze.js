@@ -17,16 +17,18 @@ import { HonestyGuard } from '../analysis/HonestyGuard.js';
 import { StateSwitchTable } from '../analysis/StateSwitchTable.js';
 import { EvolutionCalculator } from '../analysis/EvolutionCalculator.js';
 import { buildRadars } from '../analysis/RadarBuilder.js';
+import { SummaryBuilder } from '../analysis/SummaryBuilder.js';
+import { InsightBuilder } from '../analysis/InsightBuilder.js';
 import { createDefaultRegistry } from '../engines/index.js';
 
 /** Public library version (semver). Bump on any observable API change. */
-export const VERSION = '0.1.0';
+export const VERSION = '0.3.0';
 
 /**
  * Version of the `Report` shape itself, independent of code version.
  * Consumers should check this before deserializing stored reports.
  */
-export const REPORT_SCHEMA_VERSION = 1;
+export const REPORT_SCHEMA_VERSION = 3;
 
 /**
  * @typedef {import('./models/SystemResult.js').SystemResult} SystemResult
@@ -44,6 +46,8 @@ export const REPORT_SCHEMA_VERSION = 1;
  * @property {LayerClassification} layers - Block H① L0–L3 classification
  * @property {Object} scoringRules   - Block G transparency: full rule registry export
  * @property {Object[]} radars       - Block G radars（里程碑 C 填入，先為空）
+ * @property {{ version: number, sentences: Object[], sourceSystems: string[], limitations: string[] }} summary - Cross-system plain-language overview
+ * @property {{ version: number, domains: Object[], annual: Object, guidance: Object }} insights - User-question-oriented synthesis
  * @property {{ scenarios: Object[], pending: boolean }} stateTable - Block H②（里程碑 D）
  * @property {{ periods: Object[], narrative: string, pending: boolean }} evolution - Block H③（里程碑 D）
  * @property {{ languageRules: Object[], violations: Object[], pending: boolean }} honesty - Block H④
@@ -91,6 +95,7 @@ export function analyze(input, { asOf = null } = {}) {
       day: birth.day,
       hour: birth.hour,
       minute: birth.minute,
+      ...(birth.timeKnown === false ? { timeKnown: false } : {}),
       gender: birth.gender,
       name: birth.name,
       longitude: birth.longitude,
@@ -99,8 +104,10 @@ export function analyze(input, { asOf = null } = {}) {
     engines,
     layers,
     scoringRules: scoring.exportRules(),
+    summary: SummaryBuilder.build(engines),
+    insights: { version: 1, domains: [], annual: {}, guidance: {} },
 
-    // ── 區塊 G/H 進階欄位：穩定空殼（shape 已定案，里程碑 C/D 填肉）──
+    // ── 區塊 G/H 進階欄位 ──
     radars: [],
     stateTable: { scenarios: [], pending: true },
     evolution: { periods: [], narrative: '', pending: true },
@@ -118,6 +125,9 @@ export function analyze(input, { asOf = null } = {}) {
 
   // ── 區塊 G：雷達（C2）——RadarBuilder 只填入既有 radars 空殼 ──
   report.radars = buildRadars(engines);
+
+  // ── 使用者問題視圖：人生領域、本年運勢、平衡建議 ──
+  report.insights = InsightBuilder.build(engines, report.radars, { asOf: asOfStr });
 
   // ── 區塊 H②：狀態切換表（D2）——必須在誠實稽核前填入，讓自產文字受檢 ──
   report.stateTable.scenarios = StateSwitchTable.build(layers);

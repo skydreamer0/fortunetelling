@@ -88,3 +88,18 @@ tenGodsContext 的 presence 採「顯／隱／無」三態。
 顯以四柱外顯天干判定，隱以地支藏干判定，完全未出現為無。
 每群額外輸出 visibleCount、hiddenCount、breakdown、observedTenGods 與 context。
 B1 原始 tenGods 統計維持不變。
+
+## D-019 Report Schema v2 新增可追溯白話摘要（2026-07-18）✅
+依 D-012 的升版條款，`REPORT_SCHEMA_VERSION` bump 至 2，函式庫 semver bump 至 0.2.0。
+唯一新增的頂層欄位為 `summary`；每句摘要必須引用真實 engine component，資料不足時略過，
+禁止補寫。現有五行資料只代表出現次數，因此摘要不得宣稱旺衰、喜用神或吉凶。
+Schema v1 其餘欄位與元素形狀保持不變。
+
+## D-020 Report Schema v3 與獨立合盤契約（2026-07-18）✅
+`REPORT_SCHEMA_VERSION` bump 至 3、函式庫 semver bump 至 0.3.0。單人 Report 新增
+`insights`，正式承載四大人生領域、本年觀察及非決定論的平衡建議；所有敘事需引用
+既有部件或明示資料不足，五行出現次數不得冒充旺衰／喜用神。
+
+雙人比較由獨立的 `analyzeCompatibility()` 與 `COMPATIBILITY_SCHEMA_VERSION = 1`
+守護，不混入單人 Report。五行互補定義為雙方平均分布接近每元素 20%，摩擦只表示
+雙方共同過度集中；公式隨結果匯出，且不得將分數解讀為關係成敗。

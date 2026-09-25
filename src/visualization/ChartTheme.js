@@ -1,9 +1,8 @@
 /**
  * @fileoverview Shared Chart Theme Configuration
  *
- * Single source of truth for all chart styling: colors, fonts, animations,
- * grids, and labels.  Dark theme with deep navy background and glowing
- * HSL-based accent palette.
+ * Single source of truth for all chart styling. Runtime text/background colors
+ * follow the page theme while exported constants remain DOM-free fallbacks.
  *
  * @module visualization/ChartTheme
  */
@@ -11,7 +10,7 @@
 // ─── Color Palette ──────────────────────────────────────────────────────────
 
 /**
- * Core background colors (dark navy theme).
+ * Core light-theme fallback colors.
  */
 export const BACKGROUNDS = {
   /** Chart canvas background */
@@ -159,6 +158,32 @@ export const TEXT_COLORS = {
   accent: '#a83f39'
 };
 
+function cssColor(variable, fallback) {
+  if (typeof document === 'undefined' || typeof getComputedStyle === 'undefined') return fallback;
+  return getComputedStyle(document.documentElement).getPropertyValue(variable).trim() || fallback;
+}
+
+export function getRuntimeChartTheme() {
+  return {
+    canvas: cssColor('--bg-primary', BACKGROUNDS.canvas),
+    card: cssColor('--bg-card-solid', BACKGROUNDS.card),
+    primary: cssColor('--text-primary', TEXT_COLORS.primary),
+    secondary: cssColor('--text-secondary', TEXT_COLORS.secondary),
+    muted: cssColor('--text-tertiary', TEXT_COLORS.muted),
+    border: cssColor('--border-default', BACKGROUNDS.gridStrong),
+    grid: cssColor('--border-subtle', BACKGROUNDS.grid),
+    gridStrong: cssColor('--border-soft', BACKGROUNDS.gridStrong),
+    red: cssColor('--accent-red', SYSTEM_COLORS.bazi.solid),
+    jade: cssColor('--accent-jade', SYSTEM_COLORS.numerology.solid),
+    gold: cssColor('--accent-gold', SYSTEM_COLORS.ziwei.solid),
+  };
+}
+
+export function chartAnimationDuration(duration = ANIMATION.drawDuration) {
+  if (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches) return 0;
+  return duration;
+}
+
 // ─── Tooltip Theme ──────────────────────────────────────────────────────────
 
 /**
@@ -168,12 +193,13 @@ export const TEXT_COLORS = {
  * @returns {Object} Chart.js tooltip plugin config
  */
 export function buildTooltipConfig(overrides = {}) {
+  const theme = getRuntimeChartTheme();
   return {
     enabled: true,
-    backgroundColor: BACKGROUNDS.card,
-    titleColor: TEXT_COLORS.primary,
-    bodyColor: TEXT_COLORS.secondary,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
+    backgroundColor: theme.card,
+    titleColor: theme.primary,
+    bodyColor: theme.secondary,
+    borderColor: theme.border,
     borderWidth: 1,
     cornerRadius: 8,
     padding: { top: 10, bottom: 10, left: 14, right: 14 },
@@ -202,11 +228,12 @@ export function buildTooltipConfig(overrides = {}) {
  * @returns {Object}
  */
 export function buildLegendConfig(overrides = {}) {
+  const theme = getRuntimeChartTheme();
   return {
     display: true,
     position: 'bottom',
     labels: {
-      color: TEXT_COLORS.secondary,
+      color: theme.secondary,
       font: {
         family: FONTS.family,
         size: FONTS.sizeLegend,
@@ -230,6 +257,7 @@ export function buildLegendConfig(overrides = {}) {
  * @returns {Object}
  */
 export function buildRadarScaleConfig(maxValue = 100, overrides = {}) {
+  const theme = getRuntimeChartTheme();
   return {
     r: {
       min: 0,
@@ -241,15 +269,15 @@ export function buildRadarScaleConfig(maxValue = 100, overrides = {}) {
         backdropColor: 'transparent'
       },
       grid: {
-        color: BACKGROUNDS.grid,
+        color: theme.grid,
         lineWidth: 1
       },
       angleLines: {
-        color: BACKGROUNDS.gridStrong,
+        color: theme.gridStrong,
         lineWidth: 1
       },
       pointLabels: {
-        color: TEXT_COLORS.primary,
+        color: theme.primary,
         font: {
           family: FONTS.family,
           size: FONTS.sizeLabel,
@@ -271,14 +299,15 @@ export function buildRadarScaleConfig(maxValue = 100, overrides = {}) {
  * @returns {Object}
  */
 export function buildBarScaleConfig(overrides = {}) {
+  const theme = getRuntimeChartTheme();
   return {
     x: {
       grid: {
-        color: BACKGROUNDS.grid,
+        color: theme.grid,
         lineWidth: 1
       },
       ticks: {
-        color: TEXT_COLORS.secondary,
+        color: theme.secondary,
         font: {
           family: FONTS.family,
           size: FONTS.sizeTick
@@ -291,7 +320,7 @@ export function buildBarScaleConfig(overrides = {}) {
         display: false
       },
       ticks: {
-        color: TEXT_COLORS.primary,
+        color: theme.primary,
         font: {
           family: FONTS.family,
           size: FONTS.sizeLabel,
@@ -312,14 +341,14 @@ export function buildBarScaleConfig(overrides = {}) {
  * @param {string} [bgColor] - Override background color
  * @returns {Object} Chart.js plugin object
  */
-export function createBackgroundPlugin(bgColor = BACKGROUNDS.canvas) {
+export function createBackgroundPlugin(bgColor = null) {
   return {
-    id: 'darkBackground',
+    id: 'chartBackground',
     beforeDraw(chart) {
       const { ctx } = chart;
       ctx.save();
       ctx.globalCompositeOperation = 'destination-over';
-      ctx.fillStyle = bgColor;
+      ctx.fillStyle = bgColor ?? getRuntimeChartTheme().canvas;
       ctx.fillRect(0, 0, chart.width, chart.height);
       ctx.restore();
     }

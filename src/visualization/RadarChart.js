@@ -3,6 +3,7 @@
 import Chart from 'chart.js/auto';
 import {
   ANIMATION,
+  chartAnimationDuration,
   buildLegendConfig,
   buildRadarScaleConfig,
   buildTooltipConfig,
@@ -38,7 +39,7 @@ export function buildRadarChartConfig(radar) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: ANIMATION.drawDuration, easing: ANIMATION.drawEasing },
+      animation: { duration: chartAnimationDuration(), easing: ANIMATION.drawEasing },
       scales: buildRadarScaleConfig(100),
       plugins: {
         legend: buildLegendConfig({ display: false }),

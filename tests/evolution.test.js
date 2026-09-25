@@ -66,9 +66,12 @@ test('每個 Period.radar 軸的 ruleId 可被 ScoringRules 解析、inputs 可�
       assert.ok(axis.assets.length > 0 && axis.liabilities.length > 0);
 
       if (period.system === 'bazi') {
-        const { natalCount, daYunOverlay, natalTotal } = axis.inputs;
-        const expected = Math.round(((natalCount + daYunOverlay) / (natalTotal + 2)) * 100 * 100) / 100;
+        const { natalCount, stemOverlay, branchOverlay, natalTotal, overlayTotal } = axis.inputs;
+        const expected = Math.round(
+          ((natalCount + stemOverlay + branchOverlay) / (natalTotal + overlayTotal)) * 100 * 100,
+        ) / 100;
         assert.equal(axis.value, expected, `${period.label}/${axis.label} 軸值與公式重算不符`);
+        assert.equal(overlayTotal, 5);
       } else {
         const { mainStarBrightness, auxiliaryStarCount, fourTransformBonus } = axis.inputs;
         const expected = Math.round(

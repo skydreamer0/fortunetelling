@@ -13,6 +13,7 @@ import { Solar, Lunar } from 'lunar-javascript';
  * @property {number} day   - Gregorian day (1-31)
  * @property {number} [hour=12]       - Hour in 24h format (0-23)
  * @property {number} [minute=0]      - Minute (0-59)
+ * @property {boolean} [timeKnown=true] - Whether the birth time is known
  * @property {number} [longitude=121.5]  - Longitude for True Solar Time
  * @property {number} [latitude=25.05]   - Latitude for True Solar Time
  * @property {'male'|'female'} [gender='male'] - Gender
@@ -57,6 +58,8 @@ export class BirthData {
   hour;
   /** @type {number} Minute (0-59) */
   minute;
+  /** @type {boolean} Whether time-dependent engines may calculate */
+  timeKnown;
   /** @type {number} Longitude for True Solar Time */
   longitude;
   /** @type {number} Latitude for True Solar Time */
@@ -80,6 +83,7 @@ export class BirthData {
     day,
     hour = 12,
     minute = 0,
+    timeKnown = true,
     longitude = 121.5,
     latitude = 25.05,
     gender = 'male',
@@ -90,6 +94,7 @@ export class BirthData {
     this.day = day;
     this.hour = hour;
     this.minute = minute;
+    this.timeKnown = timeKnown;
     this.longitude = longitude;
     this.latitude = latitude;
     this.gender = gender;
@@ -222,6 +227,9 @@ export class BirthData {
     if (!Number.isInteger(this.minute) || this.minute < 0 || this.minute > 59) {
       throw new Error(`Invalid minute: ${this.minute}. Must be integer between 0 and 59.`);
     }
+    if (typeof this.timeKnown !== 'boolean') {
+      throw new Error('Invalid timeKnown: must be a boolean.');
+    }
     if (typeof this.longitude !== 'number' || this.longitude < -180 || this.longitude > 180) {
       throw new Error(`Invalid longitude: ${this.longitude}. Must be between -180 and 180.`);
     }
@@ -249,6 +257,7 @@ export class BirthData {
       day: this.day,
       hour: this.hour,
       minute: this.minute,
+      timeKnown: this.timeKnown,
       longitude: this.longitude,
       latitude: this.latitude,
       gender: this.gender,

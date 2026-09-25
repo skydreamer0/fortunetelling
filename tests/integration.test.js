@@ -10,7 +10,7 @@ const REQUIRED_INPUT_KEYS = [
 
 const REPORT_KEYS = [
   'asOf', 'engines', 'evolution', 'generatedAt', 'honesty', 'input',
-  'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'version',
+  'insights', 'layers', 'radars', 'schemaVersion', 'scoringRules', 'stateTable', 'summary', 'version',
 ];
 
 const RUNTIME_METADATA_KEYS = new Set([
@@ -107,7 +107,8 @@ test('public analyze contract holds for golden and sourced celebrity charts', ()
     const expected = fixture.expected;
 
     assert.deepEqual(Object.keys(report).sort(), [...REPORT_KEYS].sort(), fixture.id);
-    assert.equal(report.schemaVersion, 1, fixture.id);
+    assert.equal(report.schemaVersion, 3, fixture.id);
+    assert.ok(report.summary.sentences.length >= 3, fixture.id);
     assert.equal(report.asOf, fixture.asOf, fixture.id);
     assert.deepEqual(report.input, fixture.input, fixture.id);
     assert.deepEqual(
