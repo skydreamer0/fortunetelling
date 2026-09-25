@@ -1,0 +1,118 @@
+{
+  "$comment": "Jyotish 規則目錄（ARCHITECTURE-V2 §5、V2-03）。所有 domain／trait／強度／valence 與修正因子都是資料（D-028）；程式碼只判定宮位、大運與過境。版本一經發布不可改參數，只能遞增 version。",
+  "schemaVersion": 1,
+  "system": "jyotish",
+  "conventions": {
+    "houses": "整宮制（whole sign），自 Lagna 起算；過境另自本命月亮星座起算。",
+    "houseSignifications": "宮位象徵依 BPHS 通行說法：1 身、2 財（dhana）/家、4 家宅／不動產／車、5 子女／學習、6 疾病／紛爭、7 伴侶／契約、8 突發／遺產、9 高等教育／遠行、10 事業、11 收益／人脈、12 支出／異地。",
+    "dasha": "Vimshottari，一年 365.25 日；大運（maha）與小運（antar）主星所主管與所落的宮位被啟動。",
+    "sadeSati": "土星過境本命月亮星座之前一宮、本宮、後一宮（第 12／1／2 宮），約 7.5 年。"
+  },
+  "labels": {
+    "domains": {
+      "self": "自我", "career": "事業", "wealth": "財務", "relationship": "關係", "family": "家庭",
+      "movement": "移動", "property": "不動產", "learning": "學習", "contract": "契約", "health": "健康"
+    },
+    "grahas": {
+      "sun": "太陽", "moon": "月亮", "mars": "火星", "mercury": "水星", "jupiter": "木星",
+      "venus": "金星", "saturn": "土星", "rahu": "羅睺", "ketu": "計都"
+    }
+  },
+  "houseSignals": {
+    "1": [{ "domain": "self", "trait": "visibility", "intensity": 0.45, "valence": 0.1 }],
+    "2": [
+      { "domain": "wealth", "trait": "stability", "intensity": 0.5, "valence": 0.2 },
+      { "domain": "family", "trait": "support", "intensity": 0.3, "valence": 0.1 }
+    ],
+    "3": [{ "domain": "movement", "trait": "change", "intensity": 0.3, "valence": 0 }],
+    "4": [
+      { "domain": "property", "trait": "stability", "intensity": 0.5, "valence": 0.2 },
+      { "domain": "family", "trait": "support", "intensity": 0.4, "valence": 0.2 }
+    ],
+    "5": [{ "domain": "learning", "trait": "growth", "intensity": 0.4, "valence": 0.2 }],
+    "6": [
+      { "domain": "health", "trait": "pressure", "intensity": 0.4, "valence": -0.2 },
+      { "domain": "contract", "trait": "conflict", "intensity": 0.3, "valence": -0.2 }
+    ],
+    "7": [
+      { "domain": "relationship", "trait": "connection", "intensity": 0.5, "valence": 0.2 },
+      { "domain": "contract", "trait": "connection", "intensity": 0.4, "valence": 0.1 }
+    ],
+    "8": [
+      { "domain": "health", "trait": "risk", "intensity": 0.4, "valence": -0.2 },
+      { "domain": "wealth", "trait": "change", "intensity": 0.3, "valence": 0 }
+    ],
+    "9": [
+      { "domain": "learning", "trait": "growth", "intensity": 0.4, "valence": 0.2 },
+      { "domain": "movement", "trait": "change", "intensity": 0.3, "valence": 0.1 }
+    ],
+    "10": [
+      { "domain": "career", "trait": "visibility", "intensity": 0.5, "valence": 0.2 },
+      { "domain": "career", "trait": "leadership", "intensity": 0.4, "valence": 0.1 }
+    ],
+    "11": [
+      { "domain": "wealth", "trait": "opportunity", "intensity": 0.5, "valence": 0.3 },
+      { "domain": "relationship", "trait": "connection", "intensity": 0.3, "valence": 0.1 }
+    ],
+    "12": [
+      { "domain": "wealth", "trait": "pressure", "intensity": 0.3, "valence": -0.2 },
+      { "domain": "movement", "trait": "separation", "intensity": 0.4, "valence": 0 }
+    ]
+  },
+  "rules": [
+    {
+      "id": "jyotish.dasha.maha",
+      "version": 1,
+      "scopes": ["decade", "year"],
+      "description": "大運主星（mahadasha lord）啟動其所主管（整宮制，傳統七政）與所落的宮位；每個宮位依 houseSignals 產生訊號。羅睺／計都不主管星座，只看所落宮位。強度 = houseSignals 強度 × 關係因子 × 主星尊貴因子 × 期間因子。",
+      "source": "BPHS 大運章（Vimshottari）；「大運主星依其主管與所在宮位發揮作用」為 Parashari 通行論法。",
+      "params": {
+        "periodFactor": 1.0,
+        "relationFactors": { "rules": 1.0, "occupies": 0.8 },
+        "dignityFactors": { "exalted": 1.2, "moolatrikona": 1.1, "own": 1.1, "neutral": 1.0, "debilitated": 0.8 }
+      }
+    },
+    {
+      "id": "jyotish.dasha.antar",
+      "version": 1,
+      "scopes": ["year", "month"],
+      "description": "小運主星（antardasha lord）以同樣方式啟動其主管與所落宮位，期間因子較低。",
+      "source": "BPHS 小運（antardasha）章；同 jyotish.dasha.maha。",
+      "params": {
+        "periodFactor": 0.7,
+        "relationFactors": { "rules": 1.0, "occupies": 0.8 },
+        "dignityFactors": { "exalted": 1.2, "moolatrikona": 1.1, "own": 1.1, "neutral": 1.0, "debilitated": 0.8 }
+      }
+    },
+    {
+      "id": "jyotish.transit.slow",
+      "version": 1,
+      "scopes": ["year", "month"],
+      "description": "木星、土星過境（gochara）：於時間窗中點取恆星黃道位置，分別自本命月亮與 Lagna 起算落入第幾宮；該宮的 houseSignals 決定領域，特徵由過境行星的模板決定。只啟動 houses 所列宮位。",
+      "source": "Gochara（過境）自月亮與上升起算為通行慣例（Phaladeepika 第 26 章等）。",
+      "params": {
+        "houses": [1, 2, 4, 5, 7, 9, 10, 11],
+        "referenceFactors": { "lagna": 1.0, "moon": 0.8 },
+        "planets": {
+          "jupiter": { "trait": "growth", "intensity": 0.45, "valence": 0.3 },
+          "saturn": { "trait": "pressure", "intensity": 0.45, "valence": -0.2 }
+        }
+      }
+    },
+    {
+      "id": "jyotish.transit.sade_sati",
+      "version": 1,
+      "scopes": ["year", "month"],
+      "description": "Sade Sati：土星過境本命月亮星座的第 12／1／2 宮時，依階段因子產生自我與健康領域的壓力／變動訊號。",
+      "source": "Sade Sati（七年半）為北印度通行論法；階段強度為本專案資料設定。",
+      "params": {
+        "phaseFactors": { "rising": 0.8, "peak": 1.0, "setting": 0.8 },
+        "templates": [
+          { "domain": "self", "trait": "pressure", "intensity": 0.5, "valence": -0.3 },
+          { "domain": "self", "trait": "change", "intensity": 0.35, "valence": 0 },
+          { "domain": "health", "trait": "pressure", "intensity": 0.3, "valence": -0.2 }
+        ]
+      }
+    }
+  ]
+}
