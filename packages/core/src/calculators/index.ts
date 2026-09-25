@@ -23,7 +23,17 @@ export type * from './numerology/calculator';
 export type * from './tzolkin/calculator';
 export type * from './mingGua/calculator';
 export { timeContextToBirthData } from './birthData';
-export { baziCalculator, extractBaziChart, BAZI_CALCULATOR_VERSION } from './bazi/calculator';
+export { baziCalculator, extractBaziChart, pillarStats, toBaziRuleChart, BAZI_CALCULATOR_VERSION } from './bazi/calculator';
+export type { BaziRuleChartWithSequence, ToBaziRuleChartOptions } from './bazi/ruleChart';
+export {
+  computePillars,
+  luckCycles,
+  annualPillars,
+  monthlyPillars,
+  yearMonthAt,
+  liChunUtcMs,
+  solarYearOfAsOf,
+} from './bazi/pillars';
 export { ziweiCalculator, extractZiweiChart, ZIWEI_CALCULATOR_VERSION } from './ziwei/calculator';
 export { numerologyCalculator, extractNumerologyChart, NUMEROLOGY_CALCULATOR_VERSION } from './numerology/calculator';
 export { tzolkinCalculator, extractTzolkinChart, TZOLKIN_CALCULATOR_VERSION } from './tzolkin/calculator';
