@@ -1,6 +1,7 @@
 /** Report page: title block, sticky chapter index and the chapters. */
 
 import { useEffect, useRef, useState } from 'react';
+import { cityById, cityLabel } from '../../lib/cities';
 import { birthLabel, notices } from '../../model/selectors';
 import type { Report } from '../../model/types';
 import { Annual } from './Annual';
@@ -11,15 +12,17 @@ import { Method } from './Method';
 import { Overview } from './Overview';
 import { Periods } from './Periods';
 import { Scenarios } from './Scenarios';
+import { Timeline } from './Timeline';
 
 export const CHAPTERS = [
   { id: 'ch-overview', index: '壹', label: '命格' },
   { id: 'ch-year', index: '貳', label: '本年' },
-  { id: 'ch-domains', index: '參', label: '領域' },
-  { id: 'ch-charts', index: '肆', label: '命盤' },
-  { id: 'ch-periods', index: '伍', label: '運程' },
-  { id: 'ch-scenarios', index: '陸', label: '情境' },
-  { id: 'ch-guidance', index: '柒', label: '建議' },
+  { id: 'ch-timeline', index: '參', label: '時序' },
+  { id: 'ch-domains', index: '肆', label: '領域' },
+  { id: 'ch-charts', index: '伍', label: '命盤' },
+  { id: 'ch-periods', index: '陸', label: '運程' },
+  { id: 'ch-scenarios', index: '柒', label: '情境' },
+  { id: 'ch-guidance', index: '捌', label: '建議' },
   { id: 'ch-method', index: '附', label: '方法' },
 ] as const;
 
@@ -42,6 +45,7 @@ export function ReportView({ report, onBack }: { report: Report; onBack: () => v
   const navRef = useRef<HTMLElement>(null);
   const { date, time } = birthLabel(report.input);
   const { unavailable, warnings } = notices(report);
+  const city = cityById(report.input.cityId);
 
   // Keep the active chapter visible in the horizontally scrolling mobile index.
   useEffect(() => {
@@ -65,6 +69,7 @@ export function ReportView({ report, onBack }: { report: Report; onBack: () => v
           <span>{report.input.calendarType === 'lunar' ? '農曆輸入・' : ''}國曆 {date}</span>
           <span>{time}</span>
           <span>{report.input.gender === 'female' ? '女' : '男'}</span>
+          {city && <span>{cityLabel(city)}</span>}
           <span>基準日 {report.asOf}</span>
         </p>
       </header>
@@ -90,6 +95,7 @@ export function ReportView({ report, onBack }: { report: Report; onBack: () => v
 
       <Overview report={report} />
       <Annual report={report} />
+      <Timeline report={report} />
       <Domains report={report} />
       <Charts report={report} />
       <Periods report={report} />

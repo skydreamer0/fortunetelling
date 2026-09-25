@@ -1,4 +1,4 @@
-/** 柒 建議 — low-stakes balancing prompts (color, direction, numbers). */
+/** 捌 建議 — low-stakes balancing prompts (color, direction, numbers). */
 
 import type { Report } from '../../model/types';
 import { EmptyNote, Section, Sources } from '../ui/primitives';
@@ -6,7 +6,7 @@ import { EmptyNote, Section, Sources } from '../ui/primitives';
 export function Guidance({ report }: { report: Report }) {
   const guidance = report.insights?.guidance;
   return (
-    <Section id="ch-guidance" index="柒" title="建議" lede="只作為生活上的小提醒；色彩、方位與數字不是結果保證。">
+    <Section id="ch-guidance" index="捌" title="建議" lede="只作為生活上的小提醒；色彩、方位與數字不是結果保證。">
       {!guidance ? <EmptyNote>平衡建議資料不足。</EmptyNote> : (
         <>
           <div className="guidance">

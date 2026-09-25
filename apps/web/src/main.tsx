@@ -5,6 +5,7 @@ import './styles/base.css';
 import './styles/intake.css';
 import './styles/report.css';
 import './styles/charts.css';
+import './styles/timeline.css';
 import './styles/print.css';
 
 createRoot(document.getElementById('root')!).render(<App />);
