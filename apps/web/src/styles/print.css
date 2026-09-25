@@ -3,7 +3,7 @@
 @media print {
   :root { --paper: #fff; --paper-raised: #fff; --paper-sunk: #f4f1ea; }
   body { background: #fff; font-size: 10.5pt; }
-  body::before, .masthead, .chapters, .report__actions, .tabs, .colophon, .toasts, .loading, .skip { display: none !important; }
+  body::before, .masthead, .chapters, .report__actions, .tabs, .colophon, .install-hint, .toasts, .loading, .skip { display: none !important; }
   .page { padding: 0; width: 100%; }
   .tabpanel[hidden] { display: block !important; margin-top: 1.5rem; }
   .chapter { break-inside: auto; padding: 1.25rem 0; }

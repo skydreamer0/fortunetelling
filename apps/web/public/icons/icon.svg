@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Full-bleed app icon: iOS and Android apply their own corner mask. Mark stays inside the 80% safe zone. -->
+  <rect width="64" height="64" fill="#B03A26"/>
+  <rect x="15" y="15" width="34" height="34" rx="1.5" fill="none" stroke="#F3EDE1" stroke-width="2.5"/>
+  <path d="M32 21v22M23.5 27.5h17M23.5 36.5h17" stroke="#F3EDE1" stroke-width="3.2" stroke-linecap="square"/>
+</svg>

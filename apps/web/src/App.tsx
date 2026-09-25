@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CompatReport } from './components/compat/CompatReport';
 import { InputView, type Mode } from './components/input/InputView';
 import { ReportView } from './components/report/ReportView';
+import { InstallHint } from './components/ui/InstallHint';
 import { analyze, analyzeCompatibility } from './lib/core';
 import { createReportStore } from './lib/store';
 import { applyTheme, preferredTheme, type Theme } from './lib/theme';
@@ -153,6 +154,8 @@ export function App() {
         {view.kind === 'report' && <ReportView report={view.report} onBack={back} />}
         {view.kind === 'compat' && <CompatReport result={view.result} onBack={back} />}
       </main>
+
+      {view.kind === 'input' && <InstallHint />}
 
       <footer className="colophon">
         <p>計算於本機完成・結果為觀察假說，非決定論</p>
