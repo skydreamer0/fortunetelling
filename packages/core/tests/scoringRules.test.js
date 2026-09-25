@@ -50,7 +50,7 @@ test('重複註冊同 id 規則會拋錯', () => {
 
 test('自訂規則需通過欄位驗證', () => {
   const rules = new ScoringRules();
-  assert.throws(() => rules.addRule({ id: 'bad_rule' }), /missing required field/);
+  assert.throws(() => rules.addRule(/** @type {any} */ ({ id: 'bad_rule' })), /missing required field/);
   assert.throws(() => rules.addRule({
     id: 'bad_range', radarType: 't', axisName: 'a', sourceSystem: 's',
     formula: 'f', description: 'd', inputs: ['x'],

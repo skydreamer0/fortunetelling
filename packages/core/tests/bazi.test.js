@@ -204,6 +204,6 @@ test('八字：B2 asOf 格式與性別驗證錯誤', () => {
   const engine2 = createEngines({ asOf: '2026-07-11' }).find(item => item.id === 'bazi');
   // bypassing BirthData validation to test internal engine strictness
   assert.throws(() => {
-    engine2._compute({ year: 1991, month: 10, day: 5, hour: 14, minute: 0, gender: 'alien' });
+    engine2._compute(/** @type {any} */ ({ year: 1991, month: 10, day: 5, hour: 14, minute: 0, gender: 'alien' }));
   }, /'male' or 'female'/);
 });

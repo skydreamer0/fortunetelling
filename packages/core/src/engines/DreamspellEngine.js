@@ -39,7 +39,7 @@ import { BaseEngine } from '../core/BaseEngine.js';
 /**
  * 13 銀河音階 (Galactic Tones), indexed 1–13. Index 0 is a placeholder so the
  * tone number maps directly to its name.
- * @type {string[]}
+ * @type {readonly string[]}
  */
 export const TONE_NAMES = Object.freeze([
   '', // 0 (unused)
@@ -51,7 +51,7 @@ export const TONE_NAMES = Object.freeze([
  * 20 圖騰 (Solar Seals), indexed 1–20. Each name is prefixed with the seal's
  * inherent Dreamspell colour (紅/白/藍/黃, cycling every 4). Index 0 is a
  * placeholder so the seal number maps directly to its name.
- * @type {string[]}
+ * @type {readonly string[]}
  */
 export const SEAL_NAMES = Object.freeze([
   '', // 0 (unused)
