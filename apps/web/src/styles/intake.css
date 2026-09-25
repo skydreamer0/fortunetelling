@@ -17,11 +17,12 @@
   margin: 1rem 0 1.5rem;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: var(--text-4xl);
+  font-size: clamp(2.25rem, 1rem + 4.2vw, 4.5rem);
   line-height: 1.2;
   letter-spacing: 0.06em;
 }
 
+.intake__title span { display: block; white-space: nowrap; }
 .intake__lede { max-width: 30rem; color: var(--ink-2); }
 
 .intake__systems {

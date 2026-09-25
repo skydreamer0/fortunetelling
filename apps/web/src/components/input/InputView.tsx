@@ -38,7 +38,7 @@ export function InputView({ mode, onModeChange, lastInput, lastPair, recent, onA
       <aside className="intake__intro">
         <p className="eyebrow">命理綜合分析</p>
         <h1 className="intake__title">
-          {mode === 'single' ? <>一個生辰，<br />五種讀法。</> : <>兩張命盤，<br />放在一起讀。</>}
+          {(mode === 'single' ? ['一個生辰，', '五種讀法。'] : ['兩張命盤，', '放在一起讀。']).map(line => <span key={line}>{line}</span>)}
         </h1>
         <p className="intake__lede">
           {mode === 'single'
