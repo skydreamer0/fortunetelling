@@ -9,14 +9,25 @@
  *   mingGua     → L0  本命卦（卦數/卦名/五行/東西四命/最佳方位）
  *   directions  → L0  八宅吉凶方位（生氣天醫延年伏位 / 絕命五鬼六煞禍害）
  *
- * The Kua number uses the millennium-corrected formula and a simplified 立春
- * (≈Feb 4) year boundary; scoring/interpretation of the directions lives in the
- * analysis layer, so this engine only attaches the raw, transparent inputs.
+ * The Kua number uses the millennium-corrected formula and the exact 立春
+ * instant as the year boundary (`calculators/mingGua/mingGua.ts`, replacing the
+ * old Feb-4 approximation of D-017). BirthData carries no timezone yet, so its
+ * civil date/time is read as UTC+8 (Asia/Taipei, same convention as
+ * BaZiEngine); an unknown time is taken as local noon and, if the birth date is
+ * the 立春 day itself, the result is flagged as ambiguous. Scoring/interpretation
+ * of the directions lives in the analysis layer, so this engine only attaches
+ * the raw, transparent inputs.
  *
  * @module engines/MingGuaEngine
  */
 
 import { BaseEngine } from '../core/BaseEngine.js';
+import {
+  MING_GUA_YEAR_BOUNDARY,
+  fixedOffsetCivilToUtcMs,
+  liChunUtcMs,
+  mingGuaFromInstant,
+} from '../calculators/mingGua/mingGua.js';
 
 /**
  * @typedef {import('../core/models/BirthData.js').BirthData} BirthData
@@ -62,6 +73,15 @@ const GUA_INFO = Object.freeze({
  * @type {Record<'east'|'west', string>}
  */
 const GROUP_ZH = Object.freeze({ east: '東四命', west: '西四命' });
+
+/** BirthData has no zone: civil time is read at this fixed offset (Asia/Taipei). */
+const CIVIL_OFFSET_MINUTES = 8 * 60;
+const TIME_CONVENTION = 'UTC+8 (Asia/Taipei civil time; BirthData has no timezone)';
+
+/** @param {number} ms */
+function isoUtc(ms) {
+  return new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
+}
 
 /**
  * Kua number → eight 八宅 directions (compass codes).
@@ -123,29 +143,35 @@ export class MingGuaEngine extends BaseEngine {
    * @returns {SystemResult}
    */
   _compute(birth) {
-    // 1. 立春 year boundary (simplified ≈Feb 4). Births before 立春 belong to the
-    //    previous solar year. This is a fixed Feb-4 approximation; a future
-    //    refinement could read birth.solarTermInfo for the exact 立春 instant.
-    const yearForGua =
-      birth.month < 2 || (birth.month === 2 && birth.day < 4) ? birth.year - 1 : birth.year;
+    // 1. Birth instant: civil date/time read as UTC+8; unknown time → local noon.
+    const hour = birth.timeKnown ? birth.hour : 12;
+    const minute = birth.timeKnown ? birth.minute : 0;
+    const birthUtcMs = fixedOffsetCivilToUtcMs(
+      birth.year,
+      birth.month,
+      birth.day,
+      hour,
+      minute,
+      CIVIL_OFFSET_MINUTES,
+    );
 
-    // 2. Digit reduction of the last two digits down to a single digit (1–9).
-    const d = this.#reduceToSingleDigit((yearForGua % 100).toString());
+    // 2. Exact 立春 year boundary + millennium-corrected Kua number (5 → 2/8).
+    //    (Legacy behaviour: any non-'male' gender uses the female formula.)
+    const { solarYear: yearForGua, guaNumber: kua } = mingGuaFromInstant(
+      birthUtcMs,
+      birth.gender === 'male' ? 'male' : 'female',
+    );
 
-    // 3. Kua number (millennium-corrected).
-    let kua =
-      yearForGua < 2000
-        ? birth.gender === 'male'
-          ? 10 - d
-          : d + 5
-        : birth.gender === 'male'
-          ? 9 - d
-          : d + 6;
-
-    if (kua > 9) kua -= 9;
-    if (kua === 0) kua = 9;
-    // Central 5 has no trigram: males → 2 (坤), females → 8 (艮).
-    if (kua === 5) kua = birth.gender === 'male' ? 2 : 8;
+    // 3. Unknown time on the 立春 day itself: the side of the boundary cannot be
+    //    decided. Noon is used; flag it instead of silently picking a side.
+    const liChunThisYear = liChunUtcMs(birth.year);
+    const liChunLocal = new Date(liChunThisYear + CIVIL_OFFSET_MINUTES * 60_000);
+    const boundaryAmbiguous =
+      !birth.timeKnown &&
+      liChunLocal.getUTCMonth() + 1 === birth.month &&
+      liChunLocal.getUTCDate() === birth.day;
+    // 立春 of the birth's Gregorian year = the boundary this birth is compared to.
+    const liChunUtc = isoUtc(liChunThisYear);
 
     const gua = GUA_INFO[kua];
     const dirs = BAZHAI_DIRECTIONS[kua];
@@ -166,6 +192,8 @@ export class MingGuaEngine extends BaseEngine {
         groupName: GROUP_ZH[gua.group],
         bestDirection: dirs.auspicious.伏位, // 伏位 = the trigram's own seat
         yearForGua,
+        yearBoundary: MING_GUA_YEAR_BOUNDARY,
+        liChunUtc,
       },
     });
 
@@ -185,29 +213,23 @@ export class MingGuaEngine extends BaseEngine {
       guaNumber: kua,
       guaName: gua.name,
       group: GROUP_ZH[gua.group],
+      yearBoundary: MING_GUA_YEAR_BOUNDARY,
+      timeConvention: TIME_CONVENTION,
+      liChunUtc,
+      boundaryAmbiguous,
     };
+
+    if (boundaryAmbiguous) {
+      result.warn(
+        `出生時間未知且出生日為立春當日（立春 ${liChunUtc}）：命卦年以當地正午判定為 ${yearForGua}，` +
+          '實際可能屬於相鄰年份。',
+      );
+    }
 
     return result;
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
-
-  /**
-   * Repeatedly sum the digits of a numeric string until a single digit (1–9)
-   * remains. e.g. "91" → 10 → 1.
-   *
-   * @param {string} digits
-   * @returns {number}
-   */
-  #reduceToSingleDigit(digits) {
-    let sum = digits.split('').reduce((acc, ch) => acc + Number(ch), 0);
-    while (sum > 9) {
-      sum = String(sum)
-        .split('')
-        .reduce((acc, ch) => acc + Number(ch), 0);
-    }
-    return sum;
-  }
 
   /**
    * Turn a `{ 名稱: compassCode }` map into `{ 名稱: { code, zh } }`.
