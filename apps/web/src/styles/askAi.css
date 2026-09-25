@@ -1,0 +1,72 @@
+/* 問 AI 解讀 — copy-paste prompt and paste-back checker (D-035, V5-05). */
+
+.ask__privacy {
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--zhu);
+  background: var(--paper-sunk);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+.ask__privacy strong { margin-right: 0.75rem; color: var(--ink); letter-spacing: 0.1em; }
+
+.ask__controls { display: grid; gap: 1.25rem; margin-bottom: 1.5rem; }
+.ask__question { max-width: 40rem; }
+.ask__status { margin: 0; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.7; }
+.ask__status strong { font-family: var(--font-numeral); font-variant-numeric: lining-nums tabular-nums; color: var(--ink); letter-spacing: 0.05em; }
+
+.ask__textarea {
+  display: block;
+  min-height: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+  font-size: var(--text-md);
+  line-height: 1.7;
+  resize: vertical;
+}
+.ask__textarea:focus { border-color: var(--zhu); }
+.ask__prompt {
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ask__preview { display: grid; gap: 0.5rem; }
+.ask__preview-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; align-items: baseline; }
+.ask__count { color: var(--ink-3); font-size: var(--text-xs); }
+.ask__num { font-family: var(--font-numeral); font-variant-numeric: lining-nums tabular-nums; font-size: var(--text-md); color: var(--ink-2); }
+.ask__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-top: 0.25rem; }
+.ask__copied { color: var(--ink-2); font-size: var(--text-sm); }
+
+.ask__steps { margin: 1.5rem 0; padding-left: 1.5rem; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.9; }
+
+.ask__paste { border-top: 1px solid var(--rule-strong); padding-top: 1rem; }
+.ask__paste summary { cursor: pointer; color: var(--ink-2); margin-bottom: 0.75rem; }
+.ask__paste[open] summary { margin-bottom: 1rem; }
+
+.ask__check { display: grid; gap: 0.75rem; margin-top: 1rem; }
+.ask__summary { margin: 0; color: var(--ink); font-size: var(--text-sm); }
+.ask__flags { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.ask__flag-item { padding: 0.6rem 0; border-bottom: 1px solid var(--rule); display: grid; gap: 0.4rem; }
+.ask__excerpt { margin: 0; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.7; overflow-wrap: anywhere; }
+.ask__para { margin-right: 0.75rem; color: var(--ink-3); font-size: var(--text-xs); letter-spacing: 0.1em; }
+.ask__chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.ask__chip {
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-2);
+  font-size: var(--text-xs);
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.ask__values { color: var(--ink-3); }
+.ask__method { margin: 0; color: var(--ink-3); font-size: var(--text-xs); line-height: 1.8; }
+
+@media (max-width: 36rem) {
+  .ask .segmented__track { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
+  .ask .segmented__option span { min-width: 0; padding: 0.45rem 0.25rem; letter-spacing: 0.1em; }
+}

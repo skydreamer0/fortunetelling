@@ -1,4 +1,4 @@
-# @fortune/ai — AI 解讀層（V5-03／V5-04）
+# @fortune/ai — AI 解讀層（V5-03／V5-04／V5-05）
 
 AI 只做兩件事（ARCHITECTURE-V2 §8、§9）：
 
@@ -67,18 +67,60 @@ const result = await interpret(report, { complete, question: answer });
 - 支援的模型預設開啟伺服器端 refusal fallback（`fallbacks: 'default'`）；最終 `refusal`／`max_tokens` 會丟錯。
 - 預設模型 `claude-fable-5-1`（目前最強的通用模型），可用 `{ model }` 覆寫。
 
-## 為什麼這次不接網站
+## 網站怎麼用 AI：複製 prompt（D-035）
 
-`apps/web` 是靜態網站（GitHub Pages），**無法安全保存 API key**。可選方案：
+`apps/web` 是靜態網站（GitHub Pages），**無法安全保存 API key**，也不架伺服器。決定（D-035）：網站**不呼叫任何模型**，
+而是組出一段自足的 prompt，讓使用者貼到自己慣用的聊天 AI（ChatGPT、Claude、Gemini…）。
 
-| 方案 | 做法 | 優點 | 缺點 |
-|---|---|---|---|
-| A. BYOK（瀏覽器） | 使用者貼自己的 key，只存在 `sessionStorage`；`createAnthropicComplete({ apiKey, dangerouslyAllowBrowser: true })` 直接呼叫 API | 不需伺服器、符合本地優先（D-029）；費用由使用者負擔 | key 暴露在瀏覽器（XSS 風險）；多數使用者沒有 key；payload 由使用者瀏覽器直接送出 |
-| B. Serverless 代理 | Edge/Serverless function 保存 key，只接受 `CompletionRequest`（或更好：只接受 payload，伺服器端自己組 prompt 並跑 `validateSections`） | key 不外流；可做速率限制、快取、濫用防護；可在伺服器端強制後驗證 | 需要部署與費用；要處理個資（只收去識別化 payload，不落地） |
-| C. 不接 AI | 只顯示確定性 Question Engine 結果 | 零風險 | 沒有文字解讀 |
+網站只 import 瀏覽器安全的子路徑 **`@fortune/ai/copy`**（`src/copy.ts` → `copyPrompt.ts`＋`pasteCheck.ts`），
+不會帶進 `client.ts`／`anthropic.ts`，建置產物不含 `@anthropic-ai`（`tests/copyPrompt.test.ts` 守護 import 圖）。
 
-建議：先做 **B**（代理只收去識別化 payload，伺服器端組 prompt＋後驗證＋快取），BYOK 作為進階選項；
-兩者都讓 AI 維持選用（D-029）。決策草案見 D-035（待寫入 DECISIONS.md）。
+```ts
+import { buildCopyPrompt, checkPastedAnswer } from '@fortune/ai/copy';
+
+const prompt = buildCopyPrompt(report, {
+  focus: 'question',                  // 'overview' | 'year' | 'question'
+  question: '2026～2027 什麼時候適合買車？',
+  questionAnswer,                     // 選用：網站本地 answerQuestion() 的結果
+  maxChars: 24_000,                   // 預設；整段文字的長度上限
+});
+prompt.text; prompt.charCount; prompt.truncated; prompt.promptVersion; // 'copy-v1'
+
+const check = checkPastedAnswer(prompt.payload, pastedAnswer); // 或傳整份 report（以完整資料比對）
+check.paragraphs[i].flags; // [{ code, label, values }]
+```
+
+### `buildCopyPrompt`（純函式、決定論）
+
+一整段繁體中文，依序：
+
+1. **角色與規則**（改寫自 §9 系統指令）：只用下方資料、禁止重新排盤（資料裡沒有的干支／星曜／行星不要提）、
+   每個重要結論標〔sig_…〕、三套以上系統同向才說「高共識」、保留矛盾、隨時間變動的內容是傾向不是命定（禁「你是…」「注定」、吉凶）、
+   分數是未校準的研究訊號（D-033）、資料無法回答就直說。
+2. **輸出格式**：Markdown 標題 總覽／本年與未來五年／各領域／共識與分歧／（問題的回答）／資料限制，每段附引用。
+3. **資料**：`buildInterpretationPayload` 的去識別化 JSON（D-029：無姓名、出生地、出生日期時間、經緯度；問題文字中的姓名／地名也會遮蔽）。
+   為了符合聊天輸入長度，依序嘗試：完整命盤 → 命盤摘要 → 不附命盤 → 不附逐月 → 只附訊號；
+   過去月份的訊號不送；每一層都由 `buildInterpretationPayload` 先丟強度最低的訊號（問題的來源訊號優先保留）。
+   省略了什麼會寫在 prompt 裡，並要求 AI 在「資料限制」說明。
+4. **問題**（選填）與網站用 Question Engine 算出的月份排名，標明「確定性計算，不是 AI 產生」。
+
+### `checkPastedAnswer`（貼回檢查，建議性）
+
+網站攔截不到外部 AI 的輸出，所以這裡只**標示**、不刪改。逐段（空行分段；標題行只更新所屬章節）檢查：
+
+| code | 標示 | 條件 |
+|---|---|---|
+| `unknown_citation` | 引用不存在 | 段落中的 `sig_…` 不在資料的 signals |
+| `unverified_term` | 提到資料中沒有的干支／星曜／行星 | 同 `validate.ts` 的 vocab 比對（「紫微斗數」作為系統名不算星曜） |
+| `no_citation` | 沒有引用來源 | 20 字以上的內容段落沒有任何 `sig_…`（「資料限制」等說明段落除外） |
+| `fatalism` | 宿命論用語 | HonestyGuard `L2` 或 `FATALISM_PATTERNS` |
+| `high_consensus_unsupported` | 高共識但少於三套系統 | 寫「高共識」但引用的訊號來自少於 3 套系統 |
+
+### 日後的程式呼叫路徑（仍保留）
+
+Serverless 代理（函式持有 key，只收去識別化 payload，伺服器端組固定 prompt＋`validateSections`＋快取）或
+BYOK（使用者自備 key，只存 `sessionStorage`，`createAnthropicComplete({ apiKey, dangerouslyAllowBrowser: true })`）
+都可以直接用上面的 `interpret()`，強制後驗證照舊；兩者皆為選用層（D-029）。
 
 ## 測試
 

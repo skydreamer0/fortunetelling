@@ -19,6 +19,10 @@ export type {
   BacktestGroup, BacktestMetrics, BacktestResult, BacktestTimeline, LifeEvent, LifeEventCategory, TimeContext,
 } from '@fortune/core';
 
+// V5 Question Engine (deterministic, no AI) + the timeline it reads month signals from.
+export { answerQuestion, buildTimeline, getQuestionCategory, listQuestionCategories } from '@fortune/core';
+export type { QuestionAnswer, QuestionRange, Signal as CoreSignal, SignalWindow } from '@fortune/core';
+
 export const parseIsoDate = (value: string): YMD => core.parseIsoDate(value);
 export const toIsoDate = (date: YMD): string => core.toIsoDate(date);
 export const solarToLunarDate = (date: YMD): LunarInput => core.solarToLunarDate(date);

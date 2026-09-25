@@ -235,11 +235,20 @@ D-016 規定 iztro／lunar-javascript 只能出現在 `engines/`。V1-02 TimeCon
   `buildConsensus(await buildTimelineAsync(ctx, { asOf }))` 取得。
 - `packages/core/package.json` 的 `version` 已同步為 0.5.0。
 
-## D-035 AI 解讀的執行位置 ⏳（提案，待決定）
-`apps/web` 是 GitHub Pages 靜態站，不得內嵌任何 API key。`@fortune/ai` 以注入的 `complete()` 執行，後驗證
-（`validateSections`：引用必須存在、不得出現 payload 以外的干支／星曜／宮名／行星、HonestyGuard、禁宿命論）永遠由程式執行。
-候選接法（未決）：
-1. **Serverless 代理**：函式持有 key，只收去識別化 payload，伺服器端組固定 prompt、呼叫模型、後驗證、快取、限流，不落地保存。
-2. **BYOK**：使用者自備 key，僅存 `sessionStorage`，瀏覽器直連並在用戶端後驗證。
-兩者皆為選用層（D-029）；未設定時 UI 只顯示確定性的 Question Engine 結果。
-預設模型 `claude-fable-5-1`（最強；成本約為 `claude-opus-5` 兩倍，可用 `{ model }` 覆寫）。尚未接入網站。
+## D-035 AI 解讀的執行位置：複製 prompt 到使用者自己的 AI ✅（2026-09-25）
+`apps/web` 是 GitHub Pages 靜態站，不得內嵌任何 API key，也不架伺服器。**決定：網站不呼叫任何模型**，改為組出一段
+自足的 prompt，由使用者複製、貼到自己慣用的聊天 AI（ChatGPT、Claude、Gemini…）。沒有金鑰、沒有伺服器、資料要不要送出由使用者決定（D-029）。
+- **組 prompt**：`@fortune/ai` 的 `buildCopyPrompt(report, { question?, questionAnswer?, focus?, maxChars = 24000 })`，
+  純函式、決定論（`copy-v1`）。內容依序：(a) 由 ARCHITECTURE-V2 §9 系統指令改寫的角色與規則（只用資料、禁止重新排盤、
+  每個重要結論引用〔sig_…〕、三套以上系統同向才說「高共識」、保留矛盾、時間性內容是傾向不是命定、分數未校準（D-033）、
+  資料無法回答就直說）；(b) 輸出格式（總覽／本年與未來五年／各領域／共識與分歧／問題的回答／資料限制）；
+  (c) 去識別化資料：沿用 `buildInterpretationPayload`，以聊天長度為預算，依序精簡命盤細節、逐月資料，並先丟強度最低的訊號，
+  prompt 內明寫省略了什麼；(d) 使用者的問題，以及（若關鍵字對應到問事目錄）網站本地以 `answerQuestion` 算出的月份排名，
+  標明「確定性計算，不是 AI 產生」。問題的分類只用關鍵字比對，不用 AI。
+- **後驗證**：網站攔截不到外部 AI 的輸出，所以後驗證改為**建議性**的「貼回檢查」：`checkPastedAnswer(payload, text)`
+  逐段標示「引用不存在」「提到資料中沒有的干支／星曜／行星」「沒有引用來源」「宿命論用語」（重用 `vocab`／HonestyGuard／
+  `validate` 的規則），只提示、不刪改。`validateSections` 的強制後驗證仍適用於日後由程式呼叫模型的路徑。
+- **瀏覽器端不含 SDK**：網站只 import `@fortune/ai/copy`（`copyPrompt`＋`pasteCheck`），建置產物不得含 `@anthropic-ai`。
+- **日後仍可加**：Serverless 代理（函式持有 key，只收去識別化 payload，伺服器端組固定 prompt、`validateSections`、快取、限流）
+  或 BYOK（使用者自備 key、只存 `sessionStorage`）都可以直接用 `@fortune/ai` 的 `interpret()`；皆為選用層（D-029）。
+  程式呼叫時預設模型 `claude-fable-5-1`（可用 `{ model }` 覆寫）。

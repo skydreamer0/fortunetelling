@@ -284,7 +284,7 @@ function buildQuestion(answer: QuestionAnswer): PayloadQuestion {
 }
 
 /** Replace every occurrence of the sensitive strings inside any string of `value`. */
-function scrub(value: unknown, secrets: string[]): unknown {
+export function scrub(value: unknown, secrets: string[]): unknown {
   if (secrets.length === 0) return value;
   if (typeof value === 'string') {
     let s = value;
@@ -300,7 +300,8 @@ function scrub(value: unknown, secrets: string[]): unknown {
   return value;
 }
 
-function sensitiveStrings(report: ReportLike): string[] {
+/** Name / birthplace-label strings that must never leave the device (D-029), longest first. */
+export function sensitiveStrings(report: ReportLike): string[] {
   const out = new Set<string>();
   const add = (s: unknown) => {
     if (typeof s === 'string' && s.trim().length >= 2) out.add(s.trim());

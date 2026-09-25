@@ -8,4 +8,6 @@ export * from './schema';
 export * from './vocab';
 export * from './validate';
 export * from './client';
+export * from './copyPrompt';
+export * from './pasteCheck';
 export { canonicalJson, sha256Hex } from './canonical';
