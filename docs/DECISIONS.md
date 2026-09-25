@@ -234,3 +234,12 @@ D-016 規定 iztro／lunar-javascript 只能出現在 `engines/`。V1-02 TimeCon
 - `analyze()` 仍為同步，`consensus` 因此只涵蓋八字／紫微／靈數（與 v4 timeline 相同）；jyotish／humanDesign 需以
   `buildConsensus(await buildTimelineAsync(ctx, { asOf }))` 取得。
 - `packages/core/package.json` 的 `version` 已同步為 0.5.0。
+
+## D-035 AI 解讀的執行位置 ⏳（提案，待決定）
+`apps/web` 是 GitHub Pages 靜態站，不得內嵌任何 API key。`@fortune/ai` 以注入的 `complete()` 執行，後驗證
+（`validateSections`：引用必須存在、不得出現 payload 以外的干支／星曜／宮名／行星、HonestyGuard、禁宿命論）永遠由程式執行。
+候選接法（未決）：
+1. **Serverless 代理**：函式持有 key，只收去識別化 payload，伺服器端組固定 prompt、呼叫模型、後驗證、快取、限流，不落地保存。
+2. **BYOK**：使用者自備 key，僅存 `sessionStorage`，瀏覽器直連並在用戶端後驗證。
+兩者皆為選用層（D-029）；未設定時 UI 只顯示確定性的 Question Engine 結果。
+預設模型 `claude-fable-5-1`（最強；成本約為 `claude-opus-5` 兩倍，可用 `{ model }` 覆寫）。尚未接入網站。
