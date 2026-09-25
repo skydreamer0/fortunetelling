@@ -48,9 +48,9 @@
  * @module core/timeContextEngines
  */
 
-import { BirthData } from './models/BirthData.js';
-import { BaZiEngine, TAIPEI_CONVENTION, ELEMENTS_LIMITATION, buildBaziNatalComponents } from '../engines/BaZiEngine.js';
-import { ZiweiEngine } from '../engines/ZiweiEngine.js';
+import { BirthData } from './models/BirthData';
+import { BaZiEngine, TAIPEI_CONVENTION, ELEMENTS_LIMITATION, buildBaziNatalComponents } from '../engines/BaZiEngine';
+import { ZiweiEngine } from '../engines/ZiweiEngine';
 import { computePillars, luckCycles, solarYearOfAsOf, yearGanZhi, type ZiHourConvention } from '../calculators/bazi/pillars';
 import { ResolvedBirthData } from '../calculators/ziwei/calculator';
 import { timeIndexFrom } from '../calculators/ziwei/astrolabe';

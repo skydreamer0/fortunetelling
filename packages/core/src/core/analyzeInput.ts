@@ -20,7 +20,7 @@
  * @module core/analyzeInput
  */
 
-import { BirthData } from './models/BirthData.js';
+import { BirthData } from './models/BirthData';
 import { DEFAULT_BIRTHPLACE, cityToBirthplace, findCity } from '../profile/cities';
 import { TIME_ACCURACIES, validateBirthProfile } from '../profile/validate';
 import type { Birthplace, BirthProfile, TimeAccuracy } from '../profile/types';

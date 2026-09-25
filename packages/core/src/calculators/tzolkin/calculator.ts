@@ -8,7 +8,7 @@
  * @module calculators/tzolkin/calculator
  */
 
-import { DreamspellEngine } from '../../engines/DreamspellEngine.js';
+import { DreamspellEngine } from '../../engines/DreamspellEngine';
 import type { TimeContext } from '../../time/types';
 import { componentValue, timeContextToBirthData } from '../birthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';

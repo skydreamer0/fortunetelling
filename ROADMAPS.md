@@ -95,7 +95,7 @@
 | V1-13 ✅ | **Timeline Engine** | `timeline/`：`asOf` 起 5 年＋當年 12 個月 × 領域分數 0–100，每格附 `topSignals[]`；UI 分四段（低／中／中高／高，切點是資料） | V1-12 |
 | V1-14 ✅ | Report v4 | 新增頂層 `timeContext`、`signals`、`timeline`，其餘沿用 v3；八字／紫微改吃 TimeContext（D-032） | V1-13 |
 | V1-15 ✅ | UI：Timeline 視圖 | 年度卡片（❤️ 感情／💰 財運／💼 事業／🚗 移動）＋月份展開＋點開看來源規則；出生地輸入改為城市選擇 | V1-14 |
-| V1-16 | 核心轉 TypeScript | 新程式直接寫 `.ts`；舊檔搬進 calculators 時一併轉，清掉 31 筆型別錯誤 | 貫穿 |
+| V1-16 ✅ | 核心轉 TypeScript | `packages/core` 已無 `.js`：舊 core／engines／analysis／visualization 與其測試全數轉 `.ts`（純重構，公開匯出名不變；`exports` → `src/index.ts`）。core `tsconfig` 拿掉 `allowJs/checkJs`，改 `strict: true`＋`noUnusedLocals/Parameters`，0 錯誤。行為一致性以 `tests/reportGolden.test.ts` 鎖住（轉換前錄製的 11 份 Report＋2 份合盤，位元相同）。剩餘寬鬆處：`Component.value`／`meta` 仍為 `any`（各引擎自訂 payload），`HonestyGuard.auditReport` 與 LayerClassifier 以寬鬆物件走訪 | 貫穿 |
 
 **V1 完成條件**
 - 黃金測試：台灣 DST 年份（例：1974 年夏季）、時辰交界 ±2 分、節氣交節前後、早晚子時、`time_unknown`

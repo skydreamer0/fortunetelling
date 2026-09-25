@@ -19,7 +19,7 @@
 
 import { astro } from 'iztro';
 import { Lunar, LunarYear, Solar } from 'lunar-javascript';
-import { brightnessScore } from '../../engines/ZiweiEngine.js';
+import { brightnessScore } from '../../engines/ZiweiEngine';
 import type { TimeBasis, TimeContext } from '../../time/types';
 import type {
   ZiweiZiHourConvention,

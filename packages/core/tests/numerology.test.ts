@@ -13,8 +13,8 @@ import {
   calculateChallenges,
   reduce,
 } from '../src/calculators/numerology/numerology';
-import { BirthData, NumerologyEngine, analyze } from '../src/index.js';
-import { reduceNumber } from '../src/engines/NumerologyEngine.js';
+import { BirthData, NumerologyEngine, analyze } from '../src/index';
+import { reduceNumber } from '../src/engines/NumerologyEngine';
 
 const D1995 = { year: 1995, month: 7, day: 16 };
 
@@ -134,7 +134,7 @@ test('personal year/month use the UTC date of asOf, independent of host timezone
     { asOf: '2027-01-01' },
   );
   const numerology = report.engines.find((e: { engineId: string }) => e.engineId === 'numerology');
-  const value = (id: string) => numerology.components.find((c: { id: string }) => c.id === id).value;
+  const value = (id: string) => numerology!.components.find((c: { id: string }) => c.id === id)!.value;
   expect(value('personal_year').year).toBe(2027);
   expect(value('personal_month')).toMatchObject({ year: 2027, month: 1 });
   expect(value('personal_years').fromYear).toBe(2027);

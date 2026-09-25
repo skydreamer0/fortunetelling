@@ -1,0 +1,334 @@
+/**
+ * @fileoverview 生命靈數 (Pythagorean Numerology) calculation engine.
+ *
+ * Derives numerology numbers from a person's birth date and (Latin) name, then
+ * emits them as the project's standard {@link SystemResult} components, with
+ * `category` keys that {@link LayerClassifier} maps to L0–L2 layers:
+ *
+ *   lifePath        → L0  生命靈數（由出生年月日推得，一生核心）
+ *   expression      → L0  表達數（姓名全字母）
+ *   soulUrge        → L0  靈魂數（姓名母音）
+ *   personality     → L0  人格數（姓名子音）
+ *   digitFrequency  → L0  生命靈數九宮格頻次（出生日期數字分布）
+ *   personalYear    → L2  個人流年數（隨年變）
+ *   personalMonth   → L2  個人流月數（隨月變）
+ *   birthdayNumber  → L0  生日數（出生日）
+ *   attitude        → L0  態度數（出生月＋日）
+ *   pinnacles       → L1  巔峰數 ×4（各帶起訖年齡）
+ *   challenges      → L1  挑戰數 ×4（各帶起訖年齡）
+ *   personalYears   → L2  個人流年數序列（自 asOf 年起 9 年）
+ *
+ * The newer components (birthdayNumber … personalYears) are computed by the
+ * pure functions in `calculators/numerology/numerology.ts`.
+ *
+ * All numbers use the Pythagorean reduction, preserving the master numbers
+ * 11/22/33. Scoring/interpretation lives in the analysis layer; this engine only
+ * attaches the raw, transparent numbers those rules need.
+ *
+ * @module engines/NumerologyEngine
+ */
+
+import { BaseEngine } from '../core/BaseEngine';
+import type { BirthData } from '../core/models/BirthData';
+import type { SystemResult } from '../core/models/SystemResult';
+import {
+  calculateAttitude,
+  calculateBirthdayNumber,
+  calculateChallenges,
+  calculatePersonalYears,
+  calculatePinnacles,
+} from '../calculators/numerology/numerology';
+
+/** Number of consecutive years emitted in the `personalYears` component. */
+const PERSONAL_YEARS_SPAN = 9;
+
+/**
+ * Vowels used to split a name into 靈魂數 (vowels) vs 人格數 (consonants).
+ * Note: Y is treated as a CONSONANT here (not a vowel), per the classic
+ * Pythagorean convention adopted by this engine.
+ */
+const VOWELS: ReadonlySet<string> = new Set(['A', 'E', 'I', 'O', 'U']);
+
+/**
+ * Pythagorean letter value for an uppercase A–Z letter.
+ * A=1 … I=9, J=1 … R=9, S=1 … Z=8 (i.e. ((charCode - 65) % 9) + 1).
+ *
+ * @param letter - A single uppercase A–Z character.
+ * @returns Value 1–9.
+ */
+export function letterValue(letter: string): number {
+  return ((letter.charCodeAt(0) - 65) % 9) + 1;
+}
+
+/**
+ * Reduce a number to a single digit by repeatedly summing its decimal digits,
+ * preserving the master numbers 11/22/33 (which are never reduced further).
+ *
+ * @returns A single digit 1–9, or a master number 11/22/33.
+ */
+export function reduceNumber(n: number): number {
+  while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
+    let sum = 0;
+    let rest = n;
+    while (rest > 0) {
+      sum += rest % 10;
+      rest = Math.floor(rest / 10);
+    }
+    n = sum;
+  }
+  return n;
+}
+
+/**
+ * 生命靈數 engine.
+ *
+ * @extends BaseEngine
+ */
+export class NumerologyEngine extends BaseEngine {
+  id = 'numerology';
+  name = '生命靈數';
+  /** Evaluation date for 個人流年/流月; null = "now" at compute time. */
+  declare asOf: Date | string | null;
+
+  /**
+   * @param options.asOf - Evaluation date for the
+   *   time-varying layers (個人流年/流月). Defaults to "now" at compute time.
+   */
+  constructor({ asOf = null }: { asOf?: Date | string | null } = {}) {
+    super();
+    this.asOf = asOf;
+  }
+
+  _compute(birth: BirthData): SystemResult {
+    const result = this.result();
+
+    this.#addLifePath(result, birth);
+    this.#addNameNumbers(result, birth);
+    this.#addDigitFrequency(result, birth);
+    this.#addPersonalPeriods(result, birth);
+    this.#addBirthdayAndAttitude(result, birth);
+    this.#addPinnaclesAndChallenges(result, birth);
+    this.#addPersonalYears(result, birth);
+
+    result.meta = {
+      name: birth.name,
+    };
+
+    return result;
+  }
+
+  // ─── L0: Life path (生命靈數) ────────────────────────────────────────────
+
+  /**
+   * Compute the life-path number from the birth date: reduce each of year,
+   * month and day, sum them, then reduce again (preserving master numbers).
+   */
+  #addLifePath(result: SystemResult, birth: BirthData): void {
+    const number = reduceNumber(
+      reduceNumber(birth.year) + reduceNumber(birth.month) + reduceNumber(birth.day),
+    );
+    result.add({
+      id: 'life_path',
+      name: '生命靈數',
+      category: 'lifePath',
+      value: { number, isMaster: this.#isMaster(number) },
+    });
+  }
+
+  // ─── L0: Name-derived numbers (表達數/靈魂數/人格數) ──────────────────────
+
+  /**
+   * Emit the expression (all letters), soul-urge (vowels) and personality
+   * (consonants) numbers derived from the name. If the name has no A–Z letters,
+   * record a warning and skip all three.
+   */
+  #addNameNumbers(result: SystemResult, birth: BirthData): void {
+    const letters = this.#latinLetters(birth.name);
+    if (letters.length === 0) {
+      result.warn('姓名無拉丁字母，略過表達數/靈魂數/人格數計算');
+      return;
+    }
+
+    let allSum = 0;
+    let vowelSum = 0;
+    let consonantSum = 0;
+    for (const letter of letters) {
+      const value = letterValue(letter);
+      allSum += value;
+      if (VOWELS.has(letter)) vowelSum += value;
+      else consonantSum += value;
+    }
+
+    const expression = reduceNumber(allSum);
+    const soulUrge = reduceNumber(vowelSum);
+    const personality = reduceNumber(consonantSum);
+
+    result.add({
+      id: 'expression',
+      name: '表達數',
+      category: 'expression',
+      value: { number: expression, isMaster: this.#isMaster(expression) },
+    });
+    result.add({
+      id: 'soul_urge',
+      name: '靈魂數',
+      category: 'soulUrge',
+      value: { number: soulUrge, isMaster: this.#isMaster(soulUrge) },
+    });
+    result.add({
+      id: 'personality',
+      name: '人格數',
+      category: 'personality',
+      value: { number: personality, isMaster: this.#isMaster(personality) },
+    });
+  }
+
+  // ─── L0: Digit frequency (九宮格頻次) ────────────────────────────────────
+
+  /**
+   * Count occurrences of each digit 1–9 across the concatenated digits of the
+   * birth year, month and day. The digit 0 is ignored; all of 1–9 are included
+   * in the output (with zero counts).
+   */
+  #addDigitFrequency(result: SystemResult, birth: BirthData): void {
+    const counts: Record<string, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+    const digits = `${birth.year}${birth.month}${birth.day}`;
+    for (const ch of digits) {
+      if (ch >= '1' && ch <= '9') counts[ch]! += 1;
+    }
+    result.add({
+      id: 'digit_frequency',
+      name: '生命靈數九宮格頻次',
+      category: 'digitFrequency',
+      value: counts,
+    });
+  }
+
+  // ─── L2: Personal year / month (個人流年/流月數) ─────────────────────────
+
+  /**
+   * Add the personal-year (L2) and personal-month (L2) numbers relative to the
+   * evaluation date (`asOf`, default now).
+   */
+  #addPersonalPeriods(result: SystemResult, birth: BirthData): void {
+    const target = this.#evaluationDate();
+    // UTC getters: analyze() derives asOf as a UTC date (toISOString), so the
+    // personal year/month must not depend on the host timezone (D-014).
+    const currentYear = target.getUTCFullYear();
+    const currentMonth = target.getUTCMonth() + 1;
+
+    const personalYear = reduceNumber(
+      reduceNumber(birth.month) + reduceNumber(birth.day) + reduceNumber(currentYear),
+    );
+    result.add({
+      id: 'personal_year',
+      name: '個人流年數',
+      category: 'personalYear',
+      value: { number: personalYear, year: currentYear },
+    });
+
+    const personalMonth = reduceNumber(personalYear + currentMonth);
+    result.add({
+      id: 'personal_month',
+      name: '個人流月數',
+      category: 'personalMonth',
+      value: { number: personalMonth, year: currentYear, month: currentMonth },
+    });
+  }
+
+  // ─── L0: Birthday / attitude (生日數/態度數) ─────────────────────────────
+
+  #addBirthdayAndAttitude(result: SystemResult, birth: BirthData): void {
+    const date = { year: birth.year, month: birth.month, day: birth.day };
+    const birthday = calculateBirthdayNumber(date);
+    result.add({
+      id: 'birthday_number',
+      name: '生日數',
+      category: 'birthdayNumber',
+      value: { number: birthday, isMaster: this.#isMaster(birthday) },
+    });
+    const attitude = calculateAttitude(date);
+    result.add({
+      id: 'attitude',
+      name: '態度數',
+      category: 'attitude',
+      value: { number: attitude, isMaster: this.#isMaster(attitude) },
+    });
+  }
+
+  // ─── L1: Pinnacles / challenges (巔峰數/挑戰數) ───────────────────────────
+
+  /**
+   * Four pinnacles and four challenges, each with its age span
+   * (`endAge` is the age the next period begins; `null` = rest of life).
+   */
+  #addPinnaclesAndChallenges(result: SystemResult, birth: BirthData): void {
+    const date = { year: birth.year, month: birth.month, day: birth.day };
+    for (const p of calculatePinnacles(date)) {
+      result.add({
+        id: `pinnacle_${p.index}`,
+        name: `第${p.index}巔峰數`,
+        category: 'pinnacles',
+        value: { ...p, isMaster: this.#isMaster(p.number) },
+      });
+    }
+    for (const c of calculateChallenges(date)) {
+      result.add({
+        id: `challenge_${c.index}`,
+        name: `第${c.index}挑戰數`,
+        category: 'challenges',
+        value: { ...c },
+      });
+    }
+  }
+
+  // ─── L2: Personal-year sequence (個人流年序列) ───────────────────────────
+
+  /**
+   * Personal-year numbers for {@link PERSONAL_YEARS_SPAN} years starting at
+   * the evaluation year (same year source as {@link #addPersonalPeriods}).
+   */
+  #addPersonalYears(result: SystemResult, birth: BirthData): void {
+    const fromYear = this.#evaluationDate().getUTCFullYear();
+    const date = { year: birth.year, month: birth.month, day: birth.day };
+    result.add({
+      id: 'personal_years',
+      name: '個人流年數序列',
+      category: 'personalYears',
+      value: {
+        fromYear,
+        count: PERSONAL_YEARS_SPAN,
+        years: calculatePersonalYears(date, fromYear, PERSONAL_YEARS_SPAN),
+      },
+    });
+  }
+
+  // ─── Helpers ────────────────────────────────────────────────────────────
+
+  /**
+   * Extract the uppercase A–Z letters from a string, ignoring every other
+   * character (spaces, punctuation, digits, non-Latin scripts, etc.).
+   *
+   * @returns Array of single uppercase A–Z characters.
+   */
+  #latinLetters(name: string): string[] {
+    if (typeof name !== 'string') return [];
+    const matches = name.toUpperCase().match(/[A-Z]/g);
+    return matches ?? [];
+  }
+
+  /**
+   * The evaluation date: `asOf` when given (D-014: tests and reproducible runs
+   * always pass it); the "now" fallback is the engine's pre-existing behaviour.
+   */
+  #evaluationDate(): Date {
+    return this.asOf ? new Date(this.asOf) : new Date();
+  }
+
+  /**
+   * Whether a (already reduced) number is a master number 11/22/33.
+   */
+  #isMaster(number: number): boolean {
+    return number === 11 || number === 22 || number === 33;
+  }
+}

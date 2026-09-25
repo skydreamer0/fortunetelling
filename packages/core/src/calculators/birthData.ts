@@ -23,7 +23,7 @@
  * @module calculators/birthData
  */
 
-import { BirthData } from '../core/models/BirthData.js';
+import { BirthData } from '../core/models/BirthData';
 import type { TimeContext, TimeFlag } from '../time/types';
 import type { CalculatorWarningCode, Component } from './types';
 

@@ -9,7 +9,7 @@
  * @module calculators/numerology/calculator
  */
 
-import { NumerologyEngine } from '../../engines/NumerologyEngine.js';
+import { NumerologyEngine } from '../../engines/NumerologyEngine';
 import type { TimeContext } from '../../time/types';
 import { categoryValues, componentValue, normalizeAsOf, timeContextToBirthData } from '../birthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';

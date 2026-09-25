@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { BirthData } from '../src/core/models/BirthData.js';
-import { ZiweiEngine } from '../src/engines/ZiweiEngine.js';
+import { BirthData } from '../src/core/models/BirthData';
+import { ZiweiEngine } from '../src/engines/ZiweiEngine';
 import {
   ZIWEI_CALCULATOR_VERSION,
   addDays,
@@ -258,7 +258,7 @@ describe('flow sequences', () => {
     expect(r.chart.monthlySequence.map((m) => m.lunarYear)).toEqual(Array(12).fill(2026));
     expect(r.chart.decadeSequence.map((d) => d.id)).toEqual(r.chart.decades.map((d) => `daXian_${d.index}`));
     expect(r.chart.decadeSequence.map((d) => d.palaceIndex)).toEqual(r.chart.decades.map((d) => d.palaceIndex));
-    expect(r.chart.decadeSequence.map((d) => d.mutagen)).toEqual(r.chart.decades.map((d) => d.mutagen));
+    expect<unknown>(r.chart.decadeSequence.map((d) => d.mutagen)).toEqual(r.chart.decades.map((d) => d.mutagen));
     // asOf in January → previous lunar year is the "asOf year".
     const jan = ziweiCalculator.calculate(createTimeContext(MEI), { asOf: '2026-01-20' });
     expect(jan.chart.monthlySequence[0].lunarYear).toBe(2025);
@@ -331,7 +331,7 @@ describe('ziwei rules on the V1-05 chart', () => {
     // 丁 year: 太陰化祿, 巨門化忌.
     expect(seq.some((s) => s.target === 'liuNian_2027:祿:太陰')).toBe(true);
     expect(seq.some((s) => s.target === 'liuNian_2027:忌:巨門' && s.trait === 'pressure')).toBe(true);
-    expect(seq.some((s) => s.target.startsWith('liuNian_2027:focus:'))).toBe(true);
+    expect(seq.some((s) => s.target!.startsWith('liuNian_2027:focus:'))).toBe(true);
     // 流年 2026 (to 2027-02-05) overlaps the window via the asOf rules, not duplicated by the sequence rule.
     expect(signals.some((s) => s.ruleId === 'ziwei.year.mutagen')).toBe(true);
     for (const s of signals) expect(s.window).toEqual(YEAR_2027);
@@ -343,7 +343,7 @@ describe('ziwei rules on the V1-05 chart', () => {
     expect(new Set(signals.map((s) => s.ruleId))).toEqual(new Set(['ziwei.month.mutagen', 'ziwei.month.palace_overlay']));
     const months = new Set(signals.flatMap((s) => s.evidence.componentIds.filter((c) => c.startsWith('liuYue_'))));
     expect([...months].sort()).toEqual(['liuYue_2026_06', 'liuYue_2026_07']);
-    const overlay = signals.find((s) => s.ruleId === 'ziwei.month.palace_overlay' && s.target.includes(':overlay'))!;
+    const overlay = signals.find((s) => s.ruleId === 'ziwei.month.palace_overlay' && s.target!.includes(':overlay'))!;
     expect(overlay.evidence.modifiers.some((m) => m.id === 'overlay.month')).toBe(true);
   });
 

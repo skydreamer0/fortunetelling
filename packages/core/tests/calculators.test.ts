@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { analyze } from '../src/core/analyze.js';
+import { analyze } from '../src/core/analyze';
 import {
   CALCULATORS,
   baziCalculator,
@@ -75,8 +75,8 @@ describe('calculator adapters: parity with analyze()', () => {
         const source = r.system === 'bazi' ? civil : report;
         const engine = source.engines.find((e: { engineId: string }) => e.engineId === ENGINE_ID[r.system as keyof typeof ENGINE_ID]);
         expect(engine).toBeDefined();
-        expect(r.components).toEqual(engine.components);
-        expect(r.components.length).toBe(engine.components.length);
+        expect(r.components).toEqual(engine!.components);
+        expect(r.components.length).toBe(engine!.components.length);
       }
     }, 30_000);
   }
@@ -130,7 +130,7 @@ describe('typed charts', () => {
     const tz = tzolkinCalculator.calculate(ctx).chart as TzolkinChart;
     expect(tz.kin).toBeGreaterThanOrEqual(1);
     expect(tz.tone?.number).toBe(((tz.kin! - 1) % 13) + 1);
-    expect(tz.oracle?.destiny.kin).toBe(tz.kin);
+    expect(tz.oracle?.destiny.kin).toBe(tz.kin!);
     expect(tz.castle).not.toBeNull();
 
     const mg = mingGuaCalculator.calculate(ctx);

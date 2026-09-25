@@ -36,8 +36,8 @@ import { evaluateBaziRules } from '../src/rules/bazi/evaluate';
 import { createSignal } from '../src/signals/createSignal';
 import { signalId } from '../src/signals/signalId';
 import { DOMAINS, GRAINS, TRAITS, type Signal, type SignalWindow } from '../src/signals/types';
-import { createEngines } from '../src/index.js';
-import { BirthData } from '../src/core/models/BirthData.js';
+import { createEngines } from '../src/index';
+import { BirthData } from '../src/core/models/BirthData';
 
 const b = (...chars: Branch[]): Placed<Branch>[] => chars.map((char, i) => ({ key: `p${i}`, char }));
 const s = (...chars: Stem[]): Placed<Stem>[] => chars.map((char, i) => ({ key: `p${i}`, char }));
@@ -369,7 +369,7 @@ describe('golden: 伏吟／反吟／歲運並臨', () => {
 
 describe('real BaZiEngine output: 1991-10-05 14:00 female, asOf 2026-07-11', () => {
   const engine = createEngines({ asOf: '2026-07-11' }).find((e: any) => e.id === 'bazi');
-  const result = engine.run(new BirthData({ year: 1991, month: 10, day: 5, hour: 14, minute: 0, gender: 'female' }));
+  const result = engine!.run(new BirthData({ year: 1991, month: 10, day: 5, hour: 14, minute: 0, gender: 'female' }));
   const componentIds = new Set(result.components.map((c: any) => c.id));
   const chart = fromBaziComponents(result);
 

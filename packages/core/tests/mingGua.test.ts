@@ -7,9 +7,9 @@ import {
   mingGuaNumber,
   mingGuaSolarYear,
   reduceToSingleDigit,
-} from '../src/calculators/mingGua/mingGua.js';
-import { MingGuaEngine } from '../src/engines/MingGuaEngine.js';
-import { BirthData } from '../src/core/models/BirthData.js';
+} from '../src/calculators/mingGua/mingGua';
+import { MingGuaEngine } from '../src/engines/MingGuaEngine';
+import { BirthData } from '../src/core/models/BirthData';
 
 const HOUR_MS = 3_600_000;
 const CST = 8 * 60;

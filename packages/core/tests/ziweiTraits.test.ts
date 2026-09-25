@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { BirthData } from '../src/core/models/BirthData.js';
-import { brightnessScore, ZiweiEngine } from '../src/engines/ZiweiEngine.js';
+import { BirthData } from '../src/core/models/BirthData';
+import { brightnessScore, ZiweiEngine } from '../src/engines/ZiweiEngine';
 import { DOMAINS, GRAINS, TRAITS, signalId, type Signal, type SignalWindow } from '../src/signals/index';
 import traitsJson from '../src/traits/ziwei.json';
 import modifiersJson from '../src/traits/ziweiModifiers.json';
@@ -186,8 +186,8 @@ describe('modifier math', () => {
     const xian = qiSha(chartWith('陷', null), 'change');
     const fMiao = miao.evidence.modifiers.find((m) => m.id === 'brightness.廟')!.factor;
     const fXian = xian.evidence.modifiers.find((m) => m.id === 'brightness.陷')!.factor;
-    expect(fMiao).toBe(brightnessScore('廟'));
-    expect(fXian).toBe(brightnessScore('陷'));
+    expect(fMiao).toBe(brightnessScore('廟')!);
+    expect(fXian).toBe(brightnessScore('陷')!);
     expect(miao.intensity / xian.intensity).toBeCloseTo(fMiao / fXian, 5);
     // identical id: brightness is a modifier, not part of the identity
     expect(miao.id).toBe(xian.id);
