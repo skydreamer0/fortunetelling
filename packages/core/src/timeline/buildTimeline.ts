@@ -38,6 +38,7 @@ import { createAstrolabe, monthlySequence, yearlySequence } from '../calculators
 import { ziweiCalculator } from '../calculators/ziwei/calculator';
 import { toZiweiRuleChart } from '../calculators/ziwei/ruleChart';
 import { evaluateBaziRules } from '../rules/bazi/evaluate';
+import { evaluateBaziTenGodRules } from '../rules/bazi/evaluateTenGods';
 import { evaluateZiweiRules } from '../rules/ziwei/evaluate';
 import { aggregateSignals, type SignalConflict, type SystemAggregate } from '../signals/aggregate';
 import { DEFAULT_BAND_CUTS, toBand, type Band, type BandCuts } from '../signals/bands';
@@ -216,10 +217,15 @@ function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: st
         const monthPool = [...monthlyPillars(asOfYear - 1), ...monthlyPillars(asOfYear)];
         evaluators.bazi = (w) => {
           const y = Number(w.start.slice(0, 4));
-          if (w.grain === 'year') return evaluateBaziRules(chartFor(y), w);
+          // 關係規則（合沖刑害破…）＋十神／神煞規則（V1-10b：財星、驛馬、財庫、桃花、沖動）
+          const both = (chart: Parameters<typeof evaluateBaziRules>[0]) => [
+            ...evaluateBaziRules(chart, w),
+            ...evaluateBaziTenGodRules(chart, w),
+          ];
+          if (w.grain === 'year') return both(chartFor(y));
           const m = dominantPeriod(monthPool, w);
           if (!m) return [];
-          return evaluateBaziRules({ ...chartFor(m.solarYear), monthly: [{ start: m.start, end: m.end, ganZhi: m.ganZhi }] }, w);
+          return both({ ...chartFor(m.solarYear), monthly: [{ start: m.start, end: m.end, ganZhi: m.ganZhi }] });
         };
         break;
       }

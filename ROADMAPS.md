@@ -90,6 +90,7 @@
 | V1-09 ✅ | **Signal 模型** | `signals/`：`Signal` 型別、決定性 id 雜湊、`Domain`／`Trait` 封閉列舉 | — |
 | V1-10 ✅ | **八字 Rule Engine** | `rules/bazi/`＋`catalog.json`：天干五合、生剋、六合、六沖、三合、三會、刑、害、破、伏吟、反吟、歲運並臨；範圍涵蓋原局、原局×大運、原局×流年、原局×流月 | V1-04, V1-09 |
 | V1-11 ✅ | **紫微特徵權重＋規則** | `traits/ziwei.json`（星曜→trait vector，帶版本）；修正鏈：宮位×旺陷×煞曜×四化，記進 `evidence.modifiers`；規則包含四化飛入、大限／流年疊宮、三方四正煞曜、天馬、祿存 | V1-05, V1-09 |
+| V1-10b ✅ | 八字十神／神煞規則 | 十神（財星、官殺、食傷、印星、比劫）、驛馬、財庫、桃花、沖動 → 補上 wealth／contract／movement／property 領域 | V1-10 |
 | V1-12 ✅ | 單系統彙整（含 Numerology 流年／流月規則） | `aggregateSignals()` 第 1 步（系統內 noisy-OR）＋第 2 步（系統權重，先固定） | V1-10, V1-11 |
 | V1-13 ✅ | **Timeline Engine** | `timeline/`：`asOf` 起 5 年＋當年 12 個月 × 領域分數 0–100，每格附 `topSignals[]`；UI 分四段（低／中／中高／高，切點是資料） | V1-12 |
 | V1-14 | Report v4 | 新增頂層 `timeContext`、`signals`、`timeline`，其餘沿用 v3 | V1-13 |
