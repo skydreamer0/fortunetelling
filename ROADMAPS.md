@@ -109,7 +109,7 @@
 | V2-01 ✅ | 接入 Swiss Ephemeris WASM（瀏覽器可跑，D-027）；ephemeris 檔延遲載入 |
 | V2-02 ✅ | `calculators/astro`：Sun～Saturn、Rahu/Ketu、Ascendant，UT 輸入 |
 | V2-03 | Jyotish：ayanamsa 設定、D1/D9/D10、Nakshatra/Pada、House Lord、Vimshottari Maha/Antar Dasha（精確到日）、Transit |
-| V2-04 | Human Design：Personality／Design（88° 求根）、Gate/Line、Channel、Center、Type、Authority、Profile、Definition、Incarnation Cross |
+| V2-04 🟡 | Human Design（計算器完成，待與公開計算器交叉驗證）：Personality／Design（88° 求根）、Gate/Line、Channel、Center、Type、Authority、Profile、Definition、Incarnation Cross |
 | V2-05 | Jyotish／HD 規則 → Signal（Dasha 主星、2H/4H/7H/10H/11H 過運等） |
 
 **完成條件**：與至少兩個公開計算器交叉驗證，≥ 20 個案例。
