@@ -133,7 +133,7 @@
 | V4-01 | `apps/api` + Postgres（Supabase）；資料表：`users`、`birth_profiles`（RLS、欄位加密、一鍵刪除）、`chart_snapshots`、`signals`、`rules`／`trait_weights`（版本化，只增不改）、`annual_cycles`／`monthly_cycles`、`interpretations`、`life_events`、`backtest_runs` |
 | V4-02 | 帳號與同步；**沒登入也能用**（D-029 本地優先） |
 | V4-03 | `life_events` 輸入 UI（例：2018 畢業／北上、2022 化療藥局、2024 離職、2025 藥廠、2026 回台南／KAM） |
-| V4-04 | Backtesting：命中定義事先固定（事件落在個人時間軸前 25%）、以隨機時間窗作基準線、樣本 < 30 只顯示「樣本不足」、訓練與驗證分開 |
+| V4-04 | Backtesting（同時決定 D-033 懸而未決的：系統權重、四段切點、未發訊號系統是否計 0）：命中定義事先固定（事件落在個人時間軸前 25%）、以隨機時間窗作基準線、樣本 < 30 只顯示「樣本不足」、訓練與驗證分開 |
 | V4-05 | 權重調整只產生新版 `trait_weights`，舊報告可用舊版本重現 |
 
 **完成條件**：回驗報告可重現（同版本、同樣本 → 同命中率）。
