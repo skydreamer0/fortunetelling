@@ -79,9 +79,13 @@ iztro / lunar-javascript 只允許在 `engines/` 出現。EvolutionCalculator �
 「全部大限/大運序列」必須由引擎以 components 形式輸出（任務 B2、D3），
 analysis 層只做聚合計算。這保持 analysis 可獨立測試、可被替換。
 
-## D-017 命卦立春邊界：Feb-4 近似 ✅（已知精度債，V1 由 D-026 TimeContext 償還）
-未用精確節氣時刻。`BirthData.solarTermInfo` 已有資料可日後精修；
-生於 2/3–2/5 的使用者結果需標註不確定性。暫不排任務。
+## D-017 命卦立春邊界：~~Feb-4 近似~~ → 精確立春 ✅（V1-08 已償還，2026-09-25）
+原本以 2/4 為界。V1-08 起改用 `time/solarTerms.ts` 的精確立春時刻（`calculators/mingGua/mingGua.ts`），
+出生時刻恰在立春時刻視為新年。
+- BirthData 尚無時區，MingGuaEngine 暫以 UTC+8（Asia/Taipei）解讀民用時間，與 BaZiEngine 一致；
+  改吃 TimeContext 後移除此假設（D-026）。
+- 時間未知時以當地正午判定；若出生日正是立春當天，發出警告並設 `meta.boundaryAmbiguous: true`。
+- 影響：每年 2/4 00:00 與精確立春之間（數小時到近兩天）出生者的命卦可能改變，其餘不變。
 
 ## D-018 B3 十神顯隱採三態與可稽核明細 ✅
 tenGodsContext 的 presence 採「顯／隱／無」三態。
