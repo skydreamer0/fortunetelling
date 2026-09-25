@@ -119,6 +119,8 @@ function periodMutagenHits(
   return hits;
 }
 
+const OVERLAY_KIND: Record<string, string> = { 大限: 'decade', 流年: 'year', 流月: 'month' };
+
 interface OverlayParams {
   overlayFactor: number;
   overlayDomain: Domain;
@@ -147,7 +149,7 @@ function periodOverlayHits(chart: ZiweiRuleChart, period: ZiweiPeriod, p: Overla
   }
 
   const overlay: Modifier = {
-    id: `overlay.${periodKind === '大限' ? 'decade' : 'year'}`,
+    id: `overlay.${OVERLAY_KIND[periodKind] ?? 'year'}`,
     factor: p.overlayFactor,
     reason: `${period.label}${periodKind}命宮疊在原局${host.name}，原局星曜特徵以因子 ${p.overlayFactor} 疊加到本期${domainLabel(p.overlayDomain)}領域`,
   };
@@ -329,6 +331,35 @@ const yearOverlay = defineRule('ziwei.year.palace_overlay', (e) => ({
       : [],
 }));
 
+const yearSequence = defineRule('ziwei.year.sequence', (e) => ({
+  emits: [],
+  emitsFrom: 'catalog params.templates / params.overlay (same model as ziwei.year.mutagen / ziwei.year.palace_overlay)',
+  match: (chart, window) =>
+    chart.yearlySequence
+      // The asOf year is already covered by ziwei.year.mutagen / ziwei.year.palace_overlay.
+      .filter((y) => overlaps(y, window) && !(chart.yearly && chart.yearly.lunarYear != null && y.lunarYear === chart.yearly.lunarYear))
+      .flatMap((y) => [
+        ...periodMutagenHits(chart, y, e.params.templates, ''),
+        ...periodOverlayHits(chart, y, e.params.overlay as OverlayParams, '流年'),
+      ]),
+}));
+
+const monthMutagen = defineRule('ziwei.month.mutagen', (e) => ({
+  emits: [],
+  emitsFrom: 'catalog params.templates; domain from the natal palace of the transformed star',
+  match: (chart, window) =>
+    chart.monthlySequence.filter((m) => overlaps(m, window)).flatMap((m) => periodMutagenHits(chart, m, e.params.templates, '')),
+}));
+
+const monthOverlay = defineRule('ziwei.month.palace_overlay', (e) => ({
+  emits: [],
+  emitsFrom: 'catalog params.focus + traits/ziwei.json of the overlaid palace',
+  match: (chart, window) =>
+    chart.monthlySequence
+      .filter((m) => overlaps(m, window))
+      .flatMap((m) => periodOverlayHits(chart, m, e.params as OverlayParams, '流月')),
+}));
+
 /** All implemented (status: active) ziwei rules, in catalog order. */
 export const ZIWEI_RULES: readonly ZiweiRule[] = [
   natalStarTraits,
@@ -339,4 +370,7 @@ export const ZIWEI_RULES: readonly ZiweiRule[] = [
   lucun,
   yearMutagen,
   yearOverlay,
+  yearSequence,
+  monthMutagen,
+  monthOverlay,
 ];
