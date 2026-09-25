@@ -1,0 +1,111 @@
+{
+  "$comment": "紫微修正鏈資料（ARCHITECTURE-V2 §5.1、D-028）：最終強度 = 基礎 trait × 宮位 × 旺陷 × 四化 × 煞曜（× 規則專屬因子）；每個因子都記入 signal.evidence.modifiers。舊版本不可修改，只能新增版本。各區段說明見 notes。",
+  "version": 1,
+  "notes": {
+    "palaceDomains": "十二宮 → signals DOMAINS。factor 為宮位修正（主對應 1.0；次要對應 < 1）。DOMAINS 沒有人際／社群領域，僕役（交友）宮以 relationship 次要對應（0.6）表示，與夫妻宮的伴侶關係區隔。福德宮慣例兼看精神狀態與享受，拆為 self 0.7＋health 0.4。父母宮部分流派兼看文書、考試，以 learning 0.3 表示。兄弟、子女、父母皆歸 family。",
+    "palaceAliases": "iztro 在不同語系／版本的宮名別稱 → 本表標準宮名。",
+    "brightness": "D-005：亮度對照表唯一出處為 ZiweiEngine.BRIGHTNESS_WEIGHTS（廟7/旺6/得5/利4/平3/不2/陷1，÷7 正規化）。本表不另建對照；修正因子直接取引擎部件上的 brightnessScore（廟 1.0 … 陷 0.14）。星曜無亮度時不套用（不記錄）。",
+    "traitValence": "各 trait 的預設傾向（§6 valence：支撐 + / 壓力 − / 0 純變動）。這是方向標記，不是好壞評價。",
+    "mutagen": "星曜帶四化時的修正：factor 乘在強度上（四化使星曜特質更突出），valenceShift 加在傾向上。慣例：祿主增益流通、權主掌控主導、科主名聲條理、忌主執著與阻滯。",
+    "shaSamePalace": "煞曜同宮：宮內每多一顆六煞（不含星曜自身），強度 ×factorPerStar、傾向 +valenceShiftPerStar；最多計 maxStars 顆。慣例：星曜與煞同宮時特質表現受干擾、波動加大。",
+    "emptyPalaceBorrow": "空宮（無十四主星）慣例借對宮主星安星論斷，力量打折。",
+    "sanfang": "三方四正會照權重：本宮 1.0；對宮與兩個三合宮 0.5。宮位索引 0–11 依地支順序（0=寅），對宮 = i+6，三合 = i+4、i+8（mod 12）。",
+    "labels": "evidence.text 用的中性繁中標籤。"
+  },
+  "palaceDomains": {
+    "命宮": [{ "domain": "self", "factor": 1.0 }],
+    "兄弟": [{ "domain": "family", "factor": 1.0 }],
+    "夫妻": [{ "domain": "relationship", "factor": 1.0 }],
+    "子女": [{ "domain": "family", "factor": 1.0 }],
+    "財帛": [{ "domain": "wealth", "factor": 1.0 }],
+    "疾厄": [{ "domain": "health", "factor": 1.0 }],
+    "遷移": [{ "domain": "movement", "factor": 1.0 }],
+    "僕役": [{ "domain": "relationship", "factor": 0.6 }],
+    "官祿": [{ "domain": "career", "factor": 1.0 }],
+    "田宅": [{ "domain": "property", "factor": 1.0 }],
+    "福德": [
+      { "domain": "self", "factor": 0.7 },
+      { "domain": "health", "factor": 0.4 }
+    ],
+    "父母": [
+      { "domain": "family", "factor": 1.0 },
+      { "domain": "learning", "factor": 0.3 }
+    ]
+  },
+  "palaceAliases": {
+    "交友": "僕役",
+    "事業": "官祿",
+    "官禄": "官祿",
+    "仆役": "僕役",
+    "财帛": "財帛",
+    "迁移": "遷移"
+  },
+  "brightness": {
+    "source": "component.brightnessScore",
+    "definition": "ZiweiEngine.BRIGHTNESS_WEIGHTS[brightness] / 7"
+  },
+  "traitValence": {
+    "change": 0,
+    "growth": 0.3,
+    "stability": 0.2,
+    "pressure": -0.4,
+    "opportunity": 0.3,
+    "connection": 0.2,
+    "separation": -0.2,
+    "visibility": 0.1,
+    "leadership": 0.1,
+    "risk": -0.2,
+    "independence": 0,
+    "support": 0.3,
+    "conflict": -0.3
+  },
+  "mutagen": {
+    "祿": { "factor": 1.2, "valenceShift": 0.3 },
+    "權": { "factor": 1.25, "valenceShift": 0.1 },
+    "科": { "factor": 1.1, "valenceShift": 0.2 },
+    "忌": { "factor": 1.3, "valenceShift": -0.5 }
+  },
+  "shaSamePalace": {
+    "stars": ["擎羊", "陀羅", "火星", "鈴星", "地空", "地劫"],
+    "factorPerStar": 0.9,
+    "valenceShiftPerStar": -0.1,
+    "maxStars": 3
+  },
+  "emptyPalaceBorrow": {
+    "factor": 0.8
+  },
+  "sanfang": {
+    "self": 1.0,
+    "opposite": 0.5,
+    "trine": 0.5
+  },
+  "labels": {
+    "domains": {
+      "self": "自我",
+      "career": "事業",
+      "wealth": "財務",
+      "relationship": "關係",
+      "family": "家庭",
+      "movement": "移動",
+      "property": "居所資產",
+      "learning": "學習",
+      "contract": "契約",
+      "health": "健康"
+    },
+    "traits": {
+      "change": "變動",
+      "growth": "成長",
+      "stability": "穩定",
+      "pressure": "壓力",
+      "opportunity": "機會",
+      "connection": "連結",
+      "separation": "分離",
+      "visibility": "能見度",
+      "leadership": "主導",
+      "risk": "風險",
+      "independence": "獨立",
+      "support": "支援",
+      "conflict": "摩擦"
+    }
+  }
+}
