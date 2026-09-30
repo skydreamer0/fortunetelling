@@ -87,6 +87,11 @@ Monorepo（Bun workspaces）：`packages/core`（`@fortune/core`，框架無關�
 
 規劃與實作的差距、V1–V5 里程碑與任務拆解，請參閱 [`ROADMAPS.md`](./ROADMAPS.md)。
 
+**🧭 方向（草案）**
+- 程式先把能確定的部分算完（排盤、規則、訊號、共識、逐月分數），AI 不重新排盤。
+- AI 在本機（Claude 桌面版）經 MCP 按需查詢與比對，再對話下結論；網站 UI 與匯出檔並列為出口。
+- 完整說明與里程碑（M0.5～M5）見 [`ROADMAP-DRAFT.md`](./ROADMAP-DRAFT.md)，狀態為草案，待確認。
+
 ## 📝 授權條款
 
 本專案供學習與個人分析使用。
