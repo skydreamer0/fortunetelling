@@ -31,7 +31,8 @@ export type EphemerisState = 'not_initialized' | 'moshier';
 export const EXPERIMENTAL_SYSTEMS: readonly string[] = Object.freeze(['jyotish', 'humanDesign']);
 
 export type VersionInfo = {
-  asOf: string;
+  /** `null` for time-independent answers (e.g. listing profiles). */
+  asOf: string | null;
   coreVersion: string;
   profileSchemaVersion: number;
   reportSchemaVersion: number;
@@ -47,8 +48,8 @@ export type VersionInfo = {
 const versionOf = (catalog: { version?: number; schemaVersion?: number }): number =>
   catalog.version ?? catalog.schemaVersion ?? 0;
 
-export function buildVersionInfo(opts: { asOf: string; ephemeris?: EphemerisState }): VersionInfo {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(opts.asOf)) throw new Error(`asOf must be 'YYYY-MM-DD' (got ${JSON.stringify(opts.asOf)})`);
+export function buildVersionInfo(opts: { asOf: string | null; ephemeris?: EphemerisState }): VersionInfo {
+  if (opts.asOf !== null && !/^\d{4}-\d{2}-\d{2}$/.test(opts.asOf)) throw new Error(`asOf must be 'YYYY-MM-DD' (got ${JSON.stringify(opts.asOf)})`);
   return {
     asOf: opts.asOf,
     coreVersion: VERSION,
