@@ -1,0 +1,112 @@
+# Roadmap 草案 — 程式先算完，AI 在對話中查詢與比對
+
+> 狀態：**草案，待確認**（2026-09-30）。確認後會取代 [ROADMAPS.md](ROADMAPS.md) 的「核心原則」與 V5，V1–V4 的既有成果全部保留。
+
+## 一、方向校正
+
+**產品形狀**：圖形介面（整理與呈現命盤資料）＋ 本機 AI 對話（下結論、討論）。
+
+```
+輸入（生日／時間／出生地／性別）
+  → 程式：把「能邏輯化的」全部算完
+       TimeContext → Calculators → Rule Engine → Signal → 共識／矛盾 → Timeline → 問事排名
+  → 兩條出口
+       ① 圖形介面（網站，給人看）
+       ② 本機 MCP server／匯出檔（給 Claude 桌面版查詢，給 AI 討論）
+  → 你在 Claude 桌面版對話，AI 按需查詢、比對、下結論
+```
+
+**原則**
+
+1. **能確定的交給程式**：排盤、規則、訊號、共識、逐月分數。AI 不重新排盤、不心算。
+2. **AI 負責最後一段**：跨系統比對、綜合判斷、回答你的問題、對話追問。
+3. **AI 按需查詢，不是一次吞下全部**：模組越多越不能全部塞進 prompt。每個模組只是多一個工具。
+4. **本機優先**：資料留在你的電腦，不需要 API key、不需要伺服器、不需要去識別化。
+5. **保留矛盾、標示不確定**：系統間方向相反就並列；分數未校準（D-033）要讓 AI 知道，不能當成準確度。
+
+## 二、現況（不動的部分）
+
+| 區塊 | 狀態 |
+|---|---|
+| 時間層、profile、七套 calculator | ✅ 保留（Jyotish／HD 待交叉驗證） |
+| 八字／紫微規則、Signal、共識、Timeline、問事、回驗 | ✅ 保留，視為「給 AI 的結構化訊號」 |
+| 網站 UI（十二宮盤、時間軸、合盤、人生事件） | ✅ 保留 |
+| `packages/ai` 的去識別化、24000 字預算、Anthropic client、section 後驗證 | 🟡 為「網站呼叫 API／複製貼上」設計，不符合本機對話用法 → M3 整理 |
+| 「複製 prompt」 | 🟡 保留為沒有桌面版時的備援 |
+
+## 三、里程碑
+
+### M1 — 本機 MCP server（核心，最優先）
+
+新增 `packages/mcp`（`@fortune/mcp`），包裝 `@fortune/core`，以 stdio 跑在本機，Claude 桌面版當工具使用。
+
+| ID | 任務 | 產出 |
+|---|---|---|
+| M1-01 | 套件骨架＋Bun 執行、`claude_desktop_config.json` 設定範例 | `packages/mcp`、`docs/MCP-SETUP.md` |
+| M1-02 | 命盤存取：`load_profile`（讀本機 JSON）、`list_profiles` | 不經網站也能用 |
+| M1-03 | 查詢工具：`get_chart(system)`、`get_time_context`、`get_flags`（時辰／節氣邊界、DST、時間未知） | 回傳強型別 JSON，附欄位說明 |
+| M1-04 | 訊號工具：`list_signals({domain, system, range, minStrength})`、`get_signal(id)`（附 evidence／modifiers） | AI 可追溯每個結論 |
+| M1-05 | 時間軸與共識：`get_timeline(year)`、`get_consensus(year)`、`list_conflicts` | 共識與矛盾直接查得到 |
+| M1-06 | 問事：`answer_question({category, range})`、`list_question_categories` | 直接重用 `answerQuestion` |
+| M1-07 | 合盤：`compare_profiles(a, b)` | 重用 `analyzeCompatibility` |
+| M1-08 | 資料品質提示：每個回應附 `caveats`（分數未校準、時間精度、哪些系統未參與） | 避免 AI 過度自信 |
+| M1-09 | 測試：工具輸出與 `analyze()` 位元一致、決定論、未知 id 回結構化錯誤 | `bun test` 覆蓋 |
+
+**完成條件**：在 Claude 桌面版問「我 2027 年哪幾個月適合買車？」，它會呼叫 `answer_question`＋`list_signals`，答案引用的訊號 id 都真實存在。
+
+### M2 — 匯出檔（備援，也是離線／分享用）
+
+| ID | 任務 |
+|---|---|
+| M2-01 | 網頁「匯出給 Claude」：輸出資料夾 `chart.json`／`signals.json`／`timeline.json`／`consensus.json`，**不砍資料、不去識別化** |
+| M2-02 | 隨附 `README.md`（給 AI 看）：欄位說明、哪些是確定性計算、哪些分數未校準、建議的分析步驟 |
+| M2-03 | 網頁匯出檔與 MCP 輸出共用同一份序列化（單一來源） |
+
+### M3 — 整理 AI 層（`packages/ai`）
+
+| ID | 任務 |
+|---|---|
+| M3-01 | 標明兩條路：`copy`（備援）與 `mcp`（主線）；`client`／`anthropic` 改為選用，不進主線 |
+| M3-02 | 去識別化與字數預算改為「可選」，本機匯出預設關閉 |
+| M3-03 | 保留後驗證的詞彙檢查（`vocab`／HonestyGuard），改成獨立工具 `check_answer`，你貼回 AI 的回答可自行檢查 |
+| M3-04 | 系統指令改寫為「對話助手」版本：可用工具、如何引用訊號、何時說高共識、如何呈現矛盾 |
+
+### M4 — 網站對接
+
+| ID | 任務 |
+|---|---|
+| M4-01 | 「問 AI」章節改為兩個入口：**用 Claude 桌面版討論**（顯示 MCP 設定步驟＋匯出）、**複製 prompt**（備援） |
+| M4-02 | 網站的資料可一鍵存成本機 profile，供 MCP 讀取 |
+| M4-03 | （選用）網站顯示「AI 引用了哪些訊號」：貼回結論後用 M3-03 對照 |
+
+### M5 — 補齊計算端（沿用原 roadmap，優先序在 M1 之後）
+
+| ID | 任務 |
+|---|---|
+| M5-01 | V2-03／04：Jyotish、Human Design 與公開計算器交叉驗證（≥ 20 案例） |
+| M5-02 | V2-05：Jyotish／HD 規則 → Signal，補上後自動出現在 MCP 工具 |
+| M5-03 | 新模組進場流程：calculator → rules → Signal，**不需改 AI 層**，MCP 工具自動涵蓋 |
+| M5-04 | V4 回驗：累積多人資料（n ≥ 30）後才調權重（維持 D-033） |
+
+## 四、暫停或取消
+
+- V3-04（Next.js 遷移）：暫停，沒有需求。
+- V4-01／02（資料庫、帳號同步）：暫停；本機優先，MCP 直接讀本機檔案。
+- V5-06（網站內直接呼叫模型／BYOK）：取消，被 MCP 取代。
+
+## 五、執行順序
+
+```
+M1-01 → M1-02 → M1-03 → M1-04 → M1-05 → M1-06 → M1-07 → M1-08 → M1-09
+                              ↘ M2（共用序列化）
+M1 完成 → M3 → M4        M5 可與 M1 並行（不同區塊）
+```
+
+第一個可用版本：M1-01 ～ M1-06，加上設定說明。
+
+## 六、需要你確認
+
+1. **MCP 為主、匯出檔為備援**，這個順序對嗎？
+2. **姓名、生日不去識別化**（本機使用），可以嗎？
+3. 資料庫與帳號同步先暫停，是否同意？
+4. Claude 桌面版的實際使用情境：只有你一個人用，還是之後要給別人？（影響要不要做安裝包與多人 profile 管理）
