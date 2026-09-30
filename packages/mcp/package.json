@@ -8,6 +8,7 @@
   "exports": { ".": "./src/index.ts" },
   "scripts": {
     "start": "bun run src/bin.ts",
+    "add-profile": "bun run src/cli/addProfile.ts",
     "test": "bun test",
     "typecheck": "tsc -p tsconfig.json"
   },
