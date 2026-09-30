@@ -74,15 +74,15 @@ compare_profiles({ profileIdA, profileIdB, asOf })
 
 | ID | 任務 |
 |---|---|
-| M1-01 | 套件骨架、Bun 執行、`claude_desktop_config.json` 範例、`docs/MCP-SETUP.md` |
-| M1-02 | profile 存取：`list_profiles`、`get_profile`（讀固定目錄，依 M0.5 契約） |
-| M1-03 | `get_chart`（summary／full）、時間 flags（時辰／節氣邊界、DST、時間未知） |
-| M1-04 | `list_signals`（limit／cursor）、`get_signal` |
-| M1-05 | `get_timeline`、`get_consensus`、`list_conflicts`（range／domain 篩選） |
-| M1-06 | `answer_question`、`list_question_categories`（重用 `answerQuestion`） |
-| M1-07 | `compare_profiles`（重用 `analyzeCompatibility`） |
-| M1-08 | 統一回應外殼：`asOf`、`versions`、`caveats`、大小上限 |
-| M1-09 | **canonical contract 測試**：同一 `profile + asOf + config + 規則版本` 的 canonical payload 一致；sync 與 async 路徑各自 golden；未知 id 回結構化錯誤 |
+| M1-01 ✅ | 套件骨架、Bun 執行、`claude_desktop_config.json` 範例、`docs/MCP-SETUP.md`（另有 `add-profile` 指令，網站匯出在 M4-02 前的過渡） |
+| M1-02 ✅ | profile 存取：`list_profiles`、`get_profile`（讀固定目錄，依 M0.5 契約） |
+| M1-03 ✅ | `get_chart`（summary／full）、時間 flags（時辰／節氣邊界、DST、時間未知） |
+| M1-04 ✅ | `list_signals`（limit／cursor）、`get_signal` |
+| M1-05 ✅ | `get_timeline`、`get_consensus`、`list_conflicts`（range／domain 篩選） |
+| M1-06 ✅ | `answer_question`、`list_question_categories`（重用 `answerQuestion`） |
+| M1-07 ✅ | `compare_profiles`（重用 `analyzeCompatibility`） |
+| M1-08 ✅ | 統一回應外殼：`asOf`、`versions`、`caveats`、大小上限 |
+| M1-09 ✅ | **canonical contract 測試**：同一 `profile + asOf + config + 規則版本` 的 canonical payload 一致；sync 與 async 路徑各自 golden；未知 id 回結構化錯誤 |
 
 **完成條件**：在 Claude 桌面版問「我 2027 年哪幾個月適合買車？」，Claude 先以 `profileId` 呼叫 `answer_question`，需要細節再呼叫 `list_signals`／`get_signal`。所有引用的 signal id 必須存在；回應附 `asOf`、版本與 caveats；同一輸入與版本重跑得到相同 canonical 結果。
 
@@ -173,3 +173,15 @@ M5 與 M1～M4 並行
 - `buildVersionInfo({ asOf })`：core／schema／calculator／catalog 版本、ephemeris 狀態、`experimentalSystems`（Jyotish／HD）。
 
 **已知差異**：網站 `lifeEvents` 現行的 key（`profileKeyOf`）包含姓名，與 `chartFingerprint` 不同。人生事件的 key 遷移放到 M4-02 一起處理，這一步不動網站。
+
+## 九、M1 實作紀錄
+
+位置：`packages/mcp`，說明 `docs/MCP-SETUP.md`。64 個測試（含真實 stdio 客戶端的端到端驗收）。
+
+- 12 個工具：`list_profiles`、`get_profile`、`get_chart`、`get_time_context`、`list_signals`、`get_signal`、`get_timeline`、`get_consensus`、`list_conflicts`、`answer_question`、`list_question_categories`、`compare_profiles`。
+- 姓名與出生資料預設不回傳（`get_profile` 需明確 `includeName`／`includeBirthData`；`compare_profiles` 只回 A／B 與衍生值）。
+- 回應外殼 `{ asOf, versions, caveats, data }`；超過 60000 字元回 `response_too_large` 與縮小範圍提示，不截斷。
+- **驗收抓到的缺口（已修）**：`answer_question` 引用的月份訊號，起初 `get_signal` 查不到（兩邊各算各的）。現在月份訊號由 `Analysis` 統一計算並快取，`get_signal` 在 asOf 年 −5 ～ +10 內都能解析；`answer_question` 的區間必須落在此範圍，否則回 `invalid_args`。回歸測試：問事答案引用的每個 id 都必須可取得。
+- core 補匯出 `initEphemeris`、`jyotishCalculator`、`humanDesignCalculator`（仍標 `experimental`，不進 `CALCULATORS`）。
+
+**尚未做**：`import_profile` 工具（M0.5-03 的 MCP 端匯入，目前只讀固定目錄）；`get_timeline` 預設不含逐月（帶 `range` 才含）。

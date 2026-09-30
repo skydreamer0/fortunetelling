@@ -6,6 +6,7 @@
 
 import {
   buildConsensus,
+  buildTimeline,
   buildTimelineAsync,
   createTimeContext,
   type ConsensusSummary,
@@ -27,7 +28,22 @@ export type Analysis = {
   consensus: ConsensusSummary;
   /** All signals of all cells, deduped by id, sorted by id. */
   signals: Signal[];
+  /** Month signals of one calendar year ('YYYY-MM' → signals), one `buildTimeline` per year, cached. */
+  monthSignals(year: number): Map<string, Signal[]>;
+  /** Any signal this analysis (or a question answer) can cite; looks through the resolvable years. */
+  findSignal(id: string): Signal | undefined;
 };
+
+/**
+ * Years (relative to asOf's year) whose month signals can be computed and therefore resolved by
+ * `get_signal`. `answer_question` ranges must stay inside it so every cited id stays fetchable.
+ */
+export const RESOLVABLE_YEARS = Object.freeze({ before: 5, after: 10 });
+
+export function resolvableYearRange(asOf: string): { min: number; max: number } {
+  const year = Number(asOf.slice(0, 4));
+  return { min: year - RESOLVABLE_YEARS.before, max: year + RESOLVABLE_YEARS.after };
+}
 
 const ASOF_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -63,6 +79,42 @@ export class Analyzer {
       for (const domain of cell.domains) for (const signal of domain.topSignals) byId.set(signal.id, signal);
     }
     const signals = [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-    return { file, warnings, asOf, ctx, timeline, consensus: buildConsensus(timeline), signals };
+    const asOfYear = Number(asOf.slice(0, 4));
+    const { min, max } = resolvableYearRange(asOf);
+    const systems = timeline.systems;
+    const byYear = new Map<number, Map<string, Signal[]>>();
+    const monthSignals = (year: number): Map<string, Signal[]> => {
+      let months = byYear.get(year);
+      if (!months) {
+        const tl = buildTimeline(ctx, {
+          asOf: year === asOfYear ? asOf : `${year}-01-01`,
+          years: 1,
+          includeMonths: true,
+          topSignalsPerDomain: Infinity,
+          systems,
+        });
+        months = new Map();
+        for (const cell of tl.months) {
+          const cellSignals = new Map<string, Signal>();
+          for (const domain of cell.domains) for (const signal of domain.topSignals) cellSignals.set(signal.id, signal);
+          months.set(cell.window.start.slice(0, 7), [...cellSignals.values()]);
+        }
+        byYear.set(year, months);
+      }
+      return months;
+    };
+    const timelineIndex = new Map(signals.map(signal => [signal.id, signal]));
+    const findSignal = (id: string): Signal | undefined => {
+      const direct = timelineIndex.get(id);
+      if (direct) return direct;
+      for (let year = min; year <= max; year++) {
+        for (const list of monthSignals(year).values()) {
+          const hit = list.find(signal => signal.id === id);
+          if (hit) return hit;
+        }
+      }
+      return undefined;
+    };
+    return { file, warnings, asOf, ctx, timeline, consensus: buildConsensus(timeline), signals, monthSignals, findSignal };
   }
 }
