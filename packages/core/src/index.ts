@@ -79,3 +79,6 @@ export * from './questions/index';
 export * from './consensus/index';
 // ⑧ 人生事件與回驗（V4-03／V4-04／V4-05）
 export * from './backtest/index';
+
+// M0.5: portable profile file, canonical JSON, version block (D-037)
+export * from './portable/index';

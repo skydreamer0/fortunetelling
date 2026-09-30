@@ -1,6 +1,6 @@
 # Roadmap 草案 v2 — 程式先算完，AI 在對話中查詢與比對
 
-> 狀態：**草案，待確認**（2026-09-30）。已整合 PR #8 的審閱修正。確認後取代 [ROADMAPS.md](ROADMAPS.md) 的「核心原則」與 V5，V1–V4 的既有成果全部保留。
+> 狀態：**已確認，進行中**（2026-09-30）。已整合 PR #8 的審閱修正；第七節五個問題已定案；M0.5 核心契約已實作。確認後取代 [ROADMAPS.md](ROADMAPS.md) 的「核心原則」與 V5，V1–V4 的既有成果全部保留。
 
 ## 一、方向
 
@@ -45,10 +45,10 @@
 
 | ID | 任務 | 產出 |
 |---|---|---|
-| M0.5-01 | `ProfileSchemaV1`：`profileId`（使用者可命名的穩定 slug，如 `sky`）＋`chartFingerprint`（規範化出生欄位的雜湊）＋版本欄位 | 單一 profile 格式 |
-| M0.5-02 | canonical serializer：鍵序固定、排除 `generatedAt`／執行時間等非決定性欄位 | MCP、網站匯出、測試共用 |
-| M0.5-03 | import／export：網站下載 `.fortune.json`；MCP 讀固定 profiles 目錄或 `import_profile` | 瀏覽器 → 本機的橋 |
-| M0.5-04 | 版本資訊：`coreVersion`、`profileSchemaVersion`、規則／catalog version、`asOf`、ephemeris 狀態 | 每份輸出都帶 |
+| M0.5-01 ✅ | `ProfileSchemaV1`：`profileId`（使用者可命名的穩定 slug，如 `sky`）＋`chartFingerprint`（規範化出生欄位的雜湊）＋版本欄位 | 單一 profile 格式 |
+| M0.5-02 ✅ | canonical serializer：鍵序固定、排除 `generatedAt`／執行時間等非決定性欄位 | MCP、網站匯出、測試共用 |
+| M0.5-03 🟡 | import／export（檔案格式與 parse 完成；網站下載按鈕在 M4-02、MCP 讀取在 M1-02）：網站下載 `.fortune.json`；MCP 讀固定 profiles 目錄或 `import_profile` | 瀏覽器 → 本機的橋 |
+| M0.5-04 ✅ | 版本資訊：`coreVersion`、`profileSchemaVersion`、規則／catalog version、`asOf`、ephemeris 狀態 | 每份輸出都帶 |
 
 **決定**：`profileId` 不是內容雜湊。改一個時辰不應換掉「這個人」；`chartFingerprint` 才是內容雜湊，供人生事件等「依命盤」的資料當 key（沿用 `lifeEvents` 現況）。
 
@@ -155,10 +155,21 @@ M5 與 M1～M4 並行
 
 第一個可用版本：M0.5 ＋ M1-01～M1-06 ＋ 設定說明；Jyotish／HD 在驗證完成前標 `experimental`。
 
-## 七、待確認
+## 七、已確認事項（2026-09-30）
 
-1. MCP 為主、匯出檔為備援，順序對嗎？
-2. 本機不去識別化、進對話的資料姓名預設不回傳，可以嗎？
-3. 資料庫與帳號同步先暫停，同意嗎？
-4. 之後只有你自己用，還是要給別人？（影響安裝包與多人 profile 管理）
-5. `profileId` 用「使用者命名的 slug」＋另設 `chartFingerprint`，這個做法可以嗎？
+1. MCP 為主、匯出檔為備援。
+2. 本機不去識別化；進對話的資料姓名預設不回傳。
+3. 資料庫與帳號同步先暫停。
+4. 使用情境：**只有你自己用**（不做安裝包與多人 profile 管理；之後要給別人再開新里程碑）。
+5. `profileId` 為使用者命名的 slug，另設 `chartFingerprint`。
+
+## 八、M0.5 實作紀錄
+
+位置：`packages/core/src/portable/`，測試 `packages/core/tests/portable.test.ts`。
+
+- `canonicalStringify`／`canonicalize`：鍵序固定、排除 `generatedAt`、拒收 NaN／函式／Date。與 `signals/signalId` 既有的寬鬆 `canonicalJson` 並存（訊號 id 依賴後者，不動）。
+- `chartFingerprint`：`cf1-` + FNV-1a 64（沿用 `fnv1a64Hex`）。只含出生日期、時間、精度、性別、經緯度（4 位小數）、時區；**不含姓名與地名標籤**。
+- `.fortune.json`：`createProfileFile`／`serializeProfileFile`／`parseProfileFile`；檔案無時間戳，輸出位元穩定；指紋缺漏或過期時重算並回警告。
+- `buildVersionInfo({ asOf })`：core／schema／calculator／catalog 版本、ephemeris 狀態、`experimentalSystems`（Jyotish／HD）。
+
+**已知差異**：網站 `lifeEvents` 現行的 key（`profileKeyOf`）包含姓名，與 `chartFingerprint` 不同。人生事件的 key 遷移放到 M4-02 一起處理，這一步不動網站。
