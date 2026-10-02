@@ -8,11 +8,8 @@
 
 ## 0. 一句話
 
-**網站自己算出確定的命盤資料，AI 只讀結果做解讀。**
-排盤計算（deterministic）與解讀（generative）完全拆開；AI 任何時候都不得重新排盤。
-
-（草案，見 ROADMAP-DRAFT.md，D-036）新方向：**程式先算完能確定的部分，AI 在本機對話中經 MCP 按需查詢與比對，不重新排盤。**
-下方流程圖末端新增 MCP server／匯出檔的出口，與網站 UI 並列。
+**程式先算完能確定的部分，AI 在本機對話中經 MCP 按需查詢與比對，不重新排盤。**（D-036，原寫「AI 只讀結果做解讀」，已修訂；見 [ROADMAPS.md](../ROADMAPS.md)）
+排盤計算（deterministic）與解讀（generative）完全拆開；AI 任何時候都不得重新排盤。流程圖末端有兩個並列出口：網站 UI，與本機 MCP server／匯出檔。
 
 ```
 使用者輸入（生日／時間／出生地／性別／姓名）
@@ -34,8 +31,8 @@
         ▼
 ⑦ AI 解讀層 ──────────────────────────── 只收 ① ～ ⑥ 的 JSON，必須引用 source
         │
-        ├──► （草案，D-036）出口 A：網站 UI（給人看）
-        ├──► （草案，D-036）出口 B：本機 MCP server／匯出檔 → Claude 桌面版對話，按需查詢
+        ├──► （D-036）出口 A：網站 UI（給人看）
+        ├──► （D-036）出口 B：本機 MCP server／匯出檔 → Claude 桌面版對話，按需查詢
         ▼
 ⑧ Backtesting（life_events 回驗 → 調整規則權重）
 ```
@@ -49,7 +46,7 @@
 5. **保留矛盾**（新，D-023）：跨系統彙整時，系統間方向相反要標成 `conflict`，不得平均抵銷後假裝中性。
 6. **誠實語氣**（延續 D-007/HonestyGuard）：L0「你是」、L1/L2「這段時期」、L3「在某情境下」。AI 輸出也要通過 HonestyGuard。
 7. **本地優先**（延續 ROADMAPS 原則 1，D-029）：`core` 必須能在瀏覽器內獨立運作（不需伺服器、不需資料庫）。資料庫與 AI 都是**選用**的上層。
-8. （草案，見 ROADMAP-DRAFT.md，D-036）**MCP 只包裝 core**：不自行重算第二套邏輯；工具輸出有大小上限，並附 `asOf`／`versions`／`caveats`。原則 1（core 不得呼叫 LLM、AI 不得重新排盤）不變。
+8. （見 ROADMAPS.md，D-036）**MCP 只包裝 core**：不自行重算第二套邏輯；工具輸出有大小上限，並附 `asOf`／`versions`／`caveats`。原則 1（core 不得呼叫 LLM、AI 不得重新排盤）不變。
 
 ## 2. Repo 結構（Bun workspaces，D-024/D-025）
 
@@ -71,7 +68,7 @@ packages/
       report/              現行 analyze()／Report v3 → v4 相容層
       index.ts             唯一公開 API
   ai/                      @fortune/ai — prompt 組裝、輸出 schema 驗證、引用檢查
-  mcp/                     （草案，見 ROADMAP-DRAFT.md，D-036）@fortune/mcp — 本機 stdio MCP server，
+  mcp/                     （見 ROADMAPS.md，D-036）@fortune/mcp — 本機 stdio MCP server，
                            只包裝 core；stateless，每次呼叫都帶 profileId 與 asOf
 apps/
   web/                     目前的 Vite UI（遷移期），V3 以後評估換 Next.js
@@ -256,7 +253,7 @@ questions/catalog.json：vehicle_purchase → domains [wealth, property, movemen
 
 ## 9. ⑦ AI 解讀層（`packages/ai`）
 
-（草案，見 ROADMAP-DRAFT.md，D-036）主線改為「Claude 桌面版經 MCP 對話」：AI 按需呼叫 `@fortune/mcp` 的工具查詢 signal、共識與矛盾，並在對話中比對、下結論。
+（見 ROADMAPS.md，D-036）主線改為「Claude 桌面版經 MCP 對話」：AI 按需呼叫 `@fortune/mcp` 的工具查詢 signal、共識與矛盾，並在對話中比對、下結論。
 下方的 `interpret()`、Anthropic client、section 後驗證改為**選用**；「複製 prompt」保留為沒有桌面版時的備援。以下原有內容未刪除。
 
 **輸入**只有：`{ profile(去識別化), charts{…}, signals[], timeline, question? }`。
@@ -317,6 +314,6 @@ backtest_runs         -- 規則版本、樣本數、命中率、日期
 | **V4** | 資料庫、帳號、life_events、回驗 | 回驗報告可重現 |
 | **V5** | Question Engine + AI 解讀層 | 後驗證攔截率測試：故意餵入錯誤干支的輸出必須被丟棄 |
 
-（草案，見 ROADMAP-DRAFT.md，D-036）新方向的 M0.5～M5（Profile 契約、本機 MCP server、匯出／匯入、整理 AI 層、網站對接、計算端驗證）見 [ROADMAP-DRAFT.md](../ROADMAP-DRAFT.md)；狀態為**草案，待確認**，確認前上表仍為現行規劃。
+上表 V1–V5 為歷史里程碑。現行規劃為 M0.5～M5（Profile 契約✅、本機 MCP server✅、匯出／匯入、整理 AI 層、網站對接、計算端驗證），見 [ROADMAPS.md](../ROADMAPS.md)（D-036）。
 
 各任務細節會在每個里程碑開始時寫進 [TASKS.md](TASKS.md)，格式沿用現行的 HARNESS_SPEC。
