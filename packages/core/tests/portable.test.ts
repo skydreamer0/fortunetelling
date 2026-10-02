@@ -126,4 +126,7 @@ describe('buildVersionInfo', () => {
     expect(canonicalStringify(buildVersionInfo({ asOf: '2026-09-30' }))).toBe(canonicalStringify(buildVersionInfo({ asOf: '2026-09-30' })));
     expect(() => buildVersionInfo({ asOf: '2026/09/30' })).toThrow();
   });
+  test('asOf may be null for time-independent answers', () => {
+    expect(buildVersionInfo({ asOf: null }).asOf).toBeNull();
+  });
 });
