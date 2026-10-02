@@ -254,8 +254,8 @@ D-016 規定 iztro／lunar-javascript 只能出現在 `engines/`。V1-02 TimeCon
   或 BYOK（使用者自備 key、只存 `sessionStorage`）都可以直接用 `@fortune/ai` 的 `interpret()`；皆為選用層（D-029）。
   程式呼叫時預設模型 `claude-fable-5-1`（可用 `{ model }` 覆寫）。
 
-## D-036 方向校正：程式先算完，AI 在本機對話中經 MCP 按需查詢與比對 ✅（2026-09-30，草案，待確認）
-細節見 [ROADMAP-DRAFT.md](../ROADMAP-DRAFT.md)。**決定**：程式先把能邏輯化的部分全部算完（排盤、規則、訊號、共識、時間軸），
+## D-036 方向校正：程式先算完，AI 在本機對話中經 MCP 按需查詢與比對 ✅（2026-09-30，已確認）
+細節見 [ROADMAPS.md](../ROADMAPS.md)。**決定**：程式先把能邏輯化的部分全部算完（排盤、規則、訊號、共識、時間軸），
 AI 在使用者本機的對話（Claude 桌面版）中，經本機 MCP server 按需查詢、跨系統比對、下結論；不需要 API key，也不需要伺服器。
 - **MCP 只包裝 core、不重算**：工具直接重用 `analyze`／`buildTimeline`／`buildConsensus`／`answerQuestion`／`analyzeCompatibility`，
   不自行實作第二套邏輯；工具輸出有大小上限，明細（evidence／modifiers）按需取。
@@ -265,8 +265,8 @@ AI 在使用者本機的對話（Claude 桌面版）中，經本機 MCP server �
 - **取代 V5-06**：網站內直接呼叫模型（BYOK）取消；D-035 的複製 prompt 保留為沒有桌面版時的備援。
 - D-033 不動：分數仍未校準，回應的 `caveats` 必須讓 AI 知道。
 
-## D-037 Profile 契約：`profileId`、`chartFingerprint`、canonical serializer、stateless MCP ✅（2026-09-30，草案，待確認）
-避免 MCP、網站匯出、測試各自產生不同格式（ROADMAP-DRAFT M0.5）。
+## D-037 Profile 契約：`profileId`、`chartFingerprint`、canonical serializer、stateless MCP ✅（2026-09-30，已確認）
+避免 MCP、網站匯出、測試各自產生不同格式（ROADMAPS M0.5）。
 - **`profileId`**：使用者命名的穩定 slug（如 `sky`），**不是內容雜湊**——改一個時辰不應換掉「這個人」。
 - **`chartFingerprint`**：規範化出生欄位的雜湊，是內容識別；供人生事件等「依命盤」的資料當 key（沿用 `lifeEvents` 現況）。
 - **canonical serializer**：鍵序固定，排除 `generatedAt` 等非決定性欄位；MCP、網站匯出、測試共用同一份，確保同一
@@ -275,14 +275,14 @@ AI 在使用者本機的對話（Claude 桌面版）中，經本機 MCP server �
 - **橋接方式**：網站以 `.fortune.json` 匯出，MCP 讀固定的 profiles 目錄（或 `import_profile`）；**不假設網站能寫本機任意檔案**。
 - 每份輸出帶版本資訊：`coreVersion`、`profileSchemaVersion`、規則／catalog version、`asOf`、ephemeris 狀態。
 
-## D-038 隱私分兩層：本機 profile 完整，進入 AI 對話的資料去識別 ✅（2026-09-30，草案，待確認）
+## D-038 隱私分兩層：本機 profile 完整，進入 AI 對話的資料去識別 ✅（2026-09-30，已確認）
 延伸 D-029。工具結果一被使用就進了 AI 上下文，所以分兩層處理。
 - **本機 profile**：保留完整資料（姓名、生日、出生地）。
 - **進入 AI 對話的工具結果**：**姓名預設不回傳**；以 `profileId` 與 derived data 為主，原始出生資料只在明確需要時由工具提供。
 - **匯出分兩種 preset**：`local-full`（完整資料）與 `share-redacted`（移除姓名與非必要出生地標籤）。
 - **去識別化單一來源**：`share-redacted` 與 `packages/ai` 的 `buildInterpretationPayload` 共用同一份去識別化邏輯，不另寫一套。
 
-## D-039 未驗證系統標 `experimental`，交叉驗證後才升級 ✅（2026-09-30，草案，待確認）
+## D-039 未驗證系統標 `experimental`，交叉驗證後才升級 ✅（2026-09-30，已確認）
 Jyotish 與 Human Design 的 calculator 與 `rules.ts` 已存在，但尚未與公開計算器交叉驗證，且不在 `CALCULATORS` registry／同步 `analyze()` 內。
 - **驗證門檻**：與至少兩個公開計算器交叉驗證、至少 20 個案例，才可視為已驗證。
 - **驗證前**：標 `experimental`；MCP 回應附 `verified: false` 與 caveat，不與已驗證系統用相同信心標示，也不因此當作高共識的一票而不加說明。

@@ -1,6 +1,6 @@
 # 本機 MCP server 設定（Claude 桌面版）
 
-> 對應 ROADMAP-DRAFT.md M1。MCP 只包裝 `@fortune/core`：排盤、規則、訊號、共識都由程式算完，Claude 只負責查詢、比對與對話。資料全部留在本機。
+> 對應 ROADMAPS.md M1。MCP 只包裝 `@fortune/core`：排盤、規則、訊號、共識都由程式算完，Claude 只負責查詢、比對與對話。資料全部留在本機。
 
 ## 1. 安裝
 
