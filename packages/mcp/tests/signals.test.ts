@@ -126,8 +126,58 @@ describe('get_timeline', () => {
       expect(c.window.start.slice(0, 4) <= '2026' && c.window.end.slice(0, 4) >= '2026').toBe(true);
       expect(c.domains.map((d: any) => d.domain)).toEqual(['career']);
     }
-    expect(json.data.months.length).toBeGreaterThan(0);
+    // range filters year cells only; month cells need the explicit months parameter
+    expect(json.data.months).toEqual([]);
     expect(y).toBeDefined();
+  }, 120_000);
+  test('months defaults to []; months:{start,end} returns that range month by month (any resolvable year)', async () => {
+    expect((await fx.call('get_timeline', base)).json.data.months).toEqual([]);
+    // same year as asOf
+    const sameYear = (await fx.call('get_timeline', { ...base, months: { start: '2026-10', end: '2026-12' }, domain: 'career' })).json.data;
+    expect(sameYear.months.map((c: any) => c.window.start.slice(0, 7))).toEqual(['2026-10', '2026-11', '2026-12']);
+    // a different year: this used to come back empty because core only builds the asOf year's months
+    const { json, isError } = await fx.call('get_timeline', { ...base, months: { start: '2027-01', end: '2027-12' }, domain: 'wealth' });
+    expect(isError).toBe(false);
+    expect(json.data.monthsRange).toEqual({ start: '2027-01', end: '2027-12' });
+    expect(json.data.months.length).toBe(12);
+    for (const c of json.data.months) {
+      expect(c.window.grain).toBe('month');
+      expect(c.domains.map((d: any) => d.domain)).toEqual(['wealth']);
+      expect(c.domains[0].perSystem).toBeUndefined();
+      expect(c.domains[0].topSignalIds.length).toBeLessThanOrEqual(5);
+      expect(c.domains[0].topSignalIdsTotal).toBeGreaterThanOrEqual(c.domains[0].topSignalIds.length);
+    }
+    // spanning two years, ascending
+    const two = (await fx.call('get_timeline', { ...base, months: { start: '2026-12', end: '2027-02' }, domain: 'wealth' })).json.data.months;
+    expect(two.map((c: any) => c.window.start.slice(0, 7))).toEqual(['2026-12', '2027-01', '2027-02']);
+    // cited month ids resolve
+    const id = json.data.months.flatMap((c: any) => c.domains[0].topSignalIds)[0];
+    expect((await fx.call('get_signal', { ...base, signalId: id })).isError).toBe(false);
+  }, 120_000);
+  test('months: detail restores perSystem and the full id list; limits are enforced', async () => {
+    const months = { start: '2027-03', end: '2027-03' };
+    const slim = (await fx.call('get_timeline', { ...base, months, domain: 'wealth' })).json.data.months[0].domains[0];
+    const full = (await fx.call('get_timeline', { ...base, months, domain: 'wealth', detail: true })).json.data.months[0].domains[0];
+    expect(full.perSystem).toBeDefined();
+    expect(full.topSignalIds.length).toBe(slim.topSignalIdsTotal);
+    expect(full.topSignalIds.slice(0, 5)).toEqual(slim.topSignalIds);
+    expect((await fx.call('get_timeline', { ...base, months: { start: '2026-01', end: '2029-01' } })).json.error.code).toBe('invalid_args');
+    expect((await fx.call('get_timeline', { ...base, months: { start: '2027-05', end: '2027-01' } })).json.error.code).toBe('invalid_args');
+    expect((await fx.call('get_timeline', { ...base, months: { start: '2050-01', end: '2050-02' } })).json.error.code).toBe('invalid_args');
+    expect((await fx.call('get_timeline', { ...base, months: { start: '2027-1', end: '2027-2' } })).json.error.code).toBe('invalid_args');
+  }, 120_000);
+  test('year cells: topSignalIds preview with total; detail returns all', async () => {
+    const slim = (await fx.call('get_timeline', base)).json.data.years;
+    const full = (await fx.call('get_timeline', { ...base, detail: true })).json.data.years;
+    let cut = 0;
+    slim.forEach((y: any, i: number) => y.domains.forEach((d: any, j: number) => {
+      const f = full[i].domains[j];
+      expect(d.topSignalIds.length).toBeLessThanOrEqual(5);
+      expect(d.topSignalIdsTotal).toBe(f.topSignalIds.length);
+      expect(d.topSignalIds).toEqual(f.topSignalIds.slice(0, 5));
+      if (d.topSignalIdsTotal > 5) cut++;
+    }));
+    expect(cut).toBeGreaterThan(0);
   }, 120_000);
 });
 
@@ -149,6 +199,17 @@ describe('consensus and conflicts', () => {
     expect(json.data.headlines.conflicts).toBeUndefined();
     const conflicts = (await fx.call('list_conflicts', base)).json.data.total;
     expect(json.data.conflictCount).toBe(conflicts);
+    const full = (await fx.call('get_consensus', { ...base, detail: true })).json.data;
+    let checked = 0;
+    json.data.years.forEach((y: any, i: number) => y.highConsensus.forEach((a: any, j: number) => {
+      const f = full.years[i].highConsensus[j];
+      expect(a.signalIds.length).toBeLessThanOrEqual(5);
+      expect(a.signalIdsTotal).toBe(f.signalIds.length);
+      expect(a.signalIds).toEqual(f.signalIds.slice(0, 5));
+      checked++;
+    }));
+    expect(checked).toBeGreaterThan(0);
+    for (const a of json.data.headlines.agreements) expect(a.signalIds.length).toBeLessThanOrEqual(5);
     const ranged = await fx.call('get_consensus', { ...base, range: { start: '2026', end: '2026' } });
     expect(ranged.json.data.years.length).toBeLessThan(json.data.years.length);
     const rc = await fx.call('list_conflicts', { ...base, range: { start: '2026', end: '2026' } });

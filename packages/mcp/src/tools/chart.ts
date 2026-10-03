@@ -7,6 +7,10 @@ import { defineTool } from './types';
 const SYSTEMS = ['bazi', 'ziwei', 'numerology', 'tzolkin', 'mingGua', 'jyotish', 'humanDesign'] as const;
 type System = (typeof SYSTEMS)[number];
 
+/** core's lunar.zodiac comes straight from lunar-javascript (simplified); every other label here is Traditional. */
+const ZODIAC_HANT: Readonly<Record<string, string>> = Object.freeze({ 龙: '龍', 马: '馬', 鸡: '雞', 猪: '豬' });
+const zodiacHant = (zodiac: string) => ZODIAC_HANT[zodiac] ?? zodiac;
+
 const SUMMARY_FIELD_MAX = 240;
 const SUMMARY_VALUE_MAX = 80;
 
@@ -113,7 +117,7 @@ export const chartTools = [
     async handler(args, { analyzer }) {
       const analysis = await analyzer.get(args.profileId, args.asOf);
       const { local, utc, jd, solar, lunar, solarTerms, flags } = analysis.ctx;
-      return ok({ asOf: args.asOf, caveats: caveatsFor(analysis), data: { local, utc, jd, solar, lunar, solarTerms, flags } });
+      return ok({ asOf: args.asOf, caveats: caveatsFor(analysis), data: { local, utc, jd, solar, lunar: { ...lunar, zodiac: zodiacHant(lunar.zodiac) }, solarTerms, flags } });
     },
   }),
 ];

@@ -15,9 +15,11 @@ import type { Analysis } from '../compute';
 import { assertAsOf, resolvableYearRange } from '../compute';
 import { caveatsFor, ok, type Caveat } from '../envelope';
 import { ToolError } from '../errors';
+import { routeQuestion } from '../questionRouter';
+import { detailInput, previewIds } from '../slim';
 import { defineTool } from './types';
 
-const MAX_MONTHS = 36;
+export const MAX_MONTHS = 36;
 const RANKING_LIMIT = 12;
 const YM = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -28,7 +30,7 @@ export function monthSignalProvider(analysis: Pick<Analysis, 'monthSignals'>): (
 
 const slimSignal = (s: Signal) => ({ id: s.id, system: s.system, ruleId: s.ruleId, domain: s.domain, trait: s.trait, intensity: s.intensity, valence: s.valence });
 
-function slimWindow(r: RankedWindow) {
+function slimWindow(r: RankedWindow, detail: boolean) {
   return {
     rank: r.rank,
     window: r.window,
@@ -37,10 +39,13 @@ function slimWindow(r: RankedWindow) {
     consensus: r.consensus,
     highConsensus: r.highConsensus,
     conflict: r.conflict,
-    domainScores: r.domainScores,
-    supportSignals: r.supportSignals.map(slimSignal),
-    riskSignals: r.riskSignals.map(slimSignal),
-    signalIds: r.signalIds,
+    domainScores: r.domainScores.map(d => ({ ...d, signalIds: previewIds(d.signalIds, detail), signalIdsTotal: d.signalIds.length })),
+    supportSignals: previewIds(r.supportSignals, detail).map(slimSignal),
+    supportSignalsTotal: r.supportSignals.length,
+    riskSignals: previewIds(r.riskSignals, detail).map(slimSignal),
+    riskSignalsTotal: r.riskSignals.length,
+    signalIds: previewIds(r.signalIds, detail),
+    signalIdsTotal: r.signalIds.length,
   };
 }
 
@@ -48,20 +53,30 @@ function slimRanked(r: RankedWindow) {
   return { rank: r.rank, window: r.window, score: r.score, band: r.band, highConsensus: r.highConsensus };
 }
 
-export function slimAnswer(answer: QuestionAnswer) {
+/** Default: no `conventions` prose and only the first ids per window; `detail: true` restores both. */
+export function slimAnswer(answer: QuestionAnswer, detail = false) {
   return {
     category: answer.category,
     range: answer.range,
-    top: answer.top.map(slimWindow),
+    top: answer.top.map(r => slimWindow(r, detail)),
     ranking: answer.ranking.slice(0, RANKING_LIMIT).map(slimRanked),
     rankingTotal: answer.ranking.length,
-    conventions: answer.conventions,
+    ...(detail ? { conventions: answer.conventions } : { conventionsOmitted: true as const }),
     catalogVersion: answer.catalogVersion,
     ...(answer.categoryVersion !== undefined ? { categoryVersion: answer.categoryVersion } : {}),
   };
 }
 
 const ymShape = z.string().regex(YM, "must be 'YYYY-MM'");
+
+/** Omitted `range` = the asOf month and the 11 after it (12 months); echoed back with `rangeResolvedFrom: 'default'`. */
+export function defaultRange(asOf: string): { start: string; end: string } {
+  const year = Number(asOf.slice(0, 4));
+  const month = Number(asOf.slice(5, 7));
+  const last = year * 12 + (month - 1) + 11;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return { start: `${asOf.slice(0, 4)}-${pad(month)}`, end: `${Math.floor(last / 12)}-${pad((last % 12) + 1)}` };
+}
 
 export const questionTools = [
   defineTool({
@@ -81,15 +96,47 @@ export const questionTools = [
     name: 'answer_question',
     description:
       "Rank the months of a range (max 36) for a question category, using core's deterministic Question Engine over the profile's timeline signals. " +
-      'Returns top windows with scores and source signals plus a truncated ranking. Unknown category → { unsupported: true }.',
+      'First call list_question_categories to get a category id and pass it as category. ' +
+      'Alternatively pass question (your own wording of the question) with category omitted: a fixed keyword table picks the category, and if nothing or several categories match you get invalid_args with availableCategories (no guessing, no LLM). ' +
+      'The response says how it was chosen: categoryResolvedFrom "explicit" | "question". ' +
+      'range {start,end} (YYYY-MM) is optional: when omitted it is the asOf month plus the next 11 months (12 months), and the response says so with rangeResolvedFrom "default". ' +
+      'Returns top windows with scores and source signals plus a truncated ranking. signalIds, supportSignals and riskSignals keep the first 5 per window (…Total = full count); ' +
+      'conventions prose is omitted (conventionsOmitted: true); detail: true returns all ids and the conventions. Unknown explicit category → { unsupported: true }.',
     input: {
       profileId: z.string(),
-      category: z.string().describe('Category id from list_question_categories.'),
-      range: z.object({ start: ymShape, end: ymShape }).strict(),
+      category: z.string().optional().describe('Category id from list_question_categories. Takes precedence over question.'),
+      question: z.string().min(1).optional().describe('Natural-language question; only used to pick the category when category is omitted.'),
+      range: z.object({ start: ymShape, end: ymShape }).strict().optional().describe('Default: asOf month through 11 months later.'),
       asOf: z.string().describe("Required 'YYYY-MM-DD'."),
+      detail: detailInput,
     },
-    async handler({ profileId, category, range, asOf }, { analyzer }) {
+    async handler({ profileId, category: explicitCategory, question, range: explicitRange, asOf, detail }, { analyzer }) {
       assertAsOf(asOf);
+      const availableCategories = listQuestionCategories().map(c => c.id);
+      let category: string;
+      let categoryResolvedFrom: 'explicit' | 'question';
+      if (explicitCategory !== undefined) {
+        category = explicitCategory;
+        categoryResolvedFrom = 'explicit';
+      } else if (question !== undefined) {
+        const route = routeQuestion(question);
+        if (route.status === 'ambiguous') {
+          throw new ToolError(
+            'invalid_args',
+            route.candidates.length === 0
+              ? 'Could not tell the question category from question'
+              : `question matches several categories equally: ${route.candidates.join(', ')}`,
+            'Pass category explicitly (ids from list_question_categories).',
+            { availableCategories, ...(route.candidates.length ? { candidates: route.candidates } : {}) },
+          );
+        }
+        category = route.category;
+        categoryResolvedFrom = 'question';
+      } else {
+        throw new ToolError('invalid_args', 'Provide category or question', 'Call list_question_categories and pass a category id.', { availableCategories });
+      }
+      const range = explicitRange ?? defaultRange(asOf);
+      const rangeResolvedFrom = explicitRange ? 'explicit' : 'default';
       const n = monthsInRange(range);
       if (n < 1) throw new ToolError('invalid_args', `range.start (${range.start}) is after range.end (${range.end})`);
       if (n > MAX_MONTHS) throw new ToolError('invalid_args', `range spans ${n} months; at most ${MAX_MONTHS} allowed`);
@@ -101,10 +148,9 @@ export const questionTools = [
       }
       const analysis = await analyzer.get(profileId, asOf);
       const caveats = caveatsFor(analysis);
-      const availableCategories = listQuestionCategories().map(c => c.id);
       if (!getQuestionCategory(category)) {
         const answer = answerQuestion({ category, range }, () => []);
-        return ok({ asOf, caveats, data: { unsupported: true as const, category: answer.category, range: answer.range, conventions: answer.conventions, catalogVersion: answer.catalogVersion, availableCategories } });
+        return ok({ asOf, caveats, data: { unsupported: true as const, category: answer.category, categoryResolvedFrom, range: answer.range, rangeResolvedFrom, ...(detail ? { conventions: answer.conventions } : { conventionsOmitted: true as const }), catalogVersion: answer.catalogVersion, availableCategories } });
       }
       let answer: QuestionAnswer;
       try {
@@ -113,7 +159,7 @@ export const questionTools = [
         if (e instanceof ToolError) throw e;
         throw new ToolError('invalid_args', e instanceof Error ? e.message : String(e));
       }
-      return ok({ asOf, caveats, data: slimAnswer(answer) });
+      return ok({ asOf, caveats, data: { ...slimAnswer(answer, detail), categoryResolvedFrom, rangeResolvedFrom } });
     },
   }),
   defineTool({
