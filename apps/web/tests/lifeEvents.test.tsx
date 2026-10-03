@@ -23,7 +23,7 @@ const INPUT: BirthInput = {
   gender: 'male', calendarType: 'solar', cityId: 'tainan', timeAccuracy: 'exact',
 };
 const report: Report = analyze(INPUT);
-const key = profileKeyOf(report.input);
+const key = profileKeyOf(report);
 
 const EVENTS: LifeEvent[] = [
   { id: 'a', date: '2018-06', category: 'education', domains: ['career', 'movement', 'learning'], description: '畢業／北上／醫院藥局', confidence: 'approx' },
@@ -75,10 +75,10 @@ describe('life event store (localStorage, per profile fingerprint)', () => {
   });
 
   test('profile key is stable, hashed, and differs between people', () => {
-    expect(profileKeyOf(report.input)).toBe(key);
-    expect(key).toMatch(/^p[0-9a-z]+$/);
+    expect(profileKeyOf(report)).toBe(key);
+    expect(key).toMatch(/^cf1-[0-9a-f]{16}$/);
     expect(key).not.toContain('1995');
-    expect(profileKeyOf({ ...report.input, day: 17 })).not.toBe(key);
+    expect(profileKeyOf(analyze({ ...INPUT, day: 17 }))).not.toBe(key);
   });
 });
 
@@ -110,7 +110,7 @@ describe('人生事件 panel', () => {
     const v3: Report = { ...rest, schemaVersion: 3 };
     expect(canBacktest(v3)).toBe(false);
     const store = createLifeEventStore(memoryStorage());
-    store.upsert(profileKeyOf(v3.input), EVENTS[0]);
+    store.upsert(profileKeyOf(v3), EVENTS[0]);
     const html = renderToStaticMarkup(<LifeEvents report={v3} store={store} />);
     expect(html).not.toContain('計算回驗');
     expect(html).toContain('重新排盤');

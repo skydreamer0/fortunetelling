@@ -1,0 +1,94 @@
+/* 問 AI 兩個入口（M4-01）：Claude 桌面版（建議）與複製 prompt（備援）。 */
+
+.ask__entry { border-top: 1px solid var(--rule-strong); padding: 0.25rem 0 1.25rem; }
+.ask__entry + .ask__entry { margin-top: 1rem; }
+.ask__entry-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.6rem 0;
+  cursor: pointer;
+  list-style: none;
+}
+.ask__entry-head::-webkit-details-marker { display: none; }
+.ask__entry-head::after { content: '＋'; margin-left: auto; color: var(--ink-3); }
+.ask__entry[open] > .ask__entry-head::after { content: '－'; }
+.ask__entry-head:focus-visible { outline: 2px solid var(--zhu); outline-offset: 2px; }
+.ask__entry-tag {
+  padding: 0.05rem 0.5rem;
+  border: 1px solid var(--rule-strong);
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  letter-spacing: 0.2em;
+}
+.ask__entry-tag--main { border-color: var(--zhu); background: var(--zhu); color: var(--zhu-ink); }
+.ask__entry-title { font-family: var(--font-display); font-size: var(--text-lg); font-weight: 800; letter-spacing: 0.12em; color: var(--ink); }
+.ask__entry-hint { flex-basis: 100%; color: var(--ink-3); font-size: var(--text-xs); line-height: 1.7; }
+
+.ask__entry { min-width: 0; }
+.ask__flow { list-style: none; margin: 0; padding: 0; counter-reset: ask-step; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+.ask__step { min-width: 0; position: relative; padding-left: 2.25rem; counter-increment: ask-step; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.8; }
+.ask__step::before {
+  content: counter(ask-step);
+  position: absolute;
+  left: 0;
+  top: 0.1rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ink-3);
+  font-family: var(--font-numeral);
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--ink);
+}
+.ask__step p { margin: 0.35rem 0; }
+.ask__step-title { margin: 0 0 0.25rem; font-family: var(--font-display); font-size: var(--text-md); letter-spacing: 0.1em; color: var(--ink); }
+.ask__step code, .ask__callout code, .ask__hint code { font-size: 0.92em; overflow-wrap: anywhere; word-break: break-all; }
+
+.ask__download { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem 1rem; margin-top: 0.5rem; }
+.ask__id { flex: 1 1 14rem; max-width: 22rem; }
+.ask__id-input {
+  min-height: 2.75rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+  font-size: 1rem; /* 16px：避免 iOS Safari 聚焦時自動放大頁面 */
+}
+.ask__id-input:focus { border-color: var(--zhu); }
+.ask__id-input[aria-invalid="true"] { border-color: var(--zhu); }
+.ask__download-button { min-width: 0; font-size: var(--text-sm); letter-spacing: 0.15em; text-indent: 0; font-weight: 700; }
+.ask__download-button:disabled { opacity: 0.45; cursor: not-allowed; }
+.ask__hint { margin: 0.4rem 0 0; color: var(--ink-3); font-size: var(--text-xs); line-height: 1.8; }
+.ask__hint--error { color: var(--zhu); }
+
+.ask__os { margin: 0.25rem 0 0.75rem; }
+.ask__paths { list-style: none; margin: 0 0 0.75rem; padding: 0; display: grid; gap: 0.5rem; }
+.ask__paths li { display: grid; gap: 0.1rem; }
+.ask__path-label { color: var(--ink-3); font-size: var(--text-xs); letter-spacing: 0.1em; }
+.ask__path { display: block; padding: 0.3rem 0.5rem; background: var(--paper-sunk); overflow-wrap: anywhere; word-break: break-all; }
+.ask__callout { padding: 0.6rem 0.9rem; border-left: 3px solid var(--jin); background: var(--paper-sunk); }
+
+.ask__code {
+  margin: 0.5rem 0;
+  padding: 0.75rem 1rem;
+  background: var(--paper-sunk);
+  border: 1px solid var(--rule);
+  font-size: var(--text-xs);
+  line-height: 1.7;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.ask__code code { font-size: inherit; word-break: normal; white-space: pre; }
+.ask__code--inline { padding: 0.4rem 0.75rem; }
+.ask__notes { margin: 0.5rem 0 0; padding-left: 1.25rem; color: var(--ink-2); font-size: var(--text-sm); line-height: 1.8; }
+.ask__quote { margin: 0.5rem 0; padding: 0.5rem 0.9rem; border-left: 3px solid var(--zhu); background: var(--paper-sunk); color: var(--ink); overflow-wrap: anywhere; }
+
+@media (max-width: 36rem) {
+  .ask__step { padding-left: 0; padding-top: 2.1rem; }
+  .ask__step::before { top: 0; }
+  .ask__download-button, .ask__actions .button { width: 100%; }
+  .ask__id { max-width: none; flex-basis: 100%; }
+}

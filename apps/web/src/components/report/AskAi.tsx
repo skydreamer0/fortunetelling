@@ -14,6 +14,8 @@ import { buildCopyPrompt, checkPastedAnswer, type CopyPromptFocus, type PasteChe
 import { localQuestion, matchQuestionCategory, questionRange, type LocalQuestion } from '../../model/askAi';
 import type { Report } from '../../model/types';
 import { Section } from '../ui/primitives';
+import { McpEntry } from './McpEntry';
+import { copyText, type CopyOutcome } from './copyText';
 
 export const ASK_AI_CHAPTER_ID = 'ch-ask';
 
@@ -23,26 +25,8 @@ const FOCUS_OPTIONS: ReadonlyArray<{ value: CopyPromptFocus; label: string }> = 
   { value: 'question', label: '我有問題' },
 ];
 
-export type CopyOutcome = 'clipboard' | 'selected' | 'failed';
-
-/**
- * Copy with the Clipboard API; when it is missing or refused, fall back to
- * selecting the preview text (and trying the legacy copy command).
- */
-export async function copyText(
-  text: string,
-  env: { clipboard?: { writeText(value: string): Promise<void> } | null; select?: () => boolean },
-): Promise<CopyOutcome> {
-  if (env.clipboard?.writeText) {
-    try {
-      await env.clipboard.writeText(text);
-      return 'clipboard';
-    } catch {
-      // fall through to the selection fallback
-    }
-  }
-  return env.select?.() ? 'selected' : 'failed';
-}
+export { copyText };
+export type { CopyOutcome };
 
 const COPY_MESSAGES: Record<CopyOutcome, string> = {
   clipboard: '已複製。貼到你自己的 AI 對話框即可。',
@@ -170,7 +154,15 @@ export function AskAi({ report, clipboard }: {
 
   return (
     <Section id={ASK_AI_CHAPTER_ID} index="問" title="AI 解讀" className="ask"
-      lede="網站把報告整理成一段指令，你貼到自己慣用的 AI（ChatGPT、Claude、Gemini…）就能得到文字解讀。不需要金鑰，網站也不會替你送出任何資料。">
+      lede="兩種方式討論這份報告：用 Claude 桌面版連到你電腦上的本機 MCP（建議），或複製整理好的指令貼到任何 AI。不需要金鑰，網站也不會替你送出任何資料。">
+      <McpEntry report={report} clipboard={clipboard} />
+
+      <details className="ask__entry ask__entry--copy">
+      <summary className="ask__entry-head">
+        <span className="ask__entry-tag">備援</span>
+        <span className="ask__entry-title">複製 prompt</span>
+        <span className="ask__entry-hint">貼到 ChatGPT、Claude、Gemini 等任何 AI</span>
+      </summary>
       <p className="ask__privacy" role="note">
         <strong>隱私</strong>prompt 不含姓名、出生地、出生日期與時間，只有計算結果（命盤摘要、訊號、分數）。
         要不要貼、貼給哪個 AI，由你決定。
@@ -231,6 +223,7 @@ export function AskAi({ report, clipboard }: {
             placeholder="把 AI 的完整回答貼在這裡" onChange={event => setPasted(event.target.value)} />
         </label>
         {check && <PasteCheckView result={check} />}
+      </details>
       </details>
     </Section>
   );

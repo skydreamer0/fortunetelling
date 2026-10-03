@@ -6,6 +6,7 @@
  */
 
 import { hashString, validateLifeEvent, type LifeEvent } from './core';
+import { fingerprintOfReport } from './profileFile';
 import { safeLocalStorage } from './store';
 import type { Report } from '../model/types';
 
@@ -18,10 +19,19 @@ interface StoredProfile { events: LifeEvent[] }
 interface StoredData { version: 1; profiles: Record<string, StoredProfile> }
 
 /**
- * Fingerprint of the person a report is about (solar birth data + gender + place + name).
- * Hashed so the storage key itself does not spell out the birth data.
+ * Storage key of the chart a report is about: core's `chartFingerprint` (`cf1-…`), the same
+ * id the local MCP server uses. Hashed, so the key does not spell out the birth data; the
+ * name is not part of it, so renaming a person keeps their events (M4-02).
  */
-export function profileKeyOf(input: Report['input']): string {
+export function profileKeyOf(report: Pick<Report, 'input' | 'timeContext'>): string {
+  return fingerprintOfReport(report);
+}
+
+/**
+ * The pre-M4-02 key (`p…`): birth fields + name hashed. Kept only so old data can be moved
+ * to the new key (see `store.migrate`).
+ */
+export function legacyProfileKeyOf(input: Report['input']): string {
   const lat = Number.isFinite(input.latitude) ? input.latitude.toFixed(2) : '';
   const lng = Number.isFinite(input.longitude) ? input.longitude.toFixed(2) : '';
   const raw = [input.name ?? '', input.year, input.month, input.day, input.hour, input.minute,
@@ -80,9 +90,26 @@ export function createLifeEventStore(storage: KeyValueStorage | undefined = safe
     return write(data);
   }
 
+  /**
+   * Move the events under `fromKey` (the legacy key) to `toKey`. Events already under `toKey`
+   * win on a same-id clash; nothing is dropped except events that were already invalid.
+   * The old key is removed only after the new data is written. Returns true when something moved.
+   */
+  function migrate(fromKey: string, toKey: string): boolean {
+    if (fromKey === toKey) return false;
+    const data = read();
+    const legacy = data.profiles[fromKey];
+    if (!legacy) return false;
+    const merged = cleanEvents([...(data.profiles[toKey]?.events ?? []), ...(Array.isArray(legacy.events) ? legacy.events : [])]);
+    if (merged.length > 0) data.profiles[toKey] = { events: merged };
+    delete data.profiles[fromKey];
+    return write(data);
+  }
+
   return {
     list,
     replace,
+    migrate,
     /** Add or replace (same id) one event. Invalid events are rejected. */
     upsert(profileKey: string, event: LifeEvent): boolean {
       if (!validateLifeEvent(event).ok) return false;

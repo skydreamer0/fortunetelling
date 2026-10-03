@@ -15,7 +15,7 @@ import {
   buildBacktestTimeline, runBacktest, suggestedDomains, validateLifeEvent,
   type BacktestTimeline, type LifeEvent, type LifeEventCategory, type TimeContext,
 } from '../../lib/core';
-import { cleanEvents, createLifeEventStore, profileKeyOf, type LifeEventStore } from '../../lib/lifeEvents';
+import { cleanEvents, createLifeEventStore, legacyProfileKeyOf, profileKeyOf, type LifeEventStore } from '../../lib/lifeEvents';
 import {
   CATEGORY_OPTIONS, DOMAIN_OPTIONS, INSUFFICIENT_LABEL, canBacktest, selectBacktestView, selectEventList,
   type BacktestRowView, type BacktestView,
@@ -107,8 +107,12 @@ export function BacktestResults({ view }: { view: BacktestView }) {
 
 export function LifeEvents({ report, store: injected }: { report: Report; store?: LifeEventStore }) {
   const store = useMemo(() => injected ?? createLifeEventStore(), [injected]);
-  const profileKey = useMemo(() => profileKeyOf(report.input), [report.input]);
-  const [events, setEvents] = useState<LifeEvent[]>(() => store.list(profileKey));
+  const profileKey = useMemo(() => profileKeyOf(report), [report]);
+  const [events, setEvents] = useState<LifeEvent[]>(() => {
+    // M4-02: events saved under the old name-based key move to the fingerprint key (idempotent).
+    store.migrate(legacyProfileKeyOf(report.input), profileKey);
+    return store.list(profileKey);
+  });
   const [form, setForm] = useState<FormState>(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [timeline, setTimeline] = useState<BacktestTimeline | null>(null);
