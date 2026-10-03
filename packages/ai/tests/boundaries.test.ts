@@ -19,7 +19,11 @@ function imports(source: string): Array<{ spec: string; typeOnly: boolean }> {
 }
 
 const FORBIDDEN = [/calculators/, /engines/, /iztro/, /lunar-javascript/, /swisseph/, /\/time\//, /\/rules\//, /\/timeline\//];
-const ALLOWED_CORE_RUNTIME = new Set(['../../core/src/questions/engine', '../../core/src/analysis/HonestyGuard']);
+const ALLOWED_CORE_RUNTIME = new Set([
+  '../../core/src/questions/engine',
+  '../../core/src/analysis/HonestyGuard',
+  '../../core/src/export/redact',
+]);
 
 describe('import boundaries (D-021)', () => {
   test('no calculator / engine / 命理 library imports anywhere in src', () => {
@@ -45,7 +49,7 @@ describe('import boundaries (D-021)', () => {
   test('the pure core modules themselves do not pull calculators', () => {
     const coreSrc = join(SRC, '..', '..', 'core', 'src');
     const seen = new Set<string>();
-    const queue = ['questions/engine.ts', 'analysis/HonestyGuard.ts'];
+    const queue = ['questions/engine.ts', 'analysis/HonestyGuard.ts', 'export/redact.ts'];
     while (queue.length) {
       const rel = queue.shift()!;
       if (seen.has(rel)) continue;

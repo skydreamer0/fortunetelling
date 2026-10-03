@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { buildCopyPrompt, COPY_PROMPT_VERSION } from '../src/copyPrompt';
 import { CONVERSATION_PROMPT_VERSION, CONVERSATION_SYSTEM_INSTRUCTION, MCP_SERVER_INSTRUCTIONS } from '../src/instructions';
 import { checkPastedAnswer } from '../src/pasteCheck';
-import { buildInterpretationPayload, LOCAL_PAYLOAD_OPTIONS, REDACTED } from '../src/payload';
+import { REDACTED_NAME, REDACTED_PLACE } from '../src/core-pure';
+import { buildInterpretationPayload, LOCAL_PAYLOAD_OPTIONS } from '../src/payload';
 import { INTERPRET_PROMPT_VERSION, INTERPRET_SYSTEM_PROMPT } from '../src/prompts';
 import { loadQuestion, loadReport } from './helpers';
 
@@ -24,7 +25,8 @@ describe('buildInterpretationPayload — redact / budget 可選（M3-02）', () 
   test('redact: false 保留原文', () => {
     const { payloadJson } = buildInterpretationPayload(leaky(), { maxChars: 10_000_000, redact: false });
     expect(payloadJson).toContain('王小明 出生於 台北市大安區');
-    expect(payloadJson).not.toContain(REDACTED);
+    expect(payloadJson).not.toContain(REDACTED_NAME);
+    expect(payloadJson).not.toContain(REDACTED_PLACE);
   });
 
   test('budget: false 不丟訊號，truncation.maxChars 為 null', () => {

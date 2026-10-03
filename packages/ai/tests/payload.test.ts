@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
-import { buildInterpretationPayload, REDACTED } from '../src/payload';
+import { REDACTED_NAME, REDACTED_PLACE } from '../src/core-pure';
+import { buildInterpretationPayload } from '../src/payload';
 import { loadQuestion, loadReport } from './helpers';
 
 describe('buildInterpretationPayload — de-identification (D-029)', () => {
@@ -25,7 +26,7 @@ describe('buildInterpretationPayload — de-identification (D-029)', () => {
     const { payloadJson } = buildInterpretationPayload(report, { maxChars: 10_000_000 });
     expect(payloadJson).not.toContain('王小明');
     expect(payloadJson).not.toContain('台北市大安區');
-    expect(payloadJson).toContain(`${REDACTED} 出生於 ${REDACTED}`);
+    expect(payloadJson).toContain(`${REDACTED_NAME} 出生於 ${REDACTED_PLACE}`);
   });
 });
 

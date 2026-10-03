@@ -20,11 +20,11 @@
  * Browser-safe: must never import the Anthropic SDK (`./client`, `./anthropic`).
  */
 import type { QuestionAnswer, Signal, Timeline, TimelineCell } from '@fortune/core';
-import { listQuestionCategories } from './core-pure';
+import { listQuestionCategories, type SensitiveStrings } from './core-pure';
 import {
   buildInterpretationPayload,
-  scrub,
-  sensitiveStrings,
+  scrubReport,
+  sensitiveParts,
   type BuiltPayload,
   type InterpretationPayload,
   type ReportEngineLike,
@@ -281,15 +281,15 @@ function assemble(parts: {
 }
 
 /** Normalise the free-text question: trim, collapse whitespace, cap length, redact name/birthplace. */
-function cleanQuestion(text: string | undefined, secrets: string[]): string | null {
+function cleanQuestion(text: string | undefined, secrets: SensitiveStrings[]): string | null {
   const t = (text ?? '').replace(/\s+/g, ' ').trim().slice(0, 500);
   if (!t) return null;
-  return scrub(t, secrets) as string;
+  return scrubReport(t, secrets);
 }
 
 export function buildCopyPrompt(report: ReportLike, options: CopyPromptOptions = {}): CopyPrompt {
   const maxChars = options.maxChars ?? DEFAULT_COPY_MAX_CHARS;
-  const secrets = sensitiveStrings(report);
+  const secrets = sensitiveParts(report);
   const question = cleanQuestion(options.question, secrets);
   const answer = trimQuestion(options.questionAnswer);
   const focus: CopyPromptFocus = options.focus ?? (question || answer ? 'question' : 'overview');

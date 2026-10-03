@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildCopyPrompt, COPY_PROMPT_VERSION, DEFAULT_COPY_MAX_CHARS } from '../src/copyPrompt';
 import { checkPastedAnswer, PASTE_FLAG_LABELS } from '../src/pasteCheck';
-import { REDACTED } from '../src/payload';
+import { REDACTED_NAME, REDACTED_PLACE } from '../src/core-pure';
 import { buildCorpus, isInCorpus, VOCAB } from '../src/vocab';
 import { loadQuestion, loadReport } from './helpers';
 
@@ -31,7 +31,7 @@ describe('buildCopyPrompt — de-identification (D-029)', () => {
     const { text } = buildCopyPrompt(loadReport(), { question: '王小明 住 台北市大安區，何時買車？' });
     expect(text).not.toContain('王小明');
     expect(text).not.toContain('台北市大安區');
-    expect(text).toContain(`「${REDACTED} 住 ${REDACTED}，何時買車？」`);
+    expect(text).toContain(`「${REDACTED_NAME} 住 ${REDACTED_PLACE}，何時買車？」`);
   });
 });
 

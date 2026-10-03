@@ -31,11 +31,11 @@ import type {
   Trait,
 } from '@fortune/core';
 import { canonicalJson } from './canonical';
+import { scrubDeep, sensitiveStringsOf, type SensitiveStrings } from './core-pure';
 
 export const PAYLOAD_VERSION = 1;
 /** Default serialised-size budget (characters of canonical JSON). */
 export const DEFAULT_MAX_PAYLOAD_CHARS = 120_000;
-export const REDACTED = '〔已移除〕';
 
 // ─── loose input shapes (Report v4 is produced by JS; only the fields we read) ─
 
@@ -297,34 +297,21 @@ function buildQuestion(answer: QuestionAnswer): PayloadQuestion {
   };
 }
 
-/** Replace every occurrence of the sensitive strings inside any string of `value`. */
-export function scrub(value: unknown, secrets: string[]): unknown {
-  if (secrets.length === 0) return value;
-  if (typeof value === 'string') {
-    let s = value;
-    for (const secret of secrets) if (s.includes(secret)) s = s.split(secret).join(REDACTED);
-    return s;
-  }
-  if (Array.isArray(value)) return value.map((v) => scrub(v, secrets));
-  if (value && typeof value === 'object') {
-    const out: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(value as Record<string, unknown>)) out[k] = scrub(v, secrets);
-    return out;
-  }
-  return value;
+/** 依序套用去識別化（共用 core 的 `scrubDeep`，佔位符為 `[name]`／`[place]`，D-029、M2-03）。 */
+export function scrubReport<T>(value: T, parts: SensitiveStrings[]): T {
+  return parts.reduce((v, p) => scrubDeep(v, p), value);
 }
 
-/** Name / birthplace-label strings that must never leave the device (D-029), longest first. */
-export function sensitiveStrings(report: ReportLike): string[] {
-  const out = new Set<string>();
-  const add = (s: unknown) => {
-    if (typeof s === 'string' && s.trim().length >= 2) out.add(s.trim());
-  };
-  add(report.input?.name);
-  add(report.input?.birthplace?.label);
-  add(report.timeContext?.profile?.birthplace?.label);
-  // Longest first so a label containing the name is replaced whole.
-  return [...out].sort((a, b) => b.length - a.length || (a < b ? -1 : 1));
+/**
+ * 必須抹除的姓名與出生地標籤（D-029）。出生地標籤可能同時出現在 `input` 與 `timeContext`，
+ * 兩者不同時各自成一組，逐組抹除。
+ */
+export function sensitiveParts(report: ReportLike): SensitiveStrings[] {
+  const base = sensitiveStringsOf({ name: report.input?.name, birthplace: { label: report.input?.birthplace?.label } });
+  const parts: SensitiveStrings[] = [base];
+  const fromContext = sensitiveStringsOf({ birthplace: { label: report.timeContext?.profile?.birthplace?.label } });
+  if (fromContext.place && fromContext.place !== base.place) parts.push({ name: null, place: fromContext.place });
+  return parts;
 }
 
 // ─── main ───────────────────────────────────────────────────────────────────
@@ -433,7 +420,7 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
     overBudget: baseSize > maxChars,
   };
 
-  const secrets = options.redact === false ? [] : sensitiveStrings(report);
-  const payload = scrub({ ...base, signals: kept, truncation }, secrets) as InterpretationPayload;
+  const parts = options.redact === false ? [] : sensitiveParts(report);
+  const payload = scrubReport({ ...base, signals: kept, truncation }, parts) as InterpretationPayload;
   return { payload, payloadJson: canonicalJson(payload), signalIds: keptIds };
 }

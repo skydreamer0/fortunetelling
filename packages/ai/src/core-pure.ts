@@ -11,6 +11,7 @@
  * Allowed here: pure validators / data with no calculator dependency.
  *   - questions/engine  → validateQuestionRequest, catalog (imports only signals/aggregate, signals/bands, catalog.json)
  *   - analysis/HonestyGuard → zero-dependency lint
+ *   - export/redact → 去識別化單一來源（M2-03、D-029），純字串函式，只 import type
  * Everything else from core must be `import type` (erased at runtime).
  * `tests/boundaries.test.ts` enforces this.
  *
@@ -25,3 +26,5 @@ export {
   QUESTION_CATALOG_VERSION,
 } from '../../core/src/questions/engine';
 export { HonestyGuard } from '../../core/src/analysis/HonestyGuard';
+export { scrubDeep, sensitiveStringsOf, REDACTED_NAME, REDACTED_PLACE } from '../../core/src/export/redact';
+export type { SensitiveStrings } from '../../core/src/export/redact';
