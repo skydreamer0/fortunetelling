@@ -124,9 +124,9 @@ export const knownDivergences: readonly KnownDivergence[] = Object.freeze([
   { caseId: 'rgandhi', field: 'design.sun', category: 'sourceError', ours: '25.2', sources: { D: '25.6', T: null, H: '25.2' }, impact: 'field', reason: `${G25} T 角色 6/2 與 H 25.2 皆支持我方。` },
   { caseId: 'rgandhi', field: 'profile', category: 'sourceError', ours: '6/2', sources: { D: '6/6', T: '6/2', H: '6/2' }, impact: 'field', reason: `D 的設計太陽落在閘門 25（${G25}）；T、H 皆為 6/2。` },
   // 時區：各站與 ADB 的位移不同，但不影響任何欄位（以下皆有對應斷言）。
-  { caseId: 'einstein', field: 'utcOffset', category: 'timezone', ours: '+0:40 (ADB)', sources: { D: '+0:54', T: '+0:53', H: null }, impact: 'none', reason: '1879 烏爾姆當地平均時；D、T 改用柏林當地平均時，差 13～14 分鐘，所有欄位不變。' },
+  { caseId: 'einstein', field: 'utcOffset', category: 'timezone', ours: '+0:40 (ADB)', sources: { D: '+0:54', T: '+0:53', H: null }, impact: 'none', reason: '1879 烏爾姆當地平均時；D、T 改用柏林當地平均時，差 13～14 分鐘，所有欄位不變。我方完整流程已修正（time-fix-report.md）：tz 標為 LMT 的期間改用出生地經度的地方平時，現與 ADB 的 +0:40 相同。' },
   { caseId: 'peron', field: 'utcOffset', category: 'timezone', ours: '-4:16:48 (ADB)', sources: { D: '-4:16', T: '-4:17', H: null }, impact: 'none', reason: '1919 布宜諾斯艾利斯當地平均時，差不到 1 分鐘，所有欄位不變。' },
-  { caseId: 'aakvik', field: 'utcOffset', category: 'timezone', ours: '+1 (ADB)', sources: { D: '+1', T: '+2', H: null }, impact: 'field', affectedFields: ['personality.moon'], reason: '1948 奧斯陸是否實施夏令時間。ADB 與 D 為 +1；T 採 +2，與現行 IANA 資料庫（Europe/Oslo 連結到 Europe/Berlin，柏林 1948 有夏令）相同。差 1 小時只讓個性月亮由 60.2 變 60.1（T 不顯示月亮，其餘欄位不變）；D 的 60.2 與 ADB 位移一致，故以 ADB 為準。' },
+  { caseId: 'aakvik', field: 'utcOffset', category: 'timezone', ours: '+1 (ADB)', sources: { D: '+1', T: '+2', H: null }, impact: 'field', affectedFields: ['personality.moon'], reason: '1948 奧斯陸是否實施夏令時間。ADB 與 D 為 +1；T 採 +2，與現行 IANA 資料庫（Europe/Oslo 連結到 Europe/Berlin，柏林 1948 有夏令）相同。差 1 小時只讓個性月亮由 60.2 變 60.1（T 不顯示月亮，其餘欄位不變）；D 的 60.2 與 ADB 位移一致，故以 ADB 為準。我方完整流程已修正（time-fix-report.md）：改用內建 tz（含 backzone），Europe/Oslo 1948 為 +1，個性月亮 60.2，與 ADB／D 相同。' },
   { caseId: 'maradona', field: 'utcOffset', category: 'timezone', ours: '-3 (ADB)', sources: { D: '-3', T: '-3', H: null }, impact: 'none', reason: 'ADB 標「夏令時間」、T 標「無夏令」，但位移相同，無影響。' },
 ]);
 
@@ -442,8 +442,9 @@ describe('時區爭議（記錄於 knownDivergences）', () => {
       const chart = humanDesignCalculator.calculate(ctx).chart;
       const base = get(c.id).natal;
       const diffMin = Math.abs(chart.birthJdUt! - base.birthJdUt) * 1440;
-      // 只有 Einstein（IANA 柏林當地平均時）與 Aakvik（IANA 奧斯陸 1948 夏令）位移不同。
-      if (diffMin > 0.01) expect(['einstein', 'aakvik']).toContain(c.id);
+      // 原本 Einstein（IANA 柏林當地平均時）與 Aakvik（IANA 奧斯陸 1948 夏令）位移不同；
+      // 時間層修正後（time-fix-report.md）全部 38 案都與 ADB 位移相同。
+      expect({ id: c.id, diffMin: diffMin <= 0.01 ? 0 : diffMin }).toEqual({ id: c.id, diffMin: 0 });
       const pipeline = computeHumanDesign(chart.birthJdUt!);
       expect(pipeline.personality.map(gl)).toEqual(chart.personality.map(gl));
       const expected = diffMin > 0.01 ? [...(divergence(c.id, 'utcOffset')!.affectedFields ?? [])] : [];

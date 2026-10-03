@@ -20,7 +20,18 @@ export type TimeFlagCode =
   | 'near_shichen_boundary'
   | 'near_jie_boundary'
   | 'zi_hour_convention'
-  | 'time_unknown';
+  | 'time_unknown'
+  | 'historical_zone_uncertain';
+
+/**
+ * 歷史時區不確定的原因：
+ * - `pre_standard_time_lmt`：當地尚未實施標準時間；tz 只有時區代表城市的地方平時，已改用出生地經度的地方平時。
+ * - `backzone`：1970 年前的資料取自 tz 的 backzone（主資料庫已合併、tz 官方標示「範圍外且常有錯誤」）。
+ * - `longitude_offset_mismatch`：1970 年前，該時區的標準偏移與出生地平太陽時相差超過 90 分鐘，
+ *   這個 IANA 時區可能不代表出生地當時的法定時間。
+ * - `zone_not_bundled`：時區名稱不在內建資料庫，退回執行環境的 Intl（不保證跨環境一致）。
+ */
+export type HistoricalZoneReason = 'pre_standard_time_lmt' | 'backzone' | 'longitude_offset_mismatch' | 'zone_not_bundled';
 
 /** Which clock a boundary check was evaluated on. */
 export type TimeBasis = 'trueSolar' | 'civil';
@@ -101,7 +112,25 @@ export type TimeFlag =
       detail: string;
       data: { bases: TimeBasis[] };
     }
-  | { code: 'time_unknown'; detail: string };
+  | { code: 'time_unknown'; detail: string }
+  | {
+      code: 'historical_zone_uncertain';
+      detail: string;
+      data: {
+        reasons: HistoricalZoneReason[];
+        /** 內建 tz 資料版本（例如 '2026e'）。 */
+        tzdbVersion: string;
+        /** 實際採用的 UTC 偏移（分鐘）。 */
+        utcOffsetMinutes: number;
+        /** tz 資料本身的偏移（分鐘）；LMT 已改用出生地時與上者不同。 */
+        tzdataOffsetMinutes: number;
+        /** 出生地經度對應的平太陽時偏移（經度 × 4 分鐘）。 */
+        meanSolarOffsetMinutes: number;
+        /** 時間未知時以當地 12:00 判斷。 */
+        basis: 'birth' | 'local_noon';
+        requiresConfirmation: true;
+      };
+    };
 
 export type LunarDate = {
   /** Lunar year number (changes at 春節, NOT 立春). */
