@@ -48,7 +48,7 @@ export function ReportView({ report, onBack }: { report: Report; onBack: () => v
   const active = useActiveChapter();
   const navRef = useRef<HTMLElement>(null);
   const { date, time } = birthLabel(report.input);
-  const { unavailable, warnings } = notices(report);
+  const { unavailable, warnings, timeZone } = notices(report);
   const city = cityById(report.input.cityId);
 
   // Keep the active chapter visible in the horizontally scrolling mobile index.
@@ -90,9 +90,10 @@ export function ReportView({ report, onBack }: { report: Report; onBack: () => v
         </ol>
       </nav>
 
-      {(unavailable.length > 0 || warnings.length > 0) && (
+      {(unavailable.length > 0 || warnings.length > 0 || timeZone) && (
         <aside className="notice" role="note">
           {unavailable.length > 0 && <p><strong>計算範圍</strong>{unavailable.join(' ')}</p>}
+          {timeZone && <p><strong>出生時區</strong>{timeZone}</p>}
           {warnings.length > 0 && <p><strong>引擎提示</strong>{warnings.join('；')}</p>}
         </aside>
       )}

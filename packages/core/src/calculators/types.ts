@@ -58,7 +58,18 @@ export type CalculatorWarningCode =
   | 'near_jie_boundary'
   | 'zi_hour_convention'
   | 'dst_gap'
-  | 'dst_overlap';
+  | 'dst_overlap'
+  | 'historical_zone_uncertain';
+
+/**
+ * 歷史時區不確定（`historical_zone_uncertain`）的顯示文字，網站與各介面共用。
+ *
+ * 只有「用到出生時刻」的系統會帶這個警告：八字（時柱、節氣交界）、紫微（命宮由時辰決定）、
+ * 吠陀占星（上升、月亮）、人類圖（設計時刻與行星位置）。生命靈數、馬雅 Kin、八宅命卦只用
+ * 出生「日期」，而日期取自使用者輸入的當地日曆日，不會因時區偏移改變，所以不帶此警告。
+ */
+export const HISTORICAL_ZONE_WARNING_TEXT =
+  '出生時刻因歷史時區不確定，可能有±數十分鐘到一小時的誤差，時柱／上升等結果請保守看待。';
 
 export interface ChartResult<TChart> {
   system: SystemId;

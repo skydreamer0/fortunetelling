@@ -155,7 +155,7 @@ export class ResolvedBirthData extends BirthData {
   }
 }
 
-const TIME_WARNINGS = ['time_unknown', 'dst_gap', 'dst_overlap', 'near_shichen_boundary', 'zi_hour_convention'] as const;
+const TIME_WARNINGS = ['time_unknown', 'dst_gap', 'dst_overlap', 'near_shichen_boundary', 'zi_hour_convention', 'historical_zone_uncertain'] as const;
 
 /** TimeContext flags → warning codes; shichen / 子時 flags only when they hit on `basis`. */
 function flagWarnings(ctx: TimeContext, basis: TimeBasis): string[] {
@@ -163,6 +163,7 @@ function flagWarnings(ctx: TimeContext, basis: TimeBasis): string[] {
   for (const flag of ctx.flags) {
     if (!(TIME_WARNINGS as readonly string[]).includes(flag.code)) continue;
     if (flag.code === 'near_shichen_boundary' && !flag.data.hits.some((h) => h.basis === basis)) continue;
+    if (flag.code === 'historical_zone_uncertain' && flag.data.basis === 'local_noon') continue;
     if (flag.code === 'zi_hour_convention' && !flag.data.bases.includes(basis)) continue;
     out.push(flag.code);
   }
