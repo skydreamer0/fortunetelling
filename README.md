@@ -11,10 +11,11 @@
 - **🧭 使用者問題視圖**：提供白話命格提要、2026 本年觀察、事業／感情／財富／身心領域、平衡建議與八宅四吉方。
 - **盤面與合盤**：提供可互動的紫微十二宮盤，以及雙人五行互補／摩擦疊圖、生命靈數與八宅比較。
 - **🎨 明暗雙主題**：暖色明亮模式與深色模式共用語意 token，圖表、列印、鍵盤焦點與減少動態偏好同步支援。
+- **🤖 本機 MCP server**：12 個工具讓 Claude 桌面版在本機查詢命盤、訊號、共識、逐年／逐月分數與雙人合盤；排盤全由程式算完，資料不離開你的電腦。
 
 ## 🛠️ 技術棧
 
-- **核心框架**：計算核心為框架無關的 JavaScript（`packages/core`）；介面為 React 19 + TypeScript（`apps/web`）
+- **核心框架**：計算核心為框架無關的 JavaScript（`packages/core`）；介面為 React 19 + TypeScript（`apps/web`）；本機 MCP server 為 `packages/mcp`
 - **構建工具**：Vite
 - **命理計算**：
   - `iztro`: 紫微斗數排盤核心
@@ -56,6 +57,19 @@ bun run build
 
 建置完成的檔案將會輸出於 `apps/web/dist` 目錄中，這是一組純靜態網頁，可部署至任何靜態託管平台（如 GitHub Pages, Vercel, Netlify）。
 
+## 🤖 搭配 Claude 桌面版（本機 MCP）
+
+`packages/mcp`（`@fortune/mcp`）把 `@fortune/core` 包成本機 MCP server，Claude 只負責查詢、比對與對話，不重新排盤。
+
+1. 建立 profile（預設存於 `~/.fortune/profiles/`）：
+   ```bash
+   bun run --filter @fortune/mcp add-profile sky \
+     --date 1990-05-17 --time 08:30 --gender female --city 台南
+   ```
+2. 在 `claude_desktop_config.json` 加入 `fortune` server 後重開 Claude 桌面版。
+
+完整設定、12 個工具一覽與隱私預設（姓名、出生資料預設不回傳）見 [`docs/MCP-SETUP.md`](./docs/MCP-SETUP.md)。
+
 ## 📱 安裝到 iPhone（PWA）
 
 正式版本是可安裝的 PWA：部署到 GitHub Pages（HTTPS）後，
@@ -76,13 +90,14 @@ bun run build
 
 ## 📂 專案架構與開發狀態
 
-Monorepo（Bun workspaces）：`packages/core`（`@fortune/core`，框架無關的計算核心）與 `apps/web`（`@fortune/web`，Vite UI）。目標架構見 [docs/ARCHITECTURE-V2.md](docs/ARCHITECTURE-V2.md)。
+Monorepo（Bun workspaces）：`packages/core`（`@fortune/core`，框架無關的計算核心）、`packages/mcp`（`@fortune/mcp`，本機 MCP server）與 `apps/web`（`@fortune/web`，Vite UI）。目標架構見 [docs/ARCHITECTURE-V2.md](docs/ARCHITECTURE-V2.md)。
 
 本專案採用高度模組化的架構設計，將不同命理學派實作為獨立的計算引擎，並統一資料格式進行視覺化展示。
 
 **🟢 目前開發進度**
-- **已完成**：五套計算引擎、Report schema v3、透明雷達、白話摘要、十二宮盤、時期演化、本年／領域／建議視圖、國農曆與不確定時辰、最近查詢、列印、明暗主題及雙人合盤。
-- **驗證**：核心、整合、曆法、洞見、合盤與視覺化契約由 `bun test` 覆蓋；正式版本以 `bun run build` 驗證。
+- **已完成**：五套計算引擎、Report schema v3、透明雷達、白話摘要、十二宮盤、時期演化、本年／領域／建議視圖、國農曆與不確定時辰、最近查詢、列印、明暗主題、雙人合盤、V3 共識與 V4 人生事件回驗、Profile 契約（M0.5）及本機 MCP server（M1）。
+- **尚未開始**：M2 起（網站匯出 `.fortune.json`、`import_profile`、匯出檔等），見 ROADMAPS.md。
+- **驗證**：核心、MCP、整合、曆法、洞見、合盤與視覺化契約由 `bun test` 覆蓋；正式版本以 `bun run build` 驗證。
 - **後續效能項目**：命理計算套件（約 850 kB）已拆成獨立 chunk；下一步可改為延遲載入，讓首頁先顯示。
 
 規劃與實作的差距、V1–V5 里程碑與任務拆解，請參閱 [`ROADMAPS.md`](./ROADMAPS.md)。
