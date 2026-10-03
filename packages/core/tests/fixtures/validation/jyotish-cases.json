@@ -1,0 +1,721 @@
+{
+  "description": "吠陀占星（Jyotish）驗證案例：皆為 Astro-Databank（ADB）上 Rodden 評級 AA 的公眾人物出生資料。輸入以 ADB 頁面原文為準（日期、當地時間、ADB 標示的時區與 UTC 偏移、經緯度）；ianaZone 是我們產品實際會用的 IANA 時區，用來檢查時區層。adbTropical 是 ADB 頁面上由 Astrodienst 計算並公開的回歸黃道太陽／月亮／上升（到角分），作為第三方抽查。",
+  "retrievedAt": "2026-10-03",
+  "asOf": "2026-10-01",
+  "cases": [
+    {
+      "id": "van-gogh",
+      "name": "Vincent van Gogh",
+      "adbUrl": "https://www.astro.com/astro-databank/Van_Gogh,_Vincent",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1853-03-30",
+      "time": "11:00",
+      "adbPlace": "Zundert, Netherlands, 51n28, 4e40",
+      "adbTimezone": "LMT m4e40 (is local mean time)",
+      "utcOffset": "+00:18:40",
+      "lat": 51.466667,
+      "lng": 4.666667,
+      "ianaZone": "Europe/Amsterdam",
+      "adbTropical": {
+        "sun": "Ari 09°39'",
+        "moon": "Sag 20°44'",
+        "asc": "Can 21°09'"
+      },
+      "tags": [
+        "pre1900",
+        "lmt",
+        "north"
+      ]
+    },
+    {
+      "id": "freud",
+      "name": "Sigmund Freud",
+      "adbUrl": "https://www.astro.com/astro-databank/Freud,_Sigmund",
+      "rodden": "AA",
+      "adbSource": "Quoted BC/BR",
+      "date": "1856-05-06",
+      "time": "18:30",
+      "adbPlace": "Freiberg/Mähren, Czech Republic, 49n39, 18e10",
+      "adbTimezone": "LST m14e26 (is standard time)",
+      "utcOffset": "+00:57:44",
+      "lat": 49.65,
+      "lng": 18.166667,
+      "ianaZone": "Europe/Prague",
+      "adbTropical": {
+        "sun": "Tau 16°20'",
+        "moon": "Gem 14°40'",
+        "asc": "Sco 10°11'"
+      },
+      "tags": [
+        "pre1900",
+        "lmt",
+        "north"
+      ]
+    },
+    {
+      "id": "einstein",
+      "name": "Albert Einstein",
+      "adbUrl": "https://www.astro.com/astro-databank/Einstein,_Albert",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1879-03-14",
+      "time": "11:30",
+      "adbPlace": "Ulm, Germany, 48n24, 10e0",
+      "adbTimezone": "LMT m10e0 (is local mean time)",
+      "utcOffset": "+00:40:00",
+      "lat": 48.4,
+      "lng": 10,
+      "ianaZone": "Europe/Berlin",
+      "adbTropical": {
+        "sun": "Pis 23°30'",
+        "moon": "Sag 14°32'",
+        "asc": "Can 11°39'"
+      },
+      "tags": [
+        "pre1900",
+        "lmt",
+        "north"
+      ]
+    },
+    {
+      "id": "bose",
+      "name": "Subhas Chandra Bose",
+      "adbUrl": "https://www.astro.com/astro-databank/Bose,_Subhas_Chandra",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1897-01-23",
+      "time": "12:00",
+      "adbPlace": "Cuttack, India, 20n30, 85e50",
+      "adbTimezone": "MMT m80e1730 (is standard time)",
+      "utcOffset": "+05:21:10",
+      "lat": 20.5,
+      "lng": 85.833333,
+      "ianaZone": "Asia/Kolkata",
+      "adbTropical": {
+        "sun": "Aqu 03°35'",
+        "moon": "Vir 29°55'",
+        "asc": "Tau 17°27'"
+      },
+      "tags": [
+        "pre1900",
+        "north",
+        "india"
+      ]
+    },
+    {
+      "id": "borges",
+      "name": "Jorge Luis Borges",
+      "adbUrl": "https://www.astro.com/astro-databank/Borges,_Jorge_Luis",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1899-08-24",
+      "time": "03:30",
+      "adbPlace": "Buenos Aires, Argentina, 34s36, 58w27",
+      "adbTimezone": "CMT m64w12 (is standard time)",
+      "utcOffset": "-04:16:48",
+      "lat": -34.6,
+      "lng": -58.45,
+      "ianaZone": "America/Argentina/Buenos_Aires",
+      "adbTropical": {
+        "sun": "Vir 00°54'",
+        "moon": "Ari 14°44'",
+        "asc": "Can 12°38'"
+      },
+      "tags": [
+        "pre1900",
+        "south"
+      ]
+    },
+    {
+      "id": "garbo",
+      "name": "Greta Garbo",
+      "adbUrl": "https://www.astro.com/astro-databank/Garbo,_Greta",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1905-09-18",
+      "time": "19:30",
+      "adbPlace": "Stockholm, Sweden, 59n20, 18e03",
+      "adbTimezone": "MET h1e (is standard time)",
+      "utcOffset": "+01:00:00",
+      "lat": 59.333333,
+      "lng": 18.05,
+      "ianaZone": "Europe/Stockholm",
+      "adbTropical": {
+        "sun": "Vir 25°09'",
+        "moon": "Tau 19°58'",
+        "asc": "Gem 05°20'"
+      },
+      "tags": [
+        "high-latitude",
+        "north"
+      ]
+    },
+    {
+      "id": "peron-eva",
+      "name": "Eva Perón",
+      "adbUrl": "https://www.astro.com/astro-databank/Perón,_Eva",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1919-05-07",
+      "time": "05:00",
+      "adbPlace": "Buenos Aires, Argentina, 34s36, 58w27",
+      "adbTimezone": "CMT m64w12 (is standard time)",
+      "utcOffset": "-04:16:48",
+      "lat": -34.6,
+      "lng": -58.45,
+      "ianaZone": "America/Argentina/Buenos_Aires",
+      "adbTropical": {
+        "sun": "Tau 15°46'",
+        "moon": "Leo 20°36'",
+        "asc": "Ari 29°08'"
+      },
+      "tags": [
+        "south"
+      ]
+    },
+    {
+      "id": "elizabeth-ii",
+      "name": "Elizabeth II",
+      "adbUrl": "https://www.astro.com/astro-databank/Elizabeth_II,_Queen_of_the_United_Kingdom",
+      "rodden": "AA",
+      "adbSource": "Quoted BC/BR",
+      "date": "1926-04-21",
+      "time": "02:40",
+      "adbPlace": "Mayfair (London), England, 51n30, 0w09",
+      "adbTimezone": "GDT h1e (is daylight saving time)",
+      "utcOffset": "+01:00:00",
+      "lat": 51.5,
+      "lng": -0.15,
+      "ianaZone": "Europe/London",
+      "adbTropical": {
+        "sun": "Tau 00°12'",
+        "moon": "Leo 12°07'",
+        "asc": "Cap 21°24'"
+      },
+      "tags": [
+        "dst",
+        "north"
+      ]
+    },
+    {
+      "id": "monroe",
+      "name": "Marilyn Monroe",
+      "adbUrl": "https://www.astro.com/astro-databank/Monroe,_Marilyn",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1926-06-01",
+      "time": "09:30",
+      "adbPlace": "Los Angeles, California, 34n03, 118w15",
+      "adbTimezone": "PST h8w (is standard time)",
+      "utcOffset": "-08:00:00",
+      "lat": 34.05,
+      "lng": -118.25,
+      "ianaZone": "America/Los_Angeles",
+      "adbTropical": {
+        "sun": "Gem 10°27'",
+        "moon": "Aqu 19°06'",
+        "asc": "Leo 13°04'"
+      },
+      "tags": [
+        "north"
+      ]
+    },
+    {
+      "id": "hepburn",
+      "name": "Audrey Hepburn",
+      "adbUrl": "https://www.astro.com/astro-databank/Hepburn,_Audrey",
+      "rodden": "AA",
+      "adbSource": "Quoted BC/BR",
+      "date": "1929-05-04",
+      "time": "03:00",
+      "adbPlace": "Ixelles, Belgium, 50n50, 4e22",
+      "adbTimezone": "GDT h1e (is daylight saving time)",
+      "utcOffset": "+01:00:00",
+      "lat": 50.833333,
+      "lng": 4.366667,
+      "ianaZone": "Europe/Brussels",
+      "adbTropical": {
+        "sun": "Tau 13°07'",
+        "moon": "Pis 06°27'",
+        "asc": "Aqu 28°37'"
+      },
+      "tags": [
+        "dst",
+        "north"
+      ]
+    },
+    {
+      "id": "gilberto",
+      "name": "João Gilberto",
+      "adbUrl": "https://www.astro.com/astro-databank/Gilberto,_João",
+      "rodden": "AA",
+      "adbSource": "Quoted BC/BR",
+      "date": "1931-06-10",
+      "time": "07:00",
+      "adbPlace": "Juazeiro (Bahia), Brazil, 9s2449, 40w3011",
+      "adbTimezone": "BZT h3w (is standard time)",
+      "utcOffset": "-03:00:00",
+      "lat": -9.413611,
+      "lng": -40.503056,
+      "ianaZone": "America/Bahia",
+      "adbTropical": {
+        "sun": "Gem 18°34'",
+        "moon": "Ari 11°59'",
+        "asc": "Can 02°55'"
+      },
+      "tags": [
+        "south"
+      ]
+    },
+    {
+      "id": "bardot",
+      "name": "Brigitte Bardot",
+      "adbUrl": "https://www.astro.com/astro-databank/Bardot,_Brigitte",
+      "rodden": "AA",
+      "adbSource": "Quoted BC/BR",
+      "date": "1934-09-28",
+      "time": "13:15",
+      "adbPlace": "Paris, France, 48n52, 2e20",
+      "adbTimezone": "GDT h1e (is daylight saving time)",
+      "utcOffset": "+01:00:00",
+      "lat": 48.866667,
+      "lng": 2.333333,
+      "ianaZone": "Europe/Paris",
+      "adbTropical": {
+        "sun": "Lib 04°41'",
+        "moon": "Gem 12°02'",
+        "asc": "Sag 15°23'"
+      },
+      "tags": [
+        "dst",
+        "north"
+      ]
+    },
+    {
+      "id": "presley",
+      "name": "Elvis Presley",
+      "adbUrl": "https://www.astro.com/astro-databank/Presley,_Elvis",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1935-01-08",
+      "time": "04:35",
+      "adbPlace": "Tupelo, Mississippi, 34n15, 88w42",
+      "adbTimezone": "CST h6w (is standard time)",
+      "utcOffset": "-06:00:00",
+      "lat": 34.25,
+      "lng": -88.7,
+      "ianaZone": "America/Chicago",
+      "adbTropical": {
+        "sun": "Cap 17°14'",
+        "moon": "Pis 02°01'",
+        "asc": "Sag 12°22'"
+      },
+      "tags": [
+        "north"
+      ]
+    },
+    {
+      "id": "pele",
+      "name": "Pelé",
+      "adbUrl": "https://www.astro.com/astro-databank/Pelé",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1940-10-21",
+      "time": "03:00",
+      "adbPlace": "Três Corações (Minas Gerais), Brazil, 21s4149, 45w1512",
+      "adbTimezone": "BZT h3w (is standard time)",
+      "utcOffset": "-03:00:00",
+      "lat": -21.696944,
+      "lng": -45.253333,
+      "ianaZone": "America/Sao_Paulo",
+      "adbTropical": {
+        "sun": "Lib 27°41'",
+        "moon": "Gem 22°00'",
+        "asc": "Vir 09°30'"
+      },
+      "tags": [
+        "south"
+      ]
+    },
+    {
+      "id": "bruce-lee",
+      "name": "Bruce Lee",
+      "adbUrl": "https://www.astro.com/astro-databank/Lee,_Bruce",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1940-11-27",
+      "time": "07:12",
+      "adbPlace": "San Francisco, California, 37n47, 122w25",
+      "adbTimezone": "PST h8w (is standard time)",
+      "utcOffset": "-08:00:00",
+      "lat": 37.783333,
+      "lng": -122.416667,
+      "ianaZone": "America/Los_Angeles",
+      "adbTropical": {
+        "sun": "Sag 05°15'",
+        "moon": "Sco 11°24'",
+        "asc": "Sag 06°12'"
+      },
+      "tags": [
+        "north"
+      ]
+    },
+    {
+      "id": "trump",
+      "name": "Donald Trump",
+      "adbUrl": "https://www.astro.com/astro-databank/Trump,_Donald",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1946-06-14",
+      "time": "10:54",
+      "adbPlace": "Jamaica Hospital Queens (Queens County), New York, 40n42, 73w4859",
+      "adbTimezone": "EDT h4w (is daylight saving time)",
+      "utcOffset": "-04:00:00",
+      "lat": 40.7,
+      "lng": -73.816389,
+      "ianaZone": "America/New_York",
+      "adbTropical": {
+        "sun": "Gem 22°56'",
+        "moon": "Sag 21°12'",
+        "asc": "Leo 29°58'"
+      },
+      "tags": [
+        "dst",
+        "north"
+      ]
+    },
+    {
+      "id": "barry-gibb",
+      "name": "Barry Gibb",
+      "adbUrl": "https://www.astro.com/astro-databank/Gibb,_Barry",
+      "rodden": "AA",
+      "adbSource": "Quoted BC/BR",
+      "date": "1946-09-01",
+      "time": "09:00",
+      "adbPlace": "Douglas, Isle Of Man, 54n09, 4w28",
+      "adbTimezone": "GDT h1e (is daylight saving time)",
+      "utcOffset": "+01:00:00",
+      "lat": 54.15,
+      "lng": -4.466667,
+      "ianaZone": "Europe/Isle_of_Man",
+      "adbTropical": {
+        "sun": "Vir 08°17'",
+        "moon": "Sco 13°19'",
+        "asc": "Lib 03°41'"
+      },
+      "tags": [
+        "dst",
+        "north"
+      ]
+    },
+    {
+      "id": "jobs",
+      "name": "Steve Jobs",
+      "adbUrl": "https://www.astro.com/astro-databank/Jobs,_Steve",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1955-02-24",
+      "time": "19:15",
+      "adbPlace": "San Francisco, California, 37n47, 122w25",
+      "adbTimezone": "PST h8w (is standard time)",
+      "utcOffset": "-08:00:00",
+      "lat": 37.783333,
+      "lng": -122.416667,
+      "ianaZone": "America/Los_Angeles",
+      "adbTropical": {
+        "sun": "Pis 05°45'",
+        "moon": "Ari 07°45'",
+        "asc": "Vir 22°18'"
+      },
+      "tags": [
+        "north"
+      ]
+    },
+    {
+      "id": "madonna",
+      "name": "Madonna",
+      "adbUrl": "https://www.astro.com/astro-databank/Madonna",
+      "rodden": "AA",
+      "adbSource": "Quoted BC/BR",
+      "date": "1958-08-16",
+      "time": "07:05",
+      "adbPlace": "Bay City, Michigan, 43n36, 83w53",
+      "adbTimezone": "EST h5w (is standard time)",
+      "utcOffset": "-05:00:00",
+      "lat": 43.6,
+      "lng": -83.883333,
+      "ianaZone": "America/Detroit",
+      "adbTropical": {
+        "sun": "Leo 23°07'",
+        "moon": "Vir 11°33'",
+        "asc": "Vir 08°15'"
+      },
+      "tags": [
+        "north"
+      ]
+    },
+    {
+      "id": "senna",
+      "name": "Ayrton Senna",
+      "adbUrl": "https://www.astro.com/astro-databank/Senna,_Ayrton",
+      "rodden": "AA",
+      "adbSource": "Quoted BC/BR",
+      "date": "1960-03-21",
+      "time": "02:35",
+      "adbPlace": "São Paulo, Brazil, 23s3309, 46w3729",
+      "adbTimezone": "BZT h3w (is standard time)",
+      "utcOffset": "-03:00:00",
+      "lat": -23.5525,
+      "lng": -46.624722,
+      "ianaZone": "America/Sao_Paulo",
+      "adbTropical": {
+        "sun": "Ari 00°37'",
+        "moon": "Cap 13°13'",
+        "asc": "Aqu 11°16'"
+      },
+      "tags": [
+        "south"
+      ]
+    },
+    {
+      "id": "maradona",
+      "name": "Diego Maradona",
+      "adbUrl": "https://www.astro.com/astro-databank/Maradona,_Diego",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1960-10-30",
+      "time": "07:05",
+      "adbPlace": "Lanús (Buenos Aires), Argentina, 34s43, 58w24",
+      "adbTimezone": "-03 h3w (is daylight saving time)",
+      "utcOffset": "-03:00:00",
+      "lat": -34.716667,
+      "lng": -58.4,
+      "ianaZone": "America/Argentina/Buenos_Aires",
+      "adbTropical": {
+        "sun": "Sco 06°59'",
+        "moon": "Pis 16°57'",
+        "asc": "Sco 28°15'"
+      },
+      "tags": [
+        "dst",
+        "south"
+      ]
+    },
+    {
+      "id": "obama",
+      "name": "Barack Obama",
+      "adbUrl": "https://www.astro.com/astro-databank/Obama,_Barack",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1961-08-04",
+      "time": "19:24",
+      "adbPlace": "Honolulu, Hawaii, 21n18, 157w52",
+      "adbTimezone": "AHST h10w (is standard time)",
+      "utcOffset": "-10:00:00",
+      "lat": 21.3,
+      "lng": -157.866667,
+      "ianaZone": "Pacific/Honolulu",
+      "adbTropical": {
+        "sun": "Leo 12°33'",
+        "moon": "Gem 03°21'",
+        "asc": "Aqu 18°03'"
+      },
+      "tags": [
+        "north"
+      ]
+    },
+    {
+      "id": "bjork",
+      "name": "Björk",
+      "adbUrl": "https://www.astro.com/astro-databank/Björk",
+      "rodden": "AA",
+      "adbSource": "Quoted BC/BR",
+      "date": "1965-11-21",
+      "time": "08:10",
+      "adbPlace": "Reykjavík, Iceland, 64n09, 21w51",
+      "adbTimezone": "-01 h1w (is standard time)",
+      "utcOffset": "-01:00:00",
+      "lat": 64.15,
+      "lng": -21.85,
+      "ianaZone": "Atlantic/Reykjavik",
+      "adbTropical": {
+        "sun": "Sco 28°51'",
+        "moon": "Sco 07°02'",
+        "asc": "Sco 18°19'"
+      },
+      "tags": [
+        "high-latitude",
+        "north"
+      ]
+    },
+    {
+      "id": "cobain",
+      "name": "Kurt Cobain",
+      "adbUrl": "https://www.astro.com/astro-databank/Cobain,_Kurt",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1967-02-20",
+      "time": "19:38",
+      "adbPlace": "Aberdeen, Washington, 46n59, 123w49",
+      "adbTimezone": "PST h8w (is standard time)",
+      "utcOffset": "-08:00:00",
+      "lat": 46.983333,
+      "lng": -123.816667,
+      "ianaZone": "America/Los_Angeles",
+      "adbTropical": {
+        "sun": "Pis 01°49'",
+        "moon": "Can 13°24'",
+        "asc": "Vir 23°21'"
+      },
+      "tags": [
+        "north"
+      ]
+    },
+    {
+      "id": "prince-william",
+      "name": "William, Prince of Wales",
+      "adbUrl": "https://www.astro.com/astro-databank/William,_Prince_of_Wales",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1982-06-21",
+      "time": "21:03",
+      "adbPlace": "Paddington, England, 51n32, 0w12",
+      "adbTimezone": "GDT h1e (is daylight saving time)",
+      "utcOffset": "+01:00:00",
+      "lat": 51.533333,
+      "lng": -0.2,
+      "ianaZone": "Europe/London",
+      "adbTropical": {
+        "sun": "Can 00°06'",
+        "moon": "Can 04°58'",
+        "asc": "Sag 27°26'"
+      },
+      "tags": [
+        "dst",
+        "north"
+      ]
+    },
+    {
+      "id": "messi",
+      "name": "Lionel Messi",
+      "adbUrl": "https://www.astro.com/astro-databank/Messi,_Lionel",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "1987-06-24",
+      "time": "20:30",
+      "adbPlace": "Rosario (Santa Fé), Argentina, 32s57, 60w40",
+      "adbTimezone": "-03 h3w (is standard time)",
+      "utcOffset": "-03:00:00",
+      "lat": -32.95,
+      "lng": -60.666667,
+      "ianaZone": "America/Argentina/Cordoba",
+      "adbTropical": {
+        "sun": "Can 02°55'",
+        "moon": "Gem 19°03'",
+        "asc": "Aqu 04°59'"
+      },
+      "tags": [
+        "south"
+      ]
+    },
+    {
+      "id": "mbappe",
+      "name": "Kylian Mbappé",
+      "adbUrl": "https://www.astro.com/astro-databank/Mbappé,_Kylian",
+      "rodden": "AA",
+      "adbSource": "Quoted BC/BR",
+      "date": "1998-12-20",
+      "time": "01:47",
+      "adbPlace": "Paris Arrondissement 19, France, 48n5258, 2e2255",
+      "adbTimezone": "MET h1e (is standard time)",
+      "utcOffset": "+01:00:00",
+      "lat": 48.882778,
+      "lng": 2.381944,
+      "ianaZone": "Europe/Paris",
+      "adbTropical": {
+        "sun": "Sag 27°55'",
+        "moon": "Cap 10°17'",
+        "asc": "Lib 09°08'"
+      },
+      "tags": [
+        "north"
+      ]
+    },
+    {
+      "id": "eilish",
+      "name": "Billie Eilish",
+      "adbUrl": "https://www.astro.com/astro-databank/Eilish,_Billie",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "2001-12-18",
+      "time": "12:17",
+      "adbPlace": "Los Angeles, California, 34n03, 118w15",
+      "adbTimezone": "PST h8w (is standard time)",
+      "utcOffset": "-08:00:00",
+      "lat": 34.05,
+      "lng": -118.25,
+      "ianaZone": "America/Los_Angeles",
+      "adbTropical": {
+        "sun": "Sag 26°59'",
+        "moon": "Aqu 13°02'",
+        "asc": "Ari 05°24'"
+      },
+      "tags": [
+        "post2000",
+        "north"
+      ]
+    },
+    {
+      "id": "prince-george",
+      "name": "Prince George of Wales",
+      "adbUrl": "https://www.astro.com/astro-databank/George,_Prince_of_Wales",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "2013-07-22",
+      "time": "16:24",
+      "adbPlace": "London St Mary's Hospital, England, 51n3102, 0w1023",
+      "adbTimezone": "GDT h1e (is daylight saving time)",
+      "utcOffset": "+01:00:00",
+      "lat": 51.517222,
+      "lng": -0.173056,
+      "ianaZone": "Europe/London",
+      "adbTropical": {
+        "sun": "Can 29°59'",
+        "moon": "Cap 28°17'",
+        "asc": "Sco 27°10'"
+      },
+      "tags": [
+        "post2000",
+        "dst",
+        "north"
+      ]
+    },
+    {
+      "id": "princess-charlotte",
+      "name": "Princess Charlotte of Wales",
+      "adbUrl": "https://www.astro.com/astro-databank/Charlotte,_Princess_of_Wales",
+      "rodden": "AA",
+      "adbSource": "BC/BR in hand",
+      "date": "2015-05-02",
+      "time": "08:34",
+      "adbPlace": "London St Mary's Hospital, England, 51n3102, 0w1023",
+      "adbTimezone": "GDT h1e (is daylight saving time)",
+      "utcOffset": "+01:00:00",
+      "lat": 51.517222,
+      "lng": -0.173056,
+      "ianaZone": "Europe/London",
+      "adbTropical": {
+        "sun": "Tau 11°36'",
+        "moon": "Lib 20°44'",
+        "asc": "Can 05°34'"
+      },
+      "tags": [
+        "post2000",
+        "dst",
+        "north"
+      ]
+    }
+  ],
+  "supportedRange": "產品 BirthProfile 只支援 1800–2200 年，故未收 1800 年以前的 AA 案例（例如 Goethe 1749）。"
+}

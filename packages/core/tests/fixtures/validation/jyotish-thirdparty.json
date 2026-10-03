@@ -1,0 +1,256 @@
+{
+  "description": "第三方抽查（M5-01）：兩個有公開 API、免登入的服務。值為原始回傳，未經我們任何程式處理。",
+  "retrievedAt": "2026-10-03",
+  "sources": {
+    "jplHorizons": {
+      "name": "NASA/JPL Horizons API（DE441）",
+      "url": "https://ssd.jpl.nasa.gov/api/horizons.api",
+      "query": "EPHEM_TYPE='OBSERVER'&CENTER='500@399'&TIME_TYPE='UT'&QUANTITIES='31'&ANG_FORMAT='DEG'&EXTRA_PREC='YES'&TLIST=<jdUt>",
+      "meaning": "ObsEcLon：地心、IAU76/80 真黃道（ecliptic-of-date）視黃經，含光行時、重力偏折、光行差；回歸黃道，度。1962 年前的時間為 UT1。"
+    },
+    "astrodienstSwetest": {
+      "name": "Astrodienst Swiss Ephemeris 線上測試頁 swetest.cgi（Swiss Ephemeris 2.10.03，壓縮 DE441 星曆檔）",
+      "url": "https://www.astro.com/cgi/swetest.cgi",
+      "query": "b=<d.m.y>&n=1&s=1&p=0123456m&e=-eswe&f=Pl&arg=-ut<h:m:s> -sid1 -house<lng>,<lat>,W",
+      "meaning": "恆星黃道（-sid1 = Lahiri）視黃經，度；meanNode = 平均交點；ascendant = 恆星上升點；ayanamsa 為頁首列印的 Lahiri 值。注意：與我們同屬 Swiss Ephemeris 程式家族（但為 Astrodienst 自己的執行環境與 DE441 檔案星曆；我們是 WASM 版、Moshier 解析星曆），因此只算「部分獨立」。"
+    }
+  },
+  "horizons": {
+    "van-gogh": {
+      "jdUt": 2397942.945370371,
+      "sun": 9.6535443,
+      "moon": 260.7329501,
+      "mercury": 25.6064623,
+      "venus": 358.0562014,
+      "mars": 356.1265594,
+      "jupiter": 264.2681937,
+      "saturn": 45.9582215
+    },
+    "borges": {
+      "jdUt": 2414890.824166667,
+      "sun": 150.8961778,
+      "moon": 14.7253965,
+      "mercury": 142.3951362,
+      "venus": 144.6460034,
+      "mars": 191.624618,
+      "jupiter": 214.8800839,
+      "saturn": 257.0776108
+    },
+    "monroe": {
+      "jdUt": 2424668.229166667,
+      "sun": 70.4443169,
+      "moon": 319.0983445,
+      "mercury": 66.7786082,
+      "venus": 28.7503787,
+      "mars": 350.7315327,
+      "jupiter": 326.8256681,
+      "saturn": 231.4416013
+    },
+    "obama": {
+      "jdUt": 2437516.725,
+      "sun": 132.5479089,
+      "moon": 63.3573772,
+      "mercury": 122.3315919,
+      "venus": 91.789345,
+      "mars": 172.5765892,
+      "jupiter": 300.8586257,
+      "saturn": 295.3307494
+    },
+    "bjork": {
+      "jdUt": 2439085.881944444,
+      "sun": 238.849462,
+      "moon": 217.0405546,
+      "mercury": 258.8447492,
+      "venus": 285.8701473,
+      "mars": 275.3645944,
+      "jupiter": 89.5936906,
+      "saturn": 340.533263
+    },
+    "mbappe": {
+      "jdUt": 2451167.532638889,
+      "sun": 267.9136685,
+      "moon": 280.2843545,
+      "mercury": 246.3816071,
+      "venus": 280.3695738,
+      "mars": 192.2856006,
+      "jupiter": 350.3645309,
+      "saturn": 26.8536916
+    },
+    "prince-george": {
+      "jdUt": 2456496.141666667,
+      "sun": 119.9787901,
+      "moon": 298.2859159,
+      "mercury": 103.5269507,
+      "venus": 150.136103,
+      "mars": 96.1190364,
+      "jupiter": 95.9718712,
+      "saturn": 214.9889499
+    }
+  },
+  "swetest": {
+    "van-gogh": {
+      "ayanamsa": 21.802929806,
+      "sun": 347.8507158,
+      "moon": 238.9301178,
+      "mercury": 3.8036333,
+      "venus": 336.2533732,
+      "mars": 334.3237309,
+      "jupiter": 242.4653508,
+      "saturn": 24.1553847,
+      "meanNode": 61.6719213,
+      "ascendant": 89.3506463,
+      "ut": "1853-03-30T10:41:20Z",
+      "ayanamsaRaw": "21°48'10.5473"
+    },
+    "einstein": {
+      "ayanamsa": 22.174240667,
+      "sun": 331.3335069,
+      "moon": 232.3516706,
+      "mercury": 340.9696444,
+      "venus": 354.8107694,
+      "mars": 274.7399818,
+      "jupiter": 305.3098597,
+      "saturn": 342.015588,
+      "meanNode": 279.3061232,
+      "ascendant": 79.4721642,
+      "ut": "1879-03-14T10:50:00Z",
+      "ayanamsaRaw": "22°10'27.2664"
+    },
+    "bose": {
+      "ayanamsa": 22.423126667,
+      "sun": 281.1586354,
+      "moon": 157.5011532,
+      "mercury": 279.5985269,
+      "venus": 326.3228732,
+      "mars": 49.4407838,
+      "jupiter": 136.4908179,
+      "saturn": 216.6395304,
+      "meanNode": 293.5417911,
+      "ascendant": 25.0317159,
+      "ut": "1897-01-23T06:38:50Z",
+      "ayanamsaRaw": "22°25'23.2560"
+    },
+    "borges": {
+      "ayanamsa": 22.460596861,
+      "sun": 128.435646,
+      "moon": 352.2648618,
+      "mercury": 119.9346042,
+      "venus": 122.1854716,
+      "mars": 169.1640863,
+      "jupiter": 192.4195536,
+      "saturn": 234.6170738,
+      "meanNode": 243.5677298,
+      "ascendant": 80.165768,
+      "ut": "1899-08-24T07:46:48Z",
+      "ayanamsaRaw": "22°27'38.1487"
+    },
+    "monroe": {
+      "ayanamsa": 22.824655639,
+      "sun": 47.619704,
+      "moon": 296.2737311,
+      "mercury": 43.9539952,
+      "venus": 5.9257662,
+      "mars": 327.9069201,
+      "jupiter": 304.0010549,
+      "saturn": 208.6169999,
+      "meanNode": 85.4425395,
+      "ascendant": 110.2436147,
+      "ut": "1926-06-01T17:30:00Z",
+      "ayanamsaRaw": "22°49'28.7603"
+    },
+    "obama": {
+      "ayanamsa": 23.318351667,
+      "sun": 109.2295722,
+      "moon": 40.0390855,
+      "mercury": 99.0132592,
+      "venus": 68.4710092,
+      "mars": 149.2582518,
+      "jupiter": 277.540276,
+      "saturn": 272.0123975,
+      "meanNode": 124.5742059,
+      "ascendant": 294.7263063,
+      "ut": "1961-08-05T05:24:00Z",
+      "ayanamsaRaw": "23°19'6.0660"
+    },
+    "bjork": {
+      "ayanamsa": 23.375951444,
+      "sun": 215.4735236,
+      "moon": 193.6646174,
+      "mercury": 235.4688104,
+      "venus": 262.494209,
+      "mars": 251.988656,
+      "jupiter": 66.2177546,
+      "saturn": 317.1573297,
+      "meanNode": 41.4213672,
+      "ascendant": 204.9353301,
+      "ut": "1965-11-21T09:10:00Z",
+      "ayanamsaRaw": "23°22'33.4252"
+    },
+    "mbappe": {
+      "ayanamsa": 23.839828806,
+      "sun": 244.0738566,
+      "moon": 256.4445786,
+      "mercury": 222.5417955,
+      "venus": 256.5297624,
+      "mars": 168.4457874,
+      "jupiter": 326.5247057,
+      "saturn": 3.0138688,
+      "meanNode": 121.1901786,
+      "ascendant": 165.2885588,
+      "ut": "1998-12-20T00:47:00Z",
+      "ayanamsaRaw": "23°50'23.3837"
+    },
+    "prince-george": {
+      "ayanamsa": 24.050121194,
+      "sun": 95.9286815,
+      "moon": 274.2357955,
+      "mercury": 79.476843,
+      "venus": 126.0859943,
+      "mars": 72.0689278,
+      "jupiter": 71.921763,
+      "saturn": 190.938853,
+      "meanNode": 198.8165001,
+      "ascendant": 213.1166727,
+      "ut": "2013-07-22T15:24:00Z",
+      "ayanamsaRaw": "24°3'0.4363"
+    },
+    "princess-charlotte": {
+      "ayanamsa": 24.0716195,
+      "sun": 17.5234916,
+      "moon": 176.6681679,
+      "mercury": 37.631169,
+      "venus": 59.6499722,
+      "mars": 28.9630525,
+      "jupiter": 109.3708715,
+      "saturn": 219.0561662,
+      "meanNode": 164.4419896,
+      "ascendant": 71.4970517,
+      "ut": "2015-05-02T07:34:00Z",
+      "ayanamsaRaw": "24°4'17.8302"
+    }
+  },
+  "horizonsBoundary": {
+    "description": "計算層中距邊界小於容差、對照演算法無法判定的欄位，改以 JPL Horizons（同上查詢參數）判定。",
+    "items": [
+      {
+        "caseId": "senna",
+        "graha": "saturn",
+        "fields": [
+          "d10"
+        ],
+        "jdUt": 2437014.732638889,
+        "tropical": 287.30926
+      },
+      {
+        "caseId": "princess-charlotte",
+        "graha": "moon",
+        "fields": [
+          "pada",
+          "d9"
+        ],
+        "jdUt": 2457144.815277778,
+        "tropical": 200.7396892
+      }
+    ]
+  }
+}
