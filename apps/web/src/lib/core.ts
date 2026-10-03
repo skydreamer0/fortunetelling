@@ -23,7 +23,13 @@ export type {
 export { answerQuestion, buildTimeline, getQuestionCategory, listQuestionCategories } from '@fortune/core';
 export type { QuestionAnswer, QuestionRange, Signal as CoreSignal, SignalWindow } from '@fortune/core';
 
-export const parseIsoDate = (value: string): YMD => core.parseIsoDate(value);
+// M4-02: `.fortune.json` profile file (shared with the local MCP server).
+export {
+  PROFILE_FILE_EXTENSION, PROFILE_ID_RE, chartFingerprint, createProfileFile, isValidProfileId, serializeProfileFile,
+} from '@fortune/core';
+export type { BirthProfile } from '@fortune/core';
+
+export const parseIsoDate =(value: string): YMD => core.parseIsoDate(value);
 export const toIsoDate = (date: YMD): string => core.toIsoDate(date);
 export const solarToLunarDate = (date: YMD): LunarInput => core.solarToLunarDate(date);
 export const lunarToSolarDate = (date: LunarInput): YMD & { iso: string } => core.lunarToSolarDate(date);
