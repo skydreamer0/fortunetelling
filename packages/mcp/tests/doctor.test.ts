@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { checkMcpServer, checkProfiles, desktopConfigCandidates, inspectDesktopConfig, type FsProbe } from '../src/cli/doctor';
 
-const BIN = 'C:\\repo\\packages\\mcp\\src\\bin.ts';
+// 用 resolve 產生目前平台的絕對路徑，Windows 與 Linux（CI）都適用
+const BIN = resolve('/repo/packages/mcp/src/bin.ts');
+const BUN = resolve('/bun/bun.exe');
 const fsOf = (existing: string[], which: Record<string, string> = {}): FsProbe => ({
   exists: p => existing.includes(p),
   which: cmd => which[cmd] ?? null,
@@ -15,8 +17,8 @@ const statusOf = (results: { name: string; status: string }[], name: string) => 
 describe('inspectDesktopConfig', () => {
   test('正確的設定全部通過', () => {
     const results = inspectDesktopConfig(
-      config({ command: 'C:\\bun\\bun.exe', args: ['run', BIN] }),
-      fsOf(['C:\\bun\\bun.exe', BIN]),
+      config({ command: BUN, args: ['run', BIN] }),
+      fsOf([BUN, BIN]),
       BIN,
     );
     expect(results.every(r => r.status === 'ok')).toBe(true);
@@ -26,8 +28,8 @@ describe('inspectDesktopConfig', () => {
     // 實際發生過的壞值：JSON 沒有跳脫，反斜線全部消失
     const mangled = 'C:UsersUserDocumentsProjectfortunetellingpackagesmcpsrcbin.ts';
     const results = inspectDesktopConfig(
-      config({ command: 'C:\\bun\\bun.exe', args: ['run', mangled] }),
-      fsOf(['C:\\bun\\bun.exe']),
+      config({ command: BUN, args: ['run', mangled] }),
+      fsOf([BUN]),
       BIN,
     );
     expect(statusOf(results, '桌面版 args')).toBe('fail');
@@ -40,7 +42,7 @@ describe('inspectDesktopConfig', () => {
     expect(
       statusOf(inspectDesktopConfig(config({ command: 'bun', args: ['run', BIN] }), fsOf([], { bun: '/x/bun' }), BIN), '桌面版 args'),
     ).toBe('fail');
-    const other = 'C:\\other\\packages\\mcp\\src\\bin.ts';
+    const other = resolve('/other/packages/mcp/src/bin.ts');
     expect(
       statusOf(inspectDesktopConfig(config({ command: 'bun', args: ['run', other] }), fsOf([other], { bun: '/x/bun' }), BIN), '桌面版 args'),
     ).toBe('warn');
