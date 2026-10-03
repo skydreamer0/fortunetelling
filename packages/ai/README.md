@@ -54,7 +54,7 @@ Report v4 (+ QuestionAnswer)
 ### 去識別化（D-029）
 
 payload 不含姓名、出生日期時間、出生地標籤與經緯度；`profile` 只有 `gender`、`timeAccuracy`、`timezone`。
-報告中任何字串若出現姓名或出生地標籤，一律替換為 `〔已移除〕`。
+報告中任何字串若出現姓名或出生地標籤，一律替換為 `[name]`（姓名）或 `[place]`（出生地標籤），邏輯與匯出包共用 core 的 `export/redact`。
 
 ## 使用
 

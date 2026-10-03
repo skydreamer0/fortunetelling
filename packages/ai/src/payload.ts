@@ -7,7 +7,7 @@
  *
  * - De-identified (D-029): never copies `input.name`, `birthplace.label`,
  *   birth date/time or coordinates; any leftover occurrence of the name / label
- *   strings anywhere in the payload is replaced by 〔已移除〕.
+ *   strings anywhere in the payload is replaced by `[name]` / `[place]` (shared core/export/redact).
  * - Deterministic (D-014): no clock, no `generatedAt`/`computedAt`/`durationMs`;
  *   engines sorted by id, signals sorted by id, keys canonicalised on
  *   serialisation. Same report → byte-identical `payloadJson`.
@@ -177,7 +177,7 @@ export interface BuildPayloadOptions {
   /** Serialised-size budget in characters; default 120 000. */
   maxChars?: number;
   /**
-   * 是否把姓名與出生地標籤替換為 `〔已移除〕`（D-029）。預設 true（向下相容）。
+   * 是否把姓名與出生地標籤替換為 `[name]`／`[place]`（D-029）。預設 true（向下相容）。
    * 本機對話（MCP）不經外部網路，可關閉；對外分享或複製 prompt 請維持開啟。
    */
   redact?: boolean;
