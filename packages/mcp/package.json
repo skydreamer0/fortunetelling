@@ -9,6 +9,7 @@
   "scripts": {
     "start": "bun run src/bin.ts",
     "add-profile": "bun run src/cli/addProfile.ts",
+    "export-profile": "bun run src/cli/exportBundle.ts",
     "test": "bun test",
     "typecheck": "tsc -p tsconfig.json"
   },

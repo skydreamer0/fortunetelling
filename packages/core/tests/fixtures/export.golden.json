@@ -1,0 +1,56 @@
+{
+  "versions": {
+    "asOf": "2026-10-03",
+    "coreVersion": "0.5.0",
+    "profileSchemaVersion": 1,
+    "reportSchemaVersion": 5,
+    "timelineSchemaVersion": 1,
+    "consensusSchemaVersion": 1,
+    "calculators": {
+      "bazi": "1.0.0",
+      "ziwei": "1.0.0",
+      "numerology": "0.1.0",
+      "tzolkin": "0.1.0",
+      "mingGua": "0.1.0",
+      "jyotish": "1.0.0",
+      "humanDesign": "1.0.0"
+    },
+    "catalogs": {
+      "bazi": 1,
+      "baziTenGod": 1,
+      "ziwei": 1,
+      "ziweiTraits": 1,
+      "ziweiModifiers": 1,
+      "numerology": 1,
+      "questions": 1,
+      "jyotish": 1,
+      "humanDesign": 1
+    },
+    "ephemeris": "moshier",
+    "experimentalSystems": [
+      "jyotish",
+      "humanDesign"
+    ]
+  },
+  "files": {
+    "profile.json": {
+      "hash": "d88ae5e01d2d25ce"
+    },
+    "chart.json": {
+      "hash": "8e87bd618f2add78"
+    },
+    "signals.json": {
+      "hash": "bce10b3086644ae8"
+    },
+    "timeline.json": {
+      "hash": "33334f129049c440"
+    },
+    "consensus.json": {
+      "hash": "f1a0221631e4a8f1"
+    },
+    "README.md": {
+      "hash": "c526392cbd3944bc"
+    }
+  },
+  "signalCount": 1152
+}
