@@ -5,6 +5,7 @@
  */
 
 import type { Domain as CoreDomain, TimelineCell } from '@fortune/core';
+import { HISTORICAL_ZONE_WARNING_TEXT } from '../lib/core';
 import type { Component, ConsensusSummary, EngineResult, Period, Radar, Report, ScoringRule, Signal, SystemId, Timeline } from './types';
 
 export const SYSTEM_NAMES: Record<string, string> = {
@@ -343,8 +344,19 @@ export function radar(report: Report, id: string): Radar | null {
 
 const INFORMATIONAL = [/姓名無拉丁字母/, /無姓名/, /略過表達數/];
 
+/**
+ * 出生時刻的時區不確定提示：只有時間已知且 `timeContext.flags` 帶 `historical_zone_uncertain`（basis 為 birth）時才有。
+ * 時間未知時沒有出生時刻可受影響，不顯示。
+ */
+export function historicalZoneNotice(report: Report): string | null {
+  const flags = (report.timeContext as { flags?: { code?: string; data?: { basis?: string } }[] } | null | undefined)?.flags;
+  const hit = flags?.some(flag => flag.code === 'historical_zone_uncertain' && flag.data?.basis !== 'local_noon');
+  return hit ? HISTORICAL_ZONE_WARNING_TEXT : null;
+}
+
 export function notices(report: Report) {
   return {
+    timeZone: historicalZoneNotice(report),
     unavailable: report.engines
       .filter(item => item.meta?.unavailableReason === 'unknown-time')
       .map(item => item.meta.unavailableMessage as string),

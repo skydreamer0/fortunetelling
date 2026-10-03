@@ -70,7 +70,7 @@ export interface JyotishChart {
   };
 }
 
-const TIME_WARNINGS = ['time_unknown', 'dst_gap', 'dst_overlap'] as const;
+const TIME_WARNINGS = ['time_unknown', 'dst_gap', 'dst_overlap', 'historical_zone_uncertain'] as const;
 
 function emptyChart(settings: JyotishChart['settings'], asOf: string, asOfJd: number): JyotishChart {
   return {

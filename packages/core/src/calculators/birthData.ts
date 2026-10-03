@@ -96,6 +96,8 @@ export function flagWarnings(ctx: TimeContext, relevant: readonly CalculatorWarn
   for (const flag of ctx.flags as TimeFlag[]) {
     const code = flag.code as CalculatorWarningCode;
     if (!relevant.includes(code)) continue;
+    // 時間未知時以當地正午判斷歷史時區，沒有出生時刻可受影響，不警告。
+    if (flag.code === 'historical_zone_uncertain' && flag.data.basis === 'local_noon') continue;
     if (flag.code === 'near_shichen_boundary' && !flag.data.hits.some((h) => h.basis === 'civil')) continue;
     if (flag.code === 'zi_hour_convention' && !flag.data.bases.includes('civil')) continue;
     out.push(code);

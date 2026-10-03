@@ -203,6 +203,10 @@ function baziWarnings(ctx: TimeContext, basis: 'trueSolar' | 'civil'): string[] 
       case 'zi_hour_convention':
         if (flag.data.bases.includes(basis)) out.push(flag.code);
         break;
+      case 'historical_zone_uncertain':
+        // 時柱、真太陽時與節氣交界都依出生瞬間；時間未知（local_noon）沒有時刻可受影響。
+        if (flag.data.basis === 'birth') out.push(flag.code);
+        break;
       default:
         break;
     }

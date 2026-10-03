@@ -29,6 +29,9 @@ export {
 } from '@fortune/core';
 export type { BirthProfile } from '@fortune/core';
 
+// 歷史時區不確定的警告文字，與各計算器共用同一份。
+export const HISTORICAL_ZONE_WARNING_TEXT: string = core.HISTORICAL_ZONE_WARNING_TEXT;
+
 export const parseIsoDate =(value: string): YMD => core.parseIsoDate(value);
 export const toIsoDate = (date: YMD): string => core.toIsoDate(date);
 export const solarToLunarDate = (date: YMD): LunarInput => core.solarToLunarDate(date);

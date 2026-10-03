@@ -7,6 +7,7 @@ import {
   isValidTimeZone,
   validateBirthProfile,
 } from '../src/profile/index';
+import { allZoneNames } from '../src/time/tzdb';
 
 const base = {
   date: '1990-07-01',
@@ -113,5 +114,36 @@ describe('cities', () => {
   test('default birthplace is Taipei', () => {
     expect(DEFAULT_BIRTHPLACE).toEqual({ label: 'Taipei, Taiwan', lat: 25.0375, lng: 121.5637, timezone: 'Asia/Taipei' });
     expect(validateBirthProfile({ ...base, birthplace: DEFAULT_BIRTHPLACE }).ok).toBe(true);
+  });
+});
+
+describe('isValidTimeZone 以內建 tz 資料判斷（D-014，不依賴執行環境 Intl）', () => {
+  test('內建資料有的名稱與別名都通過', () => {
+    for (const name of allZoneNames()) {
+      if (/^([+-]\d|(utc|gmt)\s*[+-]|etc\/gmt[+-])/i.test(name)) continue; // 固定 offset 寫法一律拒收
+      expect(isValidTimeZone(name)).toBe(true);
+    }
+    for (const name of ['Asia/Taipei', 'Asia/Calcutta', 'Asia/Kolkata', 'Europe/Kiev', 'Atlantic/Reykjavik']) {
+      expect(isValidTimeZone(name)).toBe(true);
+    }
+  });
+
+  test('亂打的名稱失敗', () => {
+    for (const name of ['Mars/Olympus', 'Asia/Taipeii', 'Taipei', 'Asia/', 'foo', 12, null, undefined]) {
+      expect(isValidTimeZone(name)).toBe(false);
+    }
+  });
+
+  test('固定 offset 寫法仍拒收', () => {
+    for (const name of ['+08:00', 'UTC+8', 'GMT-5', 'Etc/GMT-8']) expect(isValidTimeZone(name)).toBe(false);
+  });
+
+  test('validateBirthProfile 接受別名並保留原字串', () => {
+    const r = validateBirthProfile({
+      date: '1990-01-01', time: '12:00', gender: 'male',
+      birthplace: { label: 'Kolkata', lat: 22.57, lng: 88.36, timezone: 'Asia/Calcutta' },
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.profile.birthplace.timezone).toBe('Asia/Calcutta');
   });
 });

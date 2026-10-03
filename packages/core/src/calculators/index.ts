@@ -23,6 +23,7 @@ export type * from './numerology/calculator';
 export type * from './tzolkin/calculator';
 export type * from './mingGua/calculator';
 export { timeContextToBirthData } from './birthData';
+export { HISTORICAL_ZONE_WARNING_TEXT } from './types';
 export { baziCalculator, extractBaziChart, pillarStats, toBaziRuleChart, BAZI_CALCULATOR_VERSION } from './bazi/calculator';
 export type { BaziRuleChartWithSequence, ToBaziRuleChartOptions } from './bazi/ruleChart';
 export {

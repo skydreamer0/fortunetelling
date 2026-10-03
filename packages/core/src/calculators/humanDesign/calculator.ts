@@ -9,7 +9,7 @@
  * `await initEphemeris()` must have resolved before `calculate` (D-027); if not,
  * the chart is empty and `ephemeris:not_initialised` is warned instead of throwing.
  *
- * Warnings: time flags (`time_unknown`, `dst_gap`, `dst_overlap`), then
+ * Warnings: time flags (`time_unknown`, `dst_gap`, `dst_overlap`, `historical_zone_uncertain`), then
  * `ephemeris:moshier_fallback`, then `humanDesign:near_profile_line_boundary`
  * when either Sun is within {@link PROFILE_LINE_TOLERANCE_DEG} of a line edge
  * (≈ 30 min of Sun motion — the profile could flip with a slightly different time).
@@ -66,7 +66,7 @@ export interface HumanDesignChart {
   incarnationCross: HdIncarnationCross | null;
 }
 
-const TIME_WARNINGS = ['time_unknown', 'dst_gap', 'dst_overlap'] as const;
+const TIME_WARNINGS = ['time_unknown', 'dst_gap', 'dst_overlap', 'historical_zone_uncertain'] as const;
 
 function emptyChart(node: NodeKind): HumanDesignChart {
   return {

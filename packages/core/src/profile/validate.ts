@@ -3,6 +3,7 @@
  * @module profile/validate
  */
 
+import { canonicalZoneName } from '../time/tzdb';
 import type { BirthProfile, TimeAccuracy, ValidationResult } from './types';
 
 export const TIME_ACCURACIES: readonly TimeAccuracy[] = Object.freeze([
@@ -33,17 +34,14 @@ export function daysInMonth(year: number, month: number): number {
 }
 
 /**
- * True when `Intl` accepts the zone as an IANA name (and it is not a fixed offset).
+ * 時區名稱是否為內建 tz 資料庫（見 `time/tzdb`）收錄的 IANA 名稱或別名（link），
+ * 固定 offset 寫法一律拒收。不再依賴執行環境的 `Intl`：各環境（Bun／Node／瀏覽器）接受的名稱不同，
+ * 以內建資料判斷才能讓同一輸入在所有環境得到相同結果（D-014）。大小寫不敏感。
  */
 export function isValidTimeZone(timezone: unknown): boolean {
   if (typeof timezone !== 'string' || timezone.trim() === '') return false;
   if (FIXED_OFFSET_RE.test(timezone)) return false;
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: timezone });
-    return true;
-  } catch {
-    return false;
-  }
+  return canonicalZoneName(timezone) !== null;
 }
 
 function isFiniteNumber(value: unknown): value is number {
@@ -120,7 +118,7 @@ export function validateBirthProfile(input: unknown): ValidationResult {
       errors.push('birthplace.lng must be a number within [-180, 180]');
     }
     if (!isValidTimeZone(bp.timezone)) {
-      errors.push(`birthplace.timezone must be an IANA zone accepted by Intl (got ${JSON.stringify(bp.timezone)})`);
+      errors.push(`birthplace.timezone must be an IANA zone name bundled in the tz database (got ${JSON.stringify(bp.timezone)})`);
     }
   }
 
