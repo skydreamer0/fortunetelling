@@ -109,3 +109,15 @@ server 連線時會自動把下面這段當作 `instructions` 送給客戶端；
 
 - profile 檔與計算都在你的電腦上，不經網路、不需要 API key。
 - 但工具結果一被 Claude 使用就進入對話上下文。所以姓名與出生資料預設不回傳，只在你明確要求時才提供（D-038）。
+
+## 5. 健康檢查（doctor）
+
+接不上或懷疑設定壞掉時，先跑：
+
+```bash
+bun run doctor
+```
+
+會檢查：profile 目錄與檔案格式、MCP server 是否真的能啟動（隔離的暫存 profile，不動你的資料）、工具是否齊全、回應外殼與錯誤格式、Claude 桌面版設定檔（含 Windows Microsoft Store 版的位置、`command` 是否存在、路徑的反斜線有沒有被吃掉）。有 ✗ 時結束碼為 1，`!` 只是警告。
+
+CI 使用 `bun run packages/mcp/src/cli/doctor.ts --ci`：略過只存在你電腦上的項目，其餘照跑。

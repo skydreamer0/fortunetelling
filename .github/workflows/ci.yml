@@ -44,5 +44,11 @@ jobs:
       - name: Typecheck AI package
         run: bun run --filter @fortune/ai typecheck
 
+      - name: Typecheck MCP package
+        run: bun run --filter @fortune/mcp typecheck
+
+      - name: Doctor（MCP 冒煙測試）
+        run: bun run packages/mcp/src/cli/doctor.ts --ci
+
       - name: Build
         run: bun run build

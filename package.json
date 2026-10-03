@@ -11,6 +11,7 @@
     "dev": "bun run --filter @fortune/web dev",
     "build": "bun run --filter @fortune/web build",
     "preview": "bun run --filter @fortune/web preview",
-    "test": "bun test"
+    "test": "bun test",
+    "doctor": "bun run --filter @fortune/mcp doctor"
   }
 }
