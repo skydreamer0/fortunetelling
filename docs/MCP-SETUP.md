@@ -53,9 +53,9 @@ bun run --filter @fortune/mcp add-profile sky \
 | `get_chart` | 單一系統命盤（`summary`／`full`） |
 | `get_time_context` | 真太陽時、節氣、農曆，以及邊界與夏令時間等 flags |
 | `list_signals` / `get_signal` | 規則訊號（可篩選、分頁）與單筆完整證據 |
-| `get_timeline` | 逐年各領域分數；加 `months: {start,end}`（`YYYY-MM`，最多 36 個月）才回逐月 |
-| `get_consensus` / `list_conflicts` | 跨系統共識與矛盾 |
-| `answer_question` / `list_question_categories` | 問事（例如「哪幾個月適合買車」）月份排名；先用 `list_question_categories` 取得 category id，或直接帶 `question` 讓固定關鍵字表決定類別（比對不到或並列會回 `invalid_args` 與 `availableCategories`，不猜） |
+| `get_timeline` | 逐年各領域分數；加 `months: {start,end}`（`YYYY-MM`，最多 36 個月）才回逐月；指定 `domain` 時逐月為每月一列的 `monthTable`。可帶 `systems`／`verifiedOnly` |
+| `get_consensus` / `list_conflicts` | 跨系統共識與矛盾；`get_consensus` 可帶 `systems`／`verifiedOnly`（`list_conflicts` 不篩選） |
+| `answer_question` / `list_question_categories` | 問事（例如「哪幾個月適合買車」）月份排名；先用 `list_question_categories` 取得 category id，或直接帶 `question` 讓固定關鍵字表決定類別（比對不到或並列會回 `invalid_args` 與 `availableCategories`，不猜）。預設精簡回傳前 3 名＋排名表，附 `experimentalSensitivity`；可帶 `systems`／`verifiedOnly` |
 | `compare_profiles` | 雙人合盤（姓名與出生資料不會出現在結果中） |
 | `check_answer` | 貼回一段 AI 回答（`profileId`、`asOf`、`answerText`），檢查引用的 `sig_` id 是否存在、有無宿命論或保證式用語、有沒有把 experimental 系統（Jyotish、Human Design）當成「高共識」。只標示、不改寫；回 `{ ok, citedIds, unknownCitations, issues[] }` |
 | `import_profile` | 匯入網站匯出的 `.fortune.json`（`content` 全文或 `path` 路徑二選一）。已存在同名 profile 不會覆蓋，要 `overwrite: true`；指紋缺漏或過期會重算並警告 |
@@ -67,11 +67,27 @@ bun run --filter @fortune/mcp add-profile sky \
 - `caveats`：Claude 不該過度相信的地方——分數未校準、時間邊界、未參與的系統、**Jyotish／Human Design 尚未交叉驗證（`experimental`）**。
 - 回應太大時不會截斷，而是回 `response_too_large` 並提示縮小範圍。
 
-回傳瘦身（`answer_question`、`get_timeline`、`get_consensus` 共通）：
+回傳瘦身：
 
-- 很長的訊號清單（`signalIds`、`topSignalIds`、`supportSignals`、`riskSignals`）預設只保留前 5 筆，旁邊的 `…Total` 欄位是完整筆數。帶 `detail: true` 取得完整清單；單一訊號用 `get_signal`。
-- `answer_question` 預設不回 `conventions`（公式說明長文），只回 `conventionsOmitted: true`；`detail: true` 才回。
-- `get_timeline` 的逐月 cell 預設不含 `perSystem`（`detail: true` 才有）。逐月資料量大，建議搭配 `domain` 縮小範圍。
+- `get_timeline`、`get_consensus` 很長的訊號清單（`signalIds`、`topSignalIds`）預設只保留前 5 筆，旁邊的 `…Total` 欄位是完整筆數。帶 `detail: true` 取得完整清單；單一訊號用 `get_signal`。
+- `answer_question` 預設是精簡版（典型 12 個月約 3.3～3.7 KB，目標 < 4 KB）：
+  - `top`：前 3 名，每名 `{ rank, month, score, band, highConsensus, domains, signalIds, oneLine }`。`domains` 是每個領域一行摘要（例：「財運 54.1：活躍61.1／支撐54.2／風險7／共識2」，數字取小數 1 位）；`signalIds` 最多 3 個（支撐最強 2 個＋風險最強 1 個，不足依序補），都能用 `get_signal` 查到；`oneLine` 是程式以固定模板產生的一句話理由（不經 LLM）。
+  - `ranking`：每個月一列 `[月份, 分數, band]`（`rankingColumns` 說明欄位），不截斷。
+  - `detail: true` 回完整結構（`domainScores`、`supportSignals`、`riskSignals`、全部 id、`conventions`）；排名與分數與精簡版完全相同。
+- `get_timeline` 的逐月 cell 預設不含 `perSystem`（`detail: true` 才有）。指定 `domain` 且未帶 `detail` 時，逐月改為 `monthTable: { domain, columns, rows }`，每月一列 `[month, score, band, consensus, highConsensus, hasConflict, topSignalIds, topSignalIdsTotal]`，回應 `monthsFormat: "table"`；要舊的巢狀 cell 就帶 `monthsFormat: "cells"`。
+
+指定系統（`answer_question`、`get_timeline`、`get_consensus`）：
+
+- `systems`：系統 id 陣列，可用 `bazi`、`ziwei`、`numerology`、`jyotish`、`humanDesign`。分數、共識、矛盾都由 core 只從這些系統的訊號重算，不是事後乘係數。
+- `verifiedOnly: true`：排除 experimental 的吠陀占星（Jyotish）與人類圖（Human Design）；可與 `systems` 併用。
+- 回應一律帶 `systemsUsed`、`excludedSystems`、`experimentalIncluded`；有排除時 caveats 會多一條 `systems_excluded`。
+- 未知名稱、空陣列、或篩完沒有任何參與系統 → `invalid_args`，`details.availableSystems` 列出可用名稱。
+- 注意：某領域在某月完全沒有訊號時，該領域以 0 分計入、權重仍在分母；領域內沒發聲的系統則不計入平均。所以排除某系統可能讓某些領域變成 0。
+
+敏感度提示（`answer_question` 的 `experimentalSensitivity`）：
+
+- 同一問題、同一範圍各算一次「含 experimental 系統」與「僅已驗證系統」的排名，回 `{ top3All, top3VerifiedOnly, changed, verifiedSystems }`（前 3 名的月份與分數）。
+- `changed` = 兩邊前 3 名的月份或名次不同。為 true 時 caveats 會多一條 `experimental_sensitive`：結論取決於尚未驗證的系統，回答時要明講，不要當成穩定結論。
 
 `answer_question` 的類別與範圍：
 
@@ -87,7 +103,7 @@ server 連線時會自動把下面這段當作 `instructions` 送給客戶端；
 ```text
 你是命理對話助手：排盤與分數都由本機工具算好，你只查詢與解釋，不自行排盤。
 1. 先 list_profiles 取得 profileId；所有時間工具都要帶 asOf（YYYY-MM-DD，使用者沒說就用今天並告知）。
-2. 問事先用 answer_question，再用 get_signal／list_signals 查證據。
+2. 問事先用 answer_question，再用 get_signal／list_signals 查證據；可用 systems 或 verifiedOnly 只看指定／已驗證系統。experimentalSensitivity.changed 為 true 時，要明講結論取決於未驗證系統。
 3. 結論附〔sig_…〕，id 逐字取自工具回傳；查不到就說資料裡沒有。
 4. 「高共識」需至少 3 套已驗證系統；吠陀占星 Jyotish、人類圖 Human Design 是實驗性系統，不得計入，引用時要註明。
 5. 分數未校準，不是機率；若最高分仍在「低」帶，直說「沒有哪個月特別突出」，不硬推薦。

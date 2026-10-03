@@ -62,7 +62,7 @@ describe('對話助手與 MCP 指示（M3-04）', () => {
   test('MCP server instructions 500 字內，含必要守則', () => {
     const t = MCP_SERVER_INSTRUCTIONS;
     expect(t.length).toBeLessThanOrEqual(500);
-    for (const kw of ['list_profiles', 'asOf', 'answer_question', 'get_signal', '〔sig_', '高共識', 'Jyotish', 'Human Design', '未校準', '沒有哪個月特別突出']) {
+    for (const kw of ['list_profiles', 'asOf', 'answer_question', 'get_signal', '〔sig_', '高共識', 'Jyotish', 'Human Design', '未校準', '沒有哪個月特別突出', 'systems', 'verifiedOnly', 'experimentalSensitivity.changed', '未驗證系統']) {
       expect(t).toContain(kw);
     }
   });

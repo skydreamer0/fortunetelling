@@ -20,6 +20,7 @@ import {
 import { SYSTEM_IDS, createSignal, type CreateSignalParams, type Signal, type SignalWindow, type SystemId } from '../src/signals/index';
 import { buildTimeline, restrictTimeline, restrictTimelineCell, type Timeline } from '../src/timeline/index';
 import { initEphemeris } from '../src/calculators/astro/index';
+import { EXPERIMENTAL_SYSTEMS } from '../src/portable/versions';
 import { createTimeContext } from '../src/time/index';
 import type { BirthProfile } from '../src/profile/index';
 
@@ -97,7 +98,7 @@ describe('指定 systems', () => {
       expect(JSON.stringify(rest)).toBe(JSON.stringify(viaProvider));
       for (const r of viaOption.ranking) for (const s of [...r.supportSignals, ...r.riskSignals]) expect(subset).toContain(s.system);
       expect(systemFilter!.systemsRequested).toEqual(SYSTEM_IDS.filter((s) => subset.includes(s)));
-      expect(systemFilter!.systemsExcluded).toEqual(['bazi', 'ziwei', 'numerology', 'jyotish', 'humanDesign'].filter((s) => !subset.includes(s as SystemId)));
+      expect(systemFilter!.systemsExcluded).toEqual((['bazi', 'ziwei', 'numerology', 'jyotish', 'humanDesign'] as SystemId[]).filter((s) => !subset.includes(s as SystemId)));
     }
   });
 
@@ -120,6 +121,7 @@ describe('指定 systems', () => {
     expect(() => answerQuestion(req, provider, { systems: [] })).toThrow(/non-empty/);
     expect(normalizeSystems(['humanDesign', 'bazi'])).toEqual(['bazi', 'humanDesign']);
     expect(EXPERIMENTAL_SYSTEM_IDS).toEqual(['jyotish', 'humanDesign']);
+    expect([...EXPERIMENTAL_SYSTEM_IDS] as string[]).toEqual([...EXPERIMENTAL_SYSTEMS]);
   });
 
   test('沒有訊號的領域以 0 計入、權重留在分母；領域內沒發聲的系統不稀釋平均', () => {

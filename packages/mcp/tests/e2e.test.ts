@@ -73,6 +73,26 @@ describe('stdio server (what Claude Desktop actually talks to)', () => {
     }
   }, 60_000);
 
+  test('answer_question over the wire：精簡回應 < 4 KB、verifiedOnly、敏感度、未知系統', async () => {
+    const args = { profileId: 'sky', category: 'vehicle_purchase', range: { start: '2027-01', end: '2027-12' }, asOf: '2026-09-30' };
+    const raw = textOf(await client.callTool({ name: 'answer_question', arguments: args }));
+    expect(Buffer.byteLength(raw, 'utf8')).toBeLessThan(4096);
+    const all = JSON.parse(raw);
+    expect(all.data.experimentalIncluded).toBe(true);
+    expect(typeof all.data.experimentalSensitivity.changed).toBe('boolean');
+    if (all.data.experimentalSensitivity.changed) expect(all.caveats.some((c: any) => c.code === 'experimental_sensitive')).toBe(true);
+    const verified = JSON.parse(textOf(await client.callTool({ name: 'answer_question', arguments: { ...args, verifiedOnly: true } })));
+    expect(verified.data.systemsUsed).toEqual(['bazi', 'ziwei', 'numerology']);
+    expect(verified.data.experimentalIncluded).toBe(false);
+    for (const id of verified.data.top.flatMap((t: any) => t.signalIds)) {
+      const sig = JSON.parse(textOf(await client.callTool({ name: 'get_signal', arguments: { profileId: 'sky', asOf: '2026-09-30', signalId: id } })));
+      expect(sig.data.signal.id).toBe(id);
+    }
+    const bad: any = await client.callTool({ name: 'answer_question', arguments: { ...args, systems: ['astrology'] } });
+    expect(bad.isError).toBe(true);
+    expect(JSON.parse(textOf(bad)).error.details.availableSystems).toContain('bazi');
+  }, 60_000);
+
   test('server 連線時送出使用守則（instructions，500 字內）', async () => {
     const text = client.getInstructions();
     expect(text).toBe(MCP_SERVER_INSTRUCTIONS);

@@ -34,7 +34,6 @@
 import { aggregateSignals, type DomainWindowAggregate } from '../signals/aggregate';
 import { toBand } from '../signals/bands';
 import { SYSTEM_IDS, type Domain, type Signal, type SignalWindow, type SystemId, type Trait } from '../signals/types';
-import { EXPERIMENTAL_SYSTEMS } from '../portable/versions';
 import catalogJson from './catalog.json';
 import type {
   AnswerOptions,
@@ -344,10 +343,12 @@ export function normalizeSystems(systems: readonly unknown[]): SystemId[] {
   return SYSTEM_IDS.filter((s) => set.has(s));
 }
 
-/** 尚未交叉驗證的實驗性系統（D-039），以 SystemId 型別提供。 */
-export const EXPERIMENTAL_SYSTEM_IDS: readonly SystemId[] = Object.freeze(
-  SYSTEM_IDS.filter((s) => (EXPERIMENTAL_SYSTEMS as readonly string[]).includes(s)),
-);
+/**
+ * 尚未交叉驗證的實驗性系統（D-039），以 SystemId 型別提供。
+ * 不從 portable/versions 匯入（那會把 calculators 拉進純模組，違反 D-021 匯入邊界）；
+ * 測試會確認它與 EXPERIMENTAL_SYSTEMS 一致。
+ */
+export const EXPERIMENTAL_SYSTEM_IDS: readonly SystemId[] = Object.freeze(['jyotish', 'humanDesign'] as SystemId[]);
 
 export interface SensitivityOptions extends Omit<AnswerOptions, 'topN'> {
   /** 比較前幾名，預設 3。 */
