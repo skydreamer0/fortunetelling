@@ -1,6 +1,6 @@
 # Roadmap — 程式先算完，AI 在對話中查詢與比對
 
-> 狀態更新：2026-10-02。V1–V3 與 M0.5、M1 已完成並併入 `master`；M2 起尚未開始。
+> 狀態更新：2026-10-03。V1–V3 與 M0.5、M1、M2、M3 已完成；M4 完成 M4-01／02；M5 完成驗證段（Jyotish／HD 仍標 `experimental`）；時間模組歷史時區已修；皆已併入 `master`。
 > 目標架構與介面契約：[docs/ARCHITECTURE-V2.md](docs/ARCHITECTURE-V2.md)
 > 決策依據：[docs/DECISIONS.md](docs/DECISIONS.md) D-021 ～ D-039
 > 現行 Report 契約（v5）：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)；MCP 設定：[docs/MCP-SETUP.md](docs/MCP-SETUP.md)
@@ -39,11 +39,13 @@
 | 八字／紫微規則、Signal、單系統與跨系統彙整、共識與矛盾、年度／月份 Timeline | ✅ V1、V3 |
 | Report v5、React UI（時間軸、共識徽章、十二宮盤、合盤、人生事件） | ✅ |
 | 問事引擎（`questions/`，逐月排名）、人生事件回驗（本地版） | ✅ V4（本地）、V5 |
-| Jyotish／Human Design | 🟡 calculator 與規則已寫、已進非同步 Timeline；**未與公開計算器交叉驗證**，不在 `CALCULATORS`／同步 `analyze()` → 視為 `experimental` |
+| Jyotish／Human Design | 🟡 calculator 與規則已寫、已進非同步 Timeline；M5 已完成獨立驗證（人類圖 38 案、吠陀占星 30 案，未發現計算器錯誤），但吠陀占星仍缺人工在公開計算器抽查 → 仍視為 `experimental`，不在 `CALCULATORS`／同步 `analyze()` |
 | Profile 契約：`.fortune.json`、`profileId`＋`chartFingerprint`、canonical serializer、版本區塊 | ✅ M0.5（#7） |
-| 本機 MCP server：12 個工具、`asOf` 顯式、回應外殼、大小上限、姓名預設不回傳 | ✅ M1（#9） |
-| 網站匯出 `.fortune.json`、匯出檔（manifest）、`import_profile` | ❌ M2／M4 |
-| `packages/ai` 整理（Anthropic client 改選用、`check_answer`、對話助手系統指令） | ❌ M3 |
+| 本機 MCP server：14 個工具（含 `check_answer`、`import_profile`）、`asOf` 顯式、回應外殼、大小上限、姓名預設不回傳、server 自帶使用守則（instructions） | ✅ M1、M3 |
+| 匯出檔（manifest）、`share-redacted`、`import_profile`、網站下載 `.fortune.json` | ✅ M2、M3、M4-02 |
+| `packages/ai` 整理（client 改選用進入點、`check_answer`、對話助手系統指令、去識別化共用 core） | ✅ M3 |
+| 歷史時區：內建固定版 tz 資料（IANA 2026e）、出生地地方平時、`historical_zone_uncertain` 旗標 | ✅ |
+| `bun run doctor` 健康檢查（profile、MCP 冒煙、桌面版設定檔），已接進 CI | ✅ |
 | 資料庫與帳號同步 | ⏸ 暫停（本機優先） |
 
 ### 已完成的基礎（保留並沿用）
@@ -195,7 +197,7 @@ compare_profiles({ profileIdA, profileIdB, asOf })
 
 **完成條件（已以真實 stdio 客戶端驗收）**：在 Claude 桌面版問「我 2027 年哪幾個月適合買車？」，Claude 先以 `profileId` 呼叫 `answer_question`，需要細節再呼叫 `list_signals`／`get_signal`。所有引用的 signal id 必須存在；回應附 `asOf`、版本與 caveats；同一輸入與版本重跑得到相同 canonical 結果。
 
-### M2 — 匯出／匯入（備援，也是離線與分享用）
+### M2 — 匯出／匯入（備援，也是離線與分享用）✅
 
 ```text
 manifest.json   exportSchemaVersion／profileSchemaVersion／coreVersion／規則與 catalog 版本／asOf／
@@ -210,33 +212,33 @@ README.md       給 AI 看：欄位說明、哪些是確定性計算、哪些分
 
 | ID | 任務 |
 |---|---|
-| M2-01 | 兩種 preset：`local-full`（完整資料）、`share-redacted`（移除姓名與非必要出生地標籤） |
-| M2-02 | 序列化與 MCP 共用 M0.5 的 canonical serializer（單一來源） |
-| M2-03 | `share-redacted` 與 `packages/ai` 的 `buildInterpretationPayload` 共用同一份去識別化邏輯（D-029），不另寫一套 |
+| M2-01 ✅ | 兩種 preset：`local-full`（完整資料）、`share-redacted`（移除姓名與非必要出生地標籤） |
+| M2-02 ✅ | 序列化與 MCP 共用 M0.5 的 canonical serializer（單一來源） |
+| M2-03 ✅ | `share-redacted` 與 `packages/ai` 的 `buildInterpretationPayload` 共用同一份去識別化邏輯（D-029），不另寫一套 |
 
-### M3 — 整理 AI 層（`packages/ai`）
-
-| ID | 任務 |
-|---|---|
-| M3-01 | 標明兩條路：`copy`（備援）與 `mcp`（主線）；`client`／`anthropic` 改為選用，不進主線 |
-| M3-02 | 去識別化與字數預算改為可選，本機匯出預設關閉 |
-| M3-03 | 保留 `vocab`／HonestyGuard 檢查，獨立成 `check_answer`：貼回 AI 的回答自行檢查 |
-| M3-04 | 系統指令改寫為「對話助手」版：可用工具、如何引用訊號、何時說高共識、如何呈現矛盾與 `experimental` 系統 |
-
-### M4 — 網站對接
+### M3 — 整理 AI 層（`packages/ai`）✅
 
 | ID | 任務 |
 |---|---|
-| M4-01 | 「問 AI」章節兩個入口：**用 Claude 桌面版討論**（MCP 設定步驟＋匯出）、**複製 prompt**（備援） |
-| M4-02 | 網站下載 `.fortune.json`（M0.5-03），供 MCP 讀取；不假設網站能寫本機任意檔案 |
-| M4-03 | （選用）貼回結論後用 `check_answer` 對照引用的訊號 |
+| M3-01 🟡 | 標明兩條路：`copy`（備援）與 `mcp`（主線）；`client`／`anthropic` 改為選用，不進主線 |
+| M3-02 ✅ | 去識別化與字數預算改為可選，本機匯出預設關閉 |
+| M3-03 ✅ | 保留 `vocab`／HonestyGuard 檢查，獨立成 `check_answer`：貼回 AI 的回答自行檢查 |
+| M3-04 ✅ | 系統指令改寫為「對話助手」版：可用工具、如何引用訊號、何時說高共識、如何呈現矛盾與 `experimental` 系統 |
 
-### M5 — 計算端驗證與補齊（與 M1～M4 並行）
+### M4 — 網站對接 🟡（M4-01／02 完成，M4-03 未做）
 
 | ID | 任務 |
 |---|---|
-| M5-01 | Jyotish／HD 與至少兩個公開計算器交叉驗證，≥ 20 案例 |
-| M5-02 | 驗證前標 `experimental`，MCP 回應附 `verified: false` 與 caveat；不與已驗證系統用相同信心標示 |
+| M4-01 ✅ | 「問 AI」章節兩個入口：**用 Claude 桌面版討論**（MCP 設定步驟＋匯出）、**複製 prompt**（備援） |
+| M4-02 ✅ | 網站下載 `.fortune.json`（M0.5-03），供 MCP 讀取；不假設網站能寫本機任意檔案 |
+| M4-03 ❌ | （選用）貼回結論後用 `check_answer` 對照引用的訊號 |
+
+### M5 — 計算端驗證與補齊（與 M1～M4 並行）🟡（驗證段完成，M5-03～05 未做）
+
+| ID | 任務 |
+|---|---|
+| M5-01 🟡 | Jyotish／HD 與至少兩個公開計算器交叉驗證，≥ 20 案例 |
+| M5-02 ✅ | 驗證前標 `experimental`，MCP 回應附 `verified: false` 與 caveat；不與已驗證系統用相同信心標示 |
 | M5-03 | 驗證後正式納入 public API／registry，明確 sync／async 行為邊界 |
 | M5-04 | V2-05：Jyotish／HD 規則 → Signal 補齊（新模組進場：calculator → rules → Signal，不需改 AI 層） |
 | M5-05 | 回驗累積多人資料 n ≥ 30 後才調權重（維持 D-033） |
@@ -262,7 +264,7 @@ M0.5 → M1 → M2 → M3 → M4
 M5 與 M1～M4 並行
 ```
 
-M0.5、M1 已完成。下一步：M2；M5 隨時可並行。
+M0.5、M1、M2、M3 已完成，M4 完成 M4-01／02。下一步：把 `historical_zone_uncertain` 轉成各系統警告、MCP 回傳瘦身與「指定系統」排名參數、M4-03；M5-03 待決定 Jyotish／HD 是否升級。
 
 ## 七、已確認事項（2026-09-30）
 
@@ -295,7 +297,54 @@ M0.5、M1 已完成。下一步：M2；M5 隨時可並行。
 - **驗收抓到的缺口（已修）**：`answer_question` 引用的月份訊號，起初 `get_signal` 查不到（兩邊各算各的）。現在月份訊號由 `Analysis` 統一計算並快取，`get_signal` 在 asOf 年 −5 ～ +10 內都能解析；`answer_question` 的區間必須落在此範圍，否則回 `invalid_args`。回歸測試：問事答案引用的每個 id 都必須可取得。
 - core 補匯出 `initEphemeris`、`jyotishCalculator`、`humanDesignCalculator`（仍標 `experimental`，不進 `CALCULATORS`）。
 
-**尚未做**：`import_profile` 工具（M0.5-03 的 MCP 端匯入，目前只讀固定目錄）；`get_timeline` 預設不含逐月（帶 `range` 才含）。
+**後續已補**：`import_profile` 在 M3 完成；`get_timeline` 的逐月與回傳瘦身在 #11 完成。
+
+### M2
+
+位置：`packages/core/src/export/`，測試 `packages/core/tests/export.test.ts`；CLI `bun run --filter @fortune/mcp export-profile`。
+
+- 匯出包：manifest、profile、chart、signals、timeline、consensus、README（給 AI 看）；序列化走 canonical serializer，位元穩定、不含時間戳。
+- 兩種 preset：`local-full`、`share-redacted`。`share-redacted` 保留出生日期、時間與經緯度（重算命盤所需），`dropCoordinates` 可連經緯度一起移除（預設關）；`profileId` 不會被去識別化。
+- `export/redact.ts` 是去識別化的單一來源：`packages/ai` 的 `buildInterpretationPayload` 與複製 prompt 已改用它（佔位符 `[name]`／`[place]`），D-021 邊界測試納入此模組。
+
+### M3
+
+位置：`packages/ai`、`packages/mcp`，說明 `docs/MCP-SETUP.md`。
+
+- `@fortune/ai` 主線不再匯出 Anthropic client，改走 `@fortune/ai/client`；新增 `@fortune/ai/mcp` 進入點。`@anthropic-ai/sdk` 仍在 dependencies（動 lockfile，未改選用）。
+- `buildInterpretationPayload` 新增 `redact`、`budget` 選項（預設不變），`LOCAL_PAYLOAD_OPTIONS` 供本機使用。
+- 新 MCP 工具 `check_answer`（引用的 signal id 是否存在、宿命論字眼、是否把實驗性系統算進高共識；不做 vocab 比對，因 MCP 端無 payload）與 `import_profile`（不覆蓋既有 profile，除非 `overwrite: true`）。
+- server 連線時送出 500 字內的 `instructions`；`docs/MCP-SETUP.md` 的「建議對話指示」與它逐字相同並有測試比對。
+- 實驗性系統（吠陀占星、人類圖）不計入高共識，複製 prompt 與系統指令一併修正（`copy-v2`、`interpret-v2`）；最高分也在「低」帶時須直說沒有突出的月份。
+
+### M4（M4-01／02）
+
+位置：`apps/web`。
+
+- 「問 AI」兩個入口：用 Claude 桌面版討論（預設展開，含 Windows／macOS 設定檔路徑與 Microsoft Store 版位置、JSON 反斜線跳脫）、複製 prompt（備援）。
+- 網站可下載 `<profileId>.fortune.json`（core 的 `createProfileFile`，位元穩定）；`profileKeyOf` 改為 `chartFingerprint`，舊含姓名 key 由 `legacyProfileKeyOf` 自動遷移。回測的隨機種子改用新 key，遷移後訓練／驗證分組可能與舊的不同。
+- **未做**：M4-03（貼回結論後用 `check_answer` 對照）。
+
+### M5（驗證段）
+
+報告：`packages/core/tests/fixtures/validation/`。
+
+- **人類圖**：38 個 Astro-Databank AA 案例、2～3 個公開產生器；類型、權威、定義、中心 38/38，行星閘門 988/988；12 個爻不一致全在閘門 25，判定為來源錯誤；未發現計算器錯誤。三站可能不獨立、爻只有一個可靠來源、無設計時刻。
+- **吠陀占星**：30 個 AA 案例，改用獨立程式化來源（`astronomy-engine` 僅 devDependency、JPL Horizons 抽查 7 案、swetest 抽查 10 案）；離散欄位 100% 一致，未發現計算器錯誤。**尚缺**人工在兩個吠陀專用公開計算器抽查 ≥ 20 案，故仍為 `experimental`。
+- 網頁表單來源不可行（導向無關頁面、拒絕連線），因此未達 M5-01 字面標準。
+
+### 時間模組：歷史時區
+
+報告 `packages/core/tests/fixtures/validation/time-fix-report.md`。
+
+- 根因：IANA tz 自 2022b 起把冰島、挪威、荷蘭等 1970 年前歷史移到 backzone，Bun／Node 的 ICU 都不含；加上程式完全依賴執行環境的 Intl，Bun 與 Node 結果不一致（D-014 被破）。
+- 修正：`packages/core/src/time/tzdb/` 內建固定版 tz 資料（2026e，含 backzone，gzip 約 31 KB，無新依賴）；tz 標為地方平時的期間改用出生地經度的地方平時；新增 `historical_zone_uncertain` 旗標。
+- 代價：網站 core chunk 約多 190 KB（未壓縮）。1995 台南等 17 個現代案例輸出不變。
+- **未做**：`profile/validate.ts` 仍用 Intl 驗證時區名稱；計算器尚未把新旗標轉成各系統警告；D-026 等文件待更新。
+
+### doctor
+
+`bun run doctor`（`packages/mcp/src/cli/doctor.ts`）：檢查 profile 目錄、MCP 真實 stdio 冒煙、桌面版設定檔（含 Store 版位置與反斜線被吃掉）；CI 使用 `--ci`。`.gitattributes` 將測試 fixtures 固定為 LF（避免 Windows autocrlf 造成 golden 比對失敗）。
 
 ---
 
