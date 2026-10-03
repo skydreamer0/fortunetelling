@@ -26,7 +26,12 @@ export type Envelope<T = unknown> = {
 };
 
 /** Caveats every time-dependent answer carries, derived from the analysis (never hand-written per tool). */
-export function caveatsFor(analysis: Pick<Analysis, 'ctx' | 'timeline'>): Caveat[] {
+export function caveatsFor(
+  analysis: Pick<Analysis, 'ctx' | 'timeline'>,
+  /** 有 systems／verifiedOnly 篩選時傳入：只對實際採計的系統發 experimental 提醒，並註明排除了誰。 */
+  selection?: { filtered: boolean; systemsUsed: readonly string[]; excludedSystems: readonly string[] },
+): Caveat[] {
+  const used = selection?.filtered ? new Set(selection.systemsUsed) : null;
   const caveats: Caveat[] = [
     {
       code: 'scores_uncalibrated',
@@ -38,12 +43,19 @@ export function caveatsFor(analysis: Pick<Analysis, 'ctx' | 'timeline'>): Caveat
     caveats.push({ code: `system_skipped:${skipped.system}`, message: `${skipped.system} did not contribute (${skipped.reason}).` });
   }
   for (const system of analysis.timeline.systems) {
+    if (used && !used.has(system)) continue;
     if (system === 'jyotish' || system === 'humanDesign') {
       caveats.push({
         code: `experimental:${system}`,
         message: `${system} is not yet cross-validated against public calculators (verified: false, D-039). Do not count it as equal confidence to verified systems, nor toward 'high consensus'.`,
       });
     }
+  }
+  if (selection?.filtered && selection.excludedSystems.length > 0) {
+    caveats.push({
+      code: 'systems_excluded',
+      message: `本次只採計 ${selection.systemsUsed.join('、')} 的訊號；${selection.excludedSystems.join('、')} 已依 systems／verifiedOnly 參數排除，分數、共識與矛盾都只從採計的系統重算。`,
+    });
   }
   return caveats;
 }

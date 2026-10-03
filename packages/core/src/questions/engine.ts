@@ -24,16 +24,24 @@
  * drives conflict detection, which is kept per domain and never cancelled (D-023).
  * Ranking: score desc, then earlier window start.
  *
+ * 指定系統（`opts.systems`）：步驟 1 之前先丟掉其他系統的訊號，之後整條公式不變，
+ * 所以結果等同 provider 只回傳那些系統。注意兩層「沒有訊號」的處理不同：
+ * 領域內沒發聲的系統不計入跨系統平均（不會稀釋 activity），但整個領域在該月
+ * 沒有任何訊號時，該領域分數以 0 計入、權重仍留在分母（會拉低月分數）。
+ *
  * Pure: no clock access (D-014), no LLM (D-021).
  */
 import { aggregateSignals, type DomainWindowAggregate } from '../signals/aggregate';
 import { toBand } from '../signals/bands';
-import type { Domain, Signal, SignalWindow, SystemId, Trait } from '../signals/types';
+import { SYSTEM_IDS, type Domain, type Signal, type SignalWindow, type SystemId, type Trait } from '../signals/types';
+import { EXPERIMENTAL_SYSTEMS } from '../portable/versions';
 import catalogJson from './catalog.json';
 import type {
   AnswerOptions,
   DomainConflict,
   DomainScore,
+  ExperimentalSensitivity,
+  SensitivityEntry,
   QuestionAnswer,
   QuestionCatalog,
   QuestionCategory,
@@ -286,12 +294,24 @@ export function answerQuestion(
   const topN = opts.topN ?? 3;
   if (!Number.isInteger(topN) || topN < 0) throw new Error(`answerQuestion: topN must be a non-negative integer`);
 
-  const scored = monthWindows(v.value.range).map((w) => scoreWindow(w, provider({ ...w }), category, catalog, opts));
+  // 指定系統：在去重、領域過濾之前就只留這些系統的訊號（等同 provider 只回傳它們），
+  // 所以 activity／support／risk、共識、衝突全部從這個子集重算，不是事後乘係數。
+  const systemSet = opts.systems === undefined ? null : new Set(normalizeSystems(opts.systems));
+  const seenSystems = new Set<SystemId>();
+  const signalsFor = (w: SignalWindow): readonly Signal[] => {
+    const raw = provider({ ...w });
+    if (!systemSet) return raw;
+    if (!Array.isArray(raw)) throw new Error(`answerQuestion: provider must return an array for ${w.start}`);
+    for (const s of raw) seenSystems.add(s.system);
+    return raw.filter((s) => systemSet.has(s.system));
+  };
+
+  const scored = monthWindows(v.value.range).map((w) => scoreWindow(w, signalsFor(w), category, catalog, opts));
   const ranking: RankedWindow[] = scored
     .sort((x, y) => y.score - x.score || cmp(x.window.start, y.window.start))
     .map((r, i) => ({ ...r, rank: i + 1 }));
 
-  return {
+  const answer: QuestionAnswer = {
     category: category.id,
     range: v.value.range,
     ranking,
@@ -300,4 +320,68 @@ export function answerQuestion(
     catalogVersion: catalog.version,
     categoryVersion: category.version,
   };
+  if (systemSet) {
+    answer.systemFilter = {
+      systemsRequested: SYSTEM_IDS.filter((s) => systemSet.has(s)),
+      systemsUsed: SYSTEM_IDS.filter((s) => systemSet.has(s) && seenSystems.has(s)),
+      systemsExcluded: SYSTEM_IDS.filter((s) => !systemSet.has(s) && seenSystems.has(s)),
+    };
+  }
+  return answer;
+}
+
+/** 驗證並正規化系統清單：非空、皆為已知系統；回傳去重後依 SYSTEM_IDS 排序的結果。 */
+export function normalizeSystems(systems: readonly unknown[]): SystemId[] {
+  if (!Array.isArray(systems) || systems.length === 0) {
+    throw new Error('answerQuestion: systems must be a non-empty array of system ids');
+  }
+  for (const s of systems) {
+    if (typeof s !== 'string' || !(SYSTEM_IDS as readonly string[]).includes(s)) {
+      throw new Error(`answerQuestion: unknown system ${JSON.stringify(s)} (known: ${SYSTEM_IDS.join(', ')})`);
+    }
+  }
+  const set = new Set(systems as SystemId[]);
+  return SYSTEM_IDS.filter((s) => set.has(s));
+}
+
+/** 尚未交叉驗證的實驗性系統（D-039），以 SystemId 型別提供。 */
+export const EXPERIMENTAL_SYSTEM_IDS: readonly SystemId[] = Object.freeze(
+  SYSTEM_IDS.filter((s) => (EXPERIMENTAL_SYSTEMS as readonly string[]).includes(s)),
+);
+
+export interface SensitivityOptions extends Omit<AnswerOptions, 'topN'> {
+  /** 比較前幾名，預設 3。 */
+  topN?: number;
+  /** 視為實驗性的系統，預設 EXPERIMENTAL_SYSTEM_IDS（吠陀占星 Jyotish、人類圖 Human Design）。 */
+  experimental?: readonly SystemId[];
+}
+
+/**
+ * 敏感度比較：同一問題、同一範圍各跑一次 `answerQuestion`，
+ *   含實驗性系統 = (systems ?? 全部) ∪ experimental
+ *   僅已驗證系統 = (systems ?? 全部) − experimental
+ * 比較兩邊前 N 名（預設 3）。`changed` 只看月份與名次順序，分數微幅差異不算。
+ * 不支援的類別回 null。純函式、deterministic。
+ */
+export function experimentalSensitivity(
+  request: QuestionRequest | unknown,
+  provider: SignalProvider,
+  opts: SensitivityOptions = {},
+): ExperimentalSensitivity | null {
+  const { experimental = EXPERIMENTAL_SYSTEM_IDS, topN = 3, systems, ...rest } = opts;
+  const exp = new Set(experimental.length === 0 ? [] : normalizeSystems([...experimental]));
+  const base = systems === undefined ? [...SYSTEM_IDS] : normalizeSystems(systems);
+  const withSet = SYSTEM_IDS.filter((s) => base.includes(s) || exp.has(s));
+  const withoutSet = base.filter((s) => !exp.has(s));
+  const top = (set: SystemId[]): SensitivityEntry[] | null => {
+    if (set.length === 0) return [];
+    const a = answerQuestion(request, provider, { ...rest, systems: set, topN });
+    if (a.unsupported) return null;
+    return a.top.map((r) => ({ month: r.window.start.slice(0, 7), score: r.score, band: r.band }));
+  };
+  const all = top(withSet);
+  const verified = top(withoutSet);
+  if (!all || !verified) return null;
+  const changed = all.length !== verified.length || all.some((e, i) => e.month !== verified[i].month);
+  return { systemsAll: withSet, systemsVerifiedOnly: withoutSet, top3All: all, top3VerifiedOnly: verified, changed };
 }

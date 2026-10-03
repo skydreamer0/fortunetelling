@@ -133,10 +133,10 @@ describe('get_timeline', () => {
   test('months defaults to []; months:{start,end} returns that range month by month (any resolvable year)', async () => {
     expect((await fx.call('get_timeline', base)).json.data.months).toEqual([]);
     // same year as asOf
-    const sameYear = (await fx.call('get_timeline', { ...base, months: { start: '2026-10', end: '2026-12' }, domain: 'career' })).json.data;
+    const sameYear = (await fx.call('get_timeline', { ...base, months: { start: '2026-10', end: '2026-12' }, domain: 'career', monthsFormat: 'cells' })).json.data;
     expect(sameYear.months.map((c: any) => c.window.start.slice(0, 7))).toEqual(['2026-10', '2026-11', '2026-12']);
     // a different year: this used to come back empty because core only builds the asOf year's months
-    const { json, isError } = await fx.call('get_timeline', { ...base, months: { start: '2027-01', end: '2027-12' }, domain: 'wealth' });
+    const { json, isError } = await fx.call('get_timeline', { ...base, months: { start: '2027-01', end: '2027-12' }, domain: 'wealth', monthsFormat: 'cells' });
     expect(isError).toBe(false);
     expect(json.data.monthsRange).toEqual({ start: '2027-01', end: '2027-12' });
     expect(json.data.months.length).toBe(12);
@@ -148,15 +148,15 @@ describe('get_timeline', () => {
       expect(c.domains[0].topSignalIdsTotal).toBeGreaterThanOrEqual(c.domains[0].topSignalIds.length);
     }
     // spanning two years, ascending
-    const two = (await fx.call('get_timeline', { ...base, months: { start: '2026-12', end: '2027-02' }, domain: 'wealth' })).json.data.months;
-    expect(two.map((c: any) => c.window.start.slice(0, 7))).toEqual(['2026-12', '2027-01', '2027-02']);
+    const two = (await fx.call('get_timeline', { ...base, months: { start: '2026-12', end: '2027-02' }, domain: 'wealth' })).json.data.monthTable.rows;
+    expect(two.map((row: any[]) => row[0])).toEqual(['2026-12', '2027-01', '2027-02']);
     // cited month ids resolve
     const id = json.data.months.flatMap((c: any) => c.domains[0].topSignalIds)[0];
     expect((await fx.call('get_signal', { ...base, signalId: id })).isError).toBe(false);
   }, 120_000);
   test('months: detail restores perSystem and the full id list; limits are enforced', async () => {
     const months = { start: '2027-03', end: '2027-03' };
-    const slim = (await fx.call('get_timeline', { ...base, months, domain: 'wealth' })).json.data.months[0].domains[0];
+    const slim = (await fx.call('get_timeline', { ...base, months, domain: 'wealth', monthsFormat: 'cells' })).json.data.months[0].domains[0];
     const full = (await fx.call('get_timeline', { ...base, months, domain: 'wealth', detail: true })).json.data.months[0].domains[0];
     expect(full.perSystem).toBeDefined();
     expect(full.topSignalIds.length).toBe(slim.topSignalIdsTotal);

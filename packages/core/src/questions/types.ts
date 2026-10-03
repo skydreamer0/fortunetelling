@@ -139,6 +139,21 @@ export interface QuestionAnswer {
   conventions: Record<string, string>;
   catalogVersion: number;
   categoryVersion?: number;
+  /**
+   * 只在呼叫端指定 `AnswerOptions.systems` 時出現（不指定時輸出與舊版逐位元相同）。
+   * 說明這次排名採計了哪些系統的訊號、排除了哪些。
+   */
+  systemFilter?: SystemFilterInfo;
+}
+
+/** 指定系統時的採計紀錄（皆依 SYSTEM_IDS 順序）。 */
+export interface SystemFilterInfo {
+  /** 呼叫端指定的系統（去重、依 SYSTEM_IDS 排序）。 */
+  systemsRequested: SystemId[];
+  /** 指定系統中，在範圍內任一月份實際提供過訊號者。 */
+  systemsUsed: SystemId[];
+  /** provider 有回傳訊號、但因不在指定清單而被排除的系統。 */
+  systemsExcluded: SystemId[];
 }
 
 export interface AnswerOptions {
@@ -148,4 +163,30 @@ export interface AnswerOptions {
   bandCuts?: BandCuts;
   /** Number of `top` entries, default 3. */
   topN?: number;
+  /**
+   * 只採計這些系統的訊號（在去重與領域過濾之前就丟掉其他系統的訊號，
+   * 因此領域分數、共識、衝突都只從這些系統重算，等同 provider 只回傳這些系統）。
+   * 省略 = 採計 provider 回傳的全部系統，且輸出不帶 `systemFilter`。
+   */
+  systems?: readonly SystemId[];
+}
+
+/** 敏感度比較中的一名：月份、分數、band。 */
+export interface SensitivityEntry {
+  /** 'YYYY-MM' */
+  month: YearMonth;
+  score: number;
+  band: Band;
+}
+
+/** 同一問題、同一範圍，「含實驗性系統」與「僅已驗證系統」兩個排名的前 N 名比較。 */
+export interface ExperimentalSensitivity {
+  /** 含實驗性系統時採計的系統（依 SYSTEM_IDS 順序）。 */
+  systemsAll: SystemId[];
+  /** 排除實驗性系統後採計的系統。 */
+  systemsVerifiedOnly: SystemId[];
+  top3All: SensitivityEntry[];
+  top3VerifiedOnly: SensitivityEntry[];
+  /** 兩邊前 N 名的月份（含名次順序）不同即為 true；分數差異本身不算。 */
+  changed: boolean;
 }

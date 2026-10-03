@@ -317,7 +317,18 @@ function buildCell(
     if (!ev) continue;
     for (const s of ev(w)) if (!byId.has(s.id)) byId.set(s.id, s);
   }
-  const signals = [...byId.values()].sort((a, b) => cmp(a.id, b.id));
+  return cellFromSignals(w, [...byId.values()], weightOf, opts, bandCuts);
+}
+
+/** 由一個 cell 已去重的訊號算出整個 cell（buildCell 與 restrictTimelineCell 共用，確保同一條公式）。 */
+function cellFromSignals(
+  w: SignalWindow,
+  deduped: readonly Signal[],
+  weightOf: (s: SystemId) => number,
+  opts: Pick<TimelineOptions, 'systemWeights' | 'consensusThreshold' | 'conflictThreshold' | 'topSignalsPerDomain'>,
+  bandCuts: BandCuts,
+): TimelineCell {
+  const signals = [...deduped].sort((a, b) => cmp(a.id, b.id));
   const aggs = aggregateSignals(signals, {
     systemWeights: opts.systemWeights,
     ...(opts.consensusThreshold !== undefined ? { consensusThreshold: opts.consensusThreshold } : {}),
@@ -417,6 +428,85 @@ export function buildTimeline(ctx: TimeContext, opts: TimelineOptions): Timeline
     systemWeights,
     years: yearCells,
     months: monthCells,
+  };
+}
+
+// ─── 依系統篩選 ─────────────────────────────────────────────────────────────
+
+/** `restrictTimeline*` 需要、但 Timeline 本身沒存下來的選項（須與建 timeline 時相同）。 */
+export interface RestrictTimelineOptions {
+  consensusThreshold?: number;
+  conflictThreshold?: number;
+}
+
+function assertKnownSystems(systems: readonly SystemId[], fn: string): Set<SystemId> {
+  if (!Array.isArray(systems)) throw new Error(`${fn}: systems must be an array`);
+  for (const s of systems) {
+    if (!(SYSTEM_IDS as readonly string[]).includes(s)) throw new Error(`${fn}: unknown system ${JSON.stringify(s)}`);
+  }
+  return new Set(systems);
+}
+
+/**
+ * 只保留指定系統的訊號，重算一個 cell（分數、band、共識、衝突、perSystem、topSignals）。
+ * 前提：cell 以 `topSignalsPerDomain: Infinity` 建立（topSignals 含全部訊號），否則丟錯，
+ * 因為截斷過的 topSignals 無法還原原始訊號。結果與 `buildTimeline({ systems })` 的同一 cell 相同。
+ */
+export function restrictTimelineCell(
+  cell: TimelineCell,
+  systems: readonly SystemId[],
+  timeline: Pick<Timeline, 'systemWeights' | 'bandCuts'>,
+  opts: RestrictTimelineOptions = {},
+): TimelineCell {
+  const keep = assertKnownSystems(systems, 'restrictTimelineCell');
+  const byId = new Map<string, Signal>();
+  for (const d of cell.domains) {
+    const total = new Set(Object.values(d.perSystem).flatMap((p) => p!.signalIds)).size;
+    if (d.topSignals.length !== total) {
+      throw new Error('restrictTimelineCell: cell topSignals are truncated; build the timeline with topSignalsPerDomain: Infinity');
+    }
+    for (const s of d.topSignals) if (keep.has(s.system) && !byId.has(s.id)) byId.set(s.id, s);
+  }
+  const systemWeights = timeline.systemWeights ?? {};
+  const weightOf = (s: SystemId) => systemWeights[s] ?? 1;
+  const bandCuts = timeline.bandCuts ?? DEFAULT_BAND_CUTS;
+  return cellFromSignals(
+    cell.window,
+    [...byId.values()],
+    weightOf,
+    {
+      systemWeights,
+      topSignalsPerDomain: Infinity,
+      ...(opts.consensusThreshold !== undefined ? { consensusThreshold: opts.consensusThreshold } : {}),
+      ...(opts.conflictThreshold !== undefined ? { conflictThreshold: opts.conflictThreshold } : {}),
+    },
+    bandCuts,
+  );
+}
+
+/**
+ * 只採計指定系統的 timeline：每個 cell 從那些系統的訊號重算（不是把分數乘係數）。
+ * `systems`／`skippedSystems`／`systemWeights` 也只留指定系統。
+ * 前提同 `restrictTimelineCell`；結果與 `buildTimeline(ctx, { systems, topSignalsPerDomain: Infinity })` 相同。
+ */
+export function restrictTimeline(timeline: Timeline, systems: readonly SystemId[], opts: RestrictTimelineOptions = {}): Timeline {
+  const keep = assertKnownSystems(systems, 'restrictTimeline');
+  const systemWeights: Partial<Record<SystemId, number>> = {};
+  for (const s of SYSTEM_IDS) {
+    const w = timeline.systemWeights[s];
+    if (keep.has(s) && w !== undefined) systemWeights[s] = w;
+  }
+  const restricted = { systemWeights, bandCuts: timeline.bandCuts };
+  return {
+    schemaVersion: timeline.schemaVersion,
+    asOf: timeline.asOf,
+    systems: timeline.systems.filter((s) => keep.has(s)),
+    skippedSystems: timeline.skippedSystems.filter((s) => keep.has(s.system)).map((s) => ({ ...s })),
+    conventions: { ...timeline.conventions },
+    bandCuts: [timeline.bandCuts[0], timeline.bandCuts[1], timeline.bandCuts[2]],
+    systemWeights,
+    years: timeline.years.map((c) => restrictTimelineCell(c, systems, restricted, opts)),
+    months: timeline.months.map((c) => restrictTimelineCell(c, systems, restricted, opts)),
   };
 }
 

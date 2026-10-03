@@ -35,19 +35,18 @@ describe('answer_question', () => {
   test('top ≤3 with window and score; deterministic', async () => {
     const r1 = await fx.call('answer_question', args);
     expect(r1.isError).toBe(false);
-    const { top, rankingTotal, ranking } = r1.json.data;
+    const { top, ranking } = r1.json.data;
     expect(top.length).toBeGreaterThan(0);
     expect(top.length).toBeLessThanOrEqual(3);
     for (const t of top) {
-      expect(t.window.start).toMatch(/^2027-/);
+      expect(t.month).toMatch(/^2027-/);
       expect(typeof t.score).toBe('number');
     }
-    expect(rankingTotal).toBe(12);
-    expect(ranking.length).toBeLessThanOrEqual(12);
+    expect(ranking.length).toBe(12);
     expect(r1.json.data.catalogVersion).toBeDefined();
-    // default is slim: no conventions prose, short hint instead
+    // 預設是精簡版：沒有 conventions 長文，也沒有完整結構
     expect(r1.json.data.conventions).toBeUndefined();
-    expect(r1.json.data.conventionsOmitted).toBe(true);
+    expect(r1.json.data.detailOmitted).toBe(true);
     expect(r1.json.data.categoryResolvedFrom).toBe('explicit');
     expect(r1.json.data.rangeResolvedFrom).toBe('explicit');
     expect(r1.json.versions).toBeUndefined();
@@ -56,34 +55,27 @@ describe('answer_question', () => {
     const r2 = await fx.call('answer_question', args);
     expect(r2.text).toBe(r1.text);
   }, 120_000);
-  test('matches core answerQuestion with an equivalent provider (pure wrapper)', async () => {
-    const { json } = await fx.call('answer_question', args);
+  test('detail:true matches core answerQuestion with an equivalent provider (pure wrapper)', async () => {
+    const { json } = await fx.call('answer_question', { ...args, detail: true });
     const analysis = await fx.ctx.analyzer.get('sky', ASOF);
-    const direct = slimAnswer(answerQuestion({ category: 'vehicle_purchase', range: RANGE }, monthSignalProvider(analysis)));
+    const direct = slimAnswer(answerQuestion({ category: 'vehicle_purchase', range: RANGE }, monthSignalProvider(analysis)), true);
     expect(json.data.top).toEqual(JSON.parse(JSON.stringify(direct.top)));
-    expect(json.data.conventionsOmitted).toBe(true);
+    expect(json.data.conventions).toBeDefined();
     expect(json.data.ranking).toEqual(JSON.parse(JSON.stringify(direct.ranking)));
   }, 120_000);
-  test('ids are previewed (5) with totals; detail:true returns everything incl. conventions', async () => {
+  test('compact cites at most 3 ids per month; detail:true returns everything incl. conventions', async () => {
     const slim = (await fx.call('answer_question', args)).json.data;
     const full = (await fx.call('answer_question', { ...args, detail: true })).json.data;
     expect(full.conventions).toBeDefined();
     expect(full.conventionsOmitted).toBeUndefined();
+    expect(full.detailOmitted).toBeUndefined();
     expect(slim.top.length).toBe(full.top.length);
-    let cut = 0;
     slim.top.forEach((w: any, i: number) => {
       const f = full.top[i];
-      expect(w.signalIds.length).toBeLessThanOrEqual(5);
-      expect(w.signalIdsTotal).toBe(f.signalIds.length);
+      expect(w.signalIds.length).toBeLessThanOrEqual(3);
       expect(f.signalIds.length).toBe(f.signalIdsTotal);
-      expect(w.signalIds).toEqual(f.signalIds.slice(0, 5));
-      expect(w.supportSignals.length).toBeLessThanOrEqual(5);
-      expect(w.supportSignalsTotal).toBe(f.supportSignals.length);
-      expect(w.riskSignalsTotal).toBe(f.riskSignals.length);
-      for (const d of w.domainScores) expect(d.signalIds.length).toBeLessThanOrEqual(5);
-      if (w.signalIdsTotal > 5) cut++;
+      for (const id of w.signalIds) expect(f.signalIds).toContain(id);
     });
-    expect(cut).toBeGreaterThan(0);
     // every id the slim answer cites is also in the full answer (truncation never invents ids)
     const fullIds = new Set(JSON.stringify(full).match(/sig_[0-9a-f]{16}/g));
     for (const id of new Set(JSON.stringify(slim).match(/sig_[0-9a-f]{16}/g))) expect(fullIds.has(id)).toBe(true);
@@ -102,7 +94,7 @@ describe('answer_question', () => {
     expect(isError).toBe(false);
     expect(json.data.range).toEqual({ start: '2026-09', end: '2027-08' });
     expect(json.data.rangeResolvedFrom).toBe('default');
-    expect(json.data.rankingTotal).toBe(12);
+    expect(json.data.ranking.length).toBe(12);
   }, 120_000);
   test('category omitted: question picks it, and says so', async () => {
     const { json, isError } = await fx.call('answer_question', { profileId: 'sky', question: '我想買車，哪幾個月好？', range: RANGE, asOf: ASOF });

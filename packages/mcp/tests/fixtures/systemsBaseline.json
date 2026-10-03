@@ -1,0 +1,12 @@
+{
+  "$comment": "加入 systems／verifiedOnly／精簡回傳之前，以測試樣本 sky、asOf 2026-09-30 錄下的 sha256。aq-detail = answer_question detail:true 的 JSON.stringify(data)；其餘 = 整個回應的 canonical JSON。比對時先移除新增欄位（systemsUsed、excludedSystems、experimentalIncluded、experimentalSensitivity、monthsFormat）與 experimental_sensitive caveat。",
+  "$versionsHash": "cf3d4b472089",
+  "aq-detail|vehicle_purchase": "038af138f44a27aae83bdd2c2fac15a0ae43b60fd8fcb49970f8fa404c36f59d",
+  "aq-detail|job_change": "f25c6b673c009440c24315eb14043fe8d7a1458c0f152a0ba9c580895f4af328",
+  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}": "c8d57f7d231c7ba52a990b5cc329c0f0471f8ee180a70e03e04a3a16ad366512",
+  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}": "550c01729b036673efe32ccdc2d5e761906deb08169f150c1ab9450977d267a2",
+  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\",\"detail\":true}": "79f7e87dc4351dd5593d67c901eb235d4761dd92255bbe48c06fb530180539c5",
+  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}": "f97dc55ca2e4c9ffb06d3baf029966db082f7dd6d2b31a36a26b0a9a1990b51e",
+  "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}": "1ec471653c5b10256ce59b9a144dfdb8565e61717d79e58f85c3bdd871a38203",
+  "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}": "e9212812a6e84e4532cdfa9a5fa3df741e216454665736fa7449c9be2e0a2e84"
+}

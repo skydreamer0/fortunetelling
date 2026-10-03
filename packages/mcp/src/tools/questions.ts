@@ -1,22 +1,27 @@
 import {
+  EXPERIMENTAL_SYSTEM_IDS,
   analyzeCompatibility,
   answerQuestion,
+  experimentalSensitivity,
   getQuestionCategory,
   listQuestionCategories,
   monthsInRange,
   timeContextToBirthData,
+  type ExperimentalSensitivity,
   type QuestionAnswer,
   type RankedWindow,
   type Signal,
   type SignalWindow,
 } from '@fortune/core';
 import { z } from 'zod';
+import { compactAnswer, sensitivityCaveat, sensitivityOut } from '../answerSummary';
 import type { Analysis } from '../compute';
 import { assertAsOf, resolvableYearRange } from '../compute';
 import { caveatsFor, ok, type Caveat } from '../envelope';
 import { ToolError } from '../errors';
 import { routeQuestion } from '../questionRouter';
-import { detailInput, previewIds } from '../slim';
+import { previewIds } from '../slim';
+import { resolveSystems, systemsFields, systemsInput, verifiedOnlyInput } from '../systems';
 import { defineTool } from './types';
 
 export const MAX_MONTHS = 36;
@@ -53,7 +58,10 @@ function slimRanked(r: RankedWindow) {
   return { rank: r.rank, window: r.window, score: r.score, band: r.band, highConsensus: r.highConsensus };
 }
 
-/** Default: no `conventions` prose and only the first ids per window; `detail: true` restores both. */
+/**
+ * 舊的瘦身結構：answer_question 的 `detail: true` 以 `slimAnswer(answer, true)` 回傳完整結構；
+ * 預設回應改用 answerSummary.ts 的 `compactAnswer`。`detail = false` 仍保留給程式呼叫端使用。
+ */
 export function slimAnswer(answer: QuestionAnswer, detail = false) {
   return {
     category: answer.category,
@@ -100,17 +108,22 @@ export const questionTools = [
       'Alternatively pass question (your own wording of the question) with category omitted: a fixed keyword table picks the category, and if nothing or several categories match you get invalid_args with availableCategories (no guessing, no LLM). ' +
       'The response says how it was chosen: categoryResolvedFrom "explicit" | "question". ' +
       'range {start,end} (YYYY-MM) is optional: when omitted it is the asOf month plus the next 11 months (12 months), and the response says so with rangeResolvedFrom "default". ' +
-      'Returns top windows with scores and source signals plus a truncated ranking. signalIds, supportSignals and riskSignals keep the first 5 per window (…Total = full count); ' +
-      'conventions prose is omitted (conventionsOmitted: true); detail: true returns all ids and the conventions. Unknown explicit category → { unsupported: true }.',
+      'Default (compact) response: top = first 3 months, each { rank, month, score, band, highConsensus, domains (one summary line per domain), signalIds (max 3, resolvable with get_signal), oneLine (fixed-template reason) }, ' +
+      'plus ranking = every month as [month, score, band]. detail: true returns the full structure instead (domainScores, support/risk signals, conventions); ranks and scores are identical. ' +
+      'systems (e.g. ["bazi","ziwei"]) or verifiedOnly: true recompute the ranking from only those systems; the response always has systemsUsed, excludedSystems, experimentalIncluded. ' +
+      'experimentalSensitivity { top3All, top3VerifiedOnly, changed } compares the top 3 with vs without the experimental systems (jyotish, humanDesign); if changed is true, tell the user the conclusion depends on unverified systems. ' +
+      'Unknown explicit category → { unsupported: true }.',
     input: {
       profileId: z.string(),
       category: z.string().optional().describe('Category id from list_question_categories. Takes precedence over question.'),
       question: z.string().min(1).optional().describe('Natural-language question; only used to pick the category when category is omitted.'),
       range: z.object({ start: ymShape, end: ymShape }).strict().optional().describe('Default: asOf month through 11 months later.'),
       asOf: z.string().describe("Required 'YYYY-MM-DD'."),
-      detail: detailInput,
+      systems: systemsInput,
+      verifiedOnly: verifiedOnlyInput,
+      detail: z.boolean().optional().describe('Default false: compact top 3 + ranking table. true: the full structure (all signal ids, domainScores, conventions).'),
     },
-    async handler({ profileId, category: explicitCategory, question, range: explicitRange, asOf, detail }, { analyzer }) {
+    async handler({ profileId, category: explicitCategory, question, range: explicitRange, asOf, systems, verifiedOnly, detail }, { analyzer }) {
       assertAsOf(asOf);
       const availableCategories = listQuestionCategories().map(c => c.id);
       let category: string;
@@ -147,19 +160,37 @@ export const questionTools = [
         throw new ToolError('invalid_args', `range must stay within ${years.min}-${years.max} for asOf ${asOf}`, 'Cited signals are only resolvable by get_signal inside this window.');
       }
       const analysis = await analyzer.get(profileId, asOf);
-      const caveats = caveatsFor(analysis);
+      const sel = resolveSystems(analysis, systems, verifiedOnly);
+      const caveats = caveatsFor(analysis, sel);
       if (!getQuestionCategory(category)) {
         const answer = answerQuestion({ category, range }, () => []);
-        return ok({ asOf, caveats, data: { unsupported: true as const, category: answer.category, categoryResolvedFrom, range: answer.range, rangeResolvedFrom, ...(detail ? { conventions: answer.conventions } : { conventionsOmitted: true as const }), catalogVersion: answer.catalogVersion, availableCategories } });
+        return ok({ asOf, caveats, data: { unsupported: true as const, category: answer.category, categoryResolvedFrom, range: answer.range, rangeResolvedFrom, ...systemsFields(sel), ...(detail ? { conventions: answer.conventions } : { conventionsOmitted: true as const }), catalogVersion: answer.catalogVersion, availableCategories } });
       }
+      const provider = monthSignalProvider(analysis);
       let answer: QuestionAnswer;
+      let sensitivity: ExperimentalSensitivity | null;
       try {
-        answer = answerQuestion({ category, range }, monthSignalProvider(analysis));
+        // 不篩選時走原本的路徑（輸出與改動前相同）；篩選時由 core 只採計 systemsUsed 的訊號重算。
+        answer = answerQuestion({ category, range }, provider, sel.filtered ? { systems: sel.systemsUsed } : {});
+        // 敏感度：同一問題、同一範圍，(採計的系統 ∪ 可用的實驗性系統) 對 (採計的系統 − 實驗性系統)。
+        sensitivity = experimentalSensitivity({ category, range }, provider, {
+          systems: sel.systemsUsed,
+          experimental: EXPERIMENTAL_SYSTEM_IDS.filter(s => analysis.timeline.systems.includes(s)),
+        });
       } catch (e) {
         if (e instanceof ToolError) throw e;
         throw new ToolError('invalid_args', e instanceof Error ? e.message : String(e));
       }
-      return ok({ asOf, caveats, data: { ...slimAnswer(answer, detail), categoryResolvedFrom, rangeResolvedFrom } });
+      const warn = sensitivity ? sensitivityCaveat(sensitivity) : null;
+      if (warn) caveats.push(warn);
+      const extra = {
+        categoryResolvedFrom,
+        rangeResolvedFrom,
+        ...systemsFields(sel),
+        experimentalSensitivity: sensitivity ? sensitivityOut(sensitivity) : null,
+      };
+      const body = detail ? slimAnswer(answer, true) : compactAnswer(answer);
+      return ok({ asOf, caveats, data: { ...body, ...extra } });
     },
   }),
   defineTool({

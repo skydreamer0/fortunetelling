@@ -1,8 +1,21 @@
-import { DOMAINS, SYSTEM_IDS, monthsInRange, type ConsensusAgreement, type ConsensusConflict, type Signal, type SignalWindow, type TimelineCell } from '@fortune/core';
+import {
+  DOMAINS,
+  SYSTEM_IDS,
+  buildConsensus,
+  monthsInRange,
+  restrictTimeline,
+  restrictTimelineCell,
+  type ConsensusAgreement,
+  type ConsensusConflict,
+  type Signal,
+  type SignalWindow,
+  type TimelineCell,
+} from '@fortune/core';
 import { z } from 'zod';
 import { caveatsFor, ok } from '../envelope';
 import { ToolError } from '../errors';
 import { detailInput, previewIds } from '../slim';
+import { resolveSystems, systemsFields, systemsInput, verifiedOnlyInput } from '../systems';
 import { assertAsOf, resolvableYearRange } from '../compute';
 import { MAX_MONTHS } from './questions';
 import { defineTool } from './types';
@@ -94,7 +107,23 @@ function slimCell(cell: TimelineCell, domain: string | undefined, detail: boolea
   };
 }
 
-const filterYears = <T extends { window: SignalWindow }>(items: T[], range: Range | undefined): T[] => {
+export const MONTH_TABLE_COLUMNS = ['month', 'score', 'band', 'consensus', 'highConsensus', 'hasConflict', 'topSignalIds', 'topSignalIdsTotal'] as const;
+const MONTH_TABLE_COLUMNS_TEXT = MONTH_TABLE_COLUMNS.join(', ');
+
+/** 單一領域的逐月表格：每月一列，欄位見 MONTH_TABLE_COLUMNS（topSignalIds 依 detail 截斷規則）。 */
+function monthTable(cells: readonly TimelineCell[], domain: string, detail: boolean | undefined) {
+  return {
+    domain,
+    columns: MONTH_TABLE_COLUMNS,
+    rows: cells.map(cell => {
+      const d = cell.domains.find(x => x.domain === domain)!;
+      const ids = d.topSignals.map(s => s.id);
+      return [cell.window.start.slice(0, 7), d.score, d.band, d.consensus, d.highConsensus, d.conflict !== null, previewIds(ids, detail), ids.length] as const;
+    }),
+  };
+}
+
+const filterYears =<T extends { window: SignalWindow }>(items: T[], range: Range | undefined): T[] => {
   const b = bounds(range);
   return items.filter(i => overlaps(i.window, b));
 };
@@ -173,17 +202,25 @@ export const signalTools = [
       'hasConflict, perSystem { score (0-1), valence, signalCount } (year cells always; month cells only with detail: true) and topSignalIds (first 5 ids; topSignalIdsTotal = full count; detail: true returns all; resolve with get_signal). ' +
       'years: yearly cells for the next years, filtered by range ({start,end} as YYYY or YYYY-MM, window overlap). ' +
       `months: ALWAYS [] unless the months parameter is given. months = {start,end} as YYYY-MM returns one cell per month in that inclusive range (max ${MAX_MONTHS} months, within asOf-5..asOf+10 years). ` +
-      'Months outside the asOf year are computed for that year (core builds month cells per year). Use domain to shrink the response; response_too_large means narrow months or domain.',
+      'Months outside the asOf year are computed for that year (core builds month cells per year). Use domain to shrink the response; response_too_large means narrow months or domain. ' +
+      `With domain + months (and no detail) months come as monthTable { domain, columns, rows } = one row per month [${MONTH_TABLE_COLUMNS_TEXT}] instead of nested cells (monthsFormat: 'cells' forces cells). ` +
+      'systems / verifiedOnly recompute every cell from only those systems; the response always has systemsUsed, excludedSystems, experimentalIncluded.',
     input: {
       profileId,
       asOf,
       range: flexRange.optional(),
       months: monthRange.optional().describe(`Month-by-month cells for this inclusive YYYY-MM range (max ${MAX_MONTHS} months). Omit for yearly cells only.`),
       domain: domainEnum.optional(),
+      monthsFormat: z.enum(['table', 'cells']).optional().describe("Default: 'table' when domain is given (and detail is not), else 'cells'. 'table' needs domain."),
+      systems: systemsInput,
+      verifiedOnly: verifiedOnlyInput,
       detail: detailInput,
     },
     async handler(args, { analyzer }) {
       assertAsOf(args.asOf);
+      if (args.monthsFormat === 'table' && !args.domain) {
+        throw new ToolError('invalid_args', "monthsFormat 'table' needs domain", 'Pass domain (one row per month for that domain).');
+      }
       let monthBounds: { lo: string; hi: string } | null = null;
       if (args.months) {
         const n = monthsInRange(args.months);
@@ -196,21 +233,30 @@ export const signalTools = [
         monthBounds = { lo: args.months.start, hi: args.months.end };
       }
       const analysis = await analyzer.get(args.profileId, args.asOf);
-      const tl = analysis.timeline;
+      const sel = resolveSystems(analysis, args.systems, args.verifiedOnly);
+      // 篩選時由 core 從指定系統的訊號重算每個 cell；不篩選時直接用原 timeline（輸出不變）。
+      const tl = sel.filtered ? restrictTimeline(analysis.timeline, sel.systemsUsed) : analysis.timeline;
+      const restrictCell = (cell: TimelineCell) => (sel.filtered ? restrictTimelineCell(cell, sel.systemsUsed, analysis.timeline) : cell);
       const years = filterYears(tl.years, args.range).map(c => slimCell(c, args.domain, args.detail));
-      const months: ReturnType<typeof slimCell>[] = [];
+      const monthCells: TimelineCell[] = [];
       if (monthBounds) {
         for (let y = Number(monthBounds.lo.slice(0, 4)); y <= Number(monthBounds.hi.slice(0, 4)); y++) {
           for (const cell of analysis.monthCells(y)) {
             const ym = cell.window.start.slice(0, 7);
-            if (ym >= monthBounds.lo && ym <= monthBounds.hi) months.push(slimCell(cell, args.domain, args.detail, true));
+            if (ym >= monthBounds.lo && ym <= monthBounds.hi) monthCells.push(restrictCell(cell));
           }
         }
       }
+      // 指定 domain 時逐月預設改成每月一列的表格（monthsFormat: 'cells' 或 detail: true 可取回巢狀 cell）。
+      const format = monthBounds ? (args.monthsFormat ?? (args.domain && !args.detail ? 'table' : 'cells')) : 'cells';
+      const monthsOut =
+        format === 'table'
+          ? { monthsFormat: 'table' as const, monthTable: monthTable(monthCells, args.domain!, args.detail) }
+          : { monthsFormat: 'cells' as const, months: monthCells.map(c => slimCell(c, args.domain, args.detail, true)) };
       return ok({
         asOf: analysis.asOf,
-        data: { systems: tl.systems, skippedSystems: tl.skippedSystems, years, months, monthsRange: args.months ?? null },
-        caveats: caveatsFor(analysis),
+        data: { systems: tl.systems, skippedSystems: tl.skippedSystems, ...systemsFields(sel), years, ...monthsOut, monthsRange: args.months ?? null },
+        caveats: caveatsFor(analysis, sel),
       });
     },
   }),
@@ -218,11 +264,13 @@ export const signalTools = [
     name: 'get_consensus',
     description:
       'Cross-system consensus: years[] each { window, highConsensus[] agreements (domain, consensus, score, systems, signalIds (first 5; signalIdsTotal = full count; detail: true returns all)), conflictCount }, ' +
-      'headlines.agreements (top agreements), conflictCount total, systems and thresholds. Conflict details: use list_conflicts. range = {start,end} as YYYY or YYYY-MM filters years.',
-    input: { profileId, asOf, range: flexRange.optional(), detail: detailInput },
+      'headlines.agreements (top agreements), conflictCount total, systems and thresholds. Conflict details: use list_conflicts. range = {start,end} as YYYY or YYYY-MM filters years. ' +
+      'systems / verifiedOnly recompute consensus from only those systems (list_conflicts is not filtered); the response always has systemsUsed, excludedSystems, experimentalIncluded.',
+    input: { profileId, asOf, range: flexRange.optional(), systems: systemsInput, verifiedOnly: verifiedOnlyInput, detail: detailInput },
     async handler(args, { analyzer }) {
       const analysis = await analyzer.get(args.profileId, args.asOf);
-      const c = analysis.consensus;
+      const sel = resolveSystems(analysis, args.systems, args.verifiedOnly);
+      const c = sel.filtered ? buildConsensus(restrictTimeline(analysis.timeline, sel.systemsUsed)) : analysis.consensus;
       const years = filterYears(c.years, args.range).map(y => ({
         window: y.window,
         highConsensus: y.highConsensus.map(a => agreementOut(a, args.detail)),
@@ -236,11 +284,12 @@ export const signalTools = [
           systems: c.systems,
           consensusThreshold: c.consensusThreshold,
           highConsensusMinSystems: c.highConsensusMinSystems,
+          ...systemsFields(sel),
           years,
           headlines: { agreements },
           conflictCount,
         },
-        caveats: caveatsFor(analysis),
+        caveats: caveatsFor(analysis, sel),
       });
     },
   }),
