@@ -1,7 +1,10 @@
-import { DOMAINS, SYSTEM_IDS, type ConsensusAgreement, type ConsensusConflict, type Signal, type SignalWindow, type TimelineCell } from '@fortune/core';
+import { DOMAINS, SYSTEM_IDS, monthsInRange, type ConsensusAgreement, type ConsensusConflict, type Signal, type SignalWindow, type TimelineCell } from '@fortune/core';
 import { z } from 'zod';
 import { caveatsFor, ok } from '../envelope';
 import { ToolError } from '../errors';
+import { detailInput, previewIds } from '../slim';
+import { assertAsOf, resolvableYearRange } from '../compute';
+import { MAX_MONTHS } from './questions';
 import { defineTool } from './types';
 
 const asOf = z.string().describe("Evaluation date 'YYYY-MM-DD'.");
@@ -65,7 +68,8 @@ function decodeCursor(cursor: string): number {
   throw new ToolError('invalid_args', 'Invalid cursor', 'Pass the nextCursor from the previous list_signals response unchanged.');
 }
 
-function slimCell(cell: TimelineCell, domain: string | undefined) {
+/** Month cells (many per response) leave out `perSystem` unless `detail`; year cells always carry it. */
+function slimCell(cell: TimelineCell, domain: string | undefined, detail: boolean | undefined, month = false) {
   return {
     window: cell.window,
     domains: cell.domains
@@ -77,10 +81,15 @@ function slimCell(cell: TimelineCell, domain: string | undefined) {
         consensus: d.consensus,
         highConsensus: d.highConsensus,
         hasConflict: d.conflict !== null,
-        perSystem: Object.fromEntries(
-          Object.entries(d.perSystem).map(([sys, a]) => [sys, { score: a!.score, valence: a!.valence, signalCount: a!.signalIds.length }]),
-        ),
-        topSignalIds: d.topSignals.map(s => s.id),
+        ...(month && !detail
+          ? {}
+          : {
+              perSystem: Object.fromEntries(
+                Object.entries(d.perSystem).map(([sys, a]) => [sys, { score: a!.score, valence: a!.valence, signalCount: a!.signalIds.length }]),
+              ),
+            }),
+        topSignalIds: previewIds(d.topSignals.map(s => s.id), detail),
+        topSignalIdsTotal: d.topSignals.length,
       })),
   };
 }
@@ -98,13 +107,14 @@ const conflictOut = (c: ConsensusConflict) => ({
   negative: c.negative,
 });
 
-const agreementOut = (a: ConsensusAgreement) => ({
+const agreementOut = (a: ConsensusAgreement, detail: boolean | undefined) => ({
   domain: a.domain,
   window: a.window,
   consensus: a.consensus,
   score: a.score,
   systems: a.systems,
-  signalIds: a.signalIds,
+  signalIds: previewIds(a.signalIds, detail),
+  signalIdsTotal: a.signalIds.length,
 });
 
 export const signalTools = [
@@ -160,17 +170,46 @@ export const signalTools = [
     name: 'get_timeline',
     description:
       'Compact timeline: { years, months } cells, each { window, domains[] } where each domain has score (0-100 cross-system), band, consensus (systems >= threshold), highConsensus, ' +
-      'hasConflict, perSystem { score (0-1), valence, signalCount } and topSignalIds (ids only; use get_signal). ' +
-      'Filters: range ({start,end} as YYYY or YYYY-MM, window overlap) and domain. Months are only included when a range is given (to keep the response small); otherwise months is [].',
-    input: { profileId, asOf, range: flexRange.optional(), domain: domainEnum.optional() },
+      'hasConflict, perSystem { score (0-1), valence, signalCount } (year cells always; month cells only with detail: true) and topSignalIds (first 5 ids; topSignalIdsTotal = full count; detail: true returns all; resolve with get_signal). ' +
+      'years: yearly cells for the next years, filtered by range ({start,end} as YYYY or YYYY-MM, window overlap). ' +
+      `months: ALWAYS [] unless the months parameter is given. months = {start,end} as YYYY-MM returns one cell per month in that inclusive range (max ${MAX_MONTHS} months, within asOf-5..asOf+10 years). ` +
+      'Months outside the asOf year are computed for that year (core builds month cells per year). Use domain to shrink the response; response_too_large means narrow months or domain.',
+    input: {
+      profileId,
+      asOf,
+      range: flexRange.optional(),
+      months: monthRange.optional().describe(`Month-by-month cells for this inclusive YYYY-MM range (max ${MAX_MONTHS} months). Omit for yearly cells only.`),
+      domain: domainEnum.optional(),
+      detail: detailInput,
+    },
     async handler(args, { analyzer }) {
+      assertAsOf(args.asOf);
+      let monthBounds: { lo: string; hi: string } | null = null;
+      if (args.months) {
+        const n = monthsInRange(args.months);
+        if (n < 1) throw new ToolError('invalid_args', `months.start (${args.months.start}) is after months.end (${args.months.end})`);
+        if (n > MAX_MONTHS) throw new ToolError('invalid_args', `months spans ${n} months; at most ${MAX_MONTHS} allowed`);
+        const years = resolvableYearRange(args.asOf);
+        if (Number(args.months.start.slice(0, 4)) < years.min || Number(args.months.end.slice(0, 4)) > years.max) {
+          throw new ToolError('invalid_args', `months must stay within ${years.min}-${years.max} for asOf ${args.asOf}`);
+        }
+        monthBounds = { lo: args.months.start, hi: args.months.end };
+      }
       const analysis = await analyzer.get(args.profileId, args.asOf);
       const tl = analysis.timeline;
-      const years = filterYears(tl.years, args.range).map(c => slimCell(c, args.domain));
-      const months = args.range ? filterYears(tl.months, args.range).map(c => slimCell(c, args.domain)) : [];
+      const years = filterYears(tl.years, args.range).map(c => slimCell(c, args.domain, args.detail));
+      const months: ReturnType<typeof slimCell>[] = [];
+      if (monthBounds) {
+        for (let y = Number(monthBounds.lo.slice(0, 4)); y <= Number(monthBounds.hi.slice(0, 4)); y++) {
+          for (const cell of analysis.monthCells(y)) {
+            const ym = cell.window.start.slice(0, 7);
+            if (ym >= monthBounds.lo && ym <= monthBounds.hi) months.push(slimCell(cell, args.domain, args.detail, true));
+          }
+        }
+      }
       return ok({
         asOf: analysis.asOf,
-        data: { systems: tl.systems, skippedSystems: tl.skippedSystems, years, months },
+        data: { systems: tl.systems, skippedSystems: tl.skippedSystems, years, months, monthsRange: args.months ?? null },
         caveats: caveatsFor(analysis),
       });
     },
@@ -178,18 +217,18 @@ export const signalTools = [
   defineTool({
     name: 'get_consensus',
     description:
-      'Cross-system consensus: years[] each { window, highConsensus[] agreements (domain, consensus, score, systems, signalIds), conflictCount }, ' +
+      'Cross-system consensus: years[] each { window, highConsensus[] agreements (domain, consensus, score, systems, signalIds (first 5; signalIdsTotal = full count; detail: true returns all)), conflictCount }, ' +
       'headlines.agreements (top agreements), conflictCount total, systems and thresholds. Conflict details: use list_conflicts. range = {start,end} as YYYY or YYYY-MM filters years.',
-    input: { profileId, asOf, range: flexRange.optional() },
+    input: { profileId, asOf, range: flexRange.optional(), detail: detailInput },
     async handler(args, { analyzer }) {
       const analysis = await analyzer.get(args.profileId, args.asOf);
       const c = analysis.consensus;
       const years = filterYears(c.years, args.range).map(y => ({
         window: y.window,
-        highConsensus: y.highConsensus.map(agreementOut),
+        highConsensus: y.highConsensus.map(a => agreementOut(a, args.detail)),
         conflictCount: y.conflicts.length,
       }));
-      const agreements = filterYears(c.headlines.agreements, args.range).map(agreementOut);
+      const agreements = filterYears(c.headlines.agreements, args.range).map(a => agreementOut(a, args.detail));
       const conflictCount = filterYears(c.headlines.conflicts, args.range).length;
       return ok({
         asOf: analysis.asOf,

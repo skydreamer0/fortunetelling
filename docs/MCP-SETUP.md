@@ -53,16 +53,30 @@ bun run --filter @fortune/mcp add-profile sky \
 | `get_chart` | 單一系統命盤（`summary`／`full`） |
 | `get_time_context` | 真太陽時、節氣、農曆，以及邊界與夏令時間等 flags |
 | `list_signals` / `get_signal` | 規則訊號（可篩選、分頁）與單筆完整證據 |
-| `get_timeline` | 逐年、逐月各領域分數 |
+| `get_timeline` | 逐年各領域分數；加 `months: {start,end}`（`YYYY-MM`，最多 36 個月）才回逐月 |
 | `get_consensus` / `list_conflicts` | 跨系統共識與矛盾 |
-| `answer_question` / `list_question_categories` | 問事（例如「哪幾個月適合買車」）月份排名 |
+| `answer_question` / `list_question_categories` | 問事（例如「哪幾個月適合買車」）月份排名；先用 `list_question_categories` 取得 category id，或直接帶 `question` 讓固定關鍵字表決定類別（比對不到或並列會回 `invalid_args` 與 `availableCategories`，不猜） |
 | `compare_profiles` | 雙人合盤（姓名與出生資料不會出現在結果中） |
 
 每個回應都是 `{ asOf, versions, caveats, data }`：
 
-- `versions`：core、calculator、規則目錄版本與 ephemeris 狀態，同一輸入同一版本會得到相同結果。
+- `versionsHash`：版本區塊（core、calculator、規則目錄版本與 ephemeris 狀態）的 12 碼雜湊，不含 `asOf`。同一輸入同一版本會得到相同結果；雜湊變了代表版本變了。
+- `versions`：完整版本區塊（約 500 bytes）只在 `list_profiles` 與 `get_profile` 回傳，其餘工具只回 `versionsHash` 以節省上下文。
 - `caveats`：Claude 不該過度相信的地方——分數未校準、時間邊界、未參與的系統、**Jyotish／Human Design 尚未交叉驗證（`experimental`）**。
 - 回應太大時不會截斷，而是回 `response_too_large` 並提示縮小範圍。
+
+回傳瘦身（`answer_question`、`get_timeline`、`get_consensus` 共通）：
+
+- 很長的訊號清單（`signalIds`、`topSignalIds`、`supportSignals`、`riskSignals`）預設只保留前 5 筆，旁邊的 `…Total` 欄位是完整筆數。帶 `detail: true` 取得完整清單；單一訊號用 `get_signal`。
+- `answer_question` 預設不回 `conventions`（公式說明長文），只回 `conventionsOmitted: true`；`detail: true` 才回。
+- `get_timeline` 的逐月 cell 預設不含 `perSystem`（`detail: true` 才有）。逐月資料量大，建議搭配 `domain` 縮小範圍。
+
+`answer_question` 的類別與範圍：
+
+- `category`（明確 id）優先於 `question`；回傳 `categoryResolvedFrom` 為 `"explicit"` 或 `"question"`。
+- `range` 省略時為 `asOf` 當月起共 12 個月，回傳的 `range` 即實際範圍，`rangeResolvedFrom` 為 `"default"`（明確給的為 `"explicit"`）。
+
+`get_timeline` 的逐月：core 的 timeline 只建 `asOf` 當年的 12 個月，所以舊版只有 `range` 落在 `asOf` 當年時才有 `months`，其他情況永遠是 `[]`。現在 `months: {start,end}` 會逐年補算（範圍限 `asOf` 前 5 年到後 10 年），不帶 `months` 就只回年度。`range` 只篩年度 cell。
 
 ## 5. 試試看
 

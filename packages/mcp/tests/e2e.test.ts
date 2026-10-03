@@ -42,6 +42,9 @@ describe('stdio server (what Claude Desktop actually talks to)', () => {
   test('list_profiles over the wire', async () => {
     const json = JSON.parse(textOf(await client.callTool({ name: 'list_profiles', arguments: {} })));
     expect(json.data.profiles.map((p: any) => p.profileId)).toEqual(['sky']);
+    // list_profiles is the entry point that carries the full version block
+    expect(json.versions.coreVersion).toBeTruthy();
+    expect(json.versionsHash).toMatch(/^[0-9a-f]{12}$/);
   });
 
   test('acceptance: 2027 vehicle purchase → answer_question → cited signals exist', async () => {
@@ -50,7 +53,8 @@ describe('stdio server (what Claude Desktop actually talks to)', () => {
       arguments: { profileId: 'sky', category: 'vehicle_purchase', range: { start: '2027-01', end: '2027-12' }, asOf: '2026-09-30' },
     })));
     expect(answer.asOf).toBe('2026-09-30');
-    expect(answer.versions.coreVersion).toBeTruthy();
+    expect(answer.versions).toBeUndefined();
+    expect(answer.versionsHash).toMatch(/^[0-9a-f]{12}$/);
     expect(answer.caveats.some((c: any) => c.code === 'scores_uncalibrated')).toBe(true);
     const top = answer.data.top ?? answer.data.answer?.top;
     expect(top.length).toBeGreaterThan(0);

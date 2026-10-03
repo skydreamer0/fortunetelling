@@ -66,6 +66,10 @@ describe('get_time_context', () => {
     expect(a.text).not.toContain('Tainan');
     expect(a.text).not.toContain('"date":"1990-05-17"');
   });
+  test('zodiac is Traditional (core hands back simplified 马)', async () => {
+    const { json } = await fx.call('get_time_context', { profileId: 'sky', asOf: ASOF });
+    expect(json.data.lunar.zodiac).toBe('馬');
+  });
   test('invalid asOf and unknown profile', async () => {
     expect((await fx.call('get_time_context', { profileId: 'sky', asOf: 'x' })).json.error.code).toBe('invalid_args');
     expect((await fx.call('get_time_context', { profileId: 'ghost', asOf: ASOF })).json.error.code).toBe('profile_not_found');

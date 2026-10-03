@@ -13,6 +13,7 @@ import {
   type Signal,
   type TimeContext,
   type Timeline,
+  type TimelineCell,
   type ProfileFileV1,
 } from '@fortune/core';
 import { ToolError } from './errors';
@@ -28,6 +29,8 @@ export type Analysis = {
   consensus: ConsensusSummary;
   /** All signals of all cells, deduped by id, sorted by id. */
   signals: Signal[];
+  /** The 12 month cells of one calendar year (core only builds months for asOf's year), one `buildTimeline` per year, cached. */
+  monthCells(year: number): TimelineCell[];
   /** Month signals of one calendar year ('YYYY-MM' → signals), one `buildTimeline` per year, cached. */
   monthSignals(year: number): Map<string, Signal[]>;
   /** Any signal this analysis (or a question answer) can cite; looks through the resolvable years. */
@@ -82,19 +85,27 @@ export class Analyzer {
     const asOfYear = Number(asOf.slice(0, 4));
     const { min, max } = resolvableYearRange(asOf);
     const systems = timeline.systems;
-    const byYear = new Map<number, Map<string, Signal[]>>();
-    const monthSignals = (year: number): Map<string, Signal[]> => {
-      let months = byYear.get(year);
-      if (!months) {
-        const tl = buildTimeline(ctx, {
+    const cellsByYear = new Map<number, TimelineCell[]>();
+    const monthCells = (year: number): TimelineCell[] => {
+      let cells = cellsByYear.get(year);
+      if (!cells) {
+        cells = buildTimeline(ctx, {
           asOf: year === asOfYear ? asOf : `${year}-01-01`,
           years: 1,
           includeMonths: true,
           topSignalsPerDomain: Infinity,
           systems,
-        });
+        }).months;
+        cellsByYear.set(year, cells);
+      }
+      return cells;
+    };
+    const byYear = new Map<number, Map<string, Signal[]>>();
+    const monthSignals = (year: number): Map<string, Signal[]> => {
+      let months = byYear.get(year);
+      if (!months) {
         months = new Map();
-        for (const cell of tl.months) {
+        for (const cell of monthCells(year)) {
           const cellSignals = new Map<string, Signal>();
           for (const domain of cell.domains) for (const signal of domain.topSignals) cellSignals.set(signal.id, signal);
           months.set(cell.window.start.slice(0, 7), [...cellSignals.values()]);
@@ -115,6 +126,6 @@ export class Analyzer {
       }
       return undefined;
     };
-    return { file, warnings, asOf, ctx, timeline, consensus: buildConsensus(timeline), signals, monthSignals, findSignal };
+    return { file, warnings, asOf, ctx, timeline, consensus: buildConsensus(timeline), signals, monthCells, monthSignals, findSignal };
   }
 }
