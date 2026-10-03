@@ -2,13 +2,16 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { join } from 'node:path';
-import { makeFixture } from './helpers';
+import { MCP_SERVER_INSTRUCTIONS } from '@fortune/ai/mcp';
+import { createProfileFile, serializeProfileFile } from '@fortune/core';
+import { makeFixture, SAMPLE_PROFILE } from './helpers';
 
 const EXPECTED_TOOLS = [
   'list_profiles', 'get_profile',
   'get_chart', 'get_time_context',
   'list_signals', 'get_signal', 'get_timeline', 'get_consensus', 'list_conflicts',
   'answer_question', 'list_question_categories', 'compare_profiles',
+  'check_answer', 'import_profile',
 ];
 
 let fx: Awaited<ReturnType<typeof makeFixture>>;
@@ -69,6 +72,40 @@ describe('stdio server (what Claude Desktop actually talks to)', () => {
       expect(signal.data.id ?? signal.data.signal?.id).toBe(id);
     }
   }, 60_000);
+
+  test('server 連線時送出使用守則（instructions，500 字內）', async () => {
+    const text = client.getInstructions();
+    expect(text).toBe(MCP_SERVER_INSTRUCTIONS);
+    expect(text!.length).toBeLessThanOrEqual(500);
+    expect(text).toContain('list_profiles');
+  });
+
+  test('check_answer over the wire：引用真實 id 通過、假 id 被標出', async () => {
+    const list = JSON.parse(textOf(await client.callTool({
+      name: 'list_signals', arguments: { profileId: 'sky', asOf: '2026-09-30', limit: 1 },
+    })));
+    const id = list.data.signals[0].id;
+    const good = JSON.parse(textOf(await client.callTool({
+      name: 'check_answer', arguments: { profileId: 'sky', asOf: '2026-09-30', answerText: `這段時期傾向有支撐〔${id}〕。` },
+    })));
+    expect(good.data.ok).toBe(true);
+    const bad = JSON.parse(textOf(await client.callTool({
+      name: 'check_answer', arguments: { profileId: 'sky', asOf: '2026-09-30', answerText: '一定會成功〔sig_fake0000〕。' },
+    })));
+    expect(bad.data.unknownCitations).toEqual(['sig_fake0000']);
+    expect(bad.data.issues.map((i: any) => i.code).sort()).toEqual(['honesty_violation', 'unknown_citation']);
+  }, 60_000);
+
+  test('import_profile over the wire：匯入後 get_profile 查得到，重複匯入被拒', async () => {
+    const content = serializeProfileFile(createProfileFile('wire', SAMPLE_PROFILE));
+    const imported = JSON.parse(textOf(await client.callTool({ name: 'import_profile', arguments: { content } })));
+    expect(imported.data).toMatchObject({ profileId: 'wire', overwritten: false });
+    const got = JSON.parse(textOf(await client.callTool({ name: 'get_profile', arguments: { profileId: 'wire' } })));
+    expect(got.data.profileId).toBe('wire');
+    const again: any = await client.callTool({ name: 'import_profile', arguments: { content } });
+    expect(again.isError).toBe(true);
+    expect(JSON.parse(textOf(again)).error.code).toBe('profile_exists');
+  });
 
   test('errors come back as isError with a structured body', async () => {
     const result: any = await client.callTool({ name: 'get_profile', arguments: { profileId: 'ghost' } });

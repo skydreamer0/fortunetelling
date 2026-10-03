@@ -146,7 +146,8 @@ export interface PayloadQuestion {
 }
 
 export interface PayloadTruncation {
-  maxChars: number;
+  /** 字數預算；`budget: false` 時為 null（不限）。 */
+  maxChars: number | null;
   signalsTotal: number;
   signalsKept: number;
   signalsDropped: number;
@@ -175,7 +176,20 @@ export interface BuildPayloadOptions {
   question?: QuestionAnswer | null;
   /** Serialised-size budget in characters; default 120 000. */
   maxChars?: number;
+  /**
+   * 是否把姓名與出生地標籤替換為 `〔已移除〕`（D-029）。預設 true（向下相容）。
+   * 本機對話（MCP）不經外部網路，可關閉；對外分享或複製 prompt 請維持開啟。
+   */
+  redact?: boolean;
+  /**
+   * 是否套用字數預算（超過就先丟強度最低的訊號）。預設 true（向下相容）。
+   * 設為 false 等同不設上限（`truncation.maxChars` 為 null）。
+   */
+  budget?: boolean;
 }
+
+/** 本機使用的選項：不去識別化、不限字數。對外送出的路徑不得使用。 */
+export const LOCAL_PAYLOAD_OPTIONS = Object.freeze({ redact: false, budget: false }) satisfies BuildPayloadOptions;
 
 export interface BuiltPayload {
   payload: InterpretationPayload;
@@ -316,7 +330,9 @@ export function sensitiveStrings(report: ReportLike): string[] {
 // ─── main ───────────────────────────────────────────────────────────────────
 
 export function buildInterpretationPayload(report: ReportLike, options: BuildPayloadOptions = {}): BuiltPayload {
-  const maxChars = options.maxChars ?? DEFAULT_MAX_PAYLOAD_CHARS;
+  const budgeted = options.budget !== false;
+  const maxChars = budgeted ? (options.maxChars ?? DEFAULT_MAX_PAYLOAD_CHARS) : Number.POSITIVE_INFINITY;
+  const reportedMax = Number.isFinite(maxChars) ? maxChars : null;
   const answer = options.question ?? null;
 
   // All candidate signals: report.signals ∪ question source signals (de-duplicated by id).
@@ -362,7 +378,7 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
 
   // ── size budget: greedy keep by priority (protected, intensity desc, id asc) ──
   const placeholderTrunc: PayloadTruncation = {
-    maxChars,
+    maxChars: reportedMax,
     signalsTotal: all.length,
     signalsKept: all.length,
     signalsDropped: all.length,
@@ -409,7 +425,7 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
   }
 
   const truncation: PayloadTruncation = {
-    maxChars,
+    maxChars: reportedMax,
     signalsTotal: all.length,
     signalsKept: kept.length,
     signalsDropped: dropped.length,
@@ -417,7 +433,7 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
     overBudget: baseSize > maxChars,
   };
 
-  const secrets = sensitiveStrings(report);
+  const secrets = options.redact === false ? [] : sensitiveStrings(report);
   const payload = scrub({ ...base, signals: kept, truncation }, secrets) as InterpretationPayload;
   return { payload, payloadJson: canonicalJson(payload), signalIds: keptIds };
 }

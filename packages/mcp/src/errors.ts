@@ -3,6 +3,7 @@ export type ToolErrorCode =
   | 'invalid_args'
   | 'profile_not_found'
   | 'profile_invalid'
+  | 'profile_exists'
   | 'unknown_signal'
   | 'response_too_large'
   | 'unsupported'

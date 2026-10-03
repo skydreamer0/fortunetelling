@@ -10,7 +10,7 @@ bun install
 
 ## 2. 建立 profile
 
-profile 是 profiles 目錄下的 `<profileId>.fortune.json`（預設 `~/.fortune/profiles/`，可用環境變數 `FORTUNE_PROFILES_DIR` 改）。網站的「匯出」按鈕在 M4-02 才會有，現在先用指令建立：
+profile 是 profiles 目錄下的 `<profileId>.fortune.json`（預設 `~/.fortune/profiles/`，可用環境變數 `FORTUNE_PROFILES_DIR` 改）。網站的「匯出」按鈕在 M4-02 才會有；已有 `.fortune.json` 時，可以在對話裡請 Claude 用 `import_profile`（帶檔案路徑或全文）匯入。沒有檔案時先用指令建立：
 
 ```bash
 bun run --filter @fortune/mcp add-profile sky \
@@ -57,6 +57,8 @@ bun run --filter @fortune/mcp add-profile sky \
 | `get_consensus` / `list_conflicts` | 跨系統共識與矛盾 |
 | `answer_question` / `list_question_categories` | 問事（例如「哪幾個月適合買車」）月份排名；先用 `list_question_categories` 取得 category id，或直接帶 `question` 讓固定關鍵字表決定類別（比對不到或並列會回 `invalid_args` 與 `availableCategories`，不猜） |
 | `compare_profiles` | 雙人合盤（姓名與出生資料不會出現在結果中） |
+| `check_answer` | 貼回一段 AI 回答（`profileId`、`asOf`、`answerText`），檢查引用的 `sig_` id 是否存在、有無宿命論或保證式用語、有沒有把 experimental 系統（Jyotish、Human Design）當成「高共識」。只標示、不改寫；回 `{ ok, citedIds, unknownCitations, issues[] }` |
+| `import_profile` | 匯入網站匯出的 `.fortune.json`（`content` 全文或 `path` 路徑二選一）。已存在同名 profile 不會覆蓋，要 `overwrite: true`；指紋缺漏或過期會重算並警告 |
 
 每個回應都是 `{ asOf, versions, caveats, data }`：
 
@@ -77,6 +79,23 @@ bun run --filter @fortune/mcp add-profile sky \
 - `range` 省略時為 `asOf` 當月起共 12 個月，回傳的 `range` 即實際範圍，`rangeResolvedFrom` 為 `"default"`（明確給的為 `"explicit"`）。
 
 `get_timeline` 的逐月：core 的 timeline 只建 `asOf` 當年的 12 個月，所以舊版只有 `range` 落在 `asOf` 當年時才有 `months`，其他情況永遠是 `[]`。現在 `months: {start,end}` 會逐年補算（範圍限 `asOf` 前 5 年到後 10 年），不帶 `months` 就只回年度。`range` 只篩年度 cell。
+
+### 建議的對話指示
+
+server 連線時會自動把下面這段當作 `instructions` 送給客戶端；若你的客戶端不會顯示它，可以手動貼到 Claude 桌面版的「專案指示」。這段文字的唯一來源是 `packages/ai/src/instructions.ts` 的 `MCP_SERVER_INSTRUCTIONS`（測試會比對本文件與程式是否一致，改字請兩邊一起改）。
+
+```text
+你是命理對話助手：排盤與分數都由本機工具算好，你只查詢與解釋，不自行排盤。
+1. 先 list_profiles 取得 profileId；所有時間工具都要帶 asOf（YYYY-MM-DD，使用者沒說就用今天並告知）。
+2. 問事先用 answer_question，再用 get_signal／list_signals 查證據。
+3. 結論附〔sig_…〕，id 逐字取自工具回傳；查不到就說資料裡沒有。
+4. 「高共識」需至少 3 套已驗證系統；吠陀占星 Jyotish、人類圖 Human Design 是實驗性系統，不得計入，引用時要註明。
+5. 分數未校準，不是機率；若最高分仍在「低」帶，直說「沒有哪個月特別突出」，不硬推薦。
+6. 系統矛盾時兩邊都講；語氣用傾向，不說一定會、保證、注定。
+重要結論送出前可用 check_answer 自我檢查。
+```
+
+需要更完整的守則（各工具用法、矛盾呈現、experimental 降信心、語氣規則）時，用 `@fortune/ai/mcp` 的 `CONVERSATION_SYSTEM_INSTRUCTION`，它以上面這段開頭。
 
 ## 5. 試試看
 
