@@ -1,4 +1,6 @@
+import { answerCheckTools } from './answerCheck';
 import { chartTools } from './chart';
+import { importProfileTools } from './importProfile';
 import { profileTools } from './profiles';
 import { questionTools } from './questions';
 import { signalTools } from './signals';
@@ -7,7 +9,7 @@ import { z } from 'zod';
 import { render, renderError } from '../envelope';
 import { ToolError } from '../errors';
 
-export const TOOLS: readonly ToolDef<any>[] = [...profileTools, ...chartTools, ...signalTools, ...questionTools];
+export const TOOLS: readonly ToolDef<any>[] = [...profileTools, ...chartTools, ...signalTools, ...questionTools, ...answerCheckTools, ...importProfileTools];
 
 export type ToolResponse = { text: string; isError: boolean };
 

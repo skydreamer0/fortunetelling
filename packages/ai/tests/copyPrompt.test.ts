@@ -46,7 +46,7 @@ describe('buildCopyPrompt — content', () => {
     expect(t).toContain('不要重新排盤或推算');
     expect(t).toContain('干支、星曜、行星名稱一律不要提');
     expect(t).toContain('〔sig_xxxxxxxxxxxxxxxx〕');
-    expect(t).toContain('三套以上不同系統');
+    expect(t).toContain('三套以上「已驗證」系統');
     expect(t).toContain('「高共識」');
     expect(t).toContain('必須保留矛盾');
     expect(t).toContain('不是命定');

@@ -1,5 +1,19 @@
 # @fortune/ai — AI 解讀層（V5-03／V5-04／V5-05）
 
+## 進入點：兩條路（M3）
+
+| 路 | 進入點 | 內容 |
+|---|---|---|
+| `mcp`（主線） | `@fortune/ai/mcp` | `checkAnswer`（貼回答案檢查）、`MCP_SERVER_INSTRUCTIONS`／`CONVERSATION_SYSTEM_INSTRUCTION`（對話助手指示）、可關閉去識別化與字數預算的 `buildInterpretationPayload`（`LOCAL_PAYLOAD_OPTIONS`） |
+| `copy`（備援） | `@fortune/ai/copy` | `buildCopyPrompt`、`checkPastedAnswer`，瀏覽器安全 |
+| 選用：程式呼叫 | `@fortune/ai/client` | `interpret`、`parseQuestion`、`createAnthropicComplete`；**不在主線 `@fortune/ai` 匯出**，需要 `@anthropic-ai/sdk` 時才 import |
+
+`buildInterpretationPayload` 的 `redact`（姓名與出生地標籤去識別化）與 `budget`（字數預算）預設都開，
+本機對話可傳 `{ redact: false, budget: false }`。高共識的「三套以上」只計已驗證系統：
+`jyotish`、`humanDesign` 屬 experimental（`EXPERIMENTAL_SYSTEMS`），不計入。
+
+以下為選用的程式呼叫層（`@fortune/ai/client`）說明。
+
 AI 只做兩件事（ARCHITECTURE-V2 §8、§9）：
 
 1. **自然語言 → `{ category, range }`**：`parseQuestion(text, { complete, today })`，輸出一律經 core

@@ -13,7 +13,7 @@
 import { canonicalJson } from './canonical';
 import { HonestyGuard } from './core-pure';
 import { buildInterpretationPayload, type BuiltPayload, type InterpretationPayload, type ReportLike } from './payload';
-import { AI_HONESTY_LAYER, FATALISM_PATTERNS, HIGH_CONSENSUS_MIN_SYSTEMS, HIGH_CONSENSUS_TERM } from './validate';
+import { AI_HONESTY_LAYER, EXPERIMENTAL_SYSTEMS, FATALISM_PATTERNS, HIGH_CONSENSUS_MIN_SYSTEMS, HIGH_CONSENSUS_TERM } from './validate';
 import { buildCorpus, findVocabTerms, isInCorpus, VOCAB } from './vocab';
 
 export type PasteFlagCode = 'unknown_citation' | 'unverified_term' | 'no_citation' | 'fatalism' | 'high_consensus_unsupported';
@@ -130,7 +130,7 @@ export function checkPastedAnswer(source: PasteCheckSource, answerText: string):
     if (fatal.length) flags.push({ code: 'fatalism', label: PASTE_FLAG_LABELS.fatalism, values: uniqSorted(fatal) });
 
     if (prose.includes(HIGH_CONSENSUS_TERM)) {
-      const systems = new Set(citations.map((id) => systemsById.get(id)).filter(Boolean));
+      const systems = new Set(citations.map((id) => systemsById.get(id)).filter((s): s is string => Boolean(s) && !EXPERIMENTAL_SYSTEMS.includes(s as string)));
       if (systems.size < HIGH_CONSENSUS_MIN_SYSTEMS) {
         flags.push({ code: 'high_consensus_unsupported', label: PASTE_FLAG_LABELS.high_consensus_unsupported, values: [] });
       }

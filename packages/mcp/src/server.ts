@@ -1,11 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { MCP_SERVER_INSTRUCTIONS } from '@fortune/ai/mcp';
 import { Analyzer } from './compute';
 import { ProfileStore } from './store';
 import { callTool, TOOLS } from './tools/index';
 
 export function createServer(store: ProfileStore = new ProfileStore()): McpServer {
   const ctx = { store, analyzer: new Analyzer(store) };
-  const server = new McpServer({ name: 'fortune', version: '0.1.0' });
+  const server = new McpServer({ name: 'fortune', version: '0.1.0' }, { instructions: MCP_SERVER_INSTRUCTIONS });
   for (const tool of TOOLS) {
     server.tool(tool.name, tool.description, tool.input, async (args: Record<string, unknown>) => {
       const { text, isError } = await callTool(tool.name, args, ctx);

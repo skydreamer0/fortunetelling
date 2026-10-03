@@ -4,13 +4,14 @@
  * path, so `../x` can never escape the directory.
  */
 
-import { readdir, readFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import {
   PROFILE_FILE_EXTENSION,
   isValidProfileId,
   parseProfileFile,
+  serializeProfileFile,
   type ProfileFileV1,
 } from '@fortune/core';
 import { ToolError } from './errors';
@@ -51,6 +52,40 @@ export class ProfileStore {
       }
     }
     return listing;
+  }
+
+  /**
+   * Write a profile file. Never replaces an existing profile unless `overwrite` is true
+   * (`wx` flag, so a concurrent write cannot slip through). Returns the previous fingerprint when replaced.
+   */
+  async put(file: ProfileFileV1, options: { overwrite?: boolean } = {}): Promise<{ replacedFingerprint: string | null }> {
+    if (!isValidProfileId(file.profileId)) {
+      throw new ToolError('invalid_args', `profileId ${JSON.stringify(file.profileId)} is not a valid id`);
+    }
+    await mkdir(this.dir, { recursive: true });
+    const path = join(this.dir, `${file.profileId}${PROFILE_FILE_EXTENSION}`);
+    let replacedFingerprint: string | null = null;
+    if (options.overwrite) {
+      try {
+        const previous = parseProfileFile(await readFile(path, 'utf8'));
+        if (previous.ok) replacedFingerprint = previous.file.chartFingerprint;
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      }
+    }
+    try {
+      await writeFile(path, serializeProfileFile(file), { flag: options.overwrite ? 'w' : 'wx' });
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+        throw new ToolError(
+          'profile_exists',
+          `Profile '${file.profileId}' already exists`,
+          'Pass overwrite: true to replace it, or change profileId in the file.',
+        );
+      }
+      throw error;
+    }
+    return { replacedFingerprint };
   }
 
   async get(profileId: string): Promise<{ file: ProfileFileV1; warnings: string[] }> {

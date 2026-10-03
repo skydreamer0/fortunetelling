@@ -58,6 +58,9 @@ export const FATALISM_PATTERNS: ReadonlyArray<{ id: string; pattern: RegExp }> =
 export const HIGH_CONSENSUS_TERM = '高共識';
 export const HIGH_CONSENSUS_MIN_SYSTEMS = 3;
 
+/** 尚未與公開計算器交叉驗證的系統 id（與 core 的 experimental 一致，D-039）；不計入高共識。 */
+export const EXPERIMENTAL_SYSTEMS: readonly string[] = Object.freeze(['jyotish', 'humanDesign']);
+
 export interface ValidationContext {
   payload: InterpretationPayload;
   /** Canonical JSON of the payload (as sent to the model). */
@@ -118,7 +121,7 @@ export function validateSections(sections: unknown[], ctx: ValidationContext): V
 
     // (4) 「高共識」 needs ≥ 3 distinct cited systems
     if (prose.includes(HIGH_CONSENSUS_TERM)) {
-      const systems = new Set(citations.map((id) => systemsById.get(id)).filter(Boolean));
+      const systems = new Set(citations.map((id) => systemsById.get(id)).filter((s): s is string => Boolean(s) && !EXPERIMENTAL_SYSTEMS.includes(s as string)));
       if (systems.size < HIGH_CONSENSUS_MIN_SYSTEMS) {
         reasons.push({
           code: 'high_consensus_unsupported',
