@@ -58,22 +58,26 @@ const TOL_DASHA_DAYS = 2;
  */
 const TIME_LAYER_DIVERGENCES: Record<string, { seconds: number; e2eFields: string[]; reason: string }> = {
   'van-gogh': {
-    seconds: 70,
+    seconds: -52,
     e2eFields: [],
     reason:
-      '1853 年荷蘭尚無標準時。tzdata 的 Europe/Amsterdam 用阿姆斯特丹地方平時（LMT +0:19:32），ADB 用出生地 Zundert 的 LMT（+0:18:40）。慣例差異；本例未影響任何離散欄位。',
+      '部分修正（time-fix-report.md）：舊值 +70 秒來自執行環境 tzdata 把 Europe/Amsterdam 連結到 Europe/Brussels，用了布魯塞爾的地方平時（+0:17:30）。' +
+      '現在改用內建 tz 的 backzone：荷蘭自己的「阿姆斯特丹平時」（+0:19:32，1835 年起通行、1909 年入法），並標 historical_zone_uncertain（backzone）。' +
+      'ADB 用出生地 Zundert 的地方平時（+0:18:40），剩下 52 秒是「1909 年前荷蘭鄉間用哪個平時」的慣例差異；本例未影響任何離散欄位。',
   },
   einstein: {
-    seconds: -808,
-    e2eFields: ['lagna.pada'],
+    seconds: 0,
+    e2eFields: [],
     reason:
-      '1879 年德國尚無標準時。tzdata 的 Europe/Berlin 用柏林 LMT（+0:53:28），ADB 用出生地 Ulm 的 LMT（+0:40:00），差 13 分 28 秒，上升點移動約 3°，換了上升的 pada（星宿未變）。',
+      '已修正（time-fix-report.md）：舊值 −808 秒是因為 tz 在 1893 年前的 Europe/Berlin 只有柏林地方平時（+0:53:28）。' +
+      '現在 tz 標為 LMT（尚未實施標準時間）的期間改用出生地經度的地方平時（Ulm +0:40:00），與 ADB 相同，並標 historical_zone_uncertain（pre_standard_time_lmt）。',
   },
   bjork: {
-    seconds: -3600,
-    e2eFields: ['moon.pada', 'lagna.nakshatra', 'lagna.pada', 'current.dasha'],
+    seconds: 0,
+    e2eFields: [],
     reason:
-      '冰島 1968 年以前使用 UTC−1（ADB 標 "-01 h1w"）。Bun 執行環境的時區資料對 Atlantic/Reykjavik 在 1965 年回傳 UTC+0（近年 tzdata 依「1970 年後相同即合併」政策把 Reykjavik 併為 Africa/Abidjan 的連結，1970 年前的歷史因此遺失），差整整 1 小時，月亮換 pada、上升換星宿，大運起點移動約 275 日，2026-10-01 的大運／小運由 Ketu/Ketu 變成 Mercury/Saturn。屬時區資料來源問題，不在 jyotish 計算器範圍。',
+      '已修正（time-fix-report.md）：舊值 −3600 秒是因為執行環境的 tzdata（2022b 起）把 Atlantic/Reykjavik 併為 Africa/Abidjan 的連結，1968 年前的 UTC−1 歷史遺失。' +
+      '現在改用內建 tz（含 backzone），1965 年為 UTC−1，與 ADB 相同，並標 historical_zone_uncertain（backzone）。月亮 pada、上升星宿／pada、當前大運／小運都恢復與 ADB 偏移一致。',
   },
 };
 

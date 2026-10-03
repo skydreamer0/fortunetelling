@@ -1,0 +1,1510 @@
+{
+  "tainan-1995": {
+    "profile": {
+      "date": "1995-07-16",
+      "time": "22:00",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Tainan, Taiwan",
+        "lat": 22.9922,
+        "lng": 120.1848,
+        "timezone": "Asia/Taipei"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "1995-07-16T22:00:00+08:00",
+        "utcOffsetMinutes": 480,
+        "dst": false
+      },
+      "utc": {
+        "iso": "1995-07-16T14:00:00Z"
+      },
+      "jd": {
+        "ut": 2449915.0833333335,
+        "tt": 2449915.084042029,
+        "deltaTSeconds": 61.231
+      },
+      "solar": {
+        "lmtIso": "1995-07-16T22:00:44",
+        "trueSolarIso": "1995-07-16T21:54:44",
+        "equationOfTimeMinutes": -5.9993
+      },
+      "lunar": {
+        "year": 1995,
+        "month": 6,
+        "day": 19,
+        "isLeap": false,
+        "yearGanZhi": "乙亥",
+        "monthInChinese": "六",
+        "dayInChinese": "十九",
+        "zodiac": "猪"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "1995-07-16T14:00:00Z",
+        "prevJie": {
+          "name": "小暑",
+          "nameHant": "小暑",
+          "kind": "jie",
+          "utcIso": "1995-07-07T14:01:00Z"
+        },
+        "nextJie": {
+          "name": "立秋",
+          "nameHant": "立秋",
+          "kind": "jie",
+          "utcIso": "1995-08-07T23:51:44Z"
+        },
+        "prevQi": {
+          "name": "夏至",
+          "nameHant": "夏至",
+          "kind": "qi",
+          "utcIso": "1995-06-21T20:34:22Z"
+        },
+        "nextQi": {
+          "name": "大暑",
+          "nameHant": "大暑",
+          "kind": "qi",
+          "utcIso": "1995-07-23T07:29:40Z"
+        }
+      },
+      "flags": []
+    }
+  },
+  "tainan-1995-unknown": {
+    "profile": {
+      "date": "1995-07-16",
+      "time": null,
+      "timeAccuracy": "unknown",
+      "gender": "male",
+      "birthplace": {
+        "label": "Tainan, Taiwan",
+        "lat": 22.9922,
+        "lng": 120.1848,
+        "timezone": "Asia/Taipei"
+      }
+    },
+    "expected": {
+      "local": null,
+      "utc": null,
+      "jd": null,
+      "solar": null,
+      "lunar": {
+        "year": 1995,
+        "month": 6,
+        "day": 19,
+        "isLeap": false,
+        "yearGanZhi": "乙亥",
+        "monthInChinese": "六",
+        "dayInChinese": "十九",
+        "zodiac": "猪"
+      },
+      "solarTerms": {
+        "reference": "local_noon",
+        "referenceUtcIso": "1995-07-16T04:00:00Z",
+        "prevJie": {
+          "name": "小暑",
+          "nameHant": "小暑",
+          "kind": "jie",
+          "utcIso": "1995-07-07T14:01:00Z"
+        },
+        "nextJie": {
+          "name": "立秋",
+          "nameHant": "立秋",
+          "kind": "jie",
+          "utcIso": "1995-08-07T23:51:44Z"
+        },
+        "prevQi": {
+          "name": "夏至",
+          "nameHant": "夏至",
+          "kind": "qi",
+          "utcIso": "1995-06-21T20:34:22Z"
+        },
+        "nextQi": {
+          "name": "大暑",
+          "nameHant": "大暑",
+          "kind": "qi",
+          "utcIso": "1995-07-23T07:29:40Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "time_unknown",
+          "detail": "出生時間未知：需時間的系統不可算，不得猜測"
+        }
+      ]
+    }
+  },
+  "taipei-1975-dst": {
+    "profile": {
+      "date": "1975-06-01",
+      "time": "12:00",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Taipei, Taiwan",
+        "lat": 25.0375,
+        "lng": 121.5637,
+        "timezone": "Asia/Taipei"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "1975-06-01T12:00:00+09:00",
+        "utcOffsetMinutes": 540,
+        "dst": true
+      },
+      "utc": {
+        "iso": "1975-06-01T03:00:00Z"
+      },
+      "jd": {
+        "ut": 2442564.625,
+        "tt": 2442564.625531691,
+        "deltaTSeconds": 45.938
+      },
+      "solar": {
+        "lmtIso": "1975-06-01T11:06:15",
+        "trueSolarIso": "1975-06-01T11:08:38",
+        "equationOfTimeMinutes": 2.3859
+      },
+      "lunar": {
+        "year": 1975,
+        "month": 4,
+        "day": 22,
+        "isLeap": false,
+        "yearGanZhi": "乙卯",
+        "monthInChinese": "四",
+        "dayInChinese": "廿二",
+        "zodiac": "兔"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "1975-06-01T03:00:00Z",
+        "prevJie": {
+          "name": "立夏",
+          "nameHant": "立夏",
+          "kind": "jie",
+          "utcIso": "1975-05-06T03:27:11Z"
+        },
+        "nextJie": {
+          "name": "芒种",
+          "nameHant": "芒種",
+          "kind": "jie",
+          "utcIso": "1975-06-06T07:42:01Z"
+        },
+        "prevQi": {
+          "name": "小满",
+          "nameHant": "小滿",
+          "kind": "qi",
+          "utcIso": "1975-05-21T16:23:40Z"
+        },
+        "nextQi": {
+          "name": "夏至",
+          "nameHant": "夏至",
+          "kind": "qi",
+          "utcIso": "1975-06-22T00:26:25Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "dst_applied",
+          "detail": "夏令時間：UTC+09:00（標準 UTC+08:00）",
+          "data": {
+            "utcOffsetMinutes": 540,
+            "standardOffsetMinutes": 480
+          }
+        }
+      ]
+    }
+  },
+  "taipei-1979-gap": {
+    "profile": {
+      "date": "1979-07-01",
+      "time": "00:30",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Taipei, Taiwan",
+        "lat": 25.0375,
+        "lng": 121.5637,
+        "timezone": "Asia/Taipei"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "1979-07-01T01:30:00+09:00",
+        "utcOffsetMinutes": 540,
+        "dst": true
+      },
+      "utc": {
+        "iso": "1979-06-30T16:30:00Z"
+      },
+      "jd": {
+        "ut": 2444055.1875,
+        "tt": 2444055.1880787867,
+        "deltaTSeconds": 50.007
+      },
+      "solar": {
+        "lmtIso": "1979-07-01T00:36:15",
+        "trueSolarIso": "1979-07-01T00:32:45",
+        "equationOfTimeMinutes": -3.5122
+      },
+      "lunar": {
+        "year": 1979,
+        "month": 6,
+        "day": 8,
+        "isLeap": false,
+        "yearGanZhi": "己未",
+        "monthInChinese": "六",
+        "dayInChinese": "初八",
+        "zodiac": "羊"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "1979-06-30T16:30:00Z",
+        "prevJie": {
+          "name": "芒种",
+          "nameHant": "芒種",
+          "kind": "jie",
+          "utcIso": "1979-06-06T07:05:11Z"
+        },
+        "nextJie": {
+          "name": "小暑",
+          "nameHant": "小暑",
+          "kind": "jie",
+          "utcIso": "1979-07-07T17:24:37Z"
+        },
+        "prevQi": {
+          "name": "夏至",
+          "nameHant": "夏至",
+          "kind": "qi",
+          "utcIso": "1979-06-21T23:56:09Z"
+        },
+        "nextQi": {
+          "name": "大暑",
+          "nameHant": "大暑",
+          "kind": "qi",
+          "utcIso": "1979-07-23T10:48:32Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "dst_applied",
+          "detail": "夏令時間：UTC+09:00（標準 UTC+08:00）",
+          "data": {
+            "utcOffsetMinutes": 540,
+            "standardOffsetMinutes": 480
+          }
+        },
+        {
+          "code": "dst_gap",
+          "detail": "1979-07-01T00:30:00 因撥快時鐘不存在，已順延 60 分鐘；請使用者確認",
+          "data": {
+            "requestedLocal": "1979-07-01T00:30:00",
+            "resolvedLocal": "1979-07-01T01:30:00",
+            "gapMinutes": 60,
+            "requiresConfirmation": true
+          }
+        },
+        {
+          "code": "zi_hour_convention",
+          "detail": "落在子時 23:00–00:59（trueSolar）：早晚子時換日由 calculator config 決定",
+          "data": {
+            "bases": [
+              "trueSolar"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "taipei-1979-overlap": {
+    "profile": {
+      "date": "1979-09-30",
+      "time": "23:30",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Taipei, Taiwan",
+        "lat": 25.0375,
+        "lng": 121.5637,
+        "timezone": "Asia/Taipei"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "1979-09-30T23:30:00+09:00",
+        "utcOffsetMinutes": 540,
+        "dst": true
+      },
+      "utc": {
+        "iso": "1979-09-30T14:30:00Z"
+      },
+      "jd": {
+        "ut": 2444147.1041666665,
+        "tt": 2444147.1047481843,
+        "deltaTSeconds": 50.243
+      },
+      "solar": {
+        "lmtIso": "1979-09-30T22:36:15",
+        "trueSolarIso": "1979-09-30T22:46:06",
+        "equationOfTimeMinutes": 9.8512
+      },
+      "lunar": {
+        "year": 1979,
+        "month": 8,
+        "day": 10,
+        "isLeap": false,
+        "yearGanZhi": "己未",
+        "monthInChinese": "八",
+        "dayInChinese": "初十",
+        "zodiac": "羊"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "1979-09-30T14:30:00Z",
+        "prevJie": {
+          "name": "白露",
+          "nameHant": "白露",
+          "kind": "jie",
+          "utcIso": "1979-09-08T05:59:45Z"
+        },
+        "nextJie": {
+          "name": "寒露",
+          "nameHant": "寒露",
+          "kind": "jie",
+          "utcIso": "1979-10-08T21:30:02Z"
+        },
+        "prevQi": {
+          "name": "秋分",
+          "nameHant": "秋分",
+          "kind": "qi",
+          "utcIso": "1979-09-23T15:16:22Z"
+        },
+        "nextQi": {
+          "name": "霜降",
+          "nameHant": "霜降",
+          "kind": "qi",
+          "utcIso": "1979-10-24T00:27:50Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "dst_applied",
+          "detail": "夏令時間：UTC+09:00（標準 UTC+08:00）",
+          "data": {
+            "utcOffsetMinutes": 540,
+            "standardOffsetMinutes": 480
+          }
+        },
+        {
+          "code": "dst_overlap",
+          "detail": "1979-09-30T23:30:00 因撥慢時鐘出現兩次，採用較早的一次；請使用者確認",
+          "data": {
+            "requestedLocal": "1979-09-30T23:30:00",
+            "chosen": "earlier",
+            "candidates": [
+              {
+                "utcIso": "1979-09-30T14:30:00Z",
+                "utcOffsetMinutes": 540
+              },
+              {
+                "utcIso": "1979-09-30T15:30:00Z",
+                "utcOffsetMinutes": 480
+              }
+            ],
+            "requiresConfirmation": true
+          }
+        },
+        {
+          "code": "zi_hour_convention",
+          "detail": "落在子時 23:00–00:59（civil）：早晚子時換日由 calculator config 決定",
+          "data": {
+            "bases": [
+              "civil"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "taipei-2001-lichun-unknown": {
+    "profile": {
+      "date": "2001-02-04",
+      "time": null,
+      "timeAccuracy": "unknown",
+      "gender": "male",
+      "birthplace": {
+        "label": "Taipei, Taiwan",
+        "lat": 25.0375,
+        "lng": 121.5637,
+        "timezone": "Asia/Taipei"
+      }
+    },
+    "expected": {
+      "local": null,
+      "utc": null,
+      "jd": null,
+      "solar": null,
+      "lunar": {
+        "year": 2001,
+        "month": 1,
+        "day": 12,
+        "isLeap": false,
+        "yearGanZhi": "辛巳",
+        "monthInChinese": "正",
+        "dayInChinese": "十二",
+        "zodiac": "蛇"
+      },
+      "solarTerms": {
+        "reference": "local_noon",
+        "referenceUtcIso": "2001-02-04T04:00:00Z",
+        "prevJie": {
+          "name": "立春",
+          "nameHant": "立春",
+          "kind": "jie",
+          "utcIso": "2001-02-03T18:28:49Z"
+        },
+        "nextJie": {
+          "name": "惊蛰",
+          "nameHant": "驚蟄",
+          "kind": "jie",
+          "utcIso": "2001-03-05T12:32:28Z"
+        },
+        "prevQi": {
+          "name": "大寒",
+          "nameHant": "大寒",
+          "kind": "qi",
+          "utcIso": "2001-01-20T00:16:18Z"
+        },
+        "nextQi": {
+          "name": "雨水",
+          "nameHant": "雨水",
+          "kind": "qi",
+          "utcIso": "2001-02-18T14:27:16Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "time_unknown",
+          "detail": "出生時間未知：需時間的系統不可算，不得猜測"
+        },
+        {
+          "code": "near_jie_boundary",
+          "detail": "出生當日交立春，時間未知無法判定交節前後",
+          "data": {
+            "basis": "date",
+            "term": {
+              "name": "立春",
+              "nameHant": "立春",
+              "kind": "jie",
+              "utcIso": "2001-02-03T18:28:49Z"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "newyork-2000-gap": {
+    "profile": {
+      "date": "2000-04-02",
+      "time": "02:30",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "New York, USA",
+        "lat": 40.7128,
+        "lng": -74.006,
+        "timezone": "America/New_York"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "2000-04-02T03:30:00-04:00",
+        "utcOffsetMinutes": -240,
+        "dst": true
+      },
+      "utc": {
+        "iso": "2000-04-02T07:30:00Z"
+      },
+      "jd": {
+        "ut": 2451636.8125,
+        "tt": 2451636.8132401905,
+        "deltaTSeconds": 63.952
+      },
+      "solar": {
+        "lmtIso": "2000-04-02T02:33:59",
+        "trueSolarIso": "2000-04-02T02:30:28",
+        "equationOfTimeMinutes": -3.5136
+      },
+      "lunar": {
+        "year": 2000,
+        "month": 2,
+        "day": 28,
+        "isLeap": false,
+        "yearGanZhi": "庚辰",
+        "monthInChinese": "二",
+        "dayInChinese": "廿八",
+        "zodiac": "龙"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "2000-04-02T07:30:00Z",
+        "prevJie": {
+          "name": "惊蛰",
+          "nameHant": "驚蟄",
+          "kind": "jie",
+          "utcIso": "2000-03-05T06:42:40Z"
+        },
+        "nextJie": {
+          "name": "清明",
+          "nameHant": "清明",
+          "kind": "jie",
+          "utcIso": "2000-04-04T11:31:58Z"
+        },
+        "prevQi": {
+          "name": "春分",
+          "nameHant": "春分",
+          "kind": "qi",
+          "utcIso": "2000-03-20T07:35:15Z"
+        },
+        "nextQi": {
+          "name": "谷雨",
+          "nameHant": "穀雨",
+          "kind": "qi",
+          "utcIso": "2000-04-19T18:39:30Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "dst_applied",
+          "detail": "夏令時間：UTC-04:00（標準 UTC-05:00）",
+          "data": {
+            "utcOffsetMinutes": -240,
+            "standardOffsetMinutes": -300
+          }
+        },
+        {
+          "code": "dst_gap",
+          "detail": "2000-04-02T02:30:00 因撥快時鐘不存在，已順延 60 分鐘；請使用者確認",
+          "data": {
+            "requestedLocal": "2000-04-02T02:30:00",
+            "resolvedLocal": "2000-04-02T03:30:00",
+            "gapMinutes": 60,
+            "requiresConfirmation": true
+          }
+        }
+      ]
+    }
+  },
+  "newyork-2000-overlap": {
+    "profile": {
+      "date": "2000-10-29",
+      "time": "01:30",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "New York, USA",
+        "lat": 40.7128,
+        "lng": -74.006,
+        "timezone": "America/New_York"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "2000-10-29T01:30:00-04:00",
+        "utcOffsetMinutes": -240,
+        "dst": true
+      },
+      "utc": {
+        "iso": "2000-10-29T05:30:00Z"
+      },
+      "jd": {
+        "ut": 2451846.7291666665,
+        "tt": 2451846.7299084268,
+        "deltaTSeconds": 64.088
+      },
+      "solar": {
+        "lmtIso": "2000-10-29T00:33:59",
+        "trueSolarIso": "2000-10-29T00:50:18",
+        "equationOfTimeMinutes": 16.3159
+      },
+      "lunar": {
+        "year": 2000,
+        "month": 10,
+        "day": 3,
+        "isLeap": false,
+        "yearGanZhi": "庚辰",
+        "monthInChinese": "十",
+        "dayInChinese": "初三",
+        "zodiac": "龙"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "2000-10-29T05:30:00Z",
+        "prevJie": {
+          "name": "寒露",
+          "nameHant": "寒露",
+          "kind": "jie",
+          "utcIso": "2000-10-07T23:38:13Z"
+        },
+        "nextJie": {
+          "name": "立冬",
+          "nameHant": "立冬",
+          "kind": "jie",
+          "utcIso": "2000-11-07T02:48:04Z"
+        },
+        "prevQi": {
+          "name": "霜降",
+          "nameHant": "霜降",
+          "kind": "qi",
+          "utcIso": "2000-10-23T02:47:28Z"
+        },
+        "nextQi": {
+          "name": "小雪",
+          "nameHant": "小雪",
+          "kind": "qi",
+          "utcIso": "2000-11-22T00:19:20Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "dst_applied",
+          "detail": "夏令時間：UTC-04:00（標準 UTC-05:00）",
+          "data": {
+            "utcOffsetMinutes": -240,
+            "standardOffsetMinutes": -300
+          }
+        },
+        {
+          "code": "dst_overlap",
+          "detail": "2000-10-29T01:30:00 因撥慢時鐘出現兩次，採用較早的一次；請使用者確認",
+          "data": {
+            "requestedLocal": "2000-10-29T01:30:00",
+            "chosen": "earlier",
+            "candidates": [
+              {
+                "utcIso": "2000-10-29T05:30:00Z",
+                "utcOffsetMinutes": -240
+              },
+              {
+                "utcIso": "2000-10-29T06:30:00Z",
+                "utcOffsetMinutes": -300
+              }
+            ],
+            "requiresConfirmation": true
+          }
+        },
+        {
+          "code": "zi_hour_convention",
+          "detail": "落在子時 23:00–00:59（trueSolar）：早晚子時換日由 calculator config 決定",
+          "data": {
+            "bases": [
+              "trueSolar"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "london-1990": {
+    "profile": {
+      "date": "1990-07-01",
+      "time": "10:00",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "London, UK",
+        "lat": 51.5074,
+        "lng": -0.1278,
+        "timezone": "Europe/London"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "1990-07-01T10:00:00+01:00",
+        "utcOffsetMinutes": 60,
+        "dst": true
+      },
+      "utc": {
+        "iso": "1990-07-01T09:00:00Z"
+      },
+      "jd": {
+        "ut": 2448073.875,
+        "tt": 2448073.8756626532,
+        "deltaTSeconds": 57.253
+      },
+      "solar": {
+        "lmtIso": "1990-07-01T08:59:29",
+        "trueSolarIso": "1990-07-01T08:55:45",
+        "equationOfTimeMinutes": -3.7401
+      },
+      "lunar": {
+        "year": 1990,
+        "month": 5,
+        "day": 9,
+        "isLeap": true,
+        "yearGanZhi": "庚午",
+        "monthInChinese": "闰五",
+        "dayInChinese": "初九",
+        "zodiac": "马"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "1990-07-01T09:00:00Z",
+        "prevJie": {
+          "name": "芒种",
+          "nameHant": "芒種",
+          "kind": "jie",
+          "utcIso": "1990-06-05T22:46:18Z"
+        },
+        "nextJie": {
+          "name": "小暑",
+          "nameHant": "小暑",
+          "kind": "jie",
+          "utcIso": "1990-07-07T09:00:28Z"
+        },
+        "prevQi": {
+          "name": "夏至",
+          "nameHant": "夏至",
+          "kind": "qi",
+          "utcIso": "1990-06-21T15:32:46Z"
+        },
+        "nextQi": {
+          "name": "大暑",
+          "nameHant": "大暑",
+          "kind": "qi",
+          "utcIso": "1990-07-23T02:21:30Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "dst_applied",
+          "detail": "夏令時間：UTC+01:00（標準 UTC+00:00）",
+          "data": {
+            "utcOffsetMinutes": 60,
+            "standardOffsetMinutes": 0
+          }
+        },
+        {
+          "code": "near_shichen_boundary",
+          "detail": "距時辰交界小於 5 分鐘（trueSolar 09:00）：時柱／命宮可能兩解",
+          "data": {
+            "toleranceMinutes": 5,
+            "hits": [
+              {
+                "basis": "trueSolar",
+                "boundary": "09:00",
+                "minutesFromBoundary": -4.25
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "sydney-2010": {
+    "profile": {
+      "date": "2010-01-15",
+      "time": "08:00",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Sydney, AU",
+        "lat": -33.8688,
+        "lng": 151.2093,
+        "timezone": "Australia/Sydney"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "2010-01-15T08:00:00+11:00",
+        "utcOffsetMinutes": 660,
+        "dst": true
+      },
+      "utc": {
+        "iso": "2010-01-14T21:00:00Z"
+      },
+      "jd": {
+        "ut": 2455211.375,
+        "tt": 2455211.375772207,
+        "deltaTSeconds": 66.719
+      },
+      "solar": {
+        "lmtIso": "2010-01-15T07:04:50",
+        "trueSolarIso": "2010-01-15T06:55:39",
+        "equationOfTimeMinutes": -9.18
+      },
+      "lunar": {
+        "year": 2009,
+        "month": 12,
+        "day": 1,
+        "isLeap": false,
+        "yearGanZhi": "己丑",
+        "monthInChinese": "腊",
+        "dayInChinese": "初一",
+        "zodiac": "牛"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "2010-01-14T21:00:00Z",
+        "prevJie": {
+          "name": "小寒",
+          "nameHant": "小寒",
+          "kind": "jie",
+          "utcIso": "2010-01-05T11:08:47Z"
+        },
+        "nextJie": {
+          "name": "立春",
+          "nameHant": "立春",
+          "kind": "jie",
+          "utcIso": "2010-02-03T22:47:51Z"
+        },
+        "prevQi": {
+          "name": "冬至",
+          "nameHant": "冬至",
+          "kind": "qi",
+          "utcIso": "2009-12-21T17:46:47Z"
+        },
+        "nextQi": {
+          "name": "大寒",
+          "nameHant": "大寒",
+          "kind": "qi",
+          "utcIso": "2010-01-20T04:27:42Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "dst_applied",
+          "detail": "夏令時間：UTC+11:00（標準 UTC+10:00）",
+          "data": {
+            "utcOffsetMinutes": 660,
+            "standardOffsetMinutes": 600
+          }
+        },
+        {
+          "code": "near_shichen_boundary",
+          "detail": "距時辰交界小於 5 分鐘（trueSolar 07:00）：時柱／命宮可能兩解",
+          "data": {
+            "toleranceMinutes": 5,
+            "hits": [
+              {
+                "basis": "trueSolar",
+                "boundary": "07:00",
+                "minutesFromBoundary": -4.34
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "kolkata-1985": {
+    "profile": {
+      "date": "1985-03-03",
+      "time": "05:45",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Kolkata, IN",
+        "lat": 22.5726,
+        "lng": 88.3639,
+        "timezone": "Asia/Kolkata"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "1985-03-03T05:45:00+05:30",
+        "utcOffsetMinutes": 330,
+        "dst": false
+      },
+      "utc": {
+        "iso": "1985-03-03T00:15:00Z"
+      },
+      "jd": {
+        "ut": 2446127.5104166665,
+        "tt": 2446127.511046989,
+        "deltaTSeconds": 54.46
+      },
+      "solar": {
+        "lmtIso": "1985-03-03T06:08:27",
+        "trueSolarIso": "1985-03-03T05:56:23",
+        "equationOfTimeMinutes": -12.0744
+      },
+      "lunar": {
+        "year": 1985,
+        "month": 1,
+        "day": 12,
+        "isLeap": false,
+        "yearGanZhi": "乙丑",
+        "monthInChinese": "正",
+        "dayInChinese": "十二",
+        "zodiac": "牛"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "1985-03-03T00:15:00Z",
+        "prevJie": {
+          "name": "立春",
+          "nameHant": "立春",
+          "kind": "jie",
+          "utcIso": "1985-02-03T21:11:47Z"
+        },
+        "nextJie": {
+          "name": "惊蛰",
+          "nameHant": "驚蟄",
+          "kind": "jie",
+          "utcIso": "1985-03-05T15:16:21Z"
+        },
+        "prevQi": {
+          "name": "雨水",
+          "nameHant": "雨水",
+          "kind": "qi",
+          "utcIso": "1985-02-18T17:07:21Z"
+        },
+        "nextQi": {
+          "name": "春分",
+          "nameHant": "春分",
+          "kind": "qi",
+          "utcIso": "1985-03-20T16:13:43Z"
+        }
+      },
+      "flags": []
+    }
+  },
+  "hongkong-1975": {
+    "profile": {
+      "date": "1975-04-20",
+      "time": "03:30",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Hong Kong",
+        "lat": 22.3193,
+        "lng": 114.1694,
+        "timezone": "Asia/Hong_Kong"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "1975-04-20T04:30:00+09:00",
+        "utcOffsetMinutes": 540,
+        "dst": true
+      },
+      "utc": {
+        "iso": "1975-04-19T19:30:00Z"
+      },
+      "jd": {
+        "ut": 2442522.3125,
+        "tt": 2442522.3130296394,
+        "deltaTSeconds": 45.761
+      },
+      "solar": {
+        "lmtIso": "1975-04-20T03:06:41",
+        "trueSolarIso": "1975-04-20T03:07:31",
+        "equationOfTimeMinutes": 0.835
+      },
+      "lunar": {
+        "year": 1975,
+        "month": 3,
+        "day": 9,
+        "isLeap": false,
+        "yearGanZhi": "乙卯",
+        "monthInChinese": "三",
+        "dayInChinese": "初九",
+        "zodiac": "兔"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "1975-04-19T19:30:00Z",
+        "prevJie": {
+          "name": "清明",
+          "nameHant": "清明",
+          "kind": "jie",
+          "utcIso": "1975-04-05T10:01:30Z"
+        },
+        "nextJie": {
+          "name": "立夏",
+          "nameHant": "立夏",
+          "kind": "jie",
+          "utcIso": "1975-05-06T03:27:11Z"
+        },
+        "prevQi": {
+          "name": "春分",
+          "nameHant": "春分",
+          "kind": "qi",
+          "utcIso": "1975-03-21T05:56:39Z"
+        },
+        "nextQi": {
+          "name": "谷雨",
+          "nameHant": "穀雨",
+          "kind": "qi",
+          "utcIso": "1975-04-20T17:07:12Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "dst_applied",
+          "detail": "夏令時間：UTC+09:00（標準 UTC+08:00）",
+          "data": {
+            "utcOffsetMinutes": 540,
+            "standardOffsetMinutes": 480
+          }
+        },
+        {
+          "code": "dst_gap",
+          "detail": "1975-04-20T03:30:00 因撥快時鐘不存在，已順延 60 分鐘；請使用者確認",
+          "data": {
+            "requestedLocal": "1975-04-20T03:30:00",
+            "resolvedLocal": "1975-04-20T04:30:00",
+            "gapMinutes": 60,
+            "requiresConfirmation": true
+          }
+        }
+      ]
+    }
+  },
+  "shanghai-1988": {
+    "profile": {
+      "date": "1988-06-01",
+      "time": "12:00",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Shanghai, CN",
+        "lat": 31.2304,
+        "lng": 121.4737,
+        "timezone": "Asia/Shanghai"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "1988-06-01T12:00:00+09:00",
+        "utcOffsetMinutes": 540,
+        "dst": true
+      },
+      "utc": {
+        "iso": "1988-06-01T03:00:00Z"
+      },
+      "jd": {
+        "ut": 2447313.625,
+        "tt": 2447313.6256482177,
+        "deltaTSeconds": 56.006
+      },
+      "solar": {
+        "lmtIso": "1988-06-01T11:05:54",
+        "trueSolarIso": "1988-06-01T11:08:08",
+        "equationOfTimeMinutes": 2.2351
+      },
+      "lunar": {
+        "year": 1988,
+        "month": 4,
+        "day": 17,
+        "isLeap": false,
+        "yearGanZhi": "戊辰",
+        "monthInChinese": "四",
+        "dayInChinese": "十七",
+        "zodiac": "龙"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "1988-06-01T03:00:00Z",
+        "prevJie": {
+          "name": "立夏",
+          "nameHant": "立夏",
+          "kind": "jie",
+          "utcIso": "1988-05-05T07:01:43Z"
+        },
+        "nextJie": {
+          "name": "芒种",
+          "nameHant": "芒種",
+          "kind": "jie",
+          "utcIso": "1988-06-05T11:14:53Z"
+        },
+        "prevQi": {
+          "name": "小满",
+          "nameHant": "小滿",
+          "kind": "qi",
+          "utcIso": "1988-05-20T19:56:40Z"
+        },
+        "nextQi": {
+          "name": "夏至",
+          "nameHant": "夏至",
+          "kind": "qi",
+          "utcIso": "1988-06-21T03:56:31Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "dst_applied",
+          "detail": "夏令時間：UTC+09:00（標準 UTC+08:00）",
+          "data": {
+            "utcOffsetMinutes": 540,
+            "standardOffsetMinutes": 480
+          }
+        }
+      ]
+    }
+  },
+  "tokyo-2020": {
+    "profile": {
+      "date": "2020-12-31",
+      "time": "23:59",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Tokyo, JP",
+        "lat": 35.6762,
+        "lng": 139.6503,
+        "timezone": "Asia/Tokyo"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "2020-12-31T23:59:00+09:00",
+        "utcOffsetMinutes": 540,
+        "dst": false
+      },
+      "utc": {
+        "iso": "2020-12-31T14:59:00Z"
+      },
+      "jd": {
+        "ut": 2459215.1243055556,
+        "tt": 2459215.12514036,
+        "deltaTSeconds": 72.127
+      },
+      "solar": {
+        "lmtIso": "2021-01-01T00:17:36",
+        "trueSolarIso": "2021-01-01T00:14:20",
+        "equationOfTimeMinutes": -3.2663
+      },
+      "lunar": {
+        "year": 2020,
+        "month": 11,
+        "day": 17,
+        "isLeap": false,
+        "yearGanZhi": "庚子",
+        "monthInChinese": "冬",
+        "dayInChinese": "十七",
+        "zodiac": "鼠"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "2020-12-31T14:59:00Z",
+        "prevJie": {
+          "name": "大雪",
+          "nameHant": "大雪",
+          "kind": "jie",
+          "utcIso": "2020-12-06T16:09:30Z"
+        },
+        "nextJie": {
+          "name": "小寒",
+          "nameHant": "小寒",
+          "kind": "jie",
+          "utcIso": "2021-01-05T03:23:26Z"
+        },
+        "prevQi": {
+          "name": "冬至",
+          "nameHant": "冬至",
+          "kind": "qi",
+          "utcIso": "2020-12-21T10:02:21Z"
+        },
+        "nextQi": {
+          "name": "大寒",
+          "nameHant": "大寒",
+          "kind": "qi",
+          "utcIso": "2021-01-19T20:39:51Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "zi_hour_convention",
+          "detail": "落在子時 23:00–00:59（trueSolar、civil）：早晚子時換日由 calculator config 決定",
+          "data": {
+            "bases": [
+              "trueSolar",
+              "civil"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "berlin-2024-gap": {
+    "profile": {
+      "date": "2024-03-31",
+      "time": "02:30",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Berlin, DE",
+        "lat": 52.52,
+        "lng": 13.405,
+        "timezone": "Europe/Berlin"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "2024-03-31T03:30:00+02:00",
+        "utcOffsetMinutes": 120,
+        "dst": true
+      },
+      "utc": {
+        "iso": "2024-03-31T01:30:00Z"
+      },
+      "jd": {
+        "ut": 2460400.5625,
+        "tt": 2460400.563356419,
+        "deltaTSeconds": 73.995
+      },
+      "solar": {
+        "lmtIso": "2024-03-31T02:23:37",
+        "trueSolarIso": "2024-03-31T02:19:30",
+        "equationOfTimeMinutes": -4.1181
+      },
+      "lunar": {
+        "year": 2024,
+        "month": 2,
+        "day": 22,
+        "isLeap": false,
+        "yearGanZhi": "甲辰",
+        "monthInChinese": "二",
+        "dayInChinese": "廿二",
+        "zodiac": "龙"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "2024-03-31T01:30:00Z",
+        "prevJie": {
+          "name": "惊蛰",
+          "nameHant": "驚蟄",
+          "kind": "jie",
+          "utcIso": "2024-03-05T02:22:45Z"
+        },
+        "nextJie": {
+          "name": "清明",
+          "nameHant": "清明",
+          "kind": "jie",
+          "utcIso": "2024-04-04T07:02:17Z"
+        },
+        "prevQi": {
+          "name": "春分",
+          "nameHant": "春分",
+          "kind": "qi",
+          "utcIso": "2024-03-20T03:06:25Z"
+        },
+        "nextQi": {
+          "name": "谷雨",
+          "nameHant": "穀雨",
+          "kind": "qi",
+          "utcIso": "2024-04-19T13:59:47Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "dst_applied",
+          "detail": "夏令時間：UTC+02:00（標準 UTC+01:00）",
+          "data": {
+            "utcOffsetMinutes": 120,
+            "standardOffsetMinutes": 60
+          }
+        },
+        {
+          "code": "dst_gap",
+          "detail": "2024-03-31T02:30:00 因撥快時鐘不存在，已順延 60 分鐘；請使用者確認",
+          "data": {
+            "requestedLocal": "2024-03-31T02:30:00",
+            "resolvedLocal": "2024-03-31T03:30:00",
+            "gapMinutes": 60,
+            "requiresConfirmation": true
+          }
+        }
+      ]
+    }
+  },
+  "saopaulo-2015": {
+    "profile": {
+      "date": "2015-12-01",
+      "time": "06:00",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Sao Paulo, BR",
+        "lat": -23.5505,
+        "lng": -46.6333,
+        "timezone": "America/Sao_Paulo"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "2015-12-01T06:00:00-02:00",
+        "utcOffsetMinutes": -120,
+        "dst": true
+      },
+      "utc": {
+        "iso": "2015-12-01T08:00:00Z"
+      },
+      "jd": {
+        "ut": 2457357.8333333335,
+        "tt": 2457357.834137554,
+        "deltaTSeconds": 69.485
+      },
+      "solar": {
+        "lmtIso": "2015-12-01T04:53:28",
+        "trueSolarIso": "2015-12-01T05:04:36",
+        "equationOfTimeMinutes": 11.1377
+      },
+      "lunar": {
+        "year": 2015,
+        "month": 10,
+        "day": 20,
+        "isLeap": false,
+        "yearGanZhi": "乙未",
+        "monthInChinese": "十",
+        "dayInChinese": "二十",
+        "zodiac": "羊"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "2015-12-01T08:00:00Z",
+        "prevJie": {
+          "name": "立冬",
+          "nameHant": "立冬",
+          "kind": "jie",
+          "utcIso": "2015-11-07T17:58:37Z"
+        },
+        "nextJie": {
+          "name": "大雪",
+          "nameHant": "大雪",
+          "kind": "jie",
+          "utcIso": "2015-12-07T10:53:21Z"
+        },
+        "prevQi": {
+          "name": "小雪",
+          "nameHant": "小雪",
+          "kind": "qi",
+          "utcIso": "2015-11-22T15:25:17Z"
+        },
+        "nextQi": {
+          "name": "冬至",
+          "nameHant": "冬至",
+          "kind": "qi",
+          "utcIso": "2015-12-22T04:47:56Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "dst_applied",
+          "detail": "夏令時間：UTC-02:00（標準 UTC-03:00）",
+          "data": {
+            "utcOffsetMinutes": -120,
+            "standardOffsetMinutes": -180
+          }
+        },
+        {
+          "code": "near_shichen_boundary",
+          "detail": "距時辰交界小於 5 分鐘（trueSolar 05:00）：時柱／命宮可能兩解",
+          "data": {
+            "toleranceMinutes": 5,
+            "hits": [
+              {
+                "basis": "trueSolar",
+                "boundary": "05:00",
+                "minutesFromBoundary": 4.6
+              }
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "kathmandu-1990": {
+    "profile": {
+      "date": "1990-05-05",
+      "time": "05:05",
+      "timeAccuracy": "exact",
+      "gender": "male",
+      "birthplace": {
+        "label": "Kathmandu, NP",
+        "lat": 27.7172,
+        "lng": 85.324,
+        "timezone": "Asia/Kathmandu"
+      }
+    },
+    "expected": {
+      "local": {
+        "iso": "1990-05-05T05:05:00+05:45",
+        "utcOffsetMinutes": 345,
+        "dst": false
+      },
+      "utc": {
+        "iso": "1990-05-04T23:20:00Z"
+      },
+      "jd": {
+        "ut": 2448016.472222222,
+        "tt": 2448016.4728835686,
+        "deltaTSeconds": 57.14
+      },
+      "solar": {
+        "lmtIso": "1990-05-05T05:01:18",
+        "trueSolarIso": "1990-05-05T05:04:34",
+        "equationOfTimeMinutes": 3.265
+      },
+      "lunar": {
+        "year": 1990,
+        "month": 4,
+        "day": 11,
+        "isLeap": false,
+        "yearGanZhi": "庚午",
+        "monthInChinese": "四",
+        "dayInChinese": "十一",
+        "zodiac": "马"
+      },
+      "solarTerms": {
+        "reference": "birth",
+        "referenceUtcIso": "1990-05-04T23:20:00Z",
+        "prevJie": {
+          "name": "清明",
+          "nameHant": "清明",
+          "kind": "jie",
+          "utcIso": "1990-04-05T01:12:56Z"
+        },
+        "nextJie": {
+          "name": "立夏",
+          "nameHant": "立夏",
+          "kind": "jie",
+          "utcIso": "1990-05-05T18:35:26Z"
+        },
+        "prevQi": {
+          "name": "谷雨",
+          "nameHant": "穀雨",
+          "kind": "qi",
+          "utcIso": "1990-04-20T08:26:32Z"
+        },
+        "nextQi": {
+          "name": "小满",
+          "nameHant": "小滿",
+          "kind": "qi",
+          "utcIso": "1990-05-21T07:37:23Z"
+        }
+      },
+      "flags": [
+        {
+          "code": "near_shichen_boundary",
+          "detail": "距時辰交界小於 5 分鐘（trueSolar 05:00）：時柱／命宮可能兩解",
+          "data": {
+            "toleranceMinutes": 5,
+            "hits": [
+              {
+                "basis": "trueSolar",
+                "boundary": "05:00",
+                "minutesFromBoundary": 4.56
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

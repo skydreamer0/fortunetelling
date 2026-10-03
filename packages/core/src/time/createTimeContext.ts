@@ -4,7 +4,8 @@
  * (ARCHITECTURE-V2 §3, D-026). Pure and deterministic (D-014): no system
  * clock, no env, no IO; the same profile yields a deep-equal TimeContext.
  *
- * Pipeline: civil wall time @ IANA zone → UTC (Intl/tzdata) → JD(UT), ΔT, JD(TT)
+ * Pipeline: civil wall time @ IANA zone → UTC（內建 tz 資料庫 `tzdb/`，不依賴執行環境的 Intl；
+ * 尚未實施標準時間時改用出生地地方平時）→ JD(UT), ΔT, JD(TT)
  * → LMT (UTC + lng·4 min) → true solar time (LMT + equation of time)
  * → lunar date (civil date) + exact prev/next 節/氣 → boundary flags.
  * @module time/createTimeContext
@@ -15,8 +16,17 @@ import type { BirthProfile, TimeAccuracy } from '../profile/types';
 import { validateBirthProfile } from '../profile/validate';
 import { deltaTDecimalYear, deltaTSeconds, equationOfTimeMinutes, julianDayFromUnixMs } from './astro';
 import { formatUtcIso, prevNextTerm, solarTermsAround, toTermRef, type SolarTermInstant } from './solarTerms';
-import type { LunarDate, SolarTerms, TimeBasis, TimeContext, TimeContextOptions, TimeFlag, ShichenBoundaryHit } from './types';
-import { resolveWallTime, standardOffsetMinutes } from './zone';
+import type {
+  HistoricalZoneReason,
+  LunarDate,
+  SolarTerms,
+  TimeBasis,
+  TimeContext,
+  TimeContextOptions,
+  TimeFlag,
+  ShichenBoundaryHit,
+} from './types';
+import { meanSolarOffsetSeconds, resolveWallTime, TZDB_VERSION, zoneInfoAt, type ZoneInfo, type ZoneOptions } from './zone';
 
 const MINUTE_MS = 60_000;
 const DAY_MS = 86_400_000;
@@ -99,6 +109,69 @@ function lunarOf(year: number, month: number, day: number): LunarDate {
   };
 }
 
+/** 1970-01-01T00:00Z：tz 官方只保證此後的資料；之前的時區歷史視為不確定來源。 */
+const TZ_RELIABLE_FROM_MS = Date.UTC(1970, 0, 1);
+/** 1970 年前，時區標準偏移與出生地平太陽時相差超過此值（分鐘）即標示。 */
+export const LONGITUDE_MISMATCH_MINUTES = 90;
+
+/**
+ * 歷史時區不確定旗標（`historical_zone_uncertain`）。原則（D-026 延伸）：預設採出生地的法定時間，
+ * 但凡是「資料本身不確定」或「時區可能不代表出生地」都明示，不默默猜測。
+ */
+function historicalZoneFlag(tz: string, utcMs: number, info: ZoneInfo, lng: number, basis: 'birth' | 'local_noon'): TimeFlag | null {
+  const reasons: HistoricalZoneReason[] = [];
+  const parts: string[] = [];
+  const meanSolar = meanSolarOffsetSeconds(lng);
+  if (info.source === 'intl') {
+    reasons.push('zone_not_bundled');
+    parts.push(`時區 ${tz} 不在內建 tz 資料（${TZDB_VERSION}），改用執行環境的時區資料，不同裝置的結果可能不同`);
+  }
+  if (info.lmtReplaced) {
+    reasons.push('pre_standard_time_lmt');
+    parts.push(
+      `當地當時尚未實施標準時間，tz 資料只有 ${tz} 代表城市的地方平時（UTC${formatOffset(info.tzdbOffsetSeconds / 60)}），` +
+        `已改用出生地經度的地方平時（UTC${formatOffset(info.offsetSeconds / 60)}）`,
+    );
+  }
+  if (info.fromBackzone) {
+    reasons.push('backzone');
+    parts.push(`1970 年前的時區歷史取自 tz 的 backzone（tz 官方標示可信度較低），採用 UTC${formatOffset(info.offsetSeconds / 60)}`);
+  }
+  if (utcMs < TZ_RELIABLE_FROM_MS && !info.lmtReplaced) {
+    const diffMin = Math.abs(info.stdOffsetSeconds - meanSolar) / 60;
+    if (diffMin > LONGITUDE_MISMATCH_MINUTES) {
+      reasons.push('longitude_offset_mismatch');
+      parts.push(`${tz} 當時的標準時間與出生地平太陽時相差 ${Math.round(diffMin)} 分鐘，這個時區可能不代表出生地當時的法定時間`);
+    }
+  }
+  if (reasons.length === 0) return null;
+  return {
+    code: 'historical_zone_uncertain',
+    detail: `歷史時區不確定：${parts.join('；')}。請以出生證明或當地史料確認出生時的 UTC 偏移`,
+    data: {
+      reasons,
+      tzdbVersion: TZDB_VERSION,
+      utcOffsetMinutes: info.offsetSeconds / 60,
+      tzdataOffsetMinutes: info.tzdbOffsetSeconds / 60,
+      meanSolarOffsetMinutes: meanSolar / 60,
+      basis,
+      requiresConfirmation: true,
+    },
+  };
+}
+
+/**
+ * 判斷夏令用的標準偏移（分鐘）。沿用既有語意「該年 1/1 與 7/1 偏移的較小者」（現代資料結果不變）；
+ * 但若該年 tz 資料的標準偏移本身改變（例如冰島 1968 由 −1 改為 0、德國 1893 由地方平時改為 CET），
+ * 這個推算會誤判，改用 tz 資料當下的標準偏移。
+ */
+function standardOffsetFor(tz: string, year: number, info: ZoneInfo, zoneOptions: ZoneOptions): number {
+  const jan = zoneInfoAt(tz, Date.UTC(year, 0, 1, 12), zoneOptions);
+  const jul = zoneInfoAt(tz, Date.UTC(year, 6, 1, 12), zoneOptions);
+  if (jan.stdOffsetSeconds === jul.stdOffsetSeconds) return Math.min(jan.offsetSeconds, jul.offsetSeconds) / 60;
+  return info.stdOffsetSeconds / 60;
+}
+
 function solarTermsFor(terms: SolarTermInstant[], refUtcMs: number, reference: SolarTerms['reference']): SolarTerms {
   const jie = prevNextTerm(terms, refUtcMs, 'jie');
   const qi = prevNextTerm(terms, refUtcMs, 'qi');
@@ -133,12 +206,14 @@ export function createTimeContext(input: BirthProfile, options: TimeContextOptio
   const { timezone: tz, lng } = profile.birthplace;
   const [year, month, day] = profile.date.split('-').map(Number);
   const flags: TimeFlag[] = [];
+  // 尚未實施標準時間（tz 的 LMT）時改用出生地經度的地方平時。
+  const zoneOptions: ZoneOptions = { lmtLongitude: lng };
 
   // ── time unknown: date-level only ────────────────────────────────────────
   if (profile.time === null) {
-    const noon = resolveWallTime(tz, Date.UTC(year, month - 1, day, 12)).utcMs;
-    const dayStart = resolveWallTime(tz, Date.UTC(year, month - 1, day)).utcMs;
-    const dayEnd = resolveWallTime(tz, Date.UTC(year, month - 1, day + 1)).utcMs;
+    const noon = resolveWallTime(tz, Date.UTC(year, month - 1, day, 12), 'earlier', zoneOptions).utcMs;
+    const dayStart = resolveWallTime(tz, Date.UTC(year, month - 1, day), 'earlier', zoneOptions).utcMs;
+    const dayEnd = resolveWallTime(tz, Date.UTC(year, month - 1, day + 1), 'earlier', zoneOptions).utcMs;
     const terms = solarTermsAround(noon);
     flags.push({ code: 'time_unknown', detail: '出生時間未知：需時間的系統不可算，不得猜測' });
     const jieInDay = terms.find((t) => t.kind === 'jie' && t.utcMs >= dayStart && t.utcMs < dayEnd);
@@ -149,6 +224,8 @@ export function createTimeContext(input: BirthProfile, options: TimeContextOptio
         data: { basis: 'date', term: toTermRef(jieInDay) },
       });
     }
+    const historical = historicalZoneFlag(tz, noon, zoneInfoAt(tz, noon, zoneOptions), lng, 'local_noon');
+    if (historical) flags.push(historical);
     return {
       profile,
       local: null,
@@ -164,12 +241,13 @@ export function createTimeContext(input: BirthProfile, options: TimeContextOptio
   // ── civil → UTC ──────────────────────────────────────────────────────────
   const [hour, minute] = profile.time.split(':').map(Number);
   const requestedNaive = Date.UTC(year, month - 1, day, hour, minute);
-  const resolution = resolveWallTime(tz, requestedNaive, options.dstOverlap ?? 'earlier');
+  const resolution = resolveWallTime(tz, requestedNaive, options.dstOverlap ?? 'earlier', zoneOptions);
   const utcMs = resolution.utcMs;
   const offset = resolution.offsetMinutes;
-  const localNaive = utcMs + offset * MINUTE_MS;
+  const localNaive = utcMs + Math.round(offset * 60) * 1000;
   const localDate = new Date(localNaive);
-  const stdOffset = standardOffsetMinutes(tz, localDate.getUTCFullYear());
+  const zoneInfo = zoneInfoAt(tz, utcMs, zoneOptions);
+  const stdOffset = standardOffsetFor(tz, localDate.getUTCFullYear(), zoneInfo, zoneOptions);
   const dst = offset > stdOffset;
 
   // ── JD / ΔT ──────────────────────────────────────────────────────────────
@@ -264,6 +342,9 @@ export function createTimeContext(input: BirthProfile, options: TimeContextOptio
       data: { bases: ziBases },
     });
   }
+
+  const historical = historicalZoneFlag(tz, utcMs, zoneInfo, lng, 'birth');
+  if (historical) flags.push(historical);
 
   return {
     profile,

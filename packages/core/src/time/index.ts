@@ -3,6 +3,7 @@ export type {
   TimeContextOptions,
   TimeFlag,
   TimeFlagCode,
+  HistoricalZoneReason,
   TimeBasis,
   ShichenBoundaryHit,
   SolarTermRef,
@@ -24,7 +25,16 @@ export {
   JD_UNIX_EPOCH,
   JD_J2000,
 } from './astro';
-export { offsetMinutesAt, standardOffsetMinutes, resolveWallTime, wallNaiveMsAt } from './zone';
-export type { WallResolution } from './zone';
+export {
+  offsetMinutesAt,
+  standardOffsetMinutes,
+  resolveWallTime,
+  wallNaiveMsAt,
+  zoneInfoAt,
+  meanSolarOffsetSeconds,
+  TZDB_VERSION,
+} from './zone';
+export type { WallResolution, ZoneInfo, ZoneOptions } from './zone';
+export { LONGITUDE_MISMATCH_MINUTES } from './createTimeContext';
 export { solarTermsAround, prevNextTerm, toHant, formatUtcIso, JIE_NAMES, QI_NAMES } from './solarTerms';
 export type { SolarTermInstant } from './solarTerms';
