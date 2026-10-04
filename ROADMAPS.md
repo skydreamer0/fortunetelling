@@ -1,6 +1,6 @@
 # Roadmap — 程式先算完，AI 在對話中查詢與比對
 
-> 狀態更新：2026-10-03。V1–V3 與 M0.5、M1、M2、M3 已完成；M4 完成 M4-01／02；M5 完成驗證段（Jyotish／HD 仍標 `experimental`）；時間模組歷史時區已修；皆已併入 `master`。
+> 狀態核對：2026-10-04，以 `master` 的 [da76f163](https://github.com/skydreamer0/fortunetelling/commit/da76f16328469366f8c3b0c9eeeff5efbe9d172f) 為準。V1、V3、M0.5～M2 與 M3 主線已完成；M4 完成 M4-01／02；V2／M5 已有驗證報告，Jyotish／HD 仍標 `experimental`，正式升級尚未完成。歷史時區修正與警告、MCP 指定系統篩選及精簡回傳均已併入 `master`。
 > 目標架構與介面契約：[docs/ARCHITECTURE-V2.md](docs/ARCHITECTURE-V2.md)
 > 決策依據：[docs/DECISIONS.md](docs/DECISIONS.md) D-021 ～ D-039
 > 現行 Report 契約（v5）：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)；MCP 設定：[docs/MCP-SETUP.md](docs/MCP-SETUP.md)
@@ -44,7 +44,8 @@
 | 本機 MCP server：14 個工具（含 `check_answer`、`import_profile`）、`asOf` 顯式、回應外殼、大小上限、姓名預設不回傳、server 自帶使用守則（instructions） | ✅ M1、M3 |
 | 匯出檔（manifest）、`share-redacted`、`import_profile`、網站下載 `.fortune.json` | ✅ M2、M3、M4-02 |
 | `packages/ai` 整理（client 改選用進入點、`check_answer`、對話助手系統指令、去識別化共用 core） | ✅ M3 |
-| 歷史時區：內建固定版 tz 資料（IANA 2026e）、出生地地方平時、`historical_zone_uncertain` 旗標 | ✅ |
+| 歷史時區：內建固定版 tz 資料（IANA 2026e）、出生地地方平時、`historical_zone_uncertain` 旗標、各相關系統與網站警告、時區名稱驗證 | ✅ |
+| MCP 問事／時間軸／共識可指定 `systems`／`verifiedOnly`；問事精簡回傳與 `experimentalSensitivity`、逐月表格 | ✅ |
 | `bun run doctor` 健康檢查（profile、MCP 冒煙、桌面版設定檔），已接進 CI | ✅ |
 | 資料庫與帳號同步 | ⏸ 暫停（本機優先） |
 
@@ -57,10 +58,11 @@
 
 ### 已知技術債
 
-1. 命理套件約 850 kB，首頁沒有延遲載入。
-2. 網站人生事件的 key（`profileKeyOf`）含姓名，與 `chartFingerprint` 不同；遷移放在 M4-02。
+1. 計算核心已拆成獨立 chunk，首頁沒有延遲載入；歷史時區資料加入後，舊的約 850 kB 數字不再代表目前大小。
+2. ~~網站人生事件的 key（`profileKeyOf`）含姓名，與 `chartFingerprint` 不同~~ → M4-02 已改用指紋，並提供舊 key 遷移。
 3. `Component.value`／`meta` 仍為 `any`（各引擎自訂 payload）。
 4. ~~BirthData 經緯度死欄位／八字固定 Asia/Taipei／無真太陽時／無歷史 DST／核心 `.js`~~ → V1 已全部處理。
+5. `packages/ai` 的 client 入口已分離，但 `@anthropic-ai/sdk` 仍在一般 dependencies，尚未改為選用依賴（M3-01）。
 
 ---
 
@@ -104,8 +106,8 @@
 |---|---|
 | V2-01 ✅ | 接入 Swiss Ephemeris WASM（瀏覽器可跑，D-027）；ephemeris 檔延遲載入 |
 | V2-02 ✅ | `calculators/astro`：Sun～Saturn、Rahu/Ketu、Ascendant，UT 輸入 |
-| V2-03 🟡 | Jyotish（計算器完成，待與公開計算器交叉驗證）：ayanamsa 設定、D1/D9/D10、Nakshatra/Pada、House Lord、Vimshottari Maha/Antar Dasha（精確到日）、Transit |
-| V2-04 🟡 | Human Design（計算器完成，待與公開計算器交叉驗證）：Personality／Design（88° 求根）、Gate/Line、Channel、Center、Type、Authority、Profile、Definition、Incarnation Cross |
+| V2-03 🟡 | Jyotish（計算器與 30 案獨立對照驗證已完成，仍缺兩個公開吠陀計算器 ≥ 20 案交叉驗證）：ayanamsa 設定、D1/D9/D10、Nakshatra/Pada、House Lord、Vimshottari Maha/Antar Dasha（精確到日）、Transit |
+| V2-04 🟡 | Human Design（計算器與 38 案公開來源交叉驗證已完成，仍標 `experimental`，待 M5-03 決定正式升級）：Personality／Design（88° 求根）、Gate/Line、Channel、Center、Type、Authority、Profile、Definition、Incarnation Cross |
 | V2-05 🟡 | Jyotish／HD 規則 → Signal（規則已寫並進非同步 Timeline；待交叉驗證，見 M5）（Dasha 主星、2H/4H/7H/10H/11H 過運等） |
 
 **完成條件**：與至少兩個公開計算器交叉驗證，≥ 20 個案例。
@@ -158,7 +160,7 @@
 |---|---|---|
 | M0.5-01 ✅ | `ProfileSchemaV1`：`profileId`（使用者可命名的穩定 slug，如 `sky`）＋`chartFingerprint`（規範化出生欄位的雜湊）＋版本欄位 | 單一 profile 格式 |
 | M0.5-02 ✅ | canonical serializer：鍵序固定、排除 `generatedAt`／執行時間等非決定性欄位 | MCP、網站匯出、測試共用 |
-| M0.5-03 🟡 | import／export：網站下載 `.fortune.json`；MCP 讀固定 profiles 目錄（M1-02 ✅）或 `import_profile`。檔案格式與 parse 已完成；網站下載按鈕在 M4-02、`import_profile` 未做 | 瀏覽器 → 本機的橋 |
+| M0.5-03 ✅ | import／export：網站下載 `.fortune.json`（M4-02）、MCP 讀固定 profiles 目錄（M1-02）或 `import_profile`（M3）；檔案格式與 parse 共用 core | 瀏覽器 → 本機的橋 |
 | M0.5-04 ✅ | 版本資訊：`coreVersion`、`profileSchemaVersion`、規則／catalog version、`asOf`、ephemeris 狀態 | 每份輸出都帶 |
 
 **決定**：`profileId` 不是內容雜湊。改一個時辰不應換掉「這個人」；`chartFingerprint` 才是內容雜湊，供人生事件等「依命盤」的資料當 key（沿用 `lifeEvents` 現況）。
@@ -216,11 +218,11 @@ README.md       給 AI 看：欄位說明、哪些是確定性計算、哪些分
 | M2-02 ✅ | 序列化與 MCP 共用 M0.5 的 canonical serializer（單一來源） |
 | M2-03 ✅ | `share-redacted` 與 `packages/ai` 的 `buildInterpretationPayload` 共用同一份去識別化邏輯（D-029），不另寫一套 |
 
-### M3 — 整理 AI 層（`packages/ai`）✅
+### M3 — 整理 AI 層（`packages/ai`）✅ 主線完成；SDK 選用依賴待整理
 
 | ID | 任務 |
 |---|---|
-| M3-01 🟡 | 標明兩條路：`copy`（備援）與 `mcp`（主線）；`client`／`anthropic` 改為選用，不進主線 |
+| M3-01 🟡 | `copy`（備援）與 `mcp`（主線）入口已分離；`client` 改為獨立選用入口，不進主線，但 `@anthropic-ai/sdk` 仍在一般 dependencies |
 | M3-02 ✅ | 去識別化與字數預算改為可選，本機匯出預設關閉 |
 | M3-03 ✅ | 保留 `vocab`／HonestyGuard 檢查，獨立成 `check_answer`：貼回 AI 的回答自行檢查 |
 | M3-04 ✅ | 系統指令改寫為「對話助手」版：可用工具、如何引用訊號、何時說高共識、如何呈現矛盾與 `experimental` 系統 |
@@ -231,13 +233,13 @@ README.md       給 AI 看：欄位說明、哪些是確定性計算、哪些分
 |---|---|
 | M4-01 ✅ | 「問 AI」章節兩個入口：**用 Claude 桌面版討論**（MCP 設定步驟＋匯出）、**複製 prompt**（備援） |
 | M4-02 ✅ | 網站下載 `.fortune.json`（M0.5-03），供 MCP 讀取；不假設網站能寫本機任意檔案 |
-| M4-03 ❌ | （選用）貼回結論後用 `check_answer` 對照引用的訊號 |
+| M4-03 ❌ | （選用）網站貼回結論後用 `check_answer` 對照引用的訊號。現有「複製 prompt」入口已用 `checkPastedAnswer` 提供貼回檢查，與此整合不同 |
 
-### M5 — 計算端驗證與補齊（與 M1～M4 並行）🟡（驗證段完成，M5-03～05 未做）
+### M5 — 計算端驗證與補齊（與 M1～M4 並行）🟡（已有驗證報告，公開來源門檻與正式升級仍有待辦）
 
 | ID | 任務 |
 |---|---|
-| M5-01 🟡 | Jyotish／HD 與至少兩個公開計算器交叉驗證，≥ 20 案例 |
+| M5-01 🟡 | 門檻：與至少兩個公開計算器交叉驗證，≥ 20 案例。HD 已有兩站 38 案；Jyotish 已有 30 案獨立對照與第三方抽查，但仍缺兩個吠陀專用計算器 ≥ 20 案 |
 | M5-02 ✅ | 驗證前標 `experimental`，MCP 回應附 `verified: false` 與 caveat；不與已驗證系統用相同信心標示 |
 | M5-03 | 驗證後正式納入 public API／registry，明確 sync／async 行為邊界 |
 | M5-04 | V2-05：Jyotish／HD 規則 → Signal 補齊（新模組進場：calculator → rules → Signal，不需改 AI 層） |
@@ -254,7 +256,7 @@ M1 不被 M5 阻塞。
 ## 五、隱私分兩層
 
 - **本機 profile**：可保留完整姓名、生日、出生地。
-- **進入 Claude 對話的資料**：工具結果一被使用就進了 AI 上下文。MCP 預設以 `profileId` 與 derived data 為主，**姓名預設不回傳**；原始出生資料只在明確需要時由工具提供。
+- **進入 Claude 對話的資料**：工具結果一被使用就進了 AI 上下文。`get_profile` 預設不回姓名與原始出生欄位，要明確帶 `includeName`／`includeBirthData` 才提供；`get_time_context` 等工具仍會回傳日期、時間或命盤資訊。本機計算不代表工具結果不會送入 AI 對話，也不代表結果無法識別個人。
 - **分享用匯出**走 `share-redacted`。
 
 ## 六、執行順序
@@ -264,7 +266,7 @@ M0.5 → M1 → M2 → M3 → M4
 M5 與 M1～M4 並行
 ```
 
-M0.5、M1、M2、M3 已完成，M4 完成 M4-01／02。下一步：把 `historical_zone_uncertain` 轉成各系統警告、MCP 回傳瘦身與「指定系統」排名參數、M4-03；M5-03 待決定 Jyotish／HD 是否升級。
+M0.5、M1、M2 與 M3 主線已完成，M4 完成 M4-01／02。`historical_zone_uncertain` 的各系統／網站警告、MCP 回傳瘦身與 `systems`／`verifiedOnly` 已完成。剩餘：選用的 M4-03、M3-01 SDK 依賴清理與首頁延遲載入；M5 按系統補足驗證門檻後再決定正式升級，規則補齊與多人回驗仍依原條件執行。
 
 ## 七、已確認事項（2026-09-30）
 
@@ -285,19 +287,19 @@ M0.5、M1、M2、M3 已完成，M4 完成 M4-01／02。下一步：把 `historic
 - `.fortune.json`：`createProfileFile`／`serializeProfileFile`／`parseProfileFile`；檔案無時間戳，輸出位元穩定；指紋缺漏或過期時重算並回警告。
 - `buildVersionInfo({ asOf })`：core／schema／calculator／catalog 版本、ephemeris 狀態、`experimentalSystems`（Jyotish／HD）。
 
-**已知差異**：網站 `lifeEvents` 現行的 key（`profileKeyOf`）包含姓名，與 `chartFingerprint` 不同。人生事件的 key 遷移放到 M4-02 一起處理，這一步不動網站。
+**M0.5 當時的差異**：網站 `lifeEvents` 的 key（`profileKeyOf`）包含姓名，與 `chartFingerprint` 不同；當時未動網站。後續已於 M4-02 改用指紋並加入舊 key 遷移，見下方 M4 紀錄。
 
 ### M1
 
 位置：`packages/mcp`，說明 `docs/MCP-SETUP.md`。64 個測試（含真實 stdio 客戶端的端到端驗收）。
 
-- 12 個工具：`list_profiles`、`get_profile`、`get_chart`、`get_time_context`、`list_signals`、`get_signal`、`get_timeline`、`get_consensus`、`list_conflicts`、`answer_question`、`list_question_categories`、`compare_profiles`。
-- 姓名與出生資料預設不回傳（`get_profile` 需明確 `includeName`／`includeBirthData`；`compare_profiles` 只回 A／B 與衍生值）。
+- M1 完成時有 12 個工具（M3 再加入兩個，現有 14 個）：`list_profiles`、`get_profile`、`get_chart`、`get_time_context`、`list_signals`、`get_signal`、`get_timeline`、`get_consensus`、`list_conflicts`、`answer_question`、`list_question_categories`、`compare_profiles`。
+- `get_profile` 預設不回姓名與原始出生欄位，需明確 `includeName`／`includeBirthData`；`compare_profiles` 只回 A／B 與衍生值。其他工具的日期、時間或命盤結果仍可能識別個人，見第五節。
 - 回應外殼 `{ asOf, versions, caveats, data }`；超過 60000 字元回 `response_too_large` 與縮小範圍提示，不截斷。
 - **驗收抓到的缺口（已修）**：`answer_question` 引用的月份訊號，起初 `get_signal` 查不到（兩邊各算各的）。現在月份訊號由 `Analysis` 統一計算並快取，`get_signal` 在 asOf 年 −5 ～ +10 內都能解析；`answer_question` 的區間必須落在此範圍，否則回 `invalid_args`。回歸測試：問事答案引用的每個 id 都必須可取得。
 - core 補匯出 `initEphemeris`、`jyotishCalculator`、`humanDesignCalculator`（仍標 `experimental`，不進 `CALCULATORS`）。
 
-**後續已補**：`import_profile` 在 M3 完成；`get_timeline` 的逐月與回傳瘦身在 #11 完成。
+**後續已補**：`import_profile` 與 `check_answer` 在 M3 完成；`get_timeline` 的逐月與回傳瘦身在 #11 完成。現行成功回應都有 `versionsHash`，僅 `list_profiles`／`get_profile` 另附完整 `versions`。10/3 已加入 `systems`／`verifiedOnly`、問事精簡前 3 名與排名表、`experimentalSensitivity`，以及指定領域的逐月表格；詳見 [MCP-SETUP.md](docs/MCP-SETUP.md)。
 
 ### M2
 
@@ -323,7 +325,7 @@ M0.5、M1、M2、M3 已完成，M4 完成 M4-01／02。下一步：把 `historic
 
 - 「問 AI」兩個入口：用 Claude 桌面版討論（預設展開，含 Windows／macOS 設定檔路徑與 Microsoft Store 版位置、JSON 反斜線跳脫）、複製 prompt（備援）。
 - 網站可下載 `<profileId>.fortune.json`（core 的 `createProfileFile`，位元穩定）；`profileKeyOf` 改為 `chartFingerprint`，舊含姓名 key 由 `legacyProfileKeyOf` 自動遷移。回測的隨機種子改用新 key，遷移後訓練／驗證分組可能與舊的不同。
-- **未做**：M4-03（貼回結論後用 `check_answer` 對照）。
+- **未做**：M4-03（網站的 `check_answer` 檢查整合）；既有複製 prompt 路徑的 `checkPastedAnswer` 不受影響。
 
 ### M5（驗證段）
 
@@ -340,7 +342,7 @@ M0.5、M1、M2、M3 已完成，M4 完成 M4-01／02。下一步：把 `historic
 - 根因：IANA tz 自 2022b 起把冰島、挪威、荷蘭等 1970 年前歷史移到 backzone，Bun／Node 的 ICU 都不含；加上程式完全依賴執行環境的 Intl，Bun 與 Node 結果不一致（D-014 被破）。
 - 修正：`packages/core/src/time/tzdb/` 內建固定版 tz 資料（2026e，含 backzone，gzip 約 31 KB，無新依賴）；tz 標為地方平時的期間改用出生地經度的地方平時；新增 `historical_zone_uncertain` 旗標。
 - 代價：網站 core chunk 約多 190 KB（未壓縮）。1995 台南等 17 個現代案例輸出不變。
-- **未做**：`profile/validate.ts` 仍用 Intl 驗證時區名稱；計算器尚未把新旗標轉成各系統警告；D-026 等文件待更新。
+- **後續已完成**：`profile/validate.ts` 改用內建 tz 資料驗證名稱與別名；八字、紫微、吠陀占星、人類圖與網站報告已加入歷史時區警告。靈數、馬雅與命卦只用日期，不加此警告。D-026 等架構文件仍待對齊。
 
 ### doctor
 

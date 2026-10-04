@@ -11,7 +11,7 @@
 ![React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6?style=flat-square&logo=typescript&logoColor=white)
 ![Bun](https://img.shields.io/badge/Bun-workspaces-f9f1e1?style=flat-square&logo=bun&logoColor=black)
-![MCP](https://img.shields.io/badge/MCP-12%20tools-d97757?style=flat-square)
+![MCP](https://img.shields.io/badge/MCP-14%20tools-d97757?style=flat-square)
 ![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?style=flat-square)
 
 [快速開始](#-快速開始) · [Claude 桌面版](#-搭配-claude-桌面版本機-mcp) · [安裝到 iPhone](#-安裝到-iphonepwa) · [架構](#-架構) · [Roadmap](./ROADMAPS.md)
@@ -24,7 +24,7 @@
 
 | | |
 |---|---|
-| 🔒 **純本地** | 不需帳號、不需後端。查詢紀錄只存在你自己的瀏覽器；MCP 資料也不離開你的電腦。 |
+| 🔒 **本機優先** | 不需帳號、不需後端，在本機排盤，查詢紀錄存在瀏覽器。使用 MCP 與 AI 對話時，工具回傳的資料會進入 AI 上下文。 |
 | 📊 **分數透明** | 每一分怎麼來都看得到。雷達圖表示特質「佔比」而非優劣，不談宿命論。 |
 | ⏳ **動靜分層** | 特質分成 L0 恆定、L1 慢變、L2 年變、L3 情境；大運與大限以可收合時間軸呈現。 |
 | 🧭 **問題導向** | 白話命格提要、本年觀察，以及事業／感情／財富／身心四大領域與平衡建議。 |
@@ -34,7 +34,7 @@
 
 ## 🚀 快速開始
 
-需要 [Bun](https://bun.sh)（或 Node.js 18+）。
+需要 [Bun](https://bun.sh)；本專案的執行、套件管理與測試皆使用 Bun。
 
 ```bash
 bun install
@@ -56,6 +56,8 @@ bun run dev
 
 **1. 建立 profile**（預設存於 `~/.fortune/profiles/`）
 
+網站報告的「用 Claude 桌面版討論」入口可下載 `<profileId>.fortune.json`，放進上述目錄，或請 Claude 以 `import_profile` 讀取本機檔案路徑。也可以用指令建立：
+
 ```bash
 bun run --filter @fortune/mcp add-profile sky \
   --date 1990-05-17 --time 08:30 --gender female --city 台南
@@ -76,8 +78,8 @@ bun run --filter @fortune/mcp add-profile sky \
 
 重開 Claude 桌面版後，直接問「幫我看 sky 明年哪幾個月適合買車」即可。
 
-> 姓名與出生資料預設不回傳；所有時間相關工具都明確帶 `asOf`，不依賴隱藏狀態。
-> 完整設定與 12 個工具說明見 [docs/MCP-SETUP.md](./docs/MCP-SETUP.md)。
+> profile 檔案與計算在本機；MCP 工具回傳的命盤、時間資訊等資料會進入 AI 對話上下文。`get_profile` 預設不回姓名與原始出生欄位，但不代表其他工具結果不含可識別資訊。
+> 所有時間相關工具都明確帶 `asOf`，不依賴隱藏狀態。完整設定、隱私說明與 14 個工具見 [docs/MCP-SETUP.md](./docs/MCP-SETUP.md)。
 
 ## 📱 安裝到 iPhone（PWA）
 
@@ -113,12 +115,15 @@ packages/core   @fortune/core   框架無關的計算核心（排盤、規則、
 
 | 狀態 | 項目 |
 |---|---|
-| ✅ 已完成 | 五套計算引擎、Report schema v3、透明雷達、十二宮盤、時期演化、本年／領域／建議視圖、國農曆與不確定時辰、列印、明暗主題、雙人合盤 |
-| ✅ 已完成 | V3 跨系統共識、V4 人生事件回驗、M0.5 Profile 契約、M1 本機 MCP server |
-| ⏳ 尚未開始 | M2 起：網站匯出 `.fortune.json`、`import_profile`、匯出檔 |
-| 🔧 待優化 | 命理計算套件（約 850 kB）已拆成獨立 chunk，下一步改延遲載入 |
+| ✅ 已完成 | 五套正式計算引擎、Report schema v5、透明雷達、十二宮盤、時期演化、本年／領域／建議視圖、國農曆與不確定時辰、列印、明暗主題、雙人合盤 |
+| ✅ 已完成 | 跨系統共識、人生事件本地回驗、M0.5 Profile 契約、M1 本機 MCP server（現有 14 個工具） |
+| ✅ 已完成 | M2 匯出包、M3 的 `import_profile`／`check_answer` 與對話助手主線、M4-01／02 網站 MCP 入口與 `.fortune.json` 下載 |
+| ✅ 已完成 | 歷史時區資料與不確定警告、指定系統／`verifiedOnly` 篩選、問事精簡回傳與實驗性系統敏感度提示、`doctor` 健康檢查 |
+| 🟡 保留實驗性 | Jyotish／Human Design 已有計算器與驗證報告，仍標 `experimental`；吠陀占星尚缺原定公開計算器交叉驗證，正式升級另行決定 |
+| ⏳ 待做 | 選用的 M4-03：網站的 `check_answer` 檢查整合；現有「複製 prompt」入口已支援貼回檢查 |
+| 🔧 待優化 | 計算核心已拆成獨立 chunk，首頁尚未延遲載入；Anthropic SDK 仍是 AI 套件的一般依賴 |
 
-核心、MCP、整合、曆法、洞見、合盤與視覺化契約由 `bun test` 覆蓋，正式版以 `bun run build` 驗證。里程碑與任務拆解見 [ROADMAPS.md](./ROADMAPS.md)。
+核心、MCP、整合、曆法、洞見、合盤與視覺化契約由 `bun test` 覆蓋；CI 另執行各套件型別檢查、`doctor --ci` 與 `bun run build`。分數仍未校準，不能當成機率或預測準確度。里程碑、驗證限制與任務拆解見 [ROADMAPS.md](./ROADMAPS.md)。
 
 ## 📝 授權
 
