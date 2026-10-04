@@ -1,6 +1,6 @@
 # 本機 MCP server 設定（Claude 桌面版）
 
-> 對應 ROADMAPS.md M1。MCP 只包裝 `@fortune/core`：排盤、規則、訊號、共識都由程式算完，Claude 只負責查詢、比對與對話。資料全部留在本機。
+> 對應 ROADMAPS.md M1。MCP 只包裝 `@fortune/core`：排盤、規則、訊號、共識都在本機算完，Claude 負責查詢、比對與對話。工具回傳的資料會進入 AI 對話上下文，詳見下方隱私說明。
 
 ## 1. 安裝
 
@@ -10,7 +10,7 @@ bun install
 
 ## 2. 建立 profile
 
-profile 是 profiles 目錄下的 `<profileId>.fortune.json`（預設 `~/.fortune/profiles/`，可用環境變數 `FORTUNE_PROFILES_DIR` 改）。網站的「匯出」按鈕在 M4-02 才會有；已有 `.fortune.json` 時，可以在對話裡請 Claude 用 `import_profile`（帶檔案路徑或全文）匯入。沒有檔案時先用指令建立：
+profile 是 profiles 目錄下的 `<profileId>.fortune.json`（預設 `~/.fortune/profiles/`，可用環境變數 `FORTUNE_PROFILES_DIR` 改）。網站報告的「用 Claude 桌面版討論」入口已可下載 `.fortune.json`（[M4-02 實作](../apps/web/src/components/report/McpEntry.tsx)）；下載後可自行放進 profiles 目錄，或在對話裡請 Claude 用 `import_profile` 讀取本機檔案路徑。若改用全文 `content` 匯入，先閱讀下方隱私說明。沒有檔案時可用指令建立：
 
 ```bash
 bun run --filter @fortune/mcp add-profile sky \
@@ -60,11 +60,11 @@ bun run --filter @fortune/mcp add-profile sky \
 | `check_answer` | 貼回一段 AI 回答（`profileId`、`asOf`、`answerText`），檢查引用的 `sig_` id 是否存在、有無宿命論或保證式用語、有沒有把 experimental 系統（Jyotish、Human Design）當成「高共識」。只標示、不改寫；回 `{ ok, citedIds, unknownCitations, issues[] }` |
 | `import_profile` | 匯入網站匯出的 `.fortune.json`（`content` 全文或 `path` 路徑二選一）。已存在同名 profile 不會覆蓋，要 `overwrite: true`；指紋缺漏或過期會重算並警告 |
 
-每個回應都是 `{ asOf, versions, caveats, data }`：
+成功回應的外殼是 `{ asOf, versionsHash, caveats, data }`，`versions` 為選用欄位；錯誤回應是 `{ error }`（[實作](../packages/mcp/src/envelope.ts)）：
 
 - `versionsHash`：版本區塊（core、calculator、規則目錄版本與 ephemeris 狀態）的 12 碼雜湊，不含 `asOf`。同一輸入同一版本會得到相同結果；雜湊變了代表版本變了。
 - `versions`：完整版本區塊（約 500 bytes）只在 `list_profiles` 與 `get_profile` 回傳，其餘工具只回 `versionsHash` 以節省上下文。
-- `caveats`：Claude 不該過度相信的地方——分數未校準、時間邊界、未參與的系統、**Jyotish／Human Design 尚未交叉驗證（`experimental`）**。
+- `caveats`：Claude 不該過度相信的地方——分數未校準、時間邊界、未參與的系統，以及仍標 `experimental` 的 Jyotish／Human Design。[人類圖已有兩站 38 案交叉驗證](../packages/core/tests/fixtures/validation/humandesign-validation-report.md)；[吠陀占星已有 30 案獨立對照，但仍缺兩個公開吠陀計算器 ≥ 20 案](../packages/core/tests/fixtures/validation/jyotish-validation-report.md)。兩者的[現行 experimental 標記](../packages/core/src/portable/versions.ts)仍保留；計算結果對照不代表預測有效性已驗證。
 - 回應太大時不會截斷，而是回 `response_too_large` 並提示縮小範圍。
 
 回傳瘦身：
@@ -123,8 +123,10 @@ server 連線時會自動把下面這段當作 `instructions` 送給客戶端；
 
 ## 隱私
 
-- profile 檔與計算都在你的電腦上，不經網路、不需要 API key。
-- 但工具結果一被 Claude 使用就進入對話上下文。所以姓名與出生資料預設不回傳，只在你明確要求時才提供（D-038）。
+- profile 檔儲存在你的電腦，排盤與規則計算由本機 MCP server 執行，不需要為本專案設定模型 API key。
+- MCP 工具結果被 Claude 使用時會進入 AI 對話上下文。本機執行不等於整段 AI 對話的資料都留在電腦上。
+- `get_profile` 預設不回姓名與原始出生欄位，須明確帶 `includeName`／`includeBirthData` 才提供；其他工具仍可能回傳可識別資訊，例如 `get_time_context` 的日期與時間，以及命盤衍生資料（D-038）。
+- 匯入 `.fortune.json` 可讓 `import_profile` 讀取本機 `path`；若把檔案全文貼給 AI 或放進 `content`，其中生日、時間、出生地與檔案內若有的姓名也會進入對話。分享前應先確認內容與接收對象。
 
 ## 5. 健康檢查（doctor）
 
