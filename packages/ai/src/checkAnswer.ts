@@ -12,7 +12,7 @@
  */
 import { HonestyGuard } from './core-pure';
 import { splitParagraphs } from './pasteCheck';
-import { AI_HONESTY_LAYER, BASELINE_ONLY_SYSTEMS, EXPERIMENTAL_SYSTEMS, FATALISM_PATTERNS, HIGH_CONSENSUS_MIN_SYSTEMS, HIGH_CONSENSUS_TERM } from './validate';
+import { AI_HONESTY_LAYER, EXPERIMENTAL_SYSTEMS, FATALISM_PATTERNS, HIGH_CONSENSUS_MIN_SYSTEMS, HIGH_CONSENSUS_TERM } from './validate';
 
 /** 文字中提到 experimental 系統的說法。 */
 export const EXPERIMENTAL_NAME_RE = /吠陀|Jyotish/i;
@@ -154,9 +154,7 @@ export function checkAnswer(answerText: string, options: CheckAnswerOptions): Ch
       const systems = citations.map(systemOf).filter((s): s is string => s !== null);
       const cited = uniqSorted(systems);
       const citedExperimental = cited.filter((s) => experimental.has(s));
-      const baseline = cited.filter((s) => BASELINE_ONLY_SYSTEMS.includes(s));
-      // 已驗證且有時間變化的系統才算票；只有出生盤基線的系統（人類圖，直到有行運規則）不算
-      const verified = cited.filter((s) => !experimental.has(s) && !BASELINE_ONLY_SYSTEMS.includes(s));
+      const verified = cited.filter((s) => !experimental.has(s));
       const named = experimentalNamedInConsensusSentence(prose);
 
       if (verified.length < HIGH_CONSENSUS_MIN_SYSTEMS) {
@@ -173,8 +171,7 @@ export function checkAnswer(answerText: string, options: CheckAnswerOptions): Ch
             code: 'high_consensus_unsupported',
             paragraph,
             values: verified,
-            detail: `「高共識」需要至少 ${HIGH_CONSENSUS_MIN_SYSTEMS} 套已驗證系統的訊號，目前引用 ${verified.length} 套` +
-              (baseline.length > 0 ? `（${baseline.join('、')} 目前只有出生盤規則、每個時間窗都一樣，不算這個時間窗的一票）` : ''),
+            detail: `「高共識」需要至少 ${HIGH_CONSENSUS_MIN_SYSTEMS} 套已驗證系統的訊號，目前引用 ${verified.length} 套`,
             excerpt,
           });
         }

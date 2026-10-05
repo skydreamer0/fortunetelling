@@ -45,7 +45,7 @@ export function AnswerCheckView({ result }: { result: CheckAnswerResult }) {
       )}
       <p className="ask__method">
         這是程式比對，不判斷內容對錯：只檢查引用的 sig_ 編號是否存在於這份報告、有沒有宿命論或保證式用語，
-        以及「高共識」是否有至少 3 套已驗證系統支持（吠陀占星是實驗性系統、人類圖目前只有出生盤規則，都不計入）。
+        以及「高共識」是否有至少 3 套已驗證系統支持（吠陀占星是實驗性系統，不計入）。
       </p>
     </div>
   );

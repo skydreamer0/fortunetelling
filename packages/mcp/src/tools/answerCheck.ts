@@ -13,7 +13,7 @@ export const answerCheckTools = [
       '檢查一段 AI 回答（可貼別的 AI 的回答，或你自己寫好的草稿）是否守規矩，結果只標示、不改寫。以空行分段，檢查：' +
       '(a) 引用的 sig_ id 是否都存在（對照 profileId 與 asOf 算出的訊號）；' +
       '(b) 是否有宿命論或保證式用語（你是／注定／一定會／絕對／保證／確定發生／大吉／大凶等）；' +
-      '(c) 是否把 experimental 系統（吠陀占星 Jyotish）或只有出生盤規則的人類圖 Human Design 當成「高共識」，或寫「高共識」但引用的已驗證系統少於 3 套。' +
+      '(c) 是否把 experimental 系統（目前只有吠陀占星 Jyotish）當成「高共識」，或寫「高共識」但引用的已驗證系統少於 3 套。' +
       '回傳 { ok, paragraphCount, citedIds, unknownCitations, issues[] }；每個 issue 有 code、paragraph（從 0 起算）、values、detail、excerpt。' +
       '不檢查回答是否「算對」，只檢查引用與語氣。',
     input: {

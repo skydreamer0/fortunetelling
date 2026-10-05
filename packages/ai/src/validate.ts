@@ -61,15 +61,6 @@ export const HIGH_CONSENSUS_MIN_SYSTEMS = 3;
 /** 尚未與公開計算器交叉驗證的系統 id（與 core 的 experimental 一致，D-039）；不計入高共識。 */
 export const EXPERIMENTAL_SYSTEMS: readonly string[] = Object.freeze(['jyotish']);
 
-/**
- * 已驗證、但時間軸上只有出生盤規則的系統：同一組訊號蓋在每個時間窗，不能算「這個時間窗」的一票，
- * 因此不計入高共識的「三套」。等它有隨時間變化的行運規則（M5-04）再移除。
- */
-export const BASELINE_ONLY_SYSTEMS: readonly string[] = Object.freeze(['humanDesign']);
-
-/** 不計入高共識票數的系統：experimental ＋ 只有出生盤基線的系統。 */
-export const NON_VOTING_SYSTEMS: readonly string[] = Object.freeze([...EXPERIMENTAL_SYSTEMS, ...BASELINE_ONLY_SYSTEMS]);
-
 export interface ValidationContext {
   payload: InterpretationPayload;
   /** Canonical JSON of the payload (as sent to the model). */
@@ -130,7 +121,7 @@ export function validateSections(sections: unknown[], ctx: ValidationContext): V
 
     // (4) 「高共識」 needs ≥ 3 distinct cited systems
     if (prose.includes(HIGH_CONSENSUS_TERM)) {
-      const systems = new Set(citations.map((id) => systemsById.get(id)).filter((s): s is string => Boolean(s) && !NON_VOTING_SYSTEMS.includes(s as string)));
+      const systems = new Set(citations.map((id) => systemsById.get(id)).filter((s): s is string => Boolean(s) && !EXPERIMENTAL_SYSTEMS.includes(s as string)));
       if (systems.size < HIGH_CONSENSUS_MIN_SYSTEMS) {
         reasons.push({
           code: 'high_consensus_unsupported',
