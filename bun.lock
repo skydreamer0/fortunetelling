@@ -27,13 +27,19 @@
       "name": "@fortune/ai",
       "version": "0.1.0",
       "dependencies": {
-        "@anthropic-ai/sdk": "^0.128.0",
         "@fortune/core": "workspace:*",
       },
       "devDependencies": {
+        "@anthropic-ai/sdk": "^0.128.0",
         "@types/bun": "^1.4.2",
         "typescript": "^7.0.2",
       },
+      "peerDependencies": {
+        "@anthropic-ai/sdk": "^0.128.0",
+      },
+      "optionalPeers": [
+        "@anthropic-ai/sdk",
+      ],
     },
     "packages/core": {
       "name": "@fortune/core",

@@ -62,7 +62,7 @@
 2. ~~網站人生事件的 key（`profileKeyOf`）含姓名，與 `chartFingerprint` 不同~~ → M4-02 已改用指紋，並提供舊 key 遷移。
 3. `Component.value`／`meta` 仍為 `any`（各引擎自訂 payload）。
 4. ~~BirthData 經緯度死欄位／八字固定 Asia/Taipei／無真太陽時／無歷史 DST／核心 `.js`~~ → V1 已全部處理。
-5. `packages/ai` 的 client 入口已分離，但 `@anthropic-ai/sdk` 仍在一般 dependencies，尚未改為選用依賴（M3-01）。
+5. ~~`packages/ai` 的 `@anthropic-ai/sdk` 仍在一般 dependencies~~ → M3-01 已改為選用 peerDependency（optional），只有 `client`/`anthropic` 入口才會（動態）載入。
 
 ---
 
@@ -218,11 +218,11 @@ README.md       給 AI 看：欄位說明、哪些是確定性計算、哪些分
 | M2-02 ✅ | 序列化與 MCP 共用 M0.5 的 canonical serializer（單一來源） |
 | M2-03 ✅ | `share-redacted` 與 `packages/ai` 的 `buildInterpretationPayload` 共用同一份去識別化邏輯（D-029），不另寫一套 |
 
-### M3 — 整理 AI 層（`packages/ai`）✅ 主線完成；SDK 選用依賴待整理
+### M3 — 整理 AI 層（`packages/ai`）✅ 完成
 
 | ID | 任務 |
 |---|---|
-| M3-01 🟡 | `copy`（備援）與 `mcp`（主線）入口已分離；`client` 改為獨立選用入口，不進主線，但 `@anthropic-ai/sdk` 仍在一般 dependencies |
+| M3-01 ✅ | `copy`（備援）與 `mcp`（主線）入口已分離；`client` 為獨立選用入口，`@anthropic-ai/sdk` 改為選用 peerDependency（`peerDependenciesMeta.optional`，devDependencies 保留供測試），缺少時 `createAnthropicComplete` 給出明確錯誤 |
 | M3-02 ✅ | 去識別化與字數預算改為可選，本機匯出預設關閉 |
 | M3-03 ✅ | 保留 `vocab`／HonestyGuard 檢查，獨立成 `check_answer`：貼回 AI 的回答自行檢查 |
 | M3-04 ✅ | 系統指令改寫為「對話助手」版：可用工具、如何引用訊號、何時說高共識、如何呈現矛盾與 `experimental` 系統 |
@@ -266,7 +266,7 @@ M0.5 → M1 → M2 → M3 → M4
 M5 與 M1～M4 並行
 ```
 
-M0.5、M1、M2 與 M3 主線已完成，M4 完成 M4-01／02。`historical_zone_uncertain` 的各系統／網站警告、MCP 回傳瘦身與 `systems`／`verifiedOnly` 已完成。M4-03 已完成。剩餘：M3-01 SDK 依賴清理與首頁延遲載入；M5 按系統補足驗證門檻後再決定正式升級，規則補齊與多人回驗仍依原條件執行。
+M0.5、M1、M2 與 M3 主線已完成，M4 完成 M4-01／02。`historical_zone_uncertain` 的各系統／網站警告、MCP 回傳瘦身與 `systems`／`verifiedOnly` 已完成。M4-03 已完成。剩餘：首頁延遲載入；M5 按系統補足驗證門檻後再決定正式升級，規則補齊與多人回驗仍依原條件執行。
 
 ## 七、已確認事項（2026-09-30）
 

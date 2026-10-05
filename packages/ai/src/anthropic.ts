@@ -9,10 +9,12 @@
  * - Streaming + `finalMessage()` so long generations don't hit HTTP timeouts.
  * - Server-side refusal fallbacks (`fallbacks: 'default'`) on the models that
  *   support them; a final `refusal` / `max_tokens` stop is surfaced as an error.
+ * - `@anthropic-ai/sdk` is an OPTIONAL peer dependency: it is loaded lazily (dynamic import) only
+ *   when no `client` is injected, and a missing install yields a clear error message.
  * - Thinking is left at the model default (always-on adaptive on Claude Fable 5.1);
  *   no sampling params (rejected on current models).
  */
-import Anthropic from '@anthropic-ai/sdk';
+import type Anthropic from '@anthropic-ai/sdk';
 import type { CompleteFn, CompletionRequest } from './client';
 
 /** Default: the most capable generally available Claude model. */
@@ -44,18 +46,32 @@ export class AiRefusalError extends Error {
   }
 }
 
+export const MISSING_SDK_MESSAGE =
+  '@fortune/ai/client 的 createAnthropicComplete 需要選用依賴 @anthropic-ai/sdk，但目前找不到。請先執行 `bun add @anthropic-ai/sdk`，或改為注入自己的 `client`／`complete`。主線（MCP、複製 prompt）不需要它。';
+
+async function loadAnthropicClient(options: AnthropicCompleteOptions): Promise<Anthropic> {
+  let mod: typeof import('@anthropic-ai/sdk');
+  try {
+    mod = await import('@anthropic-ai/sdk');
+  } catch (cause) {
+    throw new Error(MISSING_SDK_MESSAGE, { cause });
+  }
+  return new mod.default({
+    ...(options.apiKey ? { apiKey: options.apiKey } : {}),
+    ...(options.dangerouslyAllowBrowser ? { dangerouslyAllowBrowser: true } : {}),
+    ...(options.timeoutMs ? { timeout: options.timeoutMs } : {}),
+  });
+}
+
 export function createAnthropicComplete(options: AnthropicCompleteOptions = {}): CompleteFn {
   const model = options.model ?? DEFAULT_ANTHROPIC_MODEL;
-  const client =
-    options.client ??
-    new Anthropic({
-      ...(options.apiKey ? { apiKey: options.apiKey } : {}),
-      ...(options.dangerouslyAllowBrowser ? { dangerouslyAllowBrowser: true } : {}),
-      ...(options.timeoutMs ? { timeout: options.timeoutMs } : {}),
-    });
+  let lazyClient: Promise<Anthropic> | undefined;
+  const getClient = (): Promise<Anthropic> =>
+    options.client ? Promise.resolve(options.client) : (lazyClient ??= loadAnthropicClient(options));
   const useFallbacks = options.fallbacks ?? FALLBACK_MODELS.has(model);
 
   const complete = async (req: CompletionRequest): Promise<string> => {
+    const client = await getClient();
     const stream = client.beta.messages.stream({
       model,
       max_tokens: req.maxTokens,

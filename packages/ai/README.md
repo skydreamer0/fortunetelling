@@ -6,7 +6,7 @@
 |---|---|---|
 | `mcp`（主線） | `@fortune/ai/mcp` | `checkAnswer`（貼回答案檢查）、`MCP_SERVER_INSTRUCTIONS`／`CONVERSATION_SYSTEM_INSTRUCTION`（對話助手指示）、可關閉去識別化與字數預算的 `buildInterpretationPayload`（`LOCAL_PAYLOAD_OPTIONS`） |
 | `copy`（備援） | `@fortune/ai/copy` | `buildCopyPrompt`、`checkPastedAnswer`，瀏覽器安全 |
-| 選用：程式呼叫 | `@fortune/ai/client` | `interpret`、`parseQuestion`、`createAnthropicComplete`；**不在主線 `@fortune/ai` 匯出**，需要 `@anthropic-ai/sdk` 時才 import |
+| 選用：程式呼叫 | `@fortune/ai/client` | `interpret`、`parseQuestion`、`createAnthropicComplete`；**不在主線 `@fortune/ai` 匯出**，需另外安裝選用依賴 `@anthropic-ai/sdk` |
 
 `buildInterpretationPayload` 的 `redact`（姓名與出生地標籤去識別化）與 `budget`（字數預算）預設都開，
 本機對話可傳 `{ redact: false, budget: false }`。高共識的「三套以上」只計已驗證系統：
@@ -74,7 +74,7 @@ const result = await interpret(report, { complete, question: answer });
 
 ### Claude 實作（`createAnthropicComplete`）
 
-- 官方 `@anthropic-ai/sdk`；`output_config.format` json_schema 結構化輸出。
+- 官方 `@anthropic-ai/sdk`（**選用 peerDependency**，不裝也不影響 `mcp`／`copy`；需要時 `bun add @anthropic-ai/sdk`，缺少時 `createAnthropicComplete` 會丟出明確錯誤）；`output_config.format` json_schema 結構化輸出。
 - Prompt caching：固定系統指令與 payload 區塊都加 `cache_control: ephemeral`（同一份報告重複發問可重用前綴）。
   前綴低於模型最小可快取長度時不會快取；用 `usage.cache_read_input_tokens` 驗證。
 - 串流 + `finalMessage()`，避免長輸出逾時。
