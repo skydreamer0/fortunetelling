@@ -1,6 +1,8 @@
 /** Birthplace picker data: the core offline city table, searched by 中文 / English / alias. */
 
-import { OVERSEAS_CITIES, TAIWAN_CITIES, type City } from '@fortune/core';
+// 直接引用城市表檔案，而不是 '@fortune/core' 的 barrel：barrel 會讓打包器保留整個核心的副作用 import，
+// 首頁就得連同 ~850 kB 的計算核心一起下載。城市表是純資料，沒有任何副作用。
+import { OVERSEAS_CITIES, TAIWAN_CITIES, type City } from '../../../../packages/core/src/profile/cities';
 
 export type { City };
 

@@ -1,7 +1,7 @@
 /** Two-person entry form for the compatibility comparison. */
 
 import { useState, type FormEvent } from 'react';
-import { parseIsoDate, toIsoDate } from '../../lib/core';
+import { parseIsoDate, toIsoDate } from '../../lib/calendar';
 import type { BirthInput, Gender } from '../../model/types';
 import { Field, SHICHEN, Segmented, representativeHour } from './fields';
 

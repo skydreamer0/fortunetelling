@@ -1,8 +1,8 @@
 /** Single-person birth-data form (solar or lunar date, 時辰 or unknown time, birthplace, time accuracy). */
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { DEFAULT_CITY_ID } from '../../lib/cities';
-import { lunarToSolarDate, parseIsoDate, solarToLunarDate, toIsoDate } from '../../lib/core';
+import { loadCore, lunarToSolarDate, parseIsoDate, solarToLunarDate, toIsoDate } from '../../lib/calendar';
 import type { BirthInput, Gender, LunarInput, TimeAccuracy } from '../../model/types';
 import { CityPicker, Field, Segmented, ShichenPicker, TIME_ACCURACY_OPTIONS, representativeHour } from './fields';
 
@@ -31,7 +31,8 @@ export interface BirthFormState {
   gender: Gender;
   calendar: 'solar' | 'lunar';
   solarDate: string;
-  lunar: LunarInput;
+  /** 農曆欄位；null 代表尚未換算（換算需要動態載入計算核心）。 */
+  lunar: LunarInput | null;
   time: { hour: number; timeKnown: boolean };
   accuracy: TimeAccuracy;
   /** 'HH:mm' or '' (only the 時辰 is known). */
@@ -39,9 +40,9 @@ export interface BirthFormState {
   cityId: string;
 }
 
-/** Form state → `analyze()` input. Throws on an invalid date (shown as the form error). */
+/** Form state → `analyze()` input. Throws on an invalid date (shown as the form error). Lunar dates need `await loadCore()` first. */
 export function formToInput(state: BirthFormState): BirthInput {
-  const date = state.calendar === 'solar' ? parseIsoDate(state.solarDate) : lunarToSolarDate(state.lunar);
+  const date = state.calendar === 'solar' || !state.lunar ? parseIsoDate(state.solarDate) : lunarToSolarDate(state.lunar);
   const timeKnown = state.time.timeKnown && state.accuracy !== 'unknown';
   const exact = timeKnown && /^\d{2}:\d{2}$/.test(state.clock);
   return {
@@ -52,7 +53,7 @@ export function formToInput(state: BirthFormState): BirthInput {
     timeKnown,
     gender: state.gender,
     calendarType: state.calendar,
-    ...(state.calendar === 'lunar' ? { lunarInput: state.lunar } : {}),
+    ...(state.calendar === 'lunar' && state.lunar ? { lunarInput: state.lunar } : {}),
     cityId: state.cityId,
     timeAccuracy: timeKnown ? state.accuracy : 'unknown',
   };
@@ -70,7 +71,7 @@ export function BirthForm({ initial, onSubmit, onExample }: BirthFormProps) {
   const [gender, setGender] = useState<Gender>(start.gender);
   const [calendar, setCalendar] = useState<'solar' | 'lunar'>(start.calendarType);
   const [solarDate, setSolarDate] = useState(toIsoDate(start));
-  const [lunar, setLunar] = useState<LunarInput>(start.lunarInput ?? solarToLunarDate(start));
+  const [lunar, setLunar] = useState<LunarInput | null>(start.lunarInput ?? null);
   const [time, setTime] = useState({ hour: start.hour, timeKnown: start.timeKnown });
   const [accuracy, setAccuracy] = useState<TimeAccuracy>(initialAccuracy(start));
   const [clock, setClock] = useState(
@@ -109,21 +110,34 @@ export function BirthForm({ initial, onSubmit, onExample }: BirthFormProps) {
     }
   }
 
-  function switchCalendar(next: 'solar' | 'lunar') {
+  // 以農曆開啟、但沒有存過農曆欄位時，載入計算核心後補算。
+  useEffect(() => {
+    if (calendar !== 'lunar' || lunar) return;
+    let cancelled = false;
+    loadCore().then(() => {
+      if (!cancelled) setLunar(solarToLunarDate(parseIsoDate(solarDate)));
+    }).catch(caught => { if (!cancelled) setError((caught as Error).message); });
+    return () => { cancelled = true; };
+  }, [calendar, lunar, solarDate]);
+
+  async function switchCalendar(next: 'solar' | 'lunar') {
     setError('');
     try {
-      if (next === 'lunar' && calendar === 'solar') setLunar(solarToLunarDate(parseIsoDate(solarDate)));
-      if (next === 'solar' && calendar === 'lunar') setSolarDate(lunarToSolarDate(lunar).iso);
+      if (next === calendar) return;
+      await loadCore(); // 國曆↔農曆換算要用到計算核心，第一次切換才載入
+      if (next === 'lunar') setLunar(solarToLunarDate(parseIsoDate(solarDate)));
+      else if (lunar) setSolarDate(lunarToSolarDate(lunar).iso);
       setCalendar(next);
     } catch (caught) {
       setError((caught as Error).message);
     }
   }
 
-  function submit(event: FormEvent) {
+  async function submit(event: FormEvent) {
     event.preventDefault();
     setError('');
     try {
+      if (calendar === 'lunar') await loadCore();
       onSubmit(formToInput({ name, gender, calendar, solarDate, lunar, time, accuracy, clock, cityId }));
     } catch (caught) {
       setError((caught as Error).message);
@@ -131,7 +145,7 @@ export function BirthForm({ initial, onSubmit, onExample }: BirthFormProps) {
   }
 
   const lunarField = (key: 'year' | 'month' | 'day', value: number) =>
-    setLunar(previous => ({ ...previous, [key]: value }));
+    setLunar(previous => previous && ({ ...previous, [key]: value }));
 
   return (
     <form className="ledger" onSubmit={submit} noValidate>
@@ -146,7 +160,7 @@ export function BirthForm({ initial, onSubmit, onExample }: BirthFormProps) {
       <div className="ledger__date">
         <Segmented legend="曆法" name="calendar" value={calendar} onChange={switchCalendar}
           options={[{ value: 'solar', label: '國曆' }, { value: 'lunar', label: '農曆' }]} />
-        {calendar === 'solar' ? (
+        {calendar === 'solar' || !lunar ? (
           <Field label="出生日期" htmlFor="f-date">
             <input id="f-date" className="input input--date" type="date" min="1900-01-01" max="2100-12-31"
               value={solarDate} onChange={event => setSolarDate(event.target.value)} required />
@@ -174,7 +188,7 @@ export function BirthForm({ initial, onSubmit, onExample }: BirthFormProps) {
               </label>
             </div>
             <label className="check">
-              <input type="checkbox" checked={lunar.isLeap} onChange={event => setLunar(previous => ({ ...previous, isLeap: event.target.checked }))} />
+              <input type="checkbox" checked={lunar.isLeap} onChange={event => setLunar(previous => previous && ({ ...previous, isLeap: event.target.checked }))} />
               <span>閏月</span>
             </label>
           </fieldset>

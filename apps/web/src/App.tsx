@@ -1,11 +1,9 @@
 /** App shell: masthead, view switching (intake ↔ report), loading and toasts. */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CompatReport } from './components/compat/CompatReport';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { InputView, type Mode } from './components/input/InputView';
-import { ReportView } from './components/report/ReportView';
 import { InstallHint } from './components/ui/InstallHint';
-import { analyze, analyzeCompatibility } from './lib/core';
+import { loadCore } from './lib/calendar';
 import { createReportStore } from './lib/store';
 import { applyTheme, preferredTheme, type Theme } from './lib/theme';
 import type { BirthInput, CompatibilityResult, Report } from './model/types';
@@ -14,6 +12,21 @@ type View =
   | { kind: 'input' }
   | { kind: 'report'; report: Report }
   | { kind: 'compat'; result: CompatibilityResult };
+
+// 報告與合盤頁（含計算核心，約 850 kB）延遲載入：首頁只需要輸入表單，送出時才下載。
+const loadReportView = () => import('./components/report/ReportView');
+const loadCompatReport = () => import('./components/compat/CompatReport');
+const ReportView = lazy(() => loadReportView().then(module => ({ default: module.ReportView })));
+const CompatReport = lazy(() => loadCompatReport().then(module => ({ default: module.CompatReport })));
+
+function ViewLoading() {
+  return (
+    <div className="loading" role="status" aria-live="polite">
+      <span className="loading__seal" aria-hidden="true">命</span>
+      <span className="loading__text">載入中…</span>
+    </div>
+  );
+}
 
 interface Toast { id: number; text: string; tone: 'info' | 'error' }
 
@@ -86,12 +99,19 @@ export function App() {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
-  async function run<T>(message: string, minimumMs: number, task: () => T): Promise<T | null> {
+  async function run<T>(
+    message: string,
+    minimumMs: number,
+    task: (core: Awaited<ReturnType<typeof loadCore>>) => T,
+    preload: () => Promise<unknown>,
+  ): Promise<T | null> {
     const started = performance.now();
     setLoading(message);
     await nextPaint();
     try {
-      const result = task();
+      // 計算核心與報告頁 chunk 平行下載；載入失敗（例如離線且未快取）會走下面的錯誤提示。
+      const [core] = await Promise.all([loadCore(), preload()]);
+      const result = task(core);
       await wait(Math.max(0, minimumMs - (performance.now() - started)));
       return result;
     } catch (error) {
@@ -104,7 +124,7 @@ export function App() {
   }
 
   async function onAnalyze(input: BirthInput) {
-    const report = await run('排盤中', 420, () => analyze(input));
+    const report = await run('排盤中', 420, core => core.analyze(input), loadReportView);
     if (!report) return;
     store.save(input, { asOf: report.asOf });
     setRecent(store.getRecent());
@@ -112,7 +132,7 @@ export function App() {
   }
 
   async function onCompare(first: BirthInput, second: BirthInput) {
-    const result = await run('合盤中', 420, () => analyzeCompatibility(first, second));
+    const result = await run('合盤中', 420, core => core.analyzeCompatibility(first, second), loadCompatReport);
     if (!result) return;
     store.saveCompatibility(first, second);
     show({ kind: 'compat', result });
@@ -151,8 +171,10 @@ export function App() {
             onClearRecent={onClearRecent}
           />
         )}
-        {view.kind === 'report' && <ReportView report={view.report} onBack={back} />}
-        {view.kind === 'compat' && <CompatReport result={view.result} onBack={back} />}
+        <Suspense fallback={<ViewLoading />}>
+          {view.kind === 'report' && <ReportView report={view.report} onBack={back} />}
+          {view.kind === 'compat' && <CompatReport result={view.result} onBack={back} />}
+        </Suspense>
       </main>
 
       {view.kind === 'input' && <InstallHint />}
