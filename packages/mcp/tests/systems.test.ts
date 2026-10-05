@@ -136,8 +136,8 @@ describe('experimentalSensitivity', () => {
     expect(verified.experimentalSensitivity).toEqual(s);
   }, 120_000);
 
-  test('不翻轉（sky 感情 2026-10～2027-09）：changed=false，沒有提醒', async () => {
-    const { json } = await fx.call('answer_question', { profileId: 'sky', category: 'relationship_timing', range: { start: '2026-10', end: '2027-09' }, asOf: ASOF });
+  test('不翻轉（sky 置產 2026-10～2027-09；M5-04 人類圖改發行運訊號後，原用的感情範圍會翻轉，改用此範圍）：changed=false，沒有提醒', async () => {
+    const { json } = await fx.call('answer_question', { profileId: 'sky', category: 'property_purchase', range: { start: '2026-10', end: '2027-09' }, asOf: ASOF });
     const s = json.data.experimentalSensitivity;
     expect(s.changed).toBe(false);
     expect(s.top3All.map((x: any) => x.month)).toEqual(s.top3VerifiedOnly.map((x: any) => x.month));

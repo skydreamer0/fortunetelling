@@ -108,7 +108,7 @@
 | V2-02 ✅ | `calculators/astro`：Sun～Saturn、Rahu/Ketu、Ascendant，UT 輸入 |
 | V2-03 🟡 | Jyotish（計算器與 30 案獨立對照驗證已完成，仍缺兩個公開吠陀計算器 ≥ 20 案交叉驗證）：ayanamsa 設定、D1/D9/D10、Nakshatra/Pada、House Lord、Vimshottari Maha/Antar Dasha（精確到日）、Transit |
 | V2-04 🟡 | Human Design（計算器與 38 案公開來源交叉驗證已完成，M5-03 起視為已驗證）：Personality／Design（88° 求根）、Gate/Line、Channel、Center、Type、Authority、Profile、Definition、Incarnation Cross |
-| V2-05 🟡 | Jyotish／HD 規則 → Signal（規則已寫並進非同步 Timeline；待交叉驗證，見 M5）（Dasha 主星、2H/4H/7H/10H/11H 過運等） |
+| V2-05 🟡 | Jyotish／HD 規則 → Signal（規則已寫並進非同步 Timeline；HD 的 `transit.gates` 已於 M5-04 補齊並讓人類圖隨時間變化；Jyotish 待交叉驗證，見 M5）（Dasha 主星、2H/4H/7H/10H/11H 過運等） |
 
 **完成條件**：與至少兩個公開計算器交叉驗證，≥ 20 個案例。
 
@@ -241,8 +241,8 @@ README.md       給 AI 看：欄位說明、哪些是確定性計算、哪些分
 |---|---|
 | M5-01 🟡 | 門檻：與至少兩個公開計算器交叉驗證，≥ 20 案例。HD 已有兩站 38 案；Jyotish 已有 30 案獨立對照與第三方抽查，但仍缺兩個吠陀專用計算器 ≥ 20 案 |
 | M5-02 ✅ | 驗證前標 `experimental`，MCP 回應附 `verified: false` 與 caveat；不與已驗證系統用相同信心標示 |
-| M5-03 ✅ | **人類圖**升級為已驗證：`EXPERIMENTAL_SYSTEMS`（core／ai）、`EXPERIMENTAL_SYSTEM_IDS` 只剩 `jyotish`，MCP 不再附 `experimental:humanDesign` caveat，`verifiedOnly` 保留人類圖；**高共識的「三套」暫不計人類圖**（它在時間軸上只有出生盤規則、每個時間窗蓋同一組訊號，sky 範例 25 個高共識格中 23 格靠它與吠陀占星才湊滿），待 M5-04 行運規則完成再放行（`BASELINE_ONLY_SYSTEMS`）；新增 `EPHEMERIS_CALCULATORS`／`runEphemerisCalculators`（core 公開 API，`verified` 旗標）明訂 sync／async 邊界：同步 `CALCULATORS`／`analyze()`／`buildTimeline` 不含星曆系統，`buildTimelineAsync`、MCP、匯出包才含。**吠陀占星**未達門檻（缺兩個吠陀專用計算器 ≥ 20 案），維持 `experimental`，補齊後再升級。HD 規則（過運閘門等）屬啟發式、未經外部驗證，與其他系統的規則同級 |
-| M5-04 | V2-05：Jyotish／HD 規則 → Signal 補齊（新模組進場：calculator → rules → Signal，不需改 AI 層） |
+| M5-03 ✅ | **人類圖**升級為已驗證：`EXPERIMENTAL_SYSTEMS`（core／ai）、`EXPERIMENTAL_SYSTEM_IDS` 只剩 `jyotish`，MCP 不再附 `experimental:humanDesign` caveat，`verifiedOnly` 與高共識「三套已驗證」計入人類圖；新增 `EPHEMERIS_CALCULATORS`／`runEphemerisCalculators`（core 公開 API，`verified` 旗標）明訂 sync／async 邊界：同步 `CALCULATORS`／`analyze()`／`buildTimeline` 不含星曆系統，`buildTimelineAsync`、MCP、匯出包才含。**吠陀占星**未達門檻（缺兩個吠陀專用計算器 ≥ 20 案），維持 `experimental`，補齊後再升級。HD 規則（過運閘門等）屬啟發式、未經外部驗證，與其他系統的規則同級 |
+| M5-04 ✅ | V2-05：HD 規則補齊——`humanDesign.transit.gates`（行運閘門補完／強化原局通道）啟用、catalog v2；timeline 的人類圖不再蓋 natal 常數基線，只投 transit 訊號，避免每個時間窗都投同一票灌水高共識。Jyotish 規則（dasha、`jyotish.transit.slow`／`sade_sati`）早已進 Timeline，仍待吠陀專用計算器交叉驗證（M5-01）才升級 |
 | M5-05 | 回驗累積多人資料 n ≥ 30 後才調權重（維持 D-033） |
 
 M1 不被 M5 阻塞。

@@ -16,13 +16,15 @@ import {
   deriveStructure,
   distanceToLineBoundary,
   evaluateHumanDesignRules,
+  gatesAlong,
+  longitudesAt,
   gateStartLongitude,
   humanDesignCalculator,
   longitudeToActivation,
   type Line,
 } from '../src/calculators/humanDesign/index';
 import type { BirthProfile } from '../src/profile/index';
-import { DOMAINS, TRAITS } from '../src/signals/types';
+import { DOMAINS, TRAITS, type SignalWindow } from '../src/signals/types';
 import { createTimeContext } from '../src/time/index';
 
 const TAINAN = { label: 'Tainan, Taiwan', lat: 22.9922, lng: 120.1848, timezone: 'Asia/Taipei' };
@@ -311,8 +313,149 @@ describe('real chart: 1995-07-16 22:00 Tainan (UT 14:00)', () => {
       expect(s.valence).toBe(0);
     }
     expect(evaluateHumanDesignRules(c, NATAL)).toEqual(sig);
-    expect(evaluateHumanDesignRules(c, { grain: 'year', start: '2026-01-01', end: '2026-12-31' })).toEqual([]);
-    expect(HUMAN_DESIGN_CATALOG.rules.find((x) => x.id === 'humanDesign.transit.gates')!.status).toBe('pending');
+    // The transit rule (M5-04) is year / month scoped, so a natal window never triggers it.
+    expect(sig.every((s) => s.ruleId.startsWith('humanDesign.natal.'))).toBe(true);
+  });
+});
+
+// ─── M5-04: humanDesign.transit.gates ────────────────────────────────────
+
+describe('transit gates (humanDesign.transit.gates)', () => {
+  let c: ReturnType<typeof humanDesignCalculator.calculate>['chart'];
+  beforeAll(() => {
+    c = humanDesignCalculator.calculate(createTimeContext(PROFILE)).chart;
+  });
+  const YEAR_2026 = { grain: 'year', start: '2026-01-01', end: '2026-12-31' } as const;
+  const YEAR_2028 = { grain: 'year', start: '2028-01-01', end: '2028-12-31' } as const;
+  const MONTH_2026_05 = { grain: 'month', start: '2026-05-01', end: '2026-05-31' } as const;
+  const rule = (id: string) => HUMAN_DESIGN_CATALOG.rules.find((x) => x.id === id)!;
+
+  /** Natal chart whose only activated gates are `gates` (personality Sun placeholder). */
+  function chartWith(gates: number[]) {
+    const st = deriveStructure(gates);
+    return {
+      ...c,
+      gates: gates.map((g) => ({ gate: g, center: GATE_CENTER[g]!, personality: ['sun' as const], design: [] })),
+      channels: st.channels,
+      definedCenters: st.definedCenters,
+      undefinedCenters: st.undefinedCenters,
+    };
+  }
+  /** Independent gate set of one body over a window (daily samples). */
+  function gatesOf(planet: (typeof HD_PLANETS)[number], start: string, end: string) {
+    const out = new Set<number>();
+    const s = Date.parse(`${start}T00:00:00Z`) / 86_400_000 + 2440587.5;
+    const e = Date.parse(`${end}T00:00:00Z`) / 86_400_000 + 2440587.5 + 1;
+    for (let jd = s; jd <= e; jd += 1) out.add(longitudeToActivation(longitudesAt(jd)[planet]).gate);
+    return out;
+  }
+  const transit = (chart: ReturnType<typeof chartWith>, w: SignalWindow) =>
+    evaluateHumanDesignRules(chart, w).filter((s) => s.ruleId === 'humanDesign.transit.gates');
+
+  test('catalog: active, versioned, weights are project data with a source', () => {
+    const e = rule('humanDesign.transit.gates');
+    expect(e.status).toBe('active');
+    expect(e.scopes).toEqual(['year', 'month']);
+    expect(e.source).toContain('Ra Uru Hu');
+    expect(e.source).toContain('本專案資料');
+    expect(HUMAN_DESIGN_CATALOG.version).toBe(2);
+    // The moon is far too fast for a year / month window.
+    for (const grain of ['year', 'month'] as const) {
+      expect(Object.keys(e.params.planets[grain])).not.toContain('moon');
+    }
+  });
+
+  test('gatesAlong: wraps at the 302° start of the wheel, follows retrograde arcs, never skips a gate', () => {
+    expect(gatesAlong([301.9, 302.1])).toEqual([41, 60]);
+    expect(gatesAlong([302.1, 314])).toEqual([13, 19, 41]); // 41 → 19 → 13 although only two samples
+    expect(gatesAlong([314, 302.1])).toEqual([13, 19, 41]); // retrograde direction
+    expect(gatesAlong([10])).toHaveLength(1);
+  });
+
+  test('positive (complete): a transit gate that fills the other end of a hanging natal gate emits both centers', () => {
+    const jupiterGates = gatesOf('jupiter', '2026-01-01', '2026-12-31');
+    // Pick a Jupiter gate g and its channel partner h (not itself a Jupiter gate); natal has only h (a hanging gate).
+    const ch = CHANNELS.find((x) => x.gates.some((g) => jupiterGates.has(g) && !jupiterGates.has(x.gates[0] === g ? x.gates[1] : x.gates[0])))!;
+    const g = ch.gates.find((x) => jupiterGates.has(x))!;
+    const h = ch.gates[0] === g ? ch.gates[1] : ch.gates[0];
+    const natal = chartWith([h]);
+    expect(natal.channels).toEqual([]);
+    const sigs = transit(natal, YEAR_2026).filter((s) => (s.target ?? '').startsWith('transit:jupiter:') && (s.target ?? '').includes(`:g${g}:complete:${ch.id}:`));
+    expect(sigs).toHaveLength(2); // one per center of the channel
+    const centers = rule('humanDesign.transit.gates').params.centers;
+    expect(sigs.map((s) => `${s.domain}.${s.trait}`).sort()).toEqual(
+      ch.centers.map((cn: string) => `${centers[cn].domain}.${centers[cn].trait}`).sort(),
+    );
+    for (const s of sigs) {
+      expect(s.system).toBe('humanDesign');
+      expect(s.valence).toBe(0);
+      expect(s.intensity).toBeCloseTo(0.25 * 0.6, 10); // jupiter(year) × complete
+      expect(s.evidence.componentIds).toContain('hd_personality_sun');
+      expect(s.window).toEqual(YEAR_2026);
+    }
+  });
+
+  test('positive (reinforce): a transit gate on a defined natal channel emits its center', () => {
+    const saturnGates = gatesOf('saturn', '2026-01-01', '2026-12-31');
+    const ch = CHANNELS.find((x) => x.gates.some((g) => saturnGates.has(g)))!;
+    const g = ch.gates.find((x) => saturnGates.has(x))!;
+    const natal = chartWith([...ch.gates]);
+    expect(natal.channels.map((x) => x.id)).toEqual([ch.id]);
+    const sigs = transit(natal, YEAR_2026).filter((s) => (s.target ?? '') === `transit:saturn:g${g}:reinforce:${GATE_CENTER[g]}`);
+    expect(sigs).toHaveLength(1);
+    expect(sigs[0]!.intensity).toBeCloseTo(0.25 * 0.3, 10); // saturn(year) × reinforce
+    expect(sigs[0]!.valence).toBe(0);
+    expect(sigs[0]!.evidence.componentIds).toContain(`hd_channel_${ch.id}`);
+  });
+
+  test('negative: no natal gates → nothing; a lone natal gate never reinforces; unlinked natal gate → nothing', () => {
+    expect(transit(chartWith([]), YEAR_2026)).toEqual([]);
+    const planets = Object.keys(rule('humanDesign.transit.gates').params.planets.year) as (typeof HD_PLANETS)[number][];
+    const visited = new Set(planets.flatMap((p) => [...gatesOf(p, '2026-01-01', '2026-12-31')]));
+    // A single natal gate is never "defined": the reinforce branch cannot fire on it.
+    const lone = chartWith([[...visited][0]!]);
+    expect(transit(lone, YEAR_2026).filter((s) => (s.target ?? '').includes(':reinforce:'))).toEqual([]);
+    // Natal gates whose channel partners are all unvisited this year (and that are not visited themselves) stay silent.
+    const touched = new Set<number>(visited);
+    for (const ch of CHANNELS) if (ch.gates.some((g) => visited.has(g))) ch.gates.forEach((g) => touched.add(g));
+    const quiet = Array.from({ length: 64 }, (_, i) => i + 1).filter((g) => !touched.has(g));
+    expect(quiet.length).toBeGreaterThan(0);
+    expect(transit(chartWith(quiet.slice(0, 1)), YEAR_2026)).toEqual([]);
+  });
+
+  test('unknown-time (empty) chart emits nothing', () => {
+    const ctxUnknown = createTimeContext({ ...PROFILE, time: null, timeAccuracy: 'unknown' });
+    const empty = humanDesignCalculator.calculate(ctxUnknown).chart;
+    expect(evaluateHumanDesignRules(empty, YEAR_2026)).toEqual([]);
+    expect(evaluateHumanDesignRules(empty, MONTH_2026_05)).toEqual([]);
+  });
+
+  test('deterministic, sorted by id, valid; targets change with the window; month adds the fast bodies', () => {
+    const a = evaluateHumanDesignRules(c, YEAR_2026);
+    expect(JSON.stringify(evaluateHumanDesignRules(c, YEAR_2026))).toBe(JSON.stringify(a));
+    expect(a.length).toBeGreaterThan(0);
+    expect(a.map((s) => s.id)).toEqual([...a.map((s) => s.id)].sort());
+    expect(new Set(a.map((s) => s.id)).size).toBe(a.length);
+    for (const s of a) {
+      expect(s.ruleId).toBe('humanDesign.transit.gates');
+      expect(s.valence).toBe(0);
+      expect(DOMAINS).toContain(s.domain);
+      expect(TRAITS).toContain(s.trait);
+    }
+    const targets = (w: SignalWindow) => evaluateHumanDesignRules(c, w).map((s) => s.target ?? '').join('|');
+    expect(targets(YEAR_2026)).not.toBe(targets(YEAR_2028));
+    const month = evaluateHumanDesignRules(c, MONTH_2026_05);
+    expect(month.length).toBeGreaterThan(0);
+    expect(month.every((s) => s.window.grain === 'month')).toBe(true);
+    expect(a.some((s) => /transit:(sun|earth|mercury|venus|mars):/.test(s.target ?? ''))).toBe(false);
+  });
+
+  test('scopes: a year window runs only transit rules; natal scope only natal rules', () => {
+    expect(evaluateHumanDesignRules(c, YEAR_2026).every((s) => s.ruleId.startsWith('humanDesign.transit.'))).toBe(true);
+    expect(evaluateHumanDesignRules(c, NATAL).every((s) => s.ruleId.startsWith('humanDesign.natal.'))).toBe(true);
+    const both = evaluateHumanDesignRules(c, YEAR_2026, { scopes: ['natal', 'year'] });
+    expect(both.some((s) => s.ruleId.startsWith('humanDesign.natal.'))).toBe(true);
+    expect(both.some((s) => s.ruleId.startsWith('humanDesign.transit.'))).toBe(true);
   });
 });
 

@@ -24,7 +24,7 @@
       "numerology": 1,
       "questions": 1,
       "jyotish": 1,
-      "humanDesign": 1
+      "humanDesign": 2
     },
     "ephemeris": "moshier",
     "experimentalSystems": [
@@ -39,17 +39,17 @@
       "hash": "8e87bd618f2add78"
     },
     "signals.json": {
-      "hash": "bce10b3086644ae8"
+      "hash": "48cefc2d3385e369"
     },
     "timeline.json": {
-      "hash": "33334f129049c440"
+      "hash": "0f475e295a6839fe"
     },
     "consensus.json": {
-      "hash": "f1a0221631e4a8f1"
+      "hash": "8407c7ba837203b1"
     },
     "README.md": {
       "hash": "be270df9db56e36d"
     }
   },
-  "signalCount": 1152
+  "signalCount": 1191
 }

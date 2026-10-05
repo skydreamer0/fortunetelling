@@ -183,6 +183,7 @@ type Rule = {
 
 - **八字規則集**：天干五合、生剋、六合、六沖、三合、三會、刑、害、破、伏吟、反吟、歲運並臨。對象可以是原局、原局 × 大運、原局 × 流年、原局 × 流月。
 - **紫微規則集**：四化飛入、大限／流年命宮疊宮、三方四正煞曜會照、天馬、祿存等。
+- **人類圖規則集**（M5-04，`calculators/humanDesign/catalog.json` v2）：`natal.type`／`natal.authority`／`natal.channel_centers` 描述出生盤（scope `natal`），**不進 timeline**；時間軸只跑 `humanDesign.transit.gates`（scope `year`／`month`）：窗口內行運行星經過的閘門，若補滿一條原局未定義通道的另一端（補完／電磁），或落在原局已定義通道的閘門（強化），就依通道兩端中心／該閘門所屬中心的對照表發 domain × trait 訊號。年格用木星、土星、南北交點與外行星；月格用木星、土星、南北交點與太陽、地球、水星、金星、火星（月亮太快不用）。只輸出特徵權重、valence 一律 0；行星權重、補完／強化係數與取樣間隔（年 15 天、月 3 天）皆為本專案資料，來源引用 Ra Uru Hu 的閘門／通道定義。
 - 每條規則在 `rules/<system>/catalog.json` 登錄 `id / version / 說明 / 古籍或慣例出處`。`ScoringRules` 的透明匯出延伸到這裡（Report 裡的 `scoringRules` 會含規則目錄）。
 
 ### 5.1 特徵權重（D-028）
@@ -233,6 +234,7 @@ type Signal = {
 - 輸出 `asOf` 年起連續 N 年（預設 5 年），以及當年 12 個月的領域分數。
 - 後端保留 0–100 分數；UI 顯示四段：**低 / 中 / 中高 / 高**，切點是資料（例如 35／55／75）。
 - 每格都帶 `topSignals[]`，點開可以看到是哪些規則造成的。
+- **只有「隨時間變化」的規則進 timeline**：共識計票以「某系統該領域 noisy-OR 分數 ≥ θ」算一票，若把出生盤這類常數訊號蓋在每一格，該系統會在每個時間窗都投同一票、灌水「高共識」。因此人類圖不再蓋 natal 基線（M5-04），只用 `humanDesign.transit.gates`；某格沒有行運閘門命中時，人類圖在該領域就是「沒有發訊號」（不計 0，維持 D-033），不會投票。`timeline.conventions` 只有在人類圖參與時才換成含人類圖說明的版本（`scopes`、`humanDesign`），不含人類圖的 timeline（同步 `analyze()`）逐位元不變。
 
 ## 8. ⑥ Question Engine（V5）
 
