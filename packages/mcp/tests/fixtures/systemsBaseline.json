@@ -1,12 +1,12 @@
 {
-  "$comment": "加入 systems／verifiedOnly／精簡回傳之前，以測試樣本 sky、asOf 2026-09-30 錄下的 sha256。aq-detail = answer_question detail:true 的 JSON.stringify(data)；其餘 = 整個回應的 canonical JSON。比對時先移除新增欄位（systemsUsed、excludedSystems、experimentalIncluded、experimentalSensitivity、monthsFormat）與 experimental_sensitive caveat。",
+  "$comment": "加入 systems／verifiedOnly／精簡回傳之前，以測試樣本 sky、asOf 2026-09-30 錄下的 sha256。aq-detail = answer_question detail:true 的 JSON.stringify(data)；其餘 = 整個回應的 canonical JSON。比對時先移除新增欄位（systemsUsed、excludedSystems、experimentalIncluded、experimentalSensitivity、monthsFormat）與 experimental_sensitive caveat。 M5-04：人類圖改為只發 transit.gates 訊號（不再蓋出生盤常數基線）後重錄全部 8 筆；重錄前已用舊／新程式碼各跑一次比對，所有非人類圖系統的 perSystem 聚合完全相同，差異只來自人類圖。",
   "$versionsHash": "cf3d4b472089",
-  "aq-detail|vehicle_purchase": "038af138f44a27aae83bdd2c2fac15a0ae43b60fd8fcb49970f8fa404c36f59d",
-  "aq-detail|job_change": "f25c6b673c009440c24315eb14043fe8d7a1458c0f152a0ba9c580895f4af328",
-  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}": "540d2992658e56da1b2e0011cb32ca8c3521023ba517957e9dae08a1367ff0f9",
-  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}": "646bd01405cc9c0babb8bfb9c978bf90773988eb53d9e9ca6a6dcd6806f89d84",
-  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\",\"detail\":true}": "5d0d45c4e2c2ea6d5fd71d66e06f6d7ec4582129c0c6f43feaafc528d1163a63",
-  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}": "f9b43a71b5b68a852a956554e0f3035f17aec89e0d4464811e6a19323dee6538",
-  "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}": "b531ba6067124c40600a8aae71f6b8228d5dd577aaf75caa90c1b922d2aaff35",
-  "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}": "1bfda44fdc5d387fe9e2161be541865255da05713e8128b6243d12cee358b414"
+  "aq-detail|vehicle_purchase": "7be2a2a816a6c57bb80a7318eb77a4d910545d23c2f07b33c994d6aee0ea0608",
+  "aq-detail|job_change": "6adbb80dd13673992f0041d6abb04bdd096f1d597cb0a217fc47ca666e3b3620",
+  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}": "0b7188195a278a9aefb5b899f588dc2db901cf423a95f0054e2ac5b558853528",
+  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}": "fecaa88ceea1262f059dc93870c211defa6d82467e6425f0e8a2125fdc8f329c",
+  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\",\"detail\":true}": "0c5ad187ba7c703f88882df0090a6a42bd8d4819027022c45bf25fa2c6883cc7",
+  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}": "004371be645cf2120ca0b1170afa7b86aa3680d6b974c084e2c362abd9b944dd",
+  "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}": "110d6f05a8f3441ca6f98307683b924998584be505a80f7ca16428238fbbaabf",
+  "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}": "a6b65bc41e0784624700830245dbd443c427a74af54447c0a35ef19b7f90588b"
 }

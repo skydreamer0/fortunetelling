@@ -149,12 +149,12 @@ export interface HumanDesignOptions {
 
 const add180 = (d: number) => (d + 180) % 360;
 
-/** All 13 activations at a UT Julian Day (tropical). */
-export function activationsAt(jdUt: number, node: NodeKind = 'true'): PlanetActivation[] {
+/** Tropical longitudes of the 13 HD bodies at a UT Julian Day (Earth = Sun + 180°, South Node = North Node + 180°). */
+export function longitudesAt(jdUt: number, node: NodeKind = 'true'): Record<HdPlanet, number> {
   const pos = new Map<string, PlanetPosition>(planetPositions(jdUt).map((p) => [p.body, p]));
   const lon = (b: string) => pos.get(b)!.longitude;
   const nn = lon(node === 'true' ? 'rahuTrue' : 'rahuMean');
-  const longitudes: Record<HdPlanet, number> = {
+  return {
     sun: lon('sun'),
     earth: add180(lon('sun')),
     moon: lon('moon'),
@@ -169,6 +169,11 @@ export function activationsAt(jdUt: number, node: NodeKind = 'true'): PlanetActi
     neptune: lon('neptune'),
     pluto: lon('pluto'),
   };
+}
+
+/** All 13 activations at a UT Julian Day (tropical). */
+export function activationsAt(jdUt: number, node: NodeKind = 'true'): PlanetActivation[] {
+  const longitudes = longitudesAt(jdUt, node);
   return HD_PLANETS.map((planet) => ({ planet, ...longitudeToActivation(longitudes[planet]) }));
 }
 

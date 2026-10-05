@@ -6,6 +6,7 @@ import { toBand } from '../src/signals/bands';
 import { createTimeContext } from '../src/time/index';
 import {
   NUMEROLOGY_TIMELINE_CATALOG,
+  TIMELINE_CONVENTIONS,
   buildTimeline,
   buildTimelineAsync,
   calculatePersonalMonth,
@@ -120,14 +121,69 @@ describe('buildTimelineAsync', () => {
       expect(tl.years.every((c) => c.domains.some((d) => d.perSystem[s]))).toBe(true);
       expect(tl.months.some((c) => c.domains.some((d) => d.perSystem[s]))).toBe(true);
     }
-    // humanDesign is natal-only: identical per-system aggregates in every year cell.
+    // humanDesign runs only its transit rule (M5-04): the cells are no longer identical.
     const hd = (c: TimelineCell) => JSON.stringify(c.domains.map((d) => d.perSystem.humanDesign?.score ?? null));
-    expect(new Set(tl.years.map(hd)).size).toBe(1);
+    expect(new Set(tl.years.map(hd)).size).toBeGreaterThan(1);
+    expect(new Set(tl.months.map(hd)).size).toBeGreaterThan(1);
     // Print the all-systems table too.
     const lines = DOMAINS.map(
       (domain, i) => `${domain.padEnd(12)} ${tl.years.map((c) => `${c.domains[i].score.toFixed(1)} ${c.domains[i].band}`.padStart(10)).join('')}`,
     );
     console.log(`\nTimeline (async: ${tl.systems.join('+')})\n${' '.repeat(13)}${tl.years.map((c) => c.window.start.slice(0, 4).padStart(10)).join('')}\n${lines.join('\n')}\n`);
+  });
+});
+
+describe('buildTimelineAsync — humanDesign transit contract (M5-04)', () => {
+  const SKY: BirthProfile = {
+    date: '1990-05-17',
+    time: '08:30',
+    timeAccuracy: 'exact',
+    gender: 'female',
+    birthplace: { label: 'Tainan, Taiwan', lat: 22.9999, lng: 120.2269, timezone: 'Asia/Taipei' },
+  };
+  const skyCtx = createTimeContext(SKY);
+
+  test('only humanDesign.transit.gates signals; none from natal rules; per-cell scores move over time (sky sample)', async () => {
+    const tl = await buildTimelineAsync(skyCtx, { asOf: ASOF, systems: ['humanDesign'], topSignalsPerDomain: Infinity });
+    expect(tl.systems).toEqual(['humanDesign']);
+    expect(tl.years.map((c) => c.window.start)).toEqual(YEAR_STARTS);
+    expect(tl.months.map((c) => c.window.start)).toEqual(MONTH_STARTS);
+    const rules = new Set<string>();
+    for (const cell of [...tl.years, ...tl.months]) {
+      for (const d of cell.domains) {
+        for (const s of d.topSignals) {
+          rules.add(s.ruleId);
+          expect(s.system).toBe('humanDesign');
+          expect(s.valence).toBe(0);
+          expect(s.window).toEqual(cell.window);
+        }
+      }
+    }
+    expect([...rules]).toEqual(['humanDesign.transit.gates']);
+
+    // Not constant: month scores differ across months, and some cells are silent for the system.
+    const series = (domainIdx: number) => tl.months.map((c) => c.domains[domainIdx].perSystem.humanDesign?.score ?? 0);
+    expect(DOMAINS.filter((_, i) => new Set(series(i)).size > 1).length).toBeGreaterThanOrEqual(3);
+    const total = (c: TimelineCell) => c.domains.reduce((a, d) => a + (d.perSystem.humanDesign?.score ?? 0), 0).toFixed(4);
+    expect(new Set(tl.months.map(total)).size).toBeGreaterThan(6);
+    expect(new Set(tl.years.map(total)).size).toBeGreaterThan(1);
+    expect(tl.months.some((c) => c.domains.some((d) => !d.perSystem.humanDesign))).toBe(true);
+  });
+
+  test('deterministic; conventions describe the transit rule; a timeline without humanDesign keeps the base text', async () => {
+    const a = await buildTimelineAsync(skyCtx, { asOf: ASOF, systems: ['humanDesign'] });
+    const b = await buildTimelineAsync(skyCtx, { asOf: ASOF, systems: ['humanDesign'] });
+    expect(JSON.stringify(a)).toBe(JSON.stringify(b));
+    expect(a.conventions.scopes).toContain('humanDesign.transit.gates');
+    expect(a.conventions.scopes).not.toContain('constant, time-invariant baseline');
+    expect(typeof a.conventions.humanDesign).toBe('string');
+    const noHd = await buildTimelineAsync(skyCtx, { asOf: ASOF, systems: ['bazi', 'numerology'] });
+    expect(noHd.conventions).toEqual({ ...TIMELINE_CONVENTIONS });
+  });
+
+  test('humanDesign alone never reaches high consensus (needs ≥3 systems ≥ θ)', async () => {
+    const tl = await buildTimelineAsync(skyCtx, { asOf: ASOF, systems: ['humanDesign'] });
+    for (const cell of [...tl.years, ...tl.months]) for (const d of cell.domains) expect(d.highConsensus).toBe(false);
   });
 });
 

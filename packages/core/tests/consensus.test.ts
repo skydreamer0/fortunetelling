@@ -177,9 +177,10 @@ describe('buildConsensus — 1995-07-16 22:00 male Tainan, asOf 2026-09-25 (asyn
       }
     }
     expect(flagged).toBeGreaterThan(0);
-    // 4-system agreements exist once jyotish / humanDesign join (2026 self: bazi, ziwei, jyotish, humanDesign).
+    // M5-04: humanDesign now votes only through its transit rule, so it joins an agreement only in cells where
+    // transiting gates actually clear θ. 2026 self (HD score ≈ 0.36 < θ) is a 3-system agreement without it.
     const self2026 = summary.years[0].highConsensus.find((a) => a.domain === 'self')!;
-    expect(self2026.systems).toEqual(['bazi', 'ziwei', 'jyotish', 'humanDesign']);
+    expect(self2026.systems).toEqual(['bazi', 'ziwei', 'jyotish']);
     expect(self2026.consensus).toBe(cellOf('2026-01-01', 'self').consensus);
   });
 

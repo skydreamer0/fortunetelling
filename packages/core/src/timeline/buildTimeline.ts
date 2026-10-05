@@ -10,7 +10,7 @@
  *
  * Pure and deterministic: no clock; the only time input is `opts.asOf`. Same
  * input → byte-identical JSON. `buildTimeline` is SYNC and runs jyotish /
- * humanDesign only if the Swiss Ephemeris WASM is already initialised;
+ * humanDesign (transit rules only) only if the Swiss Ephemeris WASM is already initialised;
  * `buildTimelineAsync` initialises it first.
  *
  * Window conventions (also written into `timeline.conventions`):
@@ -152,6 +152,23 @@ export const TIMELINE_CONVENTIONS: Readonly<Record<string, string>> = Object.fre
   determinism: 'No clock reads: the output depends only on (TimeContext, options, rule/catalog versions).',
 });
 
+/**
+ * Conventions that replace / extend the base set when humanDesign contributes (M5-04).
+ * Kept separate so a timeline WITHOUT humanDesign (the sync `analyze()` report) keeps its
+ * recorded `conventions` byte for byte; `scopes` here is the humanDesign-aware text.
+ */
+export const TIMELINE_CONVENTIONS_HUMAN_DESIGN: Readonly<Record<string, string>> = Object.freeze({
+  scopes:
+    'Each cell runs only rules whose scope equals its grain (year or month). Natal and decade (大運/大限) rules are not emitted as separate signals; 八字 year rules still include the current 大運 as a relation member. humanDesign likewise runs only its year / month transit rule (humanDesign.transit.gates); its natal rules (type, authority, channel centers) are NOT stamped on cells, because a constant time-invariant signal would clear the consensus threshold in every window and count the system toward agreement without saying anything about that window.',
+  humanDesign:
+    'humanDesign evaluates humanDesign.transit.gates: transiting bodies (year cells: Jupiter, Saturn, the Nodes and the outer planets; month cells: Jupiter, Saturn, the Nodes, Sun, Earth, Mercury, Venus, Mars) sampled over the whole cell window; a gate they pass that completes an undefined natal channel (electromagnetic / compensation) or falls on a gate of a defined natal channel emits domain × trait weights with valence 0. A cell with no such gate has no humanDesign signal, so the system is simply absent there.',
+});
+
+/** `timeline.conventions` for the systems that contributed (base set; humanDesign-aware text only when humanDesign is in). */
+export function timelineConventions(systems: readonly SystemId[]): Record<string, string> {
+  return { ...TIMELINE_CONVENTIONS, ...(systems.includes('humanDesign') ? TIMELINE_CONVENTIONS_HUMAN_DESIGN : {}) };
+}
+
 // ─── windows ────────────────────────────────────────────────────────────────
 
 const DAY_MS = 86_400_000;
@@ -284,8 +301,9 @@ function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: st
         else if (!isEphemerisReady()) skipped.push({ system, reason: 'ephemeris_not_initialised' });
         else {
           const { chart } = humanDesignCalculator.calculate(ctx, { asOf });
-          // Natal-only rule set: a constant baseline on every cell (see conventions.scopes).
-          evaluators.humanDesign = (w) => evaluateHumanDesignRules(chart, w, { scopes: ['natal'] });
+          // Only the transit rule (scope = the cell grain). Natal rules are NOT stamped on cells: a constant
+          // signal would clear the consensus threshold in every window (see conventions.scopes / humanDesign).
+          evaluators.humanDesign = (w) => evaluateHumanDesignRules(chart, w);
         }
         break;
       }
@@ -423,7 +441,7 @@ export function buildTimeline(ctx: TimeContext, opts: TimelineOptions): Timeline
     asOf,
     systems,
     skippedSystems: skipped,
-    conventions: { ...TIMELINE_CONVENTIONS },
+    conventions: timelineConventions(systems),
     bandCuts: [bandCuts[0], bandCuts[1], bandCuts[2]],
     systemWeights,
     years: yearCells,
@@ -502,7 +520,7 @@ export function restrictTimeline(timeline: Timeline, systems: readonly SystemId[
     asOf: timeline.asOf,
     systems: timeline.systems.filter((s) => keep.has(s)),
     skippedSystems: timeline.skippedSystems.filter((s) => keep.has(s.system)).map((s) => ({ ...s })),
-    conventions: { ...timeline.conventions },
+    conventions: timelineConventions(timeline.systems.filter((s) => keep.has(s))),
     bandCuts: [timeline.bandCuts[0], timeline.bandCuts[1], timeline.bandCuts[2]],
     systemWeights,
     years: timeline.years.map((c) => restrictTimelineCell(c, systems, restricted, opts)),
