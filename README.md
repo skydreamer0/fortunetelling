@@ -119,7 +119,7 @@ packages/core   @fortune/core   框架無關的計算核心（排盤、規則、
 | ✅ 已完成 | 跨系統共識、人生事件本地回驗、M0.5 Profile 契約、M1 本機 MCP server（現有 14 個工具） |
 | ✅ 已完成 | M2 匯出包、M3 的 `import_profile`／`check_answer` 與對話助手主線、M4-01／02 網站 MCP 入口與 `.fortune.json` 下載 |
 | ✅ 已完成 | 歷史時區資料與不確定警告、指定系統／`verifiedOnly` 篩選、問事精簡回傳與實驗性系統敏感度提示、`doctor` 健康檢查 |
-| ✅ M5-03 | 人類圖（Human Design）通過 D-039 門檻（38 案、兩個公開產生器），升級為已驗證，可計入高共識；新增 `EPHEMERIS_CALCULATORS` 明訂 sync／async 邊界 |
+| ✅ M5-03 | 人類圖（Human Design）通過 D-039 門檻（38 案、兩個公開產生器），升級為已驗證（但時間軸上只有出生盤規則，暫不計入高共識的「三套」，待行運規則完成）；新增 `EPHEMERIS_CALCULATORS` 明訂 sync／async 邊界 |
 | 🟡 保留實驗性 | 吠陀占星（Jyotish）已有計算器與 30 案驗證報告，仍標 `experimental`；尚缺兩個吠陀專用公開計算器 ≥ 20 案，補齊後再升級 |
 | ✅ M4-03 | 網站貼回 Claude 回答，用 `check_answer` 同一套檢查對照報告訊號 |
 | ✅ 已完成 | 首頁延遲載入計算核心（首頁 JS 約 1,625 kB → 252 kB） |

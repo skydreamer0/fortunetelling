@@ -241,7 +241,7 @@ README.md       給 AI 看：欄位說明、哪些是確定性計算、哪些分
 |---|---|
 | M5-01 🟡 | 門檻：與至少兩個公開計算器交叉驗證，≥ 20 案例。HD 已有兩站 38 案；Jyotish 已有 30 案獨立對照與第三方抽查，但仍缺兩個吠陀專用計算器 ≥ 20 案 |
 | M5-02 ✅ | 驗證前標 `experimental`，MCP 回應附 `verified: false` 與 caveat；不與已驗證系統用相同信心標示 |
-| M5-03 ✅ | **人類圖**升級為已驗證：`EXPERIMENTAL_SYSTEMS`（core／ai）、`EXPERIMENTAL_SYSTEM_IDS` 只剩 `jyotish`，MCP 不再附 `experimental:humanDesign` caveat，`verifiedOnly` 與高共識「三套已驗證」計入人類圖；新增 `EPHEMERIS_CALCULATORS`／`runEphemerisCalculators`（core 公開 API，`verified` 旗標）明訂 sync／async 邊界：同步 `CALCULATORS`／`analyze()`／`buildTimeline` 不含星曆系統，`buildTimelineAsync`、MCP、匯出包才含。**吠陀占星**未達門檻（缺兩個吠陀專用計算器 ≥ 20 案），維持 `experimental`，補齊後再升級。HD 規則（過運閘門等）屬啟發式、未經外部驗證，與其他系統的規則同級 |
+| M5-03 ✅ | **人類圖**升級為已驗證：`EXPERIMENTAL_SYSTEMS`（core／ai）、`EXPERIMENTAL_SYSTEM_IDS` 只剩 `jyotish`，MCP 不再附 `experimental:humanDesign` caveat，`verifiedOnly` 保留人類圖；**高共識的「三套」暫不計人類圖**（它在時間軸上只有出生盤規則、每個時間窗蓋同一組訊號，sky 範例 25 個高共識格中 23 格靠它與吠陀占星才湊滿），待 M5-04 行運規則完成再放行（`BASELINE_ONLY_SYSTEMS`）；新增 `EPHEMERIS_CALCULATORS`／`runEphemerisCalculators`（core 公開 API，`verified` 旗標）明訂 sync／async 邊界：同步 `CALCULATORS`／`analyze()`／`buildTimeline` 不含星曆系統，`buildTimelineAsync`、MCP、匯出包才含。**吠陀占星**未達門檻（缺兩個吠陀專用計算器 ≥ 20 案），維持 `experimental`，補齊後再升級。HD 規則（過運閘門等）屬啟發式、未經外部驗證，與其他系統的規則同級 |
 | M5-04 | V2-05：Jyotish／HD 規則 → Signal 補齊（新模組進場：calculator → rules → Signal，不需改 AI 層） |
 | M5-05 | 回驗累積多人資料 n ≥ 30 後才調權重（維持 D-033） |
 

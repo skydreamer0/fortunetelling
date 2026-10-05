@@ -57,14 +57,14 @@ bun run --filter @fortune/mcp add-profile sky \
 | `get_consensus` / `list_conflicts` | 跨系統共識與矛盾；`get_consensus` 可帶 `systems`／`verifiedOnly`（`list_conflicts` 不篩選） |
 | `answer_question` / `list_question_categories` | 問事（例如「哪幾個月適合買車」）月份排名；先用 `list_question_categories` 取得 category id，或直接帶 `question` 讓固定關鍵字表決定類別（比對不到或並列會回 `invalid_args` 與 `availableCategories`，不猜）。預設精簡回傳前 3 名＋排名表，附 `experimentalSensitivity`；可帶 `systems`／`verifiedOnly` |
 | `compare_profiles` | 雙人合盤（姓名與出生資料不會出現在結果中） |
-| `check_answer` | 貼回一段 AI 回答（`profileId`、`asOf`、`answerText`），檢查引用的 `sig_` id 是否存在、有無宿命論或保證式用語、有沒有把 experimental 系統（目前只有 Jyotish）當成「高共識」。只標示、不改寫；回 `{ ok, citedIds, unknownCitations, issues[] }` |
+| `check_answer` | 貼回一段 AI 回答（`profileId`、`asOf`、`answerText`），檢查引用的 `sig_` id 是否存在、有無宿命論或保證式用語、有沒有把 experimental 系統（Jyotish）或只有出生盤規則的 Human Design 當成「高共識」。只標示、不改寫；回 `{ ok, citedIds, unknownCitations, issues[] }` |
 | `import_profile` | 匯入網站匯出的 `.fortune.json`（`content` 全文或 `path` 路徑二選一）。已存在同名 profile 不會覆蓋，要 `overwrite: true`；指紋缺漏或過期會重算並警告 |
 
 成功回應的外殼是 `{ asOf, versionsHash, caveats, data }`，`versions` 為選用欄位；錯誤回應是 `{ error }`（[實作](../packages/mcp/src/envelope.ts)）：
 
 - `versionsHash`：版本區塊（core、calculator、規則目錄版本與 ephemeris 狀態）的 12 碼雜湊，不含 `asOf`。同一輸入同一版本會得到相同結果；雜湊變了代表版本變了。
 - `versions`：完整版本區塊（約 500 bytes）只在 `list_profiles` 與 `get_profile` 回傳，其餘工具只回 `versionsHash` 以節省上下文。
-- `caveats`：Claude 不該過度相信的地方——分數未校準、時間邊界、未參與的系統，以及仍標 `experimental` 的 Jyotish。[人類圖已有兩站 38 案交叉驗證](../packages/core/tests/fixtures/validation/humandesign-validation-report.md)，M5-03 起視為已驗證（不再有 `experimental:humanDesign` caveat，可計入高共識）；[吠陀占星已有 30 案獨立對照，但仍缺兩個公開吠陀計算器 ≥ 20 案](../packages/core/tests/fixtures/validation/jyotish-validation-report.md)，[experimental 標記](../packages/core/src/portable/versions.ts)仍保留。計算結果對照不代表預測有效性已驗證。
+- `caveats`：Claude 不該過度相信的地方——分數未校準、時間邊界、未參與的系統，以及仍標 `experimental` 的 Jyotish。[人類圖已有兩站 38 案交叉驗證](../packages/core/tests/fixtures/validation/humandesign-validation-report.md)，M5-03 起視為已驗證（不再有 `experimental:humanDesign` caveat），但時間軸上目前只有出生盤規則，暫不計入高共識的「三套」；[吠陀占星已有 30 案獨立對照，但仍缺兩個公開吠陀計算器 ≥ 20 案](../packages/core/tests/fixtures/validation/jyotish-validation-report.md)，[experimental 標記](../packages/core/src/portable/versions.ts)仍保留。計算結果對照不代表預測有效性已驗證。
 - 回應太大時不會截斷，而是回 `response_too_large` 並提示縮小範圍。
 
 回傳瘦身：
@@ -105,7 +105,7 @@ server 連線時會自動把下面這段當作 `instructions` 送給客戶端；
 1. 先 list_profiles 取得 profileId；所有時間工具都要帶 asOf（YYYY-MM-DD，使用者沒說就用今天並告知）。
 2. 問事先用 answer_question，再用 get_signal／list_signals 查證據；可用 systems 或 verifiedOnly 只看指定／已驗證系統。experimentalSensitivity.changed 為 true 時，要明講結論取決於未驗證系統。
 3. 結論附〔sig_…〕，id 逐字取自工具回傳；查不到就說資料裡沒有。
-4. 「高共識」需至少 3 套已驗證系統；吠陀占星 Jyotish 是實驗性系統，不得計入，引用時要註明；人類圖 Human Design 已通過交叉驗證（M5-03），可計入。
+4. 「高共識」需至少 3 套已驗證系統；Jyotish 是實驗性系統、Human Design 目前只有出生盤規則（每窗都一樣），都不得計入，引用時要註明。
 5. 分數未校準，不是機率；若最高分仍在「低」帶，直說「沒有哪個月特別突出」，不硬推薦。
 6. 系統矛盾時兩邊都講；語氣用傾向，不說一定會、保證、注定。
 重要結論送出前可用 check_answer 自我檢查。

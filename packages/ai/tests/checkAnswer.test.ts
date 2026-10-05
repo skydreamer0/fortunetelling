@@ -70,9 +70,11 @@ describe('checkAnswer (c) 高共識與 experimental', () => {
   test('說「吠陀占星不算高共識」是誠實的說法，不標示', () => {
     expect(run('吠陀占星屬 experimental，不算高共識的依據〔sig_jyo01〕。').ok).toBe(true);
   });
-  test('人類圖已通過交叉驗證（M5-03）：可計入三套已驗證系統', () => {
-    expect(run('財運屬高共識〔sig_bazi01〕〔sig_ziwei01〕〔sig_hd01〕').ok).toBe(true);
-    expect(run('人類圖與其他系統都支持這個高共識〔sig_bazi01〕〔sig_ziwei01〕〔sig_hd01〕').ok).toBe(true);
+  test('人類圖已驗證但只有出生盤基線：不算高共識的一票，說明原因', () => {
+    const r = run('財運屬高共識〔sig_bazi01〕〔sig_ziwei01〕〔sig_hd01〕');
+    expect(r.issues.map((i) => i.code)).toEqual(['high_consensus_unsupported']);
+    expect(r.issues[0].detail).toContain('humanDesign');
+    expect(run('財運屬高共識〔sig_bazi01〕〔sig_ziwei01〕〔sig_num01〕').ok).toBe(true);
   });
   test('預設 experimental 清單與 core 一致', () => {
     expect([...EXPERIMENTAL_SYSTEMS]).toEqual(['jyotish']);
