@@ -70,7 +70,7 @@ async function networkFirstShell(request) {
 }
 
 async function cacheFirst(request) {
-  const cached = await caches.match(request, { ignoreSearch: true });
+  const cached = await caches.match(request, { ignoreSearch: true, ignoreVary: true });
   if (cached) return cached;
   const response = await fetch(request);
   if (response.ok) {
