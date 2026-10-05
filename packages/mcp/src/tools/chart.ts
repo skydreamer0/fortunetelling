@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { humanDesignCalculator, initEphemeris, jyotishCalculator, runCalculators, type Component } from '@fortune/core';
+import { EXPERIMENTAL_SYSTEMS, humanDesignCalculator, initEphemeris, jyotishCalculator, runCalculators, type Component } from '@fortune/core';
 import type { Analysis } from '../compute';
 import { caveatsFor, ok, type Caveat } from '../envelope';
 import { defineTool } from './types';
@@ -71,7 +71,7 @@ export const chartTools = [
       'detail="summary" (default) returns only chart fields whose JSON is short (<=240 chars; the rest are listed in omittedChartFields), ' +
       'components as {id, value} with value truncated to 80 chars, and warnings. The name is never included. ' +
       'If the system needs a birth time and it is unknown, returns available:false with a reason instead of guessing. ' +
-      'jyotish and humanDesign are experimental (caveat experimental:<system>).',
+      'jyotish is experimental (caveat experimental:<system>); humanDesign passed cross-validation (M5-03) and has no such caveat. Both need the ephemeris (async).',
     input: {
       profileId: z.string(),
       system: z.enum(SYSTEMS),
@@ -82,7 +82,7 @@ export const chartTools = [
       const analysis = await analyzer.get(args.profileId, args.asOf);
       const { system, detail } = args;
       const caveats: Caveat[] = caveatsFor(analysis);
-      if ((system === 'jyotish' || system === 'humanDesign') && !caveats.some(c => c.code === `experimental:${system}`)) {
+      if (EXPERIMENTAL_SYSTEMS.includes(system) && !caveats.some(c => c.code === `experimental:${system}`)) {
         caveats.push({
           code: `experimental:${system}`,
           message: `${system} is not yet cross-validated against public calculators (verified: false, D-039). Do not count it as equal confidence to verified systems.`,

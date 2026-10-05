@@ -288,3 +288,4 @@ Jyotish 與 Human Design 的 calculator 與 `rules.ts` 已存在，但尚未與�
 - **驗證前**：標 `experimental`；MCP 回應附 `verified: false` 與 caveat，不與已驗證系統用相同信心標示，也不因此當作高共識的一票而不加說明。
 - **驗證後**：才正式納入 public API／registry，並明確 sync／async 行為邊界。
 - M1（MCP）不被此驗證阻塞。
+- **2026-10-05 落實（M5-03）**：人類圖（38 案、兩個公開產生器）達門檻，升級為已驗證：不再標 `experimental`，計入高共識的「三套已驗證」；仍因需要星曆而不進同步 `CALCULATORS`，改列 `EPHEMERIS_CALCULATORS`（含 `verified` 旗標）。吠陀占星未達門檻，維持 `experimental`。算法有「與公開來源一致」的證據，不等於預測有效性已驗證（D-033 分數未校準仍成立）。

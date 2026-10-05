@@ -83,8 +83,11 @@ export * from './backtest/index';
 // M0.5: portable profile file, canonical JSON, version block (D-037)
 export * from './portable/index';
 
-// Jyotish / Human Design calculators are experimental (D-039) and not in CALCULATORS; expose them explicitly
-// so consumers (MCP) need not reach into core/src. Call `await initEphemeris()` first.
+// Jyotish / Human Design need the ephemeris (async), so they are not in the sync CALCULATORS; they live in
+// EPHEMERIS_CALCULATORS (M5-03, D-039: humanDesign verified, jyotish still experimental). The individual
+// calculators stay exported for consumers (MCP) that need one system. Call `await initEphemeris()` first.
+export { EPHEMERIS_CALCULATORS, runEphemerisCalculators } from './calculators/ephemerisRegistry';
+export type { EphemerisCalculatorEntry } from './calculators/ephemerisRegistry';
 export { initEphemeris, isEphemerisReady } from './calculators/astro/index';
 export { jyotishCalculator } from './calculators/jyotish/calculator';
 export { humanDesignCalculator } from './calculators/humanDesign/calculator';

@@ -120,7 +120,7 @@ describe('指定 systems', () => {
     expect(() => answerQuestion(req, provider, { systems: ['astrology' as SystemId] })).toThrow(/unknown system/);
     expect(() => answerQuestion(req, provider, { systems: [] })).toThrow(/non-empty/);
     expect(normalizeSystems(['humanDesign', 'bazi'])).toEqual(['bazi', 'humanDesign']);
-    expect(EXPERIMENTAL_SYSTEM_IDS).toEqual(['jyotish', 'humanDesign']);
+    expect(EXPERIMENTAL_SYSTEM_IDS).toEqual(['jyotish']);
     expect([...EXPERIMENTAL_SYSTEM_IDS] as string[]).toEqual([...EXPERIMENTAL_SYSTEMS]);
   });
 
@@ -194,7 +194,7 @@ describe('experimentalSensitivity', () => {
   test('sky 真實訊號：結果穩定可重現（記錄是否翻轉）', () => {
     const s = experimentalSensitivity({ category: 'vehicle_purchase', range: { start: '2027-01', end: '2027-12' } }, provider)!;
     expect(s.top3All.length).toBe(3);
-    expect(s.systemsVerifiedOnly).toEqual(['bazi', 'ziwei', 'numerology', 'tzolkin', 'mingGua']);
+    expect(s.systemsVerifiedOnly).toEqual(['bazi', 'ziwei', 'numerology', 'tzolkin', 'mingGua', 'humanDesign']);
     expect(JSON.stringify(experimentalSensitivity({ category: 'vehicle_purchase', range: { start: '2027-01', end: '2027-12' } }, provider))).toBe(JSON.stringify(s));
     console.log('sky vehicle_purchase 2027 sensitivity:', JSON.stringify(s.top3All), JSON.stringify(s.top3VerifiedOnly), s.changed);
   });

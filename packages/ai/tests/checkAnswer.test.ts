@@ -62,16 +62,20 @@ describe('checkAnswer (c) 高共識與 experimental', () => {
   test('三套已驗證 + 一套 experimental → 通過', () => {
     expect(run('財運屬高共識〔sig_bazi01〕〔sig_ziwei01〕〔sig_astro01〕，吠陀占星也有提到〔sig_jyo01〕').ok).toBe(true);
   });
-  test('同一句把吠陀占星／人類圖與高共識並列 → 標示', () => {
-    const r = run('吠陀占星與人類圖都支持這個高共識〔sig_bazi01〕〔sig_ziwei01〕〔sig_astro01〕');
+  test('同一句把吠陀占星與高共識並列 → 標示', () => {
+    const r = run('吠陀占星也支持這個高共識〔sig_bazi01〕〔sig_ziwei01〕〔sig_astro01〕');
     expect(r.issues.map((i) => i.code)).toEqual(['experimental_as_consensus']);
     expect(r.issues[0].values).toEqual(expect.arrayContaining(['吠陀']));
   });
-  test('說「人類圖不算高共識」是誠實的說法，不標示', () => {
-    expect(run('人類圖屬 experimental，不算高共識的依據〔sig_hd01〕。').ok).toBe(true);
+  test('說「吠陀占星不算高共識」是誠實的說法，不標示', () => {
+    expect(run('吠陀占星屬 experimental，不算高共識的依據〔sig_jyo01〕。').ok).toBe(true);
+  });
+  test('人類圖已通過交叉驗證（M5-03）：可計入三套已驗證系統', () => {
+    expect(run('財運屬高共識〔sig_bazi01〕〔sig_ziwei01〕〔sig_hd01〕').ok).toBe(true);
+    expect(run('人類圖與其他系統都支持這個高共識〔sig_bazi01〕〔sig_ziwei01〕〔sig_hd01〕').ok).toBe(true);
   });
   test('預設 experimental 清單與 core 一致', () => {
-    expect([...EXPERIMENTAL_SYSTEMS]).toEqual(['jyotish', 'humanDesign']);
+    expect([...EXPERIMENTAL_SYSTEMS]).toEqual(['jyotish']);
   });
 });
 

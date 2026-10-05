@@ -90,10 +90,10 @@ describe('answer_question systems／verifiedOnly', () => {
     expect(json.caveats.some((c: any) => c.code.startsWith('experimental:'))).toBe(false);
 
     const verified = (await aq({ verifiedOnly: true })).json.data;
-    const explicit = (await aq({ systems: ['bazi', 'ziwei', 'numerology'] })).json.data;
+    const explicit = (await aq({ systems: ['bazi', 'ziwei', 'numerology', 'humanDesign'] })).json.data;
     expect(verified.ranking).toEqual(explicit.ranking);
     expect(verified.top).toEqual(explicit.top);
-    expect(verified.systemsUsed).toEqual(['bazi', 'ziwei', 'numerology']);
+    expect(verified.systemsUsed).toEqual(['bazi', 'ziwei', 'numerology', 'humanDesign']);
     expect(verified.experimentalIncluded).toBe(false);
     // verifiedOnly 與 systems 可併用：從指定清單再拿掉實驗性系統
     const both = (await aq({ systems: ['bazi', 'jyotish'], verifiedOnly: true })).json.data;
@@ -121,7 +121,7 @@ describe('experimentalSensitivity', () => {
     const s = json.data.experimentalSensitivity;
     expect(s.changed).toBe(true);
     expect(s.top3All.map((x: any) => x.month)).not.toEqual(s.top3VerifiedOnly.map((x: any) => x.month));
-    expect(s.verifiedSystems).toEqual(['bazi', 'ziwei', 'numerology']);
+    expect(s.verifiedSystems).toEqual(['bazi', 'ziwei', 'numerology', 'humanDesign']);
     // 含實驗性系統的前 3 名 = 本次排名前 3 名
     expect(s.top3All).toEqual(json.data.top.map((t: any) => ({ month: t.month, score: t.score })));
     // 僅已驗證系統的前 3 名 = verifiedOnly 的排名前 3 名
@@ -130,7 +130,6 @@ describe('experimentalSensitivity', () => {
     const warn = json.caveats.find((c: any) => c.code === 'experimental_sensitive');
     expect(warn.message).toContain('結論取決於尚未驗證的系統');
     expect(warn.message).toContain('吠陀占星');
-    expect(warn.message).toContain('人類圖');
     for (const m of [...s.top3All, ...s.top3VerifiedOnly]) expect(warn.message).toContain(m.month);
     for (const bad of ['数据', '默认', '导出', '代码']) expect(warn.message).not.toContain(bad);
     // verifiedOnly 的回應也照樣比較（排除與否都看得到兩邊）
@@ -197,11 +196,11 @@ describe('get_timeline／get_consensus systems 與逐月表格', () => {
   test('get_timeline systems：年度 cell 等於 core restrictTimeline', async () => {
     const analysis = await fx.ctx.analyzer.get('sky', ASOF);
     const { json } = await fx.call('get_timeline', { ...base, verifiedOnly: true, domain: 'career' });
-    expect(json.data.systems).toEqual(['bazi', 'ziwei', 'numerology']);
-    expect(json.data.systemsUsed).toEqual(['bazi', 'ziwei', 'numerology']);
-    expect(json.data.excludedSystems).toEqual(['jyotish', 'humanDesign']);
+    expect(json.data.systems).toEqual(['bazi', 'ziwei', 'numerology', 'humanDesign']);
+    expect(json.data.systemsUsed).toEqual(['bazi', 'ziwei', 'numerology', 'humanDesign']);
+    expect(json.data.excludedSystems).toEqual(['jyotish']);
     expect(json.data.experimentalIncluded).toBe(false);
-    const expected = restrictTimeline(analysis.timeline, ['bazi', 'ziwei', 'numerology']);
+    const expected = restrictTimeline(analysis.timeline, ['bazi', 'ziwei', 'numerology', 'humanDesign']);
     json.data.years.forEach((y: any, i: number) => {
       const cell = expected.years[i].domains.find(d => d.domain === 'career')!;
       expect(y.domains[0].score).toBe(cell.score);
@@ -235,12 +234,12 @@ describe('get_timeline／get_consensus systems 與逐月表格', () => {
   test('get_consensus verifiedOnly：只從已驗證系統重算共識', async () => {
     const analysis = await fx.ctx.analyzer.get('sky', ASOF);
     const { json } = await fx.call('get_consensus', { ...base, verifiedOnly: true, detail: true });
-    expect(json.data.systems).toEqual(['bazi', 'ziwei', 'numerology']);
+    expect(json.data.systems).toEqual(['bazi', 'ziwei', 'numerology', 'humanDesign']);
     expect(json.data.experimentalIncluded).toBe(false);
-    const expected = buildConsensus(restrictTimeline(analysis.timeline, ['bazi', 'ziwei', 'numerology']));
+    const expected = buildConsensus(restrictTimeline(analysis.timeline, ['bazi', 'ziwei', 'numerology', 'humanDesign']));
     expect(json.data.conflictCount).toBe(expected.headlines.conflicts.length);
     for (const y of json.data.years) for (const a of y.highConsensus) {
-      for (const s of a.systems) expect(['bazi', 'ziwei', 'numerology']).toContain(s);
+      for (const s of a.systems) expect(['bazi', 'ziwei', 'numerology', 'humanDesign']).toContain(s);
     }
     expect((await fx.call('get_consensus', { ...base, systems: ['x'] })).json.error.code).toBe('invalid_args');
   }, 120_000);

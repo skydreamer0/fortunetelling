@@ -59,7 +59,7 @@ export const HIGH_CONSENSUS_TERM = '高共識';
 export const HIGH_CONSENSUS_MIN_SYSTEMS = 3;
 
 /** 尚未與公開計算器交叉驗證的系統 id（與 core 的 experimental 一致，D-039）；不計入高共識。 */
-export const EXPERIMENTAL_SYSTEMS: readonly string[] = Object.freeze(['jyotish', 'humanDesign']);
+export const EXPERIMENTAL_SYSTEMS: readonly string[] = Object.freeze(['jyotish']);
 
 export interface ValidationContext {
   payload: InterpretationPayload;

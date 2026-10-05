@@ -10,7 +10,7 @@
 
 `buildInterpretationPayload` 的 `redact`（姓名與出生地標籤去識別化）與 `budget`（字數預算）預設都開，
 本機對話可傳 `{ redact: false, budget: false }`。高共識的「三套以上」只計已驗證系統：
-`jyotish`、`humanDesign` 屬 experimental（`EXPERIMENTAL_SYSTEMS`），不計入。
+只有 `jyotish` 屬 experimental（`EXPERIMENTAL_SYSTEMS`），不計入；`humanDesign` 已於 M5-03 通過交叉驗證，可計入。
 
 以下為選用的程式呼叫層（`@fortune/ai/client`）說明。
 

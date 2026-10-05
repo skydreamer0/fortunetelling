@@ -111,7 +111,7 @@ export const questionTools = [
       'Default (compact) response: top = first 3 months, each { rank, month, score, band, highConsensus, domains (one summary line per domain), signalIds (max 3, resolvable with get_signal), oneLine (fixed-template reason) }, ' +
       'plus ranking = every month as [month, score, band]. detail: true returns the full structure instead (domainScores, support/risk signals, conventions); ranks and scores are identical. ' +
       'systems (e.g. ["bazi","ziwei"]) or verifiedOnly: true recompute the ranking from only those systems; the response always has systemsUsed, excludedSystems, experimentalIncluded. ' +
-      'experimentalSensitivity { top3All, top3VerifiedOnly, changed } compares the top 3 with vs without the experimental systems (jyotish, humanDesign); if changed is true, tell the user the conclusion depends on unverified systems. ' +
+      'experimentalSensitivity { top3All, top3VerifiedOnly, changed } compares the top 3 with vs without the experimental systems (jyotish); if changed is true, tell the user the conclusion depends on unverified systems. ' +
       'Unknown explicit category → { unsupported: true }.',
     input: {
       profileId: z.string(),

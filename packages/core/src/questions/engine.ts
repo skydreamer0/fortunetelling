@@ -348,12 +348,12 @@ export function normalizeSystems(systems: readonly unknown[]): SystemId[] {
  * 不從 portable/versions 匯入（那會把 calculators 拉進純模組，違反 D-021 匯入邊界）；
  * 測試會確認它與 EXPERIMENTAL_SYSTEMS 一致。
  */
-export const EXPERIMENTAL_SYSTEM_IDS: readonly SystemId[] = Object.freeze(['jyotish', 'humanDesign'] as SystemId[]);
+export const EXPERIMENTAL_SYSTEM_IDS: readonly SystemId[] = Object.freeze(['jyotish'] as SystemId[]);
 
 export interface SensitivityOptions extends Omit<AnswerOptions, 'topN'> {
   /** 比較前幾名，預設 3。 */
   topN?: number;
-  /** 視為實驗性的系統，預設 EXPERIMENTAL_SYSTEM_IDS（吠陀占星 Jyotish、人類圖 Human Design）。 */
+  /** 視為實驗性的系統，預設 EXPERIMENTAL_SYSTEM_IDS（目前只有吠陀占星 Jyotish）。 */
   experimental?: readonly SystemId[];
 }
 

@@ -82,7 +82,7 @@ describe('stdio server (what Claude Desktop actually talks to)', () => {
     expect(typeof all.data.experimentalSensitivity.changed).toBe('boolean');
     if (all.data.experimentalSensitivity.changed) expect(all.caveats.some((c: any) => c.code === 'experimental_sensitive')).toBe(true);
     const verified = JSON.parse(textOf(await client.callTool({ name: 'answer_question', arguments: { ...args, verifiedOnly: true } })));
-    expect(verified.data.systemsUsed).toEqual(['bazi', 'ziwei', 'numerology']);
+    expect(verified.data.systemsUsed).toEqual(['bazi', 'ziwei', 'numerology', 'humanDesign']);
     expect(verified.data.experimentalIncluded).toBe(false);
     for (const id of verified.data.top.flatMap((t: any) => t.signalIds)) {
       const sig = JSON.parse(textOf(await client.callTool({ name: 'get_signal', arguments: { profileId: 'sky', asOf: '2026-09-30', signalId: id } })));

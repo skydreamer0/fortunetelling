@@ -6,7 +6,7 @@
  */
 
 import { createHash } from 'node:crypto';
-import { buildVersionInfo, canonicalStringify, type VersionInfo } from '@fortune/core';
+import { EXPERIMENTAL_SYSTEMS, buildVersionInfo, canonicalStringify, type VersionInfo } from '@fortune/core';
 import type { Analysis } from './compute';
 import { ToolError } from './errors';
 
@@ -44,7 +44,7 @@ export function caveatsFor(
   }
   for (const system of analysis.timeline.systems) {
     if (used && !used.has(system)) continue;
-    if (system === 'jyotish' || system === 'humanDesign') {
+    if (EXPERIMENTAL_SYSTEMS.includes(system)) {
       caveats.push({
         code: `experimental:${system}`,
         message: `${system} is not yet cross-validated against public calculators (verified: false, D-039). Do not count it as equal confidence to verified systems, nor toward 'high consensus'.`,

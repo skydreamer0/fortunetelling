@@ -7,7 +7,7 @@
  * 檢查三件事，皆為建議性（只標示，不改寫）：
  *   (a) `unknown_citation`           引用的 sig_ id 查不到；
  *   (b) `honesty_violation`          HonestyGuard（L2）、AI 宿命論用語、或保證式斷言；
- *   (c) `experimental_as_consensus`  把 experimental 系統（吠陀占星、人類圖）當成「高共識」的依據；
+ *   (c) `experimental_as_consensus`  把 experimental 系統（吠陀占星）當成「高共識」的依據；
  *       `high_consensus_unsupported` 寫「高共識」但引用的已驗證系統少於 3 套。
  */
 import { HonestyGuard } from './core-pure';
@@ -15,7 +15,7 @@ import { splitParagraphs } from './pasteCheck';
 import { AI_HONESTY_LAYER, EXPERIMENTAL_SYSTEMS, FATALISM_PATTERNS, HIGH_CONSENSUS_MIN_SYSTEMS, HIGH_CONSENSUS_TERM } from './validate';
 
 /** 文字中提到 experimental 系統的說法。 */
-export const EXPERIMENTAL_NAME_RE = /吠陀|Jyotish|人類圖|Human\s*Design/i;
+export const EXPERIMENTAL_NAME_RE = /吠陀|Jyotish/i;
 
 /** HonestyGuard 與 FATALISM 之外的保證式斷言。 */
 export const ASSERTION_PATTERNS: ReadonlyArray<{ id: string; pattern: RegExp }> = Object.freeze([

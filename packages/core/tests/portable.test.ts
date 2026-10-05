@@ -113,11 +113,11 @@ describe('profile file', () => {
 });
 
 describe('buildVersionInfo', () => {
-  test('carries asOf, versions and marks Jyotish/Human Design experimental', () => {
+  test('carries asOf, versions and marks only Jyotish experimental (Human Design passed M5-03)', () => {
     const v = buildVersionInfo({ asOf: '2026-09-30' });
     expect(v.asOf).toBe('2026-09-30');
     expect(v.profileSchemaVersion).toBe(1);
-    expect(v.experimentalSystems).toEqual(['jyotish', 'humanDesign']);
+    expect(v.experimentalSystems).toEqual(['jyotish']);
     expect(v.calculators.bazi).toBeTruthy();
     expect(Object.values(v.catalogs).every(n => n > 0)).toBe(true);
     expect(v.ephemeris).toBe('not_initialized');

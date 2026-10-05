@@ -22,9 +22,11 @@ describe('get_chart', () => {
     expect(full.text).not.toContain('王小明');
     expect(summary.text).not.toContain('王小明');
     expect(full.json.asOf).toBe(ASOF);
-    if (system === 'jyotish' || system === 'humanDesign') {
-      expect(full.json.caveats.map((c: any) => c.code)).toContain(`experimental:${system}`);
-      expect(summary.json.caveats.map((c: any) => c.code)).toContain(`experimental:${system}`);
+    // jyotish stays experimental; humanDesign passed cross-validation (M5-03) and carries no such caveat.
+    for (const reply of [full, summary]) {
+      const codes = reply.json.caveats.map((c: any) => c.code);
+      if (system === 'jyotish') expect(codes).toContain('experimental:jyotish');
+      expect(codes).not.toContain('experimental:humanDesign');
     }
   }, 30000);
 

@@ -110,7 +110,7 @@ export function sensitivityCaveat(s: ExperimentalSensitivity): { code: string; m
   return {
     code: 'experimental_sensitive',
     message:
-      `結論取決於尚未驗證的系統：含吠陀占星 Jyotish、人類圖 Human Design 時前 3 名為 ${list(s.top3All)}，` +
+      `結論取決於尚未驗證的系統：含吠陀占星 Jyotish 時前 3 名為 ${list(s.top3All)}，` +
       `僅已驗證系統為 ${list(s.top3VerifiedOnly)}。不可當成穩定結論，回答時須明講。`,
   };
 }

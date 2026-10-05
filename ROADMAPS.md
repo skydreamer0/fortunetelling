@@ -1,6 +1,6 @@
 # Roadmap — 程式先算完，AI 在對話中查詢與比對
 
-> 狀態核對：2026-10-04，以 `master` 的 [da76f163](https://github.com/skydreamer0/fortunetelling/commit/da76f16328469366f8c3b0c9eeeff5efbe9d172f) 為準。V1、V3、M0.5～M2 與 M3 主線已完成；M4 完成 M4-01／02；V2／M5 已有驗證報告，Jyotish／HD 仍標 `experimental`，正式升級尚未完成。歷史時區修正與警告、MCP 指定系統篩選及精簡回傳均已併入 `master`。
+> 狀態核對：2026-10-04，以 `master` 的 [da76f163](https://github.com/skydreamer0/fortunetelling/commit/da76f16328469366f8c3b0c9eeeff5efbe9d172f) 為準。V1、V3、M0.5～M2 與 M3 主線已完成；M4 完成 M4-01／02；V2／M5 已有驗證報告；2026-10-05 起人類圖（HD）通過 D-039 門檻、視為已驗證（M5-03），Jyotish 仍標 `experimental`。歷史時區修正與警告、MCP 指定系統篩選及精簡回傳均已併入 `master`。
 > 目標架構與介面契約：[docs/ARCHITECTURE-V2.md](docs/ARCHITECTURE-V2.md)
 > 決策依據：[docs/DECISIONS.md](docs/DECISIONS.md) D-021 ～ D-039
 > 現行 Report 契約（v5）：[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)；MCP 設定：[docs/MCP-SETUP.md](docs/MCP-SETUP.md)
@@ -39,7 +39,7 @@
 | 八字／紫微規則、Signal、單系統與跨系統彙整、共識與矛盾、年度／月份 Timeline | ✅ V1、V3 |
 | Report v5、React UI（時間軸、共識徽章、十二宮盤、合盤、人生事件） | ✅ |
 | 問事引擎（`questions/`，逐月排名）、人生事件回驗（本地版） | ✅ V4（本地）、V5 |
-| Jyotish／Human Design | 🟡 calculator 與規則已寫、已進非同步 Timeline；M5 已完成獨立驗證（人類圖 38 案、吠陀占星 30 案，未發現計算器錯誤），但吠陀占星仍缺人工在公開計算器抽查 → 仍視為 `experimental`，不在 `CALCULATORS`／同步 `analyze()` |
+| Jyotish／Human Design | 🟡 calculator 與規則已寫、已進非同步 Timeline；M5 已完成獨立驗證（人類圖 38 案、吠陀占星 30 案，未發現計算器錯誤）。**人類圖**達 D-039 門檻 → 已驗證（M5-03）；**吠陀占星**仍缺人工在公開計算器抽查 → 仍視為 `experimental`。兩者都需星曆（async），不在同步 `CALCULATORS`／`analyze()`，改列 `EPHEMERIS_CALCULATORS` |
 | Profile 契約：`.fortune.json`、`profileId`＋`chartFingerprint`、canonical serializer、版本區塊 | ✅ M0.5（#7） |
 | 本機 MCP server：14 個工具（含 `check_answer`、`import_profile`）、`asOf` 顯式、回應外殼、大小上限、姓名預設不回傳、server 自帶使用守則（instructions） | ✅ M1、M3 |
 | 匯出檔（manifest）、`share-redacted`、`import_profile`、網站下載 `.fortune.json` | ✅ M2、M3、M4-02 |
@@ -107,7 +107,7 @@
 | V2-01 ✅ | 接入 Swiss Ephemeris WASM（瀏覽器可跑，D-027）；ephemeris 檔延遲載入 |
 | V2-02 ✅ | `calculators/astro`：Sun～Saturn、Rahu/Ketu、Ascendant，UT 輸入 |
 | V2-03 🟡 | Jyotish（計算器與 30 案獨立對照驗證已完成，仍缺兩個公開吠陀計算器 ≥ 20 案交叉驗證）：ayanamsa 設定、D1/D9/D10、Nakshatra/Pada、House Lord、Vimshottari Maha/Antar Dasha（精確到日）、Transit |
-| V2-04 🟡 | Human Design（計算器與 38 案公開來源交叉驗證已完成，仍標 `experimental`，待 M5-03 決定正式升級）：Personality／Design（88° 求根）、Gate/Line、Channel、Center、Type、Authority、Profile、Definition、Incarnation Cross |
+| V2-04 🟡 | Human Design（計算器與 38 案公開來源交叉驗證已完成，M5-03 起視為已驗證）：Personality／Design（88° 求根）、Gate/Line、Channel、Center、Type、Authority、Profile、Definition、Incarnation Cross |
 | V2-05 🟡 | Jyotish／HD 規則 → Signal（規則已寫並進非同步 Timeline；待交叉驗證，見 M5）（Dasha 主星、2H/4H/7H/10H/11H 過運等） |
 
 **完成條件**：與至少兩個公開計算器交叉驗證，≥ 20 個案例。
@@ -241,7 +241,7 @@ README.md       給 AI 看：欄位說明、哪些是確定性計算、哪些分
 |---|---|
 | M5-01 🟡 | 門檻：與至少兩個公開計算器交叉驗證，≥ 20 案例。HD 已有兩站 38 案；Jyotish 已有 30 案獨立對照與第三方抽查，但仍缺兩個吠陀專用計算器 ≥ 20 案 |
 | M5-02 ✅ | 驗證前標 `experimental`，MCP 回應附 `verified: false` 與 caveat；不與已驗證系統用相同信心標示 |
-| M5-03 | 驗證後正式納入 public API／registry，明確 sync／async 行為邊界 |
+| M5-03 ✅ | **人類圖**升級為已驗證：`EXPERIMENTAL_SYSTEMS`（core／ai）、`EXPERIMENTAL_SYSTEM_IDS` 只剩 `jyotish`，MCP 不再附 `experimental:humanDesign` caveat，`verifiedOnly` 與高共識「三套已驗證」計入人類圖；新增 `EPHEMERIS_CALCULATORS`／`runEphemerisCalculators`（core 公開 API，`verified` 旗標）明訂 sync／async 邊界：同步 `CALCULATORS`／`analyze()`／`buildTimeline` 不含星曆系統，`buildTimelineAsync`、MCP、匯出包才含。**吠陀占星**未達門檻（缺兩個吠陀專用計算器 ≥ 20 案），維持 `experimental`，補齊後再升級。HD 規則（過運閘門等）屬啟發式、未經外部驗證，與其他系統的規則同級 |
 | M5-04 | V2-05：Jyotish／HD 規則 → Signal 補齊（新模組進場：calculator → rules → Signal，不需改 AI 層） |
 | M5-05 | 回驗累積多人資料 n ≥ 30 後才調權重（維持 D-033） |
 
@@ -285,7 +285,7 @@ M0.5、M1、M2 與 M3 主線已完成，M4 完成 M4-01／02。`historical_zone_
 - `canonicalStringify`／`canonicalize`：鍵序固定、排除 `generatedAt`、拒收 NaN／函式／Date。與 `signals/signalId` 既有的寬鬆 `canonicalJson` 並存（訊號 id 依賴後者，不動）。
 - `chartFingerprint`：`cf1-` + FNV-1a 64（沿用 `fnv1a64Hex`）。只含出生日期、時間、精度、性別、經緯度（4 位小數）、時區；**不含姓名與地名標籤**。
 - `.fortune.json`：`createProfileFile`／`serializeProfileFile`／`parseProfileFile`；檔案無時間戳，輸出位元穩定；指紋缺漏或過期時重算並回警告。
-- `buildVersionInfo({ asOf })`：core／schema／calculator／catalog 版本、ephemeris 狀態、`experimentalSystems`（Jyotish／HD）。
+- `buildVersionInfo({ asOf })`：core／schema／calculator／catalog 版本、ephemeris 狀態、`experimentalSystems`（M5-03 前為 Jyotish／HD，現只剩 Jyotish）。
 
 **M0.5 當時的差異**：網站 `lifeEvents` 的 key（`profileKeyOf`）包含姓名，與 `chartFingerprint` 不同；當時未動網站。後續已於 M4-02 改用指紋並加入舊 key 遷移，見下方 M4 紀錄。
 

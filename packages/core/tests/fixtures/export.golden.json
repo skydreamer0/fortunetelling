@@ -28,8 +28,7 @@
     },
     "ephemeris": "moshier",
     "experimentalSystems": [
-      "jyotish",
-      "humanDesign"
+      "jyotish"
     ]
   },
   "files": {
@@ -49,7 +48,7 @@
       "hash": "f1a0221631e4a8f1"
     },
     "README.md": {
-      "hash": "c526392cbd3944bc"
+      "hash": "be270df9db56e36d"
     }
   },
   "signalCount": 1152
