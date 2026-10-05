@@ -9,6 +9,7 @@
 import { useState } from 'react';
 import { buildProfileDownload, profileIdError } from '../../lib/profileFile';
 import type { Report } from '../../model/types';
+import { AnswerCheck } from './AnswerCheck';
 import { copyText, type CopyOutcome } from './copyText';
 
 export type DesktopOs = 'windows' | 'mac';
@@ -225,6 +226,15 @@ export function McpEntry({ report, clipboard, onDownload = downloadTextFile }: {
           <p className="ask__hint">
             Claude 會呼叫工具取得訊號與月份排名，回答裡引用的訊號編號都查得到。完整工具說明見專案的 docs/MCP-SETUP.md。
           </p>
+        </li>
+
+        <li className="ask__step">
+          <h3 className="ask__step-title">檢查回答（選填）</h3>
+          <p className="ask__hint">
+            把 Claude 的回答貼回來，網站用這份報告的訊號對照：引用的編號是否存在、有沒有保證式用語、「高共識」有沒有算進實驗性系統。
+            只在你的瀏覽器裡比對，不會送出任何資料。
+          </p>
+          <AnswerCheck report={report} />
         </li>
       </ol>
     </details>

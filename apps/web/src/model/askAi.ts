@@ -67,12 +67,18 @@ export function questionRange(text: string, asOf: string): QuestionRange {
 
 /** Month signals from the timeline layer, one `buildTimeline` per calendar year (cached). */
 export function monthSignalProvider(report: Report): ((window: SignalWindow) => CoreSignal[]) | null {
+  const monthsOf = monthSignalsByYear(report);
+  if (!monthsOf) return null;
+  return window => monthsOf(Number(window.start.slice(0, 4))).get(window.start.slice(0, 7)) ?? [];
+}
+
+function monthSignalsByYear(report: Report): ((year: number) => Map<string, CoreSignal[]>) | null {
   const ctx = report.timeContext as unknown as TimeContext | null | undefined;
   if (!ctx || !report.timeline) return null;
   const systems = report.timeline.systems;
   const asOfYear = Number(report.asOf.slice(0, 4));
   const byYear = new Map<number, Map<string, CoreSignal[]>>();
-  const monthsOf = (year: number) => {
+  return year => {
     let months = byYear.get(year);
     if (!months) {
       const tl = buildTimeline(ctx, {
@@ -89,7 +95,40 @@ export function monthSignalProvider(report: Report): ((window: SignalWindow) => 
     }
     return months;
   };
-  return window => monthsOf(Number(window.start.slice(0, 4))).get(window.start.slice(0, 7)) ?? [];
+}
+
+/** Same reach as the MCP server's `get_signal`: asOf year −5 … +10 (RESOLVABLE_YEARS in @fortune/mcp). */
+const LOOKUP_YEARS = { before: 5, after: 10 } as const;
+
+/**
+ * id → signal for checking a pasted Claude answer (M4-03). Cheap sources first (the report's own
+ * lists), then month signals year by year (~1 s per year, cached) so any id the MCP tools could
+ * have returned resolves here too. An unknown id scans every year before it is reported missing.
+ */
+export function reportSignalLookup(report: Report): (id: string) => { system: string } | null {
+  const known = new Map<string, CoreSignal>();
+  const add = (signal: CoreSignal | null | undefined) => {
+    if (signal && typeof signal.id === 'string') known.set(signal.id, signal);
+  };
+  if (Array.isArray(report.signals)) report.signals.forEach(add);
+  for (const cell of [...(report.timeline?.years ?? []), ...(report.timeline?.months ?? [])]) {
+    for (const domain of cell.domains) domain.topSignals.forEach(add);
+  }
+  const monthsOf = monthSignalsByYear(report);
+  const asOfYear = Number(report.asOf.slice(0, 4));
+  let scanned = asOfYear - LOOKUP_YEARS.before - 1;
+  const last = asOfYear + LOOKUP_YEARS.after;
+  return id => {
+    while (!known.has(id) && monthsOf && scanned < last) {
+      scanned += 1;
+      try {
+        for (const list of monthsOf(scanned).values()) list.forEach(add);
+      } catch {
+        // a year the engine cannot build simply contributes no signals
+      }
+    }
+    return known.get(id) ?? null;
+  };
 }
 
 export interface LocalQuestion {

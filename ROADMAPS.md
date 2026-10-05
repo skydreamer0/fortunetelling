@@ -227,13 +227,13 @@ README.md       給 AI 看：欄位說明、哪些是確定性計算、哪些分
 | M3-03 ✅ | 保留 `vocab`／HonestyGuard 檢查，獨立成 `check_answer`：貼回 AI 的回答自行檢查 |
 | M3-04 ✅ | 系統指令改寫為「對話助手」版：可用工具、如何引用訊號、何時說高共識、如何呈現矛盾與 `experimental` 系統 |
 
-### M4 — 網站對接 🟡（M4-01／02 完成，M4-03 未做）
+### M4 — 網站對接 ✅（M4-01～03 完成）
 
 | ID | 任務 |
 |---|---|
 | M4-01 ✅ | 「問 AI」章節兩個入口：**用 Claude 桌面版討論**（MCP 設定步驟＋匯出）、**複製 prompt**（備援） |
 | M4-02 ✅ | 網站下載 `.fortune.json`（M0.5-03），供 MCP 讀取；不假設網站能寫本機任意檔案 |
-| M4-03 ❌ | （選用）網站貼回結論後用 `check_answer` 對照引用的訊號。現有「複製 prompt」入口已用 `checkPastedAnswer` 提供貼回檢查，與此整合不同 |
+| M4-03 ✅ | 網站「用 Claude 桌面版討論」入口新增「檢查回答」步驟：貼回 Claude 的回答，用與 MCP `check_answer` 同一個 `checkAnswer`，以報告訊號（含 asOf 年 −5～+10 的月份訊號，與 `get_signal` 同範圍）查 sig_ 編號、宿命論用語、實驗性系統算進高共識；只標示不改寫，不送出資料。與「複製 prompt」那條路的 `checkPastedAnswer` 並存 |
 
 ### M5 — 計算端驗證與補齊（與 M1～M4 並行）🟡（已有驗證報告，公開來源門檻與正式升級仍有待辦）
 
@@ -266,7 +266,7 @@ M0.5 → M1 → M2 → M3 → M4
 M5 與 M1～M4 並行
 ```
 
-M0.5、M1、M2 與 M3 主線已完成，M4 完成 M4-01／02。`historical_zone_uncertain` 的各系統／網站警告、MCP 回傳瘦身與 `systems`／`verifiedOnly` 已完成。剩餘：選用的 M4-03、M3-01 SDK 依賴清理與首頁延遲載入；M5 按系統補足驗證門檻後再決定正式升級，規則補齊與多人回驗仍依原條件執行。
+M0.5、M1、M2 與 M3 主線已完成，M4 完成 M4-01／02。`historical_zone_uncertain` 的各系統／網站警告、MCP 回傳瘦身與 `systems`／`verifiedOnly` 已完成。M4-03 已完成。剩餘：M3-01 SDK 依賴清理與首頁延遲載入；M5 按系統補足驗證門檻後再決定正式升級，規則補齊與多人回驗仍依原條件執行。
 
 ## 七、已確認事項（2026-09-30）
 
@@ -325,7 +325,7 @@ M0.5、M1、M2 與 M3 主線已完成，M4 完成 M4-01／02。`historical_zone_
 
 - 「問 AI」兩個入口：用 Claude 桌面版討論（預設展開，含 Windows／macOS 設定檔路徑與 Microsoft Store 版位置、JSON 反斜線跳脫）、複製 prompt（備援）。
 - 網站可下載 `<profileId>.fortune.json`（core 的 `createProfileFile`，位元穩定）；`profileKeyOf` 改為 `chartFingerprint`，舊含姓名 key 由 `legacyProfileKeyOf` 自動遷移。回測的隨機種子改用新 key，遷移後訓練／驗證分組可能與舊的不同。
-- **未做**：M4-03（網站的 `check_answer` 檢查整合）；既有複製 prompt 路徑的 `checkPastedAnswer` 不受影響。
+- **M4-03 已完成**：網站「檢查回答」步驟（`AnswerCheck`），既有複製 prompt 路徑的 `checkPastedAnswer` 不受影響。
 
 ### M5（驗證段）
 

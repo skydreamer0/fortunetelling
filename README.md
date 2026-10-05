@@ -120,7 +120,7 @@ packages/core   @fortune/core   框架無關的計算核心（排盤、規則、
 | ✅ 已完成 | M2 匯出包、M3 的 `import_profile`／`check_answer` 與對話助手主線、M4-01／02 網站 MCP 入口與 `.fortune.json` 下載 |
 | ✅ 已完成 | 歷史時區資料與不確定警告、指定系統／`verifiedOnly` 篩選、問事精簡回傳與實驗性系統敏感度提示、`doctor` 健康檢查 |
 | 🟡 保留實驗性 | Jyotish／Human Design 已有計算器與驗證報告，仍標 `experimental`；吠陀占星尚缺原定公開計算器交叉驗證，正式升級另行決定 |
-| ⏳ 待做 | 選用的 M4-03：網站的 `check_answer` 檢查整合；現有「複製 prompt」入口已支援貼回檢查 |
+| ✅ M4-03 | 網站貼回 Claude 回答，用 `check_answer` 同一套檢查對照報告訊號 |
 | 🔧 待優化 | 計算核心已拆成獨立 chunk，首頁尚未延遲載入；Anthropic SDK 仍是 AI 套件的一般依賴 |
 
 核心、MCP、整合、曆法、洞見、合盤與視覺化契約由 `bun test` 覆蓋；CI 另執行各套件型別檢查、`doctor --ci` 與 `bun run build`。分數仍未校準，不能當成機率或預測準確度。里程碑、驗證限制與任務拆解見 [ROADMAPS.md](./ROADMAPS.md)。
