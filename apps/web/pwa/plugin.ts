@@ -41,6 +41,8 @@ export function pwa(): Plugin {
         hash.update(item.type === 'chunk' ? item.code : item.source);
         return item.fileName;
       });
+      const template = readFileSync(SW_SOURCE, 'utf8');
+      hash.update(template); // sw.js 本身改了（例如快取比對規則），版本也要跟著變
       const publicFiles = config.publicDir ? listFiles(config.publicDir) : [];
       for (const file of publicFiles) hash.update(file).update(readFileSync(join(config.publicDir, file)));
 
@@ -49,7 +51,7 @@ export function pwa(): Plugin {
         .filter(file => !SKIP.test(file))
         .sort();
       const version = hash.digest('hex').slice(0, 12);
-      const source = readFileSync(SW_SOURCE, 'utf8')
+      const source = template
         .replace('__PWA_VERSION__', JSON.stringify(version))
         .replace('__PWA_PRECACHE__', JSON.stringify(urls, null, 2));
       if (source.includes('__PWA_')) this.error('sw.js still contains an unfilled __PWA_ placeholder');
