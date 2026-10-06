@@ -455,6 +455,10 @@ JSON key 重排／空白、ID/asOf 隔離、壞檔拒絕、pending 共用、失�
 tests-only head `c0676d2d4e8e69c3c9a141d1dac6f589e19bc90a`，
 1254 pass／2 skip／6 fail。六項失敗正是姓名改動後 get_chart 未更新、
 姓名／精確座標／label／warnings 仍沿用舊 Analysis，以及 A → B → A 被同一舊 pending 吃掉。
-其餘五項保護回歸與既有測試通過。工作區沒有 Bun，修正候選仍須既有 frozen-lock CI 完整驗證，
-不以非作者靜態檢查代替測試結果。
+其餘五項保護回歸與既有測試通過。
+
+**最終狀態（2026-10-06）：** 實作 head `63948d2dddc2d3d6577c50fee9aecc379b2c1b7c`
+的 [CI 37474913169](https://github.com/skydreamer0/fortunetelling/actions/runs/37474913169)
+為 1260 pass／2 skip／0 fail，四套 typecheck、doctor、build 與 GitGuardian 通過；
+已透過 [PR #40](https://github.com/skydreamer0/fortunetelling/pull/40) 合併（merge `2dda69c`）。
 #26 維持部分交付，不關閉整單。
