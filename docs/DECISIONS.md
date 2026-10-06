@@ -312,6 +312,20 @@ PR #37 的 tests-only commit `ceebfca3853554afa4c49c1e741da78935d9d5cd` 由既�
 `LOCKED FORECAST V1 2026-10-03` 的既有年分、命中與內容不得因本次重算而改寫。
 非預設 early+civil fixture 的 timeline／signals／consensus 差異須以 CI 實際結果記錄，不以全量重錄掩蓋。
 
+**實測差異（修補 commit `7b7764ff62abdcc095b9fd919f993400bad02f10`）：**
+[run 37425777507](https://github.com/skydreamer0/fortunetelling/actions/runs/37425777507) 的 21 個新回歸全通過，
+整體 1214 pass／2 skip／2 fail，剩下兩項只因原 report／export golden 尚未套用新版本差異。
+- 11 個 report 都只先變 core version 與 timeline conventions；其中 10 個預設案例的所有計算 section 不變。
+- 唯一非預設 `late-zi-2330-early-civil` 額外改動 `signals`、`timeline`、`consensus`：
+  原時間軸誤用 trueSolar／late，修正為與主盤一致的 civil／early（紫微映射 nextDayAt23），
+  本命規則來源改變，造成訊號集與彙整分數改變，再由同一時間軸重建共識。
+  其三個 section 的 JSON 長度分別由 223942／281550／25380 變為 216607／274013／25938。
+  精確前後 SHA-256 見 `packages/core/tests/fixtures/reportGolden.v0.5.1.delta.json`，不更新原 fixture。
+- 兩組 compatibility 只更新 core version；最終 golden 比對仍檢查所有其餘欄位。
+- export 的六個 file hash 與 signalCount 1191 不變，只更新 manifest 的 coreVersion。
+測試先核原 fixture 的固定 SHA-256，再逐項驗證 before 值並套用 literal delta，最後做完整結果比對；
+不得由當次計算自動產生 expected。
+
 **首包邊界：** 本包只處理主報告時間軸及直接 timeline API 的選項傳遞，不完成 CalculationSpec／ChartSnapshot。
 Web Ask AI 月訊號重算（`apps/web/src/model/askAi.ts`）、Backtest 等仍需在 #26 後續傳入有效選項／共用快照；
 MCP、匯出和 profile 契約也未因此新增時間選項輸入。不得宣稱所有入口已一致。

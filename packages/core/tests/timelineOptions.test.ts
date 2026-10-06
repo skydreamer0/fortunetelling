@@ -11,7 +11,7 @@ import { toZiweiRuleChart } from '../src/calculators/ziwei/ruleChart';
 import { evaluateBaziRules } from '../src/rules/bazi/evaluate';
 import { evaluateBaziTenGodRules } from '../src/rules/bazi/evaluateTenGods';
 import { evaluateZiweiRules } from '../src/rules/ziwei/evaluate';
-import { buildTimeline, buildTimelineAsync, dominantPeriod, type TimelineCell } from '../src/timeline/buildTimeline';
+import { buildTimeline, buildTimelineAsync, dominantPeriod, type TimelineCell, type TimelineOptions } from '../src/timeline/buildTimeline';
 import type { Signal } from '../src/signals/types';
 import { aggregateSignals } from '../src/signals/aggregate';
 
@@ -88,6 +88,11 @@ function assertReportUsesOptions(input: AnalyzeInput) {
 }
 
 describe('Issue #26 first slice: real analyze -> timeline option propagation', () => {
+  test('direct timeline rejects malformed clock and noncanonical zi-hour options', () => {
+    const ctx = createTimeContext(resolveAnalyzeInput(CROSSING).profile);
+    expect(() => buildTimeline(ctx, { asOf: AS_OF, useTrueSolarTime: 'false' } as unknown as TimelineOptions)).toThrow('useTrueSolarTime');
+    expect(() => buildTimeline(ctx, { asOf: AS_OF, ziHourConvention: 'nextDayAt23' } as unknown as TimelineOptions)).toThrow('ziHourConvention');
+  });
   for (const useTrueSolarTime of [false, true]) {
     test(`cross-shichen fixture uses ${useTrueSolarTime ? 'true solar' : 'civil'} natal chart throughout`, () => {
       assertReportUsesOptions({ ...CROSSING, useTrueSolarTime });
