@@ -1,0 +1,30 @@
+{
+  "@babel/runtime": {
+    "version": "7.29.7",
+    "integrity": "sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw=="
+  },
+  "dayjs": {
+    "version": "1.11.21",
+    "integrity": "sha512-98IT+HOahAisibz/yjKbzuOBwYcjJ7BCLPzARyHiyEBmRz4fatF+KPJszEHXsGYjUG234aH/cOjW1wwTbKUZlA=="
+  },
+  "i18next": {
+    "version": "23.16.8",
+    "integrity": "sha512-06r/TitrM88Mg5FdUXAKL96dJMzgqLE5dv3ryBAra4KCwD9mJ4ndOTS95ZuymIGoE+2hzfdaMak2X11/es7ZWg=="
+  },
+  "iztro": {
+    "version": "2.5.8",
+    "integrity": "sha512-kgyyvxdSEvgJxi6zvHpvzGbXZLGXCdhTHYK2Pe/sRdBIQ7RfCArvupmg2ChUMQCSQGomW7XCI0gWwUuKJwPENg=="
+  },
+  "lunar-javascript": {
+    "version": "1.7.7",
+    "integrity": "sha512-u/KYiwPIBo/0bT+WWfU7qO1d+aqeB90Tuy4ErXenr2Gam0QcWeezUvtiOIyXR7HbVnW2I1DKfU0NBvzMZhbVQw=="
+  },
+  "lunar-lite": {
+    "version": "0.2.8",
+    "integrity": "sha512-Y4tba4RaIFI0ikImJhgoEsyqtDE64lJIM3yFwRX01dbmagCDq7rNmpDQFrSFFy4WXeuywdRVFpIBoT1GGCEizw=="
+  },
+  "lunar-typescript": {
+    "version": "1.8.6",
+    "integrity": "sha512-5Eo4T/cnuXfrgO4k5LCpOGHIUOuz5hCF/IfNv0T29WY2shR36Hiz+ecN9WjnUuxUKhql9gbOkPaQoqLFKtPRNA=="
+  }
+}

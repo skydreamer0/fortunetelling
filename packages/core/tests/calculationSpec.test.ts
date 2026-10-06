@@ -164,9 +164,10 @@ describe('CalculationSpec v1: analyze-sync natal intent only', () => {
       expect(report.timeContext.conventions.ziwei.ziHourConvention).toBe(spec.identity.settings.ziwei.ziHourConvention);
       expect(report.timeContext.conventions.timeline.clock).toBe(spec.identity.settings.bazi.clock);
     }
-    const civil = core.analyze({ ...birth, useTrueSolarTime: false }, { asOf: '2026-07-11' });
-    const solar = core.analyze({ ...birth, useTrueSolarTime: true }, { asOf: '2026-07-11' });
-    const natal = (report: typeof civil) => report.engines.find(e => e.system === 'bazi')?.components.find(c => c.id === 'natal')?.value;
+    const crossing = { year: 2026, month: 2, day: 15, hour: 13, minute: 3, gender: 'male' as const };
+    const civil = core.analyze({ ...crossing, useTrueSolarTime: false }, { asOf: '2026-07-11' });
+    const solar = core.analyze({ ...crossing, useTrueSolarTime: true }, { asOf: '2026-07-11' });
+    const natal = (report: typeof civil) => report.engines.find(e => e.engineId === 'bazi')?.components.find(c => c.id === 'natal')?.value;
     expect(natal(civil)).not.toEqual(natal(solar));
   });
   test('22:59/23:00/23:59/00:00 preserve explicit clock and convention identities', () => {
@@ -175,6 +176,74 @@ describe('CalculationSpec v1: analyze-sync natal intent only', () => {
       const values = [true, false].flatMap(useTrueSolarTime =>
         ['late', 'early'].map(ziHourConvention => hash({ ...input, useTrueSolarTime, ziHourConvention } as any)));
       expect(new Set(values).size).toBe(4);
+    }
+  });
+});
+
+describe('CalculationSpec version and host independence guards', () => {
+  test('locked dependency manifest is the exact complete sync calculation closure', async () => {
+    const lockText = await Bun.file(new URL('../../../bun.lock', import.meta.url)).text();
+    // bun.lock is JSONC with trailing commas; this lock contains no comments.
+    const lock = JSON.parse(lockText.replace(/,\s*([}\]])/g, '$1'));
+    const versions = createSpec(birth).identity.versions;
+    const seen = new Set<string>();
+    function visit(name: string) {
+      if (seen.has(name)) return;
+      seen.add(name);
+      const entry = lock.packages[name];
+      expect(entry).toBeDefined();
+      expect(versions.dependencies[name]).toEqual({
+        version: entry[0].slice(name.length + 1), integrity: entry.at(-1),
+      });
+      for (const dependency of Object.keys(entry[2].dependencies ?? {})) visit(dependency);
+    }
+    visit('iztro');
+    visit('lunar-javascript');
+    expect([...seen].sort()).toEqual(Object.keys(versions.dependencies).sort());
+  });
+  test('every version dimension contributes to specHash with no caller override API', async () => {
+    const { hashCalculationIdentity } = await import('../src/core/calculationSpec');
+    const spec = createSpec(birth);
+    expect(hashCalculationIdentity(spec.identity)).toBe(spec.specHash);
+    const paths = [
+      ['contract'], ['core'],
+      ...Object.keys(spec.identity.versions.calculators).map(key => ['calculators', key]),
+      ...Object.keys(spec.identity.versions.dependencies).flatMap(key =>
+        [['dependencies', key, 'version'], ['dependencies', key, 'integrity']]),
+      ['data', 'tzdb'],
+      ...Object.keys(spec.identity.versions.rules).map(key => ['rules', key]),
+    ];
+    for (const path of paths) {
+      const identity = structuredClone(spec.identity);
+      let target = identity.versions;
+      for (const key of path.slice(0, -1)) target = target[key];
+      const key = path.at(-1)!;
+      target[key] = typeof target[key] === 'number' ? target[key] + 1 : target[key] + '-changed';
+      expect(hashCalculationIdentity(identity)).not.toBe(spec.specHash);
+    }
+  });
+  test('same identity across process host zones, including a date skipped only on one host', () => {
+    const input = { ...birth, year: 2011, month: 12, day: 30 };
+    const modulePath = new URL('../src/index.ts', import.meta.url).pathname;
+    const script = `import { createCalculationSpec } from ${JSON.stringify(modulePath)}; console.log(JSON.stringify(createCalculationSpec(${JSON.stringify(input)})));`;
+    const results = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'].map(TZ => {
+      const result = Bun.spawnSync([process.execPath, '--eval', script], { env: { ...process.env, TZ } });
+      expect(result.exitCode).toBe(0);
+      return result.stdout.toString().trim();
+    });
+    expect(new Set(results).size).toBe(1);
+    expect(JSON.parse(results[0])).toEqual(createSpec(input));
+  });
+  test('DST gap/overlap raw wall time remains explicit and is never silently reinterpreted by the spec', () => {
+    const birthplace = { label: 'Synthetic NY', lat: 40.7, lng: -74, timezone: 'America/New_York' };
+    for (const input of [
+      { year: 2026, month: 3, day: 8, hour: 2, minute: 30 },
+      { year: 2026, month: 11, day: 1, hour: 1, minute: 30 },
+    ]) {
+      const spec = createSpec({ ...input, birthplace });
+      expect(spec.identity.input.time).toBe(input.hour === 2 ? '02:30' : '01:30');
+      expect(spec.source.input.hour).toBe(input.hour);
+      expect(spec.identity.settings.time).toEqual({ dstOverlap: 'earlier', dstGap: 'shift-forward-by-gap' });
     }
   });
 });

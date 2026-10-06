@@ -120,7 +120,7 @@ describe('golden', () => {
     expect(new Bun.CryptoHasher('sha256').update(original).digest('hex')).toBe('90189fb31fea2937ec78db9688a5cea49714504f054525fe46a39ecc6a860668');
     const recorded = JSON.parse(original);
     expect(recorded.versions.coreVersion).toBe('0.5.0');
-    recorded.versions.coreVersion = '0.5.2';
+    recorded.versions.coreVersion = '0.5.3';
     expect(text).toBe(`${JSON.stringify(recorded, null, 2)}\n`);
   });
 });

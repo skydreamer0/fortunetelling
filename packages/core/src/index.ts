@@ -18,6 +18,8 @@
 
 // ── Orchestrator ──
 export { analyze, VERSION, REPORT_SCHEMA_VERSION } from './core/analyze';
+export { createCalculationSpec, CALCULATION_SPEC_SCHEMA_VERSION } from './core/calculationSpec';
+export type { CalculationSpec, CalculationIdentity } from './core/calculationSpec';
 export { analyzeCompatibility, COMPATIBILITY_SCHEMA_VERSION } from './core/analyzeCompatibility';
 
 // ── Core models & engine framework（自建引擎/自組管線用）──

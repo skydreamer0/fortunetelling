@@ -227,12 +227,13 @@ export class BirthData {
       throw new Error(`Invalid day: ${this.day}. Must be integer between 1 and 31.`);
     }
 
-    // Validate the actual date by constructing it
-    const testDate = new Date(this.year, this.month - 1, this.day);
+    // Validate the civil calendar date independently of the host timezone.
+    // A host's skipped day (e.g. Apia 2011-12-30) says nothing about birthplace.
+    const testDate = new Date(Date.UTC(this.year, this.month - 1, this.day));
     if (
-      testDate.getFullYear() !== this.year ||
-      testDate.getMonth() !== this.month - 1 ||
-      testDate.getDate() !== this.day
+      testDate.getUTCFullYear() !== this.year ||
+      testDate.getUTCMonth() !== this.month - 1 ||
+      testDate.getUTCDate() !== this.day
     ) {
       throw new Error(`Invalid date: ${this.year}-${this.month}-${this.day} does not exist.`);
     }

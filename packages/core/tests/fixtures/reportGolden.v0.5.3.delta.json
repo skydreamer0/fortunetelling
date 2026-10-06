@@ -1,0 +1,122 @@
+{
+  "description": "Core 0.5.3 adds immutable analyze CalculationSpec identity and rejects inherited zi-hour option keys. Valid existing report and export calculations are unchanged; only the library version advances.",
+  "changes": [
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-1991-1986",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-ny-unknown",
+        "version"
+      ],
+      "before": "0.5.2",
+      "after": "0.5.3"
+    }
+  ]
+}
