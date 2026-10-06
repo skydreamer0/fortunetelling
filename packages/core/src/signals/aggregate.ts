@@ -1,4 +1,5 @@
 import { DOMAINS, GRAINS, SYSTEM_IDS, type Domain, type Signal, type SignalWindow, type SystemId } from './types';
+import { canonicalJson } from './signalId';
 
 export interface AggregateOptions {
   /** Per-system weight wₛ (data; default 1 for any system not listed). */
@@ -45,6 +46,53 @@ const SEP = '\u0000';
 const windowKey = (w: SignalWindow) => `${w.grain}${SEP}${w.start}${SEP}${w.end}`;
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
+function threshold(value: unknown, name: string, fallback: number): number {
+  if (value === undefined) return fallback;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
+    throw new Error(`aggregateSignals: ${name} must be a finite number in [0, 1]`);
+  }
+  return value;
+}
+
+/** Copy validated own entries; inherited values must never bypass validation. */
+function systemWeights(input: AggregateOptions['systemWeights']): Partial<Record<SystemId, number>> {
+  const weights: Partial<Record<SystemId, number>> = Object.create(null);
+  if (input === undefined) return weights;
+  if (input === null || typeof input !== 'object' || Array.isArray(input) ||
+      (Object.getPrototypeOf(input) !== Object.prototype && Object.getPrototypeOf(input) !== null)) {
+    throw new Error('aggregateSignals: systemWeights must be a plain record');
+  }
+  for (const [system, weight] of Object.entries(input)) {
+    if (!(SYSTEM_IDS as readonly string[]).includes(system)) {
+      throw new Error(`aggregateSignals: unknown system weight ${JSON.stringify(system)}`);
+    }
+    // Partial<Record<...>> permits explicit undefined, equivalent to omission.
+    if (weight === undefined) continue;
+    if (typeof weight !== 'number' || !Number.isFinite(weight) || weight < 0) {
+      throw new Error(`aggregateSignals: weight of ${system} must be a finite number >= 0`);
+    }
+    weights[system as SystemId] = weight;
+  }
+  return weights;
+}
+
+/** Identical ids are one signal; conflicting payloads cannot be resolved by input order. */
+function uniqueSignals(signals: readonly Signal[]): Signal[] {
+  const byId = new Map<string, { signal: Signal; canonical: string }>();
+  for (const signal of signals) {
+    const canonical = canonicalJson(signal);
+    const previous = byId.get(signal.id);
+    if (previous) {
+      if (previous.canonical !== canonical) {
+        throw new Error(`aggregateSignals: conflicting signals with id ${signal.id}`);
+      }
+    } else {
+      byId.set(signal.id, { signal, canonical });
+    }
+  }
+  return [...byId.values()].map(entry => entry.signal);
+}
+
 /**
  * §6.1: per (domain, window) — noisy-OR within a system, weighted mean across
  * systems, consensus count, and explicit conflict (never averaged away, D-023).
@@ -55,13 +103,16 @@ export function aggregateSignals(
   signals: readonly Signal[],
   options: AggregateOptions = {},
 ): DomainWindowAggregate[] {
-  const theta = options.consensusThreshold ?? DEFAULT_CONSENSUS_THRESHOLD;
-  const tau = options.conflictThreshold ?? DEFAULT_CONFLICT_THRESHOLD;
-  const weightOf = (s: SystemId) => options.systemWeights?.[s] ?? 1;
+  // Validate every supplied option even when there are no signals or the
+  // weighted system is absent from this particular domain/window.
+  const theta = threshold(options.consensusThreshold, 'consensusThreshold', DEFAULT_CONSENSUS_THRESHOLD);
+  const tau = threshold(options.conflictThreshold, 'conflictThreshold', DEFAULT_CONFLICT_THRESHOLD);
+  const weights = systemWeights(options.systemWeights);
+  const weightOf = (s: SystemId) => weights[s] ?? 1;
 
   type Group = { domain: Domain; window: SignalWindow; bySystem: Map<SystemId, Signal[]> };
   const groups = new Map<string, Group>();
-  for (const sig of signals) {
+  for (const sig of uniqueSignals(signals)) {
     const key = `${sig.domain}${SEP}${windowKey(sig.window)}`;
     let g = groups.get(key);
     if (!g) {
@@ -105,9 +156,11 @@ export function aggregateSignals(
       const w = weightOf(system);
       wSum += w;
       wScore += w * score;
-      if (score >= theta) consensus++;
-      if (valence > tau) posSystems.push(system);
-      else if (valence < -tau) negSystems.push(system);
+      if (w > 0) {
+        if (score >= theta) consensus++;
+        if (valence > tau) posSystems.push(system);
+        else if (valence < -tau) negSystems.push(system);
+      }
     }
 
     let conflict: SignalConflict | null = null;
