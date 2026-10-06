@@ -410,6 +410,12 @@ LOCKED FORECAST V1 與既有快照都不改寫。新增 literal delta 只把 11 
 以及 UTC／台北／紐約／Apia 子程序的同內容比對。DST gap／overlap 在 spec 中保留請求的
 民用時刻及明確既有策略，這不是完整曆法驗收矩陣。工作區沒有 Bun；執行證據由既有 locked CI 提供。
 
+先紅證據：[CI 37456101693](https://github.com/skydreamer0/fortunetelling/actions/runs/37456101693)
+為 1230 pass／2 skip／15 fail（缺少公開 spec 契約、inherited 子時選項未拒絕）。
+首個實作候選 [CI 37456773778](https://github.com/skydreamer0/fortunetelling/actions/runs/37456773778)
+的 19 項新回歸與舊 golden 全通過；唯一失敗是 analyze.test 的舊 0.5.2 版本 literal，
+已按 0.5.3 公開 API 契約精確更新。另檢查 VERSION／package.json／bun.lock 三處版本一致。
+
 **尚未交付：** natal snapshot 共用、snapshotId、真正的 cache migration／cross-run reuse、
 舊報告 parser／回填、MCP／匯出／profile 全入口統一、async 星曆設定及完整曆法邊界矩陣。
 本切片不關閉 #26，不宣稱提高命理預測準確率。

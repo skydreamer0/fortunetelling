@@ -185,6 +185,9 @@ describe('CalculationSpec version and host independence guards', () => {
     const lockText = await Bun.file(new URL('../../../bun.lock', import.meta.url)).text();
     // bun.lock is JSONC with trailing commas; this lock contains no comments.
     const lock = JSON.parse(lockText.replace(/,\s*([}\]])/g, '$1'));
+    const pkg = await Bun.file(new URL('../package.json', import.meta.url)).json();
+    expect(pkg.version).toBe(core.VERSION);
+    expect(lock.workspaces['packages/core'].version).toBe(core.VERSION);
     const versions = createSpec(birth).identity.versions;
     const seen = new Set<string>();
     function visit(name: string) {
