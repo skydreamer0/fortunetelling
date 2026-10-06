@@ -34,7 +34,9 @@ function assertSignalIds(cell: TimelineCell, system: 'bazi' | 'ziwei', expected:
       expect(domain.perSystem[system]?.valence).toBe(round4(aggregate.valence));
     }
     for (const signal of domain.topSignals.filter(s => s.system === system)) {
-      expect(signal).toEqual(expected.find(s => s.id === signal.id));
+      const matched = expected.find(s => s.id === signal.id);
+      expect(matched).toBeDefined();
+      expect(signal).toEqual(matched!);
     }
   }
 }
