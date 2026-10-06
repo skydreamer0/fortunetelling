@@ -1,12 +1,12 @@
 {
-  "$comment": "加入 systems／verifiedOnly／精簡回傳之前，以測試樣本 sky、asOf 2026-09-30 錄下的 sha256。aq-detail = answer_question detail:true 的 JSON.stringify(data)；其餘 = 整個回應的 canonical JSON。比對時先移除新增欄位（systemsUsed、excludedSystems、experimentalIncluded、experimentalSensitivity、monthsFormat）與 experimental_sensitive caveat。 M5-04：人類圖改為只發 transit.gates 訊號（不再蓋出生盤常數基線）後重錄全部 8 筆；重錄前已用舊／新程式碼各跑一次比對，所有非人類圖系統的 perSystem 聚合完全相同，差異只來自人類圖。",
+  "$comment": "加入 systems／verifiedOnly／精簡回傳之前，以測試樣本 sky、asOf 2026-09-30 錄下的 sha256。aq-detail = answer_question detail:true 的 JSON.stringify(data)；其餘 = 整個回應的 canonical JSON。比對時先移除新增欄位（systemsUsed、excludedSystems、experimentalIncluded、experimentalSensitivity、monthsFormat）與 experimental_sensitive caveat。 M5-04：人類圖改為只發 transit.gates 訊號（不再蓋出生盤常數基線）後重錄全部 8 筆；重錄前已用舊／新程式碼各跑一次比對，所有非人類圖系統的 perSystem 聚合完全相同，差異只來自人類圖。 短訊號編號（sig_+8 位）與 get_timeline 預設年度表（yearTable）上線後：比對前先把短編號還原成完整編號，所以 aq-detail、get_consensus 與 detail:true 的基準數值不變（編號縮短不改雜湊）。get_timeline 預設呼叫的年度區塊改成 yearTable（刻意改格式），故這三筆基準（鍵尾 |noYears）改為「去掉年度區塊後的其餘部分」，其值是用改動前的程式碼重算的，因此逐月部分仍與改動前逐位元相同。",
   "$versionsHash": "cf3d4b472089",
   "aq-detail|vehicle_purchase": "7be2a2a816a6c57bb80a7318eb77a4d910545d23c2f07b33c994d6aee0ea0608",
   "aq-detail|job_change": "6adbb80dd13673992f0041d6abb04bdd096f1d597cb0a217fc47ca666e3b3620",
-  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}": "0b7188195a278a9aefb5b899f588dc2db901cf423a95f0054e2ac5b558853528",
-  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}": "fecaa88ceea1262f059dc93870c211defa6d82467e6425f0e8a2125fdc8f329c",
   "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\",\"detail\":true}": "0c5ad187ba7c703f88882df0090a6a42bd8d4819027022c45bf25fa2c6883cc7",
-  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}": "004371be645cf2120ca0b1170afa7b86aa3680d6b974c084e2c362abd9b944dd",
   "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}": "110d6f05a8f3441ca6f98307683b924998584be505a80f7ca16428238fbbaabf",
-  "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}": "a6b65bc41e0784624700830245dbd443c427a74af54447c0a35ef19b7f90588b"
+  "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}": "a6b65bc41e0784624700830245dbd443c427a74af54447c0a35ef19b7f90588b",
+  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}|noYears": "0855877a48efb689eb8cdcdd393b9c9efe2ef4ede5dc89e1b2a3e0da4a1158e4",
+  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}|noYears": "e6bb4d9db626fa91f22c4eea481139d4f0b3dd38e6dabe04a6857a28b0da940c",
+  "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}|noYears": "8cee054eb3a5623928e5c59fa2bf044d2ae555aa17e5946eb3b58dacf3a177fc"
 }

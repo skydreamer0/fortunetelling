@@ -12,9 +12,10 @@ import { makeFixture } from './helpers';
 
 const ASOF = '2026-09-30';
 const RANGE = { start: '2027-01', end: '2027-12' };
-const NEW_FIELDS = ['systemsUsed', 'excludedSystems', 'experimentalIncluded', 'experimentalSensitivity', 'monthsFormat'];
+const NEW_FIELDS = ['systemsUsed', 'excludedSystems', 'experimentalIncluded', 'experimentalSensitivity', 'monthsFormat', 'yearsFormat'];
 const sha = (x: unknown) => createHash('sha256').update(JSON.stringify(x)).digest('hex');
 const ID = /sig_[0-9a-f]{16}/g;
+const SHORT_ID = /sig_[0-9a-f]{8}(?![0-9a-f])/g;
 
 let fx: Awaited<ReturnType<typeof makeFixture>>;
 beforeAll(async () => { fx = await makeFixture(); });
@@ -31,29 +32,54 @@ function stripNew(json: any) {
   return copy;
 }
 
+/**
+ * 把輸出中的短編號還原成完整編號（用 analysis 的前綴解析），好和「短編號功能之前」錄下的基準比對：
+ * 這樣基準的差異就只剩 timeline 預設格式，編號縮短本身不會讓雜湊改變。
+ */
+async function expandIds(json: any) {
+  const analysis = await fx.ctx.analyzer.get('sky', ASOF);
+  const text = JSON.stringify(json).replace(SHORT_ID, m => {
+    const hit = analysis.findSignal(m);
+    if (!hit) throw new Error(`short id ${m} does not resolve`);
+    return hit.id;
+  });
+  return JSON.parse(text);
+}
+
 describe('不指定系統：與改動前相同', () => {
   test('answer_question detail:true 的完整結構（去掉新欄位）與改動前逐位元相同', async () => {
     for (const [cat, start, end] of [['vehicle_purchase', '2027-01', '2027-12'], ['job_change', '2026-10', '2028-09']]) {
       const r = await fx.call('answer_question', { profileId: 'sky', category: cat, range: { start, end }, asOf: ASOF, detail: true });
-      expect(sha(stripNew(r.json).data)).toBe((baseline as Record<string, string>)[`aq-detail|${cat}`]);
+      expect(sha((await expandIds(stripNew(r.json))).data)).toBe((baseline as Record<string, string>)[`aq-detail|${cat}`]);
     }
   }, 120_000);
 
-  test('get_timeline／get_consensus（去掉新欄位）與改動前逐位元相同', async () => {
+  test('get_timeline／get_consensus（去掉新欄位、短編號還原）與改動前逐位元相同', async () => {
+    // 改動前錄下的基準；短編號與 yearTable 預設格式是這次刻意的改動：
+    //  - detail:true 與 get_consensus：短編號還原後與舊基準完全相同；
+    //  - 其餘 get_timeline 預設呼叫：年度區塊改成 yearTable（刻意改格式），基準改成「去掉年度區塊後的其餘部分」，
+    //    其雜湊是用改動前的程式碼重算的（`|noYears` 鍵），所以逐月部分仍與改動前逐位元相同。
     const base = { profileId: 'sky', asOf: ASOF };
-    const cases: [string, Record<string, unknown>, Record<string, unknown>][] = [
-      ['get_timeline', base, {}],
-      ['get_timeline', { ...base, months: { start: '2027-01', end: '2027-12' }, domain: 'wealth' }, { monthsFormat: 'cells' }],
-      ['get_timeline', { ...base, months: { start: '2027-01', end: '2027-12' }, domain: 'wealth', detail: true }, {}],
-      ['get_timeline', { ...base, months: { start: '2027-01', end: '2027-03' } }, {}],
-      ['get_consensus', base, {}],
-      ['get_consensus', { ...base, detail: true }, {}],
+    const cases: [string, Record<string, unknown>, Record<string, unknown>, boolean][] = [
+      ['get_timeline', base, {}, true],
+      ['get_timeline', { ...base, months: { start: '2027-01', end: '2027-12' }, domain: 'wealth' }, { monthsFormat: 'cells' }, true],
+      ['get_timeline', { ...base, months: { start: '2027-01', end: '2027-12' }, domain: 'wealth', detail: true }, {}, false],
+      ['get_timeline', { ...base, months: { start: '2027-01', end: '2027-03' } }, {}, true],
+      ['get_consensus', base, {}, false],
+      ['get_consensus', { ...base, detail: true }, {}, false],
     ];
-    for (const [name, args, extra] of cases) {
+    for (const [name, args, extra, noYears] of cases) {
       const r = await fx.call(name, { ...args, ...extra });
-      const j = stripNew(r.json);
-      j.versionsHash = baseline.$versionsHash;
-      expect(sha(canonicalStringify(j))).toBe((baseline as Record<string, string>)[`${name}|${JSON.stringify(args)}`]);
+      const j = await expandIds(stripNew(r.json));
+      if (noYears) {
+        delete j.data.years;
+        delete j.data.yearTable;
+        j.versionsHash = 'X';
+      } else {
+        j.versionsHash = baseline.$versionsHash;
+      }
+      const key = `${name}|${JSON.stringify(args)}${noYears ? '|noYears' : ''}`;
+      expect(sha(canonicalStringify(j))).toBe((baseline as Record<string, string>)[key]);
     }
   }, 120_000);
 
@@ -80,7 +106,7 @@ describe('answer_question systems／verifiedOnly', () => {
     const subset = ['bazi', 'ziwei'] as const;
     const { json } = await aq({ systems: [...subset], detail: true });
     const direct = answerQuestion({ category: 'vehicle_purchase', range: RANGE }, w => monthSignalProvider(analysis)(w).filter(s => (subset as readonly string[]).includes(s.system)));
-    const expected = JSON.parse(JSON.stringify(slimAnswer(direct, true)));
+    const expected = JSON.parse(JSON.stringify(slimAnswer(direct, true, analysis.shortIds)));
     expect(json.data.top).toEqual(expected.top);
     expect(json.data.ranking).toEqual(expected.ranking);
     expect(json.data.systemsUsed).toEqual(['bazi', 'ziwei']);
@@ -174,7 +200,7 @@ describe('answer_question 精簡回傳', () => {
 
   test('與 core 直接算的 compactAnswer 相同（MCP 只包裝）', async () => {
     const analysis = await fx.ctx.analyzer.get('sky', ASOF);
-    const direct = compactAnswer(answerQuestion({ category: 'vehicle_purchase', range: RANGE }, monthSignalProvider(analysis)));
+    const direct = compactAnswer(answerQuestion({ category: 'vehicle_purchase', range: RANGE }, monthSignalProvider(analysis)), analysis.shortIds);
     const { json } = await aq();
     expect(json.data.top).toEqual(JSON.parse(JSON.stringify(direct.top)));
     expect(json.data.ranking).toEqual(JSON.parse(JSON.stringify(direct.ranking)));
@@ -195,7 +221,7 @@ describe('get_timeline／get_consensus systems 與逐月表格', () => {
   const base = { profileId: 'sky', asOf: ASOF };
   test('get_timeline systems：年度 cell 等於 core restrictTimeline', async () => {
     const analysis = await fx.ctx.analyzer.get('sky', ASOF);
-    const { json } = await fx.call('get_timeline', { ...base, verifiedOnly: true, domain: 'career' });
+    const { json } = await fx.call('get_timeline', { ...base, verifiedOnly: true, domain: 'career', detail: true });
     expect(json.data.systems).toEqual(['bazi', 'ziwei', 'numerology', 'humanDesign']);
     expect(json.data.systemsUsed).toEqual(['bazi', 'ziwei', 'numerology', 'humanDesign']);
     expect(json.data.excludedSystems).toEqual(['jyotish']);
@@ -206,6 +232,13 @@ describe('get_timeline／get_consensus systems 與逐月表格', () => {
       expect(y.domains[0].score).toBe(cell.score);
       // 回應是 canonical JSON（key 排序），所以比對排序後的系統清單
       expect(Object.keys(y.domains[0].perSystem).sort()).toEqual(Object.keys(cell.perSystem).sort());
+    });
+    // 預設年度表與 detail 的 cell 數值一致，systems 欄 = perSystem 的系統
+    const table = (await fx.call('get_timeline', { ...base, verifiedOnly: true, domain: 'career' })).json.data.yearTable.rows;
+    expect(table.length).toBe(json.data.years.length);
+    table.forEach((row: any[], i: number) => {
+      expect(row[2]).toBe(json.data.years[i].domains[0].score);
+      expect(row[7]).toEqual(Object.keys(json.data.years[i].domains[0].perSystem).sort());
     });
   }, 120_000);
 

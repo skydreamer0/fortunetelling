@@ -14,7 +14,7 @@ import {
   type SignalWindow,
 } from '@fortune/core';
 import { z } from 'zod';
-import { compactAnswer, sensitivityCaveat, sensitivityOut } from '../answerSummary';
+import { compactAnswer, type Shorten, sensitivityCaveat, sensitivityOut } from '../answerSummary';
 import type { Analysis } from '../compute';
 import { assertAsOf, resolvableYearRange } from '../compute';
 import { caveatsFor, ok, type Caveat } from '../envelope';
@@ -33,9 +33,9 @@ export function monthSignalProvider(analysis: Pick<Analysis, 'monthSignals'>): (
   return window => analysis.monthSignals(Number(window.start.slice(0, 4))).get(window.start.slice(0, 7)) ?? [];
 }
 
-const slimSignal = (s: Signal) => ({ id: s.id, system: s.system, ruleId: s.ruleId, domain: s.domain, trait: s.trait, intensity: s.intensity, valence: s.valence });
+const slimSignal = (s: Signal, sh: Shorten) => ({ id: sh([s.id])[0], system: s.system, ruleId: s.ruleId, domain: s.domain, trait: s.trait, intensity: s.intensity, valence: s.valence });
 
-function slimWindow(r: RankedWindow, detail: boolean) {
+function slimWindow(r: RankedWindow, detail: boolean, sh: Shorten) {
   return {
     rank: r.rank,
     window: r.window,
@@ -44,12 +44,12 @@ function slimWindow(r: RankedWindow, detail: boolean) {
     consensus: r.consensus,
     highConsensus: r.highConsensus,
     conflict: r.conflict,
-    domainScores: r.domainScores.map(d => ({ ...d, signalIds: previewIds(d.signalIds, detail), signalIdsTotal: d.signalIds.length })),
-    supportSignals: previewIds(r.supportSignals, detail).map(slimSignal),
+    domainScores: r.domainScores.map(d => ({ ...d, signalIds: sh(previewIds(d.signalIds, detail)), signalIdsTotal: d.signalIds.length })),
+    supportSignals: previewIds(r.supportSignals, detail).map(x => slimSignal(x, sh)),
     supportSignalsTotal: r.supportSignals.length,
-    riskSignals: previewIds(r.riskSignals, detail).map(slimSignal),
+    riskSignals: previewIds(r.riskSignals, detail).map(x => slimSignal(x, sh)),
     riskSignalsTotal: r.riskSignals.length,
-    signalIds: previewIds(r.signalIds, detail),
+    signalIds: sh(previewIds(r.signalIds, detail)),
     signalIdsTotal: r.signalIds.length,
   };
 }
@@ -62,11 +62,11 @@ function slimRanked(r: RankedWindow) {
  * 舊的瘦身結構：answer_question 的 `detail: true` 以 `slimAnswer(answer, true)` 回傳完整結構；
  * 預設回應改用 answerSummary.ts 的 `compactAnswer`。`detail = false` 仍保留給程式呼叫端使用。
  */
-export function slimAnswer(answer: QuestionAnswer, detail = false) {
+export function slimAnswer(answer: QuestionAnswer, detail = false, sh: Shorten = ids => [...ids]) {
   return {
     category: answer.category,
     range: answer.range,
-    top: answer.top.map(r => slimWindow(r, detail)),
+    top: answer.top.map(r => slimWindow(r, detail, sh)),
     ranking: answer.ranking.slice(0, RANKING_LIMIT).map(slimRanked),
     rankingTotal: answer.ranking.length,
     ...(detail ? { conventions: answer.conventions } : { conventionsOmitted: true as const }),
@@ -189,7 +189,7 @@ export const questionTools = [
         ...systemsFields(sel),
         experimentalSensitivity: sensitivity ? sensitivityOut(sensitivity) : null,
       };
-      const body = detail ? slimAnswer(answer, true) : compactAnswer(answer);
+      const body = detail ? slimAnswer(answer, true, analysis.shortIds) : compactAnswer(answer, analysis.shortIds);
       return ok({ asOf, caveats, data: { ...body, ...extra } });
     },
   }),

@@ -91,7 +91,9 @@ describe('get_signal', () => {
       const { isError, json } = await fx.call('get_signal', { ...base, signalId: row.id });
       expect(isError).toBe(false);
       const s = json.data.signal;
-      expect(s.id).toBe(row.id);
+      expect(s.id).toMatch(/^sig_[0-9a-f]{16}$/);
+      expect(s.id.startsWith(row.id)).toBe(true);
+      expect(json.data.shortId).toBe(row.id);
       expect(Array.isArray(s.evidence.modifiers)).toBe(true);
       expect(Array.isArray(s.evidence.componentIds)).toBe(true);
       expect(s.evidence.text).toBe(row.evidence.text);
@@ -106,29 +108,44 @@ describe('get_signal', () => {
 });
 
 describe('get_timeline', () => {
-  test('default is compact with ids only', async () => {
+  test('default is a compact yearTable with short ids only', async () => {
     const { json, text } = await fx.call('get_timeline', base);
     console.log('get_timeline default chars', text.length);
-    expect(json.data.years.length).toBeGreaterThan(0);
+    expect(json.data.yearsFormat).toBe('table');
+    expect(json.data.years).toBeUndefined();
+    const { columns, rows } = json.data.yearTable;
+    expect(columns).toEqual(['year', 'domain', 'score', 'band', 'consensus', 'highConsensus', 'hasConflict', 'systems', 'topSignalIds', 'topSignalIdsTotal']);
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row.length).toBe(columns.length);
+      expect(typeof row[2]).toBe('number');
+      expect(row[8].length).toBeLessThanOrEqual(3);
+      expect(row[9]).toBeGreaterThanOrEqual(row[8].length);
+      for (const id of row[8]) expect(id).toMatch(/^sig_[0-9a-f]{8}$/);
+    }
+  }, 120_000);
+  test('default response stays under 8,000 chars (was ~21,000)', async () => {
+    const { text } = await fx.call('get_timeline', base);
+    expect(text.length).toBeLessThan(8_000);
+  }, 120_000);
+  test('detail:true restores the full yearly cells', async () => {
+    const { json } = await fx.call('get_timeline', { ...base, detail: true });
+    expect(json.data.yearsFormat).toBe('cells');
+    expect(json.data.yearTable).toBeUndefined();
     const cell = json.data.years[0].domains[0];
     expect(typeof cell.score).toBe('number');
-    expect(cell.band).toBeDefined();
-    expect(cell.topSignalIds.every((x: unknown) => typeof x === 'string')).toBe(true);
+    expect(cell.perSystem).toBeDefined();
     expect(cell.topSignals).toBeUndefined();
   }, 120_000);
   test('range and domain filters', async () => {
-    const full = (await fx.call('get_timeline', base)).json.data.years;
-    const y = full[0].window.start.slice(0, 4);
+    const full = (await fx.call('get_timeline', base)).json.data.yearTable.rows;
     const { json } = await fx.call('get_timeline', { ...base, range: { start: '2026', end: '2026' }, domain: 'career' });
-    expect(json.data.years.length).toBeGreaterThan(0);
-    expect(json.data.years.length).toBeLessThan(full.length);
-    for (const c of json.data.years) {
-      expect(c.window.start.slice(0, 4) <= '2026' && c.window.end.slice(0, 4) >= '2026').toBe(true);
-      expect(c.domains.map((d: any) => d.domain)).toEqual(['career']);
-    }
-    // range filters year cells only; month cells need the explicit months parameter
+    const rows = json.data.yearTable.rows;
+    expect(rows.length).toBe(1);
+    expect(rows.length).toBeLessThan(full.length);
+    expect(rows.map((r: any[]) => [r[0], r[1]])).toEqual([['2026', 'career']]);
+    // range filters year rows only; month cells need the explicit months parameter
     expect(json.data.months).toEqual([]);
-    expect(y).toBeDefined();
   }, 120_000);
   test('months defaults to []; months:{start,end} returns that range month by month (any resolvable year)', async () => {
     expect((await fx.call('get_timeline', base)).json.data.months).toEqual([]);
@@ -166,17 +183,20 @@ describe('get_timeline', () => {
     expect((await fx.call('get_timeline', { ...base, months: { start: '2050-01', end: '2050-02' } })).json.error.code).toBe('invalid_args');
     expect((await fx.call('get_timeline', { ...base, months: { start: '2027-1', end: '2027-2' } })).json.error.code).toBe('invalid_args');
   }, 120_000);
-  test('year cells: topSignalIds preview with total; detail returns all', async () => {
-    const slim = (await fx.call('get_timeline', base)).json.data.years;
+  test('year rows: first 3 short ids + total; detail returns all', async () => {
+    const rows = (await fx.call('get_timeline', base)).json.data.yearTable.rows;
     const full = (await fx.call('get_timeline', { ...base, detail: true })).json.data.years;
     let cut = 0;
-    slim.forEach((y: any, i: number) => y.domains.forEach((d: any, j: number) => {
-      const f = full[i].domains[j];
-      expect(d.topSignalIds.length).toBeLessThanOrEqual(5);
-      expect(d.topSignalIdsTotal).toBe(f.topSignalIds.length);
-      expect(d.topSignalIds).toEqual(f.topSignalIds.slice(0, 5));
-      if (d.topSignalIdsTotal > 5) cut++;
-    }));
+    const flat = full.flatMap((y: any) => y.domains.map((d: any) => [y.window.start.slice(0, 4), d]));
+    expect(flat.length).toBe(rows.length);
+    rows.forEach((row: any[], i: number) => {
+      const [year, f] = flat[i];
+      expect(row[0]).toBe(year);
+      expect(row[1]).toBe(f.domain);
+      expect(row[9]).toBe(f.topSignalIds.length);
+      expect(row[8]).toEqual(f.topSignalIds.slice(0, 3));
+      if (row[9] > 3) cut++;
+    });
     expect(cut).toBeGreaterThan(0);
   }, 120_000);
 });

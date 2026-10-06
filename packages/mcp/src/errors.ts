@@ -5,6 +5,7 @@ export type ToolErrorCode =
   | 'profile_invalid'
   | 'profile_exists'
   | 'unknown_signal'
+  | 'ambiguous_signal'
   | 'response_too_large'
   | 'unsupported'
   | 'internal';

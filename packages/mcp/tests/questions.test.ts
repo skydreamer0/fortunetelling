@@ -58,7 +58,7 @@ describe('answer_question', () => {
   test('detail:true matches core answerQuestion with an equivalent provider (pure wrapper)', async () => {
     const { json } = await fx.call('answer_question', { ...args, detail: true });
     const analysis = await fx.ctx.analyzer.get('sky', ASOF);
-    const direct = slimAnswer(answerQuestion({ category: 'vehicle_purchase', range: RANGE }, monthSignalProvider(analysis)), true);
+    const direct = slimAnswer(answerQuestion({ category: 'vehicle_purchase', range: RANGE }, monthSignalProvider(analysis)), true, analysis.shortIds);
     expect(json.data.top).toEqual(JSON.parse(JSON.stringify(direct.top)));
     expect(json.data.conventions).toBeDefined();
     expect(json.data.ranking).toEqual(JSON.parse(JSON.stringify(direct.ranking)));
@@ -77,8 +77,8 @@ describe('answer_question', () => {
       for (const id of w.signalIds) expect(f.signalIds).toContain(id);
     });
     // every id the slim answer cites is also in the full answer (truncation never invents ids)
-    const fullIds = new Set(JSON.stringify(full).match(/sig_[0-9a-f]{16}/g));
-    for (const id of new Set(JSON.stringify(slim).match(/sig_[0-9a-f]{16}/g))) expect(fullIds.has(id)).toBe(true);
+    const fullIds = new Set(JSON.stringify(full).match(/sig_[0-9a-f]+/g));
+    for (const id of new Set(JSON.stringify(slim).match(/sig_[0-9a-f]+/g))) expect(fullIds.has(id)).toBe(true);
   }, 120_000);
   test('unknown category → unsupported, not an error', async () => {
     const { isError, json } = await fx.call('answer_question', { ...args, category: 'nope_xyz' });

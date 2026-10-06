@@ -11,7 +11,7 @@ const EXPECTED_TOOLS = [
   'get_chart', 'get_time_context',
   'list_signals', 'get_signal', 'get_timeline', 'get_consensus', 'list_conflicts',
   'answer_question', 'list_question_categories', 'compare_profiles',
-  'check_answer', 'import_profile',
+  'check_answer', 'import_profile', 'batch',
 ];
 
 let fx: Awaited<ReturnType<typeof makeFixture>>;
@@ -64,12 +64,17 @@ describe('stdio server (what Claude Desktop actually talks to)', () => {
 
     // every signal id the answer cites must be fetchable
     const cited = [...new Set(JSON.stringify(top).match(/sig_[0-9a-f]+/g) ?? [])];
+    // 輸出一律是短編號（sig_ + 8 位）；碰撞才會是完整編號（此範例不碰撞）
+    expect(cited.length).toBeGreaterThan(0);
+    for (const id of cited) expect(id).toMatch(/^sig_[0-9a-f]{8}$/);
     for (const id of cited.slice(0, 5)) {
       const signal = JSON.parse(textOf(await client.callTool({
         name: 'get_signal', arguments: { profileId: 'sky', asOf: '2026-09-30', signalId: id },
       })));
       expect(signal.error).toBeUndefined();
-      expect(signal.data.id ?? signal.data.signal?.id).toBe(id);
+      expect(signal.data.shortId).toBe(id);
+      expect(signal.data.signal.id.startsWith(id)).toBe(true);
+      expect(signal.data.signal.id).toMatch(/^sig_[0-9a-f]{16}$/);
     }
   }, 60_000);
 
@@ -86,7 +91,7 @@ describe('stdio server (what Claude Desktop actually talks to)', () => {
     expect(verified.data.experimentalIncluded).toBe(false);
     for (const id of verified.data.top.flatMap((t: any) => t.signalIds)) {
       const sig = JSON.parse(textOf(await client.callTool({ name: 'get_signal', arguments: { profileId: 'sky', asOf: '2026-09-30', signalId: id } })));
-      expect(sig.data.signal.id).toBe(id);
+      expect(sig.data.shortId).toBe(id);
     }
     const bad: any = await client.callTool({ name: 'answer_question', arguments: { ...args, systems: ['astrology'] } });
     expect(bad.isError).toBe(true);
