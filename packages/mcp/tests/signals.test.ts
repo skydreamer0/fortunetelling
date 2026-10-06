@@ -114,7 +114,7 @@ describe('get_timeline', () => {
     expect(json.data.yearsFormat).toBe('table');
     expect(json.data.years).toBeUndefined();
     const { columns, rows } = json.data.yearTable;
-    expect(columns).toEqual(['year', 'domain', 'score', 'band', 'consensus', 'highConsensus', 'hasConflict', 'systems', 'topSignalIds', 'topSignalIdsTotal']);
+    expect(columns).toEqual(['year', 'domain', 'score', 'band', 'consensus', 'highConsensus', 'hasConflict', 'systems', 'topSignalIds', 'topSignalIdsTotal', 'activityAgreement', 'agreementDirections']);
     expect(rows.length).toBeGreaterThan(0);
     for (const row of rows) {
       expect(row.length).toBe(columns.length);
@@ -228,7 +228,9 @@ describe('consensus and conflicts', () => {
       expect(a.signalIds).toEqual(f.signalIds.slice(0, 5));
       checked++;
     }));
-    expect(checked).toBeGreaterThan(0);
+    expect(checked).toBe(0); // this fixture has no three eligible same-direction votes
+    expect(json.data.headlines.agreements).toEqual([]);
+    expect(json.data.agreementSemantics).toBe('directional');
     for (const a of json.data.headlines.agreements) expect(a.signalIds.length).toBeLessThanOrEqual(5);
     const ranged = await fx.call('get_consensus', { ...base, range: { start: '2026', end: '2026' } });
     expect(ranged.json.data.years.length).toBeLessThan(json.data.years.length);

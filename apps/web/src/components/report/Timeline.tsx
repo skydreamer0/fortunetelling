@@ -281,7 +281,7 @@ export function ConsensusBlock({ consensus, selected, onSelect }: ConsensusBlock
           ) : (
             <ul className="tl-cons__list">
               {agreements.map(item => (
-                <li key={item.key}>
+                <li key={`${item.key}:${item.direction}`}>
                   <button type="button" className="tl-cons__item" aria-pressed={item.key === selected} onClick={() => onSelect(item.key)}>
                     <span className="tl-cons__where">
                       <span className="tl-cons__year">{item.yearLabel}</span>

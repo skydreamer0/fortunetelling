@@ -1,0 +1,39 @@
+{
+  "version": "0.6.0",
+  "decision": "D-045",
+  "reason": "Issues #43/#44: validated aggregation input; raw, threshold-provenanced eligible directional agreement. Activity, noisy-OR scores, ranking, chart algorithms and source signals preserved.",
+  "changes": {
+    "aq-detail|vehicle_purchase": {
+      "before": "7be2a2a816a6c57bb80a7318eb77a4d910545d23c2f07b33c994d6aee0ea0608",
+      "after": "fc7716ecb520c1eb50fd6b872b5e9062e71f5f1b341168d8a8b56ca44a3a1bf1"
+    },
+    "aq-detail|job_change": {
+      "before": "6adbb80dd13673992f0041d6abb04bdd096f1d597cb0a217fc47ca666e3b3620",
+      "after": "89f03a3c0dd7930095975aab403542bf825d2b22e2c88087735364d87b8f2169"
+    },
+    "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}|noYears": {
+      "before": "0855877a48efb689eb8cdcdd393b9c9efe2ef4ede5dc89e1b2a3e0da4a1158e4",
+      "after": "a5a830203cd556b32a777e2d7c4d7d7ef97b7fc918768091eb2ea301bcc6c0a8"
+    },
+    "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}|noYears": {
+      "before": "e6bb4d9db626fa91f22c4eea481139d4f0b3dd38e6dabe04a6857a28b0da940c",
+      "after": "42270a787af55da431b247154c660c7a1221a97642d5b8313522ecd69ae8991c"
+    },
+    "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\",\"detail\":true}": {
+      "before": "0c5ad187ba7c703f88882df0090a6a42bd8d4819027022c45bf25fa2c6883cc7",
+      "after": "54c81b1d27dab7cfb0a0d285d817a70fe046d62d4e7643714ddbdb2821e17ae3"
+    },
+    "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}|noYears": {
+      "before": "8cee054eb3a5623928e5c59fa2bf044d2ae555aa17e5946eb3b58dacf3a177fc",
+      "after": "eb2b0eb49c848730da541121ff9e49f5aa972318c114a7cbf031376f6129a70a"
+    },
+    "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}": {
+      "before": "110d6f05a8f3441ca6f98307683b924998584be505a80f7ca16428238fbbaabf",
+      "after": "dfb1bc623fa89c50c03d0dca2f4c05366b12ede3ea9bdf0916593bba4676896b"
+    },
+    "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}": {
+      "before": "a6b65bc41e0784624700830245dbd443c427a74af54447c0a35ef19b7f90588b",
+      "after": "dfb1bc623fa89c50c03d0dca2f4c05366b12ede3ea9bdf0916593bba4676896b"
+    }
+  }
+}

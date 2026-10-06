@@ -75,7 +75,8 @@ describe('#43 aggregation input guards', () => {
     const b = signal('negative', { system: 'ziwei', intensity: 0.8, valence: -1 });
     const c = signal('positive-c', { system: 'numerology', intensity: 0.8, valence: 1 });
     const [withoutA] = aggregateSignals([a, b, c], { systemWeights: { bazi: 0 } });
-    expect(withoutA.consensus).toBe(2);
+    expect(withoutA.activityAgreement).toBe(2);
+    expect(withoutA.consensus).toBe(1);
     expect(withoutA.conflict).toEqual({ positive: [c.id], negative: [b.id] });
     const [withoutB] = aggregateSignals([a, b, c], { systemWeights: { ziwei: 0 } });
     expect(withoutB.consensus).toBe(2);
@@ -87,7 +88,8 @@ describe('#43 aggregation input guards', () => {
     const b = signal('weighted-b', { system: 'ziwei', intensity: 0.2 });
     const [result] = aggregateSignals([a, b], { systemWeights: { bazi: 3 }, consensusThreshold: 0.5 });
     expect(result.score).toBeCloseTo(65, 12);
-    expect(result.consensus).toBe(1);
+    expect(result.activityAgreement).toBe(1);
+    expect(result.consensus).toBe(0);
     expect(aggregateSignals([a, b], { systemWeights: { bazi: undefined } })).toEqual(aggregateSignals([a, b]));
   });
 
@@ -121,10 +123,12 @@ describe('#43 aggregation input guards', () => {
     const a = signal('boundary-positive', { intensity: 1, valence: 1 });
     const b = signal('boundary-negative', { system: 'ziwei', intensity: 1, valence: -1 });
     const [zero] = aggregateSignals([a, b], { consensusThreshold: 0, conflictThreshold: 0 });
-    expect(zero.consensus).toBe(2);
+    expect(zero.activityAgreement).toBe(2);
+    expect(zero.consensus).toBe(1);
     expect(zero.conflict).not.toBeNull();
     const [one] = aggregateSignals([a, b], { consensusThreshold: 1, conflictThreshold: 1 });
-    expect(one.consensus).toBe(2);
+    expect(one.activityAgreement).toBe(2);
+    expect(one.consensus).toBe(0);
     expect(one.conflict).toBeNull();
   });
 

@@ -31,8 +31,8 @@ const fmt1 = (x: number) => String(Math.round(x * 10) / 10);
 const month = (r: RankedWindow) => r.window.start.slice(0, 7);
 
 /**
- * 領域一行摘要，例：「財運 58.3：活躍70.2／支撐52.1／風險6／共識2／有矛盾」
- * （共識 = 該領域分數達門檻的系統數；數字取小數 1 位，精確值見 detail: true）。
+ * 領域一行摘要，例：「財運 58.3：活躍70.2／支撐52.1／風險6／共同關注3／同向2／有矛盾」
+ * （共同關注 = 正權重系統強度達 θ；同向 = 非 experimental、方向超過 τ 的最大同側票數；數字取小數 1 位，精確值見 detail: true）。
  */
 export function domainLine(d: DomainScore): string {
   const label = DOMAIN_LABELS[d.domain] ?? d.domain;

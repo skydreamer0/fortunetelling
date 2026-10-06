@@ -109,7 +109,8 @@ describe('timeline selectors', () => {
   });
 
   test('high consensus is exposed', () => {
-    expect(findTimelineCell('year:2026-01-01:family', years)!.highConsensus).toBe(true);
+    expect(findTimelineCell('year:2026-01-01:family', years)!.highConsensus).toBe(false);
+    expect(findTimelineCell('year:2026-01-01:family', years)!.activityAgreement).toBe(3);
   });
 
   test('month grid: the 12 months of the asOf year, September current', () => {
@@ -232,7 +233,7 @@ describe('consensus (Report v5)', () => {
     expect(view.agreements.map(item => item.key)).toEqual(
       consensus.headlines.agreements.map(item => `year:${item.window.start}:${item.domain}`),
     );
-    expect(view.agreements.length).toBeGreaterThan(0);
+    expect(view.agreements).toEqual([]);
     for (const item of view.agreements) {
       expect(item.systems.map(chip => chip.name)).toEqual(['八字', '紫微斗數', '生命靈數']);
       expect(findTimelineCell(item.key, years5)!.highConsensus).toBe(true);
@@ -260,7 +261,7 @@ describe('consensus (Report v5)', () => {
     const button = findElement(tree, element => element.type === 'button' && element.props['aria-pressed'] === false);
     expect(button).not.toBeNull();
     button!.props.onClick();
-    expect(onSelect).toHaveBeenCalledWith(view.agreements[0].key);
+    expect(onSelect).toHaveBeenCalledWith((view.agreements[0] ?? view.conflicts[0]).key);
     // Neutral wording in the block chrome.
     expect(renderToStaticMarkup(<ConsensusBlock consensus={view} selected={null} onSelect={() => {}} />)).not.toMatch(/[吉凶]|你是/);
   });

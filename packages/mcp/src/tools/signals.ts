@@ -59,6 +59,10 @@ const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 /** 把一串完整編號縮成輸出用的短編號（碰撞者保留完整編號）。 */
 export type Shorten = (ids: readonly string[]) => string[];
 
+const evidenceOut = (proof: TimelineCell['domains'][number]['directionalEvidence'], sh: Shorten) => proof ? {
+  ...proof, perSystem: Object.fromEntries(Object.entries(proof.perSystem).map(([system, value]) => [system, { ...value!, signalIds: sh(value!.signalIds) }])),
+} : null;
+
 function slim(s: Signal, sh: Shorten) {
   return {
     id: sh([s.id])[0],
@@ -99,7 +103,7 @@ function slimCell(cell: TimelineCell, domain: string | undefined, detail: boolea
         activityAgreement: d.activityAgreement,
         highConsensus: d.highConsensus,
         agreementDirections: (['positive', 'negative'] as const).filter(direction => (directionalVotes(d.directionalEvidence)?.[direction].systems.length ?? 0) >= 3),
-        ...(detail ? { directionalEvidence: d.directionalEvidence } : {}),
+        ...(detail ? { directionalEvidence: evidenceOut(d.directionalEvidence, sh) } : {}),
         hasConflict: d.conflict !== null,
         ...(month && !detail
           ? {}
@@ -319,8 +323,8 @@ export const signalTools = [
   defineTool({
     name: 'get_consensus',
     description:
-      'Cross-system consensus (signal ids are short ids, sig_ + 8 hex): years[] each { window, highConsensus[] agreements (domain, consensus, score, systems, signalIds (first 5; signalIdsTotal = full count; detail: true returns all)), conflictCount }, ' +
-      'headlines.agreements (top agreements), conflictCount total, systems and thresholds. Conflict details: use list_conflicts. range = {start,end} as YYYY or YYYY-MM filters years. ' +
+      'Cross-system consensus (signal ids are short ids, sig_ + 8 hex): years[] each { window, highConsensus[] agreements (domain, direction, consensus, score, systems, signalIds (first 5; signalIdsTotal = full count; detail: true returns all)), conflictCount }, ' +
+      'headlines.agreements (at least 3 eligible same-direction votes; positive=support, negative=pressure), conflictCount total, systems and raw thresholds. Conflict details: use list_conflicts. range = {start,end} as YYYY or YYYY-MM filters years. ' +
       'systems / verifiedOnly recompute consensus from only those systems (list_conflicts is not filtered); the response always has systemsUsed, excludedSystems, experimentalIncluded.',
     input: { profileId, asOf, range: flexRange.optional(), systems: systemsInput, verifiedOnly: verifiedOnlyInput, detail: detailInput },
     async handler(args, { analyzer }) {

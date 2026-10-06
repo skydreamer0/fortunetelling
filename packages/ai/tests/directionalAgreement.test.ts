@@ -47,6 +47,17 @@ describe('#44 all AI check paths use trusted same-direction evidence', () => {
     expect(checkPastedAnswer(f.built, f.text).ok).toBe(true);
   });
 
+  test('caller exclusions can narrow but never relax the fixed eligibility policy', () => {
+    const f = fixture();
+    expect(checkAnswer(f.text, { signalLookup: f.lookup, directionalEvidence: [f.agg.directionalEvidence],
+      experimentalSystems: ['numerology'] } as any).ok).toBe(false);
+    const proof = structuredClone(f.agg.directionalEvidence);
+    proof.perSystem.jyotish = proof.perSystem.numerology; delete proof.perSystem.numerology;
+    const signals = f.signals.map(signal => signal.system === 'numerology' ? { ...signal, system: 'jyotish' } : signal);
+    expect(checkAnswer(f.text, { signalLookup: (id: string) => signals.find(signal => signal.id === id),
+      directionalEvidence: [proof], experimentalSystems: [] } as any).ok).toBe(false);
+  });
+
   test('the payload carries raw thresholds/provenance and distinguishes shared attention', () => {
     const f = fixture([1, -1, 0], { consensusThreshold: 0.7, conflictThreshold: 0.3 });
     const timeline = f.built.payload.timeline as any;

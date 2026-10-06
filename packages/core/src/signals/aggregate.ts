@@ -6,7 +6,7 @@ export { DEFAULT_CONSENSUS_THRESHOLD, DEFAULT_CONFLICT_THRESHOLD, HIGH_CONSENSUS
 export interface AggregateOptions {
   /** Per-system weight wₛ (data; default 1 for any system not listed). */
   systemWeights?: Partial<Record<SystemId, number>>;
-  /** θ: a system counts toward consensus when its noisy-OR score ≥ θ. Default 0.5. */
+  /** θ: raw noisy-OR activity threshold; directional votes also require eligibility and |valence| > τ. Default 0.5. */
   consensusThreshold?: number;
   /** τ: conflict when one system valence > τ and another < −τ. Default 0.2. */
   conflictThreshold?: number;

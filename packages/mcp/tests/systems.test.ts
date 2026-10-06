@@ -8,6 +8,12 @@ import { answerQuestion, buildConsensus, canonicalStringify, listQuestionCategor
 import { compactAnswer } from '../src/answerSummary';
 import { monthSignalProvider, slimAnswer } from '../src/tools/questions';
 import baseline from './fixtures/systemsBaseline.json';
+import agreementDelta from './fixtures/systemsBaseline.v0.6.0.delta.json';
+function expectedHash(key: string): string {
+  const delta = (agreementDelta.changes as Record<string, {before:string; after:string}>)[key];
+  expect(delta.before).toBe((baseline as Record<string,string>)[key]);
+  return delta.after;
+}
 import { makeFixture } from './helpers';
 
 const ASOF = '2026-09-30';
@@ -46,11 +52,11 @@ async function expandIds(json: any) {
   return JSON.parse(text);
 }
 
-describe('不指定系統：與改動前相同', () => {
-  test('answer_question detail:true 的完整結構（去掉新欄位）與改動前逐位元相同', async () => {
+describe('不指定系統：保留舊基準並套用 D-045 字面差異', () => {
+  test('answer_question detail:true 的完整結構（去掉新欄位）符合已審查 v0.6.0 字面差異', async () => {
     for (const [cat, start, end] of [['vehicle_purchase', '2027-01', '2027-12'], ['job_change', '2026-10', '2028-09']]) {
       const r = await fx.call('answer_question', { profileId: 'sky', category: cat, range: { start, end }, asOf: ASOF, detail: true });
-      expect(sha((await expandIds(stripNew(r.json))).data)).toBe((baseline as Record<string, string>)[`aq-detail|${cat}`]);
+      expect(sha((await expandIds(stripNew(r.json))).data)).toBe(expectedHash(`aq-detail|${cat}`));
     }
   }, 120_000);
 
@@ -79,7 +85,7 @@ describe('不指定系統：與改動前相同', () => {
         j.versionsHash = baseline.$versionsHash;
       }
       const key = `${name}|${JSON.stringify(args)}${noYears ? '|noYears' : ''}`;
-      expect(sha(canonicalStringify(j))).toBe((baseline as Record<string, string>)[key]);
+      expect(sha(canonicalStringify(j))).toBe(expectedHash(key));
     }
   }, 120_000);
 
@@ -254,7 +260,7 @@ describe('get_timeline／get_consensus systems 與逐月表格', () => {
       expect(table.monthTable.rows.length).toBe(12);
       table.monthTable.rows.forEach((row: any[], i: number) => {
         const d = cells.months[i].domains[0];
-        expect(row).toEqual([cells.months[i].window.start.slice(0, 7), d.score, d.band, d.consensus, d.highConsensus, d.hasConflict, d.topSignalIds, d.topSignalIdsTotal]);
+        expect(row).toEqual([cells.months[i].window.start.slice(0, 7), d.score, d.band, d.consensus, d.highConsensus, d.hasConflict, d.topSignalIds, d.topSignalIdsTotal, d.activityAgreement, d.agreementDirections]);
       });
     }
     const plain = (await fx.call('get_timeline', { ...base, months, domain: 'wealth' })).json.data.monthTable.rows;

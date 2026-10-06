@@ -405,15 +405,6 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
   };
 
   // ── size budget: greedy keep by priority (protected, intensity desc, id asc) ──
-  const placeholderTrunc: PayloadTruncation = {
-    maxChars: reportedMax,
-    signalsTotal: all.length,
-    signalsKept: all.length,
-    signalsDropped: all.length,
-    droppedMaxIntensity: 0.123456789,
-    overBudget: false,
-  };
-  const baseSize = canonicalJson({ ...base, signals: [], truncation: placeholderTrunc }).length + 64;
   const priority = [...all].sort((a, b) => {
     const pa = protectedIds.has(a.id) ? 1 : 0;
     const pb = protectedIds.has(b.id) ? 1 : 0;
@@ -421,23 +412,15 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
     if (a.intensity !== b.intensity) return b.intensity - a.intensity;
     return a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
   });
-  const kept: PayloadSignal[] = [];
-  const dropped: PayloadSignal[] = [];
-  let size = baseSize;
-  let full = false; // strict order: once one signal does not fit, every lower-priority one is dropped too
-  for (const s of priority) {
-    const len = canonicalJson({ ...s, id: sid(s.id) }).length + 1;
-    if (!full && size + len <= maxChars) {
-      kept.push(s);
-      size += len;
-    } else {
-      full = true;
-      dropped.push(s);
-    }
-  }
-  kept.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  const keptIds = new Set(kept.map((s) => s.id));
-
+  const parts = options.redact === false ? [] : sensitiveParts(report);
+  // Measure the actual, redacted payload after pruning references. Estimating the
+  // untrimmed base can discard every signal even when thousands of chars fit.
+  // Each attempt starts fresh: a smaller prefix must not destroy later proofs.
+  const renderPrefix = (count: number, overBudget = false): BuiltPayload => {
+    const candidate = structuredClone(base);
+    const kept = priority.slice(0, count).sort((a, b) => a.id.localeCompare(b.id));
+    const dropped = priority.slice(count);
+    const keptIds = new Set(kept.map(s => s.id));
   // Drop references to signals that are not in the payload.
   const keptShort = new Set(kept.map((s) => sid(s.id)));
   const filterIds = (ids: string[]) => ids.filter((id) => keptShort.has(id));
@@ -451,8 +434,8 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
     }));
     return { ...proof, perSystem };
   };
-  if (base.timeline) {
-    for (const cell of [...base.timeline.years, ...base.timeline.months]) {
+  if (candidate.timeline) {
+    for (const cell of [...candidate.timeline.years, ...candidate.timeline.months]) {
       for (const d of cell.domains) {
         d.topSignalIds = filterIds(d.topSignalIds);
         d.directionalEvidence = trimProof(d.directionalEvidence);
@@ -460,8 +443,8 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
       }
     }
   }
-  if (base.question) {
-    for (const w of base.question.top) {
+  if (candidate.question) {
+    for (const w of candidate.question.top) {
       w.supportSignalIds = filterIds(w.supportSignalIds);
       w.riskSignalIds = filterIds(w.riskSignalIds);
       w.directionalEvidence = w.directionalEvidence.map(proof => trimProof(proof)!).filter(Boolean);
@@ -470,16 +453,31 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
     }
   }
 
-  const truncation: PayloadTruncation = {
-    maxChars: reportedMax,
-    signalsTotal: all.length,
-    signalsKept: kept.length,
-    signalsDropped: dropped.length,
-    droppedMaxIntensity: dropped.length ? Math.max(...dropped.map((s) => s.intensity)) : null,
-    overBudget: baseSize > maxChars,
+    const truncation: PayloadTruncation = {
+      maxChars: reportedMax,
+      signalsTotal: all.length,
+      signalsKept: kept.length,
+      signalsDropped: dropped.length,
+      droppedMaxIntensity: dropped.length ? Math.max(...dropped.map(s => s.intensity)) : null,
+      overBudget,
+    };
+    const payload = scrubReport({ ...candidate, signals: kept.map(s => ({ ...s, id: sid(s.id) })), truncation }, parts) as InterpretationPayload;
+    return { payload, payloadJson: canonicalJson(payload), signalIds: keptIds };
   };
-
-  const parts = options.redact === false ? [] : sensitiveParts(report);
-  const payload = scrubReport({ ...base, signals: kept.map((s) => ({ ...s, id: sid(s.id) })), truncation }, parts) as InterpretationPayload;
-  return { payload, payloadJson: canonicalJson(payload), signalIds: keptIds };
+  const complete = renderPrefix(priority.length);
+  if (!budgeted || complete.payloadJson.length <= maxChars) return complete;
+  const empty = renderPrefix(0);
+  if (empty.payloadJson.length > maxChars) return renderPrefix(0, true);
+  // Keep only a priority prefix. Adding signals restores their references too,
+  // so measure complete candidates instead of budgeting each signal in isolation.
+  let low = 0, high = priority.length;
+  let best = empty;
+  while (low + 1 < high) {
+    const middle = Math.floor((low + high) / 2);
+    const candidate = renderPrefix(middle);
+    if (candidate.payloadJson.length <= maxChars) { low = middle; best = candidate; }
+    else high = middle;
+  }
+  if (best.payloadJson.length > maxChars) throw new Error('payload budget invariant violated');
+  return best;
 }

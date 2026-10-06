@@ -42,7 +42,7 @@ export interface CheckAnswerOptions {
    * 由呼叫端負責解析前綴：唯一才回訊號，ambiguous（對到多筆）與查不到一律回 null，絕不猜。
    */
   signalLookup: (id: string) => SignalRef | undefined | null;
-  /** 覆寫 experimental 系統清單（預設 {@link EXPERIMENTAL_SYSTEMS}）。 */
+  /** 額外排除的 experimental 系統；不能解禁 core 的固定排除清單。 */
   experimentalSystems?: readonly string[];
   /** From the SAME report/analysis. Lazy retrieval runs after citation resolution fills period caches. */
   directionalEvidence?: readonly unknown[] | (() => readonly unknown[]);
@@ -130,7 +130,7 @@ function experimentalNamedInConsensusSentence(prose: string): string[] {
 }
 
 export function checkAnswer(answerText: string, options: CheckAnswerOptions): CheckAnswerResult {
-  const experimental = new Set(options.experimentalSystems ?? EXPERIMENTAL_SYSTEMS);
+  const experimental = new Set([...EXPERIMENTAL_SYSTEMS, ...(options.experimentalSystems ?? [])]);
   const referenceCache = new Map<string, SignalRef | null>();
   const referenceOf = (id: string): SignalRef | null => {
     let hit = referenceCache.get(id);
@@ -171,7 +171,7 @@ export function checkAnswer(answerText: string, options: CheckAnswerOptions): Ch
       const named = experimentalNamedInConsensusSentence(prose);
 
       const evidence = typeof options.directionalEvidence === 'function' ? options.directionalEvidence() : options.directionalEvidence ?? [];
-      const refs = citations.flatMap(id => { const ref = referenceOf(id); return ref ? [{ ...ref, id: ref.id ?? id }] : []; });
+      const refs = citations.flatMap(id => { const ref = referenceOf(id); return ref && !experimental.has(ref.system) ? [{ ...ref, id: ref.id ?? id }] : []; });
       const supported = supportsHighConsensusCitations(evidence, refs);
       if (!supported) {
         if (citedExperimental.length > 0 && verified.length < HIGH_CONSENSUS_MIN_SYSTEMS) {

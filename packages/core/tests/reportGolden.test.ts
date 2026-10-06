@@ -4,6 +4,7 @@ import { GOLDEN_PATH, buildGolden } from './fixtures/reportGolden';
 import delta from './fixtures/reportGolden.v0.5.1.delta.json';
 import replayDelta from './fixtures/reportGolden.v0.5.2.delta.json';
 import specDelta from './fixtures/reportGolden.v0.5.3.delta.json';
+import agreementDelta from './fixtures/reportGolden.v0.6.0.delta.json';
 
 // Preserve the original V1-16 golden; apply only reviewed literal versioned deltas.
 // No value in the expected result is derived from the current implementation.
@@ -12,7 +13,7 @@ test('analyze()/analyzeCompatibility() JSON matches the preserved golden plus ex
   assert.equal(new Bun.CryptoHasher('sha256').update(original).digest('hex'),
     '07ca1cd3b22f6699115c14d0dfb0a6c78742b445dac6efb4dba6c8ae2ca3b29f', 'Preserve the original v0.5.0 report fixture');
   const recorded = JSON.parse(original) as Record<string, unknown>;
-  for (const change of [...delta.changes, ...replayDelta.changes, ...specDelta.changes]) {
+  for (const change of [...delta.changes, ...replayDelta.changes, ...specDelta.changes, ...agreementDelta.changes]) {
     let parent = recorded;
     for (const key of change.path.slice(0, -1)) {
       const child = parent[key];

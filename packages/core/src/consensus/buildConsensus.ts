@@ -48,7 +48,7 @@ export interface ConsensusSide {
   signalIds: string[];
 }
 
-/** A high-consensus (domain, year): ≥ 3 systems with noisy-OR score ≥ θ. */
+/** A high-consensus side: ≥ 3 eligible positive-weight systems with raw score ≥ θ and same-sign valence beyond τ. */
 export interface ConsensusAgreement extends ConsensusSide {
   direction: 'positive' | 'negative';
   domain: Domain;

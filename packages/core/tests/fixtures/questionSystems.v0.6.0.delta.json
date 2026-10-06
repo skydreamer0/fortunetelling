@@ -1,0 +1,71 @@
+{
+  "version": "0.6.0",
+  "decision": "D-045",
+  "reason": "Issues #43/#44: validated aggregation input; raw, threshold-provenanced eligible directional agreement. Activity, noisy-OR scores, ranking, chart algorithms and source signals preserved.",
+  "changes": {
+    "vehicle_purchase|2027-01|2027-12": {
+      "before": "6739f6d56f1fbba3ff06552094c1a644b94476a66d714cc6ed379aa21ceb298a",
+      "after": "2225ddaba335dbd75506f549940962d180f88194cbe9409767516b5d02e03920"
+    },
+    "job_change|2027-01|2027-12": {
+      "before": "9f7475fbfd4f4b98b3a1a84dcb7f80df2a52518d708c1d48077c5ecc0435c454",
+      "after": "640a4af7a22982c172d465d4af2cfb10569a744c31484707176e52d20917b1e8"
+    },
+    "relationship_timing|2027-01|2027-12": {
+      "before": "5947792259e9e126926b4ff2374345f92d4025ace2c6a3ef52e32ade51d852f2",
+      "after": "04c8cab58ac18335718f41219ba68e59d4bfc206488f36b8bbe445d9d6903ba9"
+    },
+    "startup_timing|2027-01|2027-12": {
+      "before": "74715234f3eba9a0a18b288537bffb73094419adc12f048a4e6f6a9cdde471c3",
+      "after": "a206ea8cb56297f41380639ae7401e2d86f2d7f3f8c7f2acf29517fe5a1bc33e"
+    },
+    "property_purchase|2027-01|2027-12": {
+      "before": "a0b806a7ab2d50bb347bb974a5c86f1e853b3d5a16a0a745111ae4fc372cfa70",
+      "after": "c007d7e849e9430362786f0ea104d5c776e4536962c50e25019e9491eb93d02f"
+    },
+    "relocation|2027-01|2027-12": {
+      "before": "aed8b61130c23cd1f0b3e7fee2f209c4f6f392532d8beddbae011b3ead8bac34",
+      "after": "0c5ac66e82a336ea4fc77f94d699dfda3468267a0cafd77fe7319cdb5c17b295"
+    },
+    "study_exam|2027-01|2027-12": {
+      "before": "1176174a15f996010ec19020ca36027579073ea9c6d0173f71adcefe98bbb087",
+      "after": "b74a4334cea36e6039a33bc3126abf61d5444cf88d58c56f7a10a1e9554601c5"
+    },
+    "investment|2027-01|2027-12": {
+      "before": "61831526251f2d4e6780053ab8550d18d7d32b509de78eea9759336cc254eadb",
+      "after": "02161e87ff0b6174c1273a710a2d08b56f03d4ea28e09c64c8d74399bbf92ac0"
+    },
+    "vehicle_purchase|2026-10|2027-09": {
+      "before": "dc42dbffaa0513428cb8d5a4d47cfcb6e4cbb41936a7642fefebaa9e578538ec",
+      "after": "e82bb141a04f769548f8ba24d8d0d4ed3267c40340250f4ee3d4f8a1aa553040"
+    },
+    "job_change|2026-10|2027-09": {
+      "before": "f66ea5dd262dbc2c63a0f7c9fb0ff0a5f6ebd3b81dfc4527958f7546da09493c",
+      "after": "ee52658ec28c16e4e13b6e0d623629a656faf431cfeb12883691b26a70c52ef0"
+    },
+    "relationship_timing|2026-10|2027-09": {
+      "before": "5677ac1d73aa8b69cc2fdc3586ad1afc870df3d70d708bfb7d49c7371c8c4e6d",
+      "after": "aae2287fbc6e9babb1e7d63c79914c7bbc2c815dce386efdf8b112e5b75a3fe6"
+    },
+    "startup_timing|2026-10|2027-09": {
+      "before": "671fb2a316971b254cfcd86d1b52f7a4fc287065bcb0ae804acec13b6f38125a",
+      "after": "0d8de739505a9941dc16dcfdcfa96add15c53bfbc4bbc4aadd01492014d43d18"
+    },
+    "property_purchase|2026-10|2027-09": {
+      "before": "cade7cd94ef3f24bed489b796f9b3a4c1fb6ac27acf46e0c417b3a26d5eff257",
+      "after": "6d1870059806b5b7ef5e39eead61a0bb0752edb45f77be4d30cdc4f521598f03"
+    },
+    "relocation|2026-10|2027-09": {
+      "before": "2d0c94ed5597394ec83e9b8751d8967cfb54e848b69acf17336a2e1c885f8ae2",
+      "after": "af6ed0d0fafdf074fadfbd57d9a5ae91748781c184e08511674106be5a289530"
+    },
+    "study_exam|2026-10|2027-09": {
+      "before": "30907572c1f27c89cce48747cc9cbb25ce75bd3a0de2e9ea9f0f31636f38c1ae",
+      "after": "5eee2d59f0161b7a20c512ccfa61f8bab89555c945408d2672658f96eba21531"
+    },
+    "investment|2026-10|2027-09": {
+      "before": "1eed953e7b832db7610345b892589f1f1e8b0bfad4be2d9bd3c51a78c9a9531b",
+      "after": "9e11fdc01ee3cdd50c0a42034c69ea832c85565a6bd8ac463e530058ccf0ed67"
+    }
+  }
+}

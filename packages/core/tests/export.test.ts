@@ -1,3 +1,4 @@
+import agreementDelta from './fixtures/export.v0.6.0.delta.json';
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -110,7 +111,7 @@ describe('buildExportBundle', () => {
 
 describe('golden', () => {
   // Preserve the v0.5.0 fixture. D-040 changes only the manifest core version;
-  // every exported file hash and signal count remains pinned to the original.
+  // D-045 then applies reviewed literal provenance/schema/export deltas.
   const goldenPath = join(import.meta.dir, 'fixtures', 'export.golden.json');
   test('share-redacted 檔案內容指紋固定', async () => {
     const bundle = await buildExportBundle(file, { preset: 'share-redacted', asOf: ASOF });
@@ -121,6 +122,11 @@ describe('golden', () => {
     const recorded = JSON.parse(original);
     expect(recorded.versions.coreVersion).toBe('0.5.0');
     recorded.versions.coreVersion = '0.5.3';
+    for (const change of agreementDelta.changes) {
+      const [group, key] = change.path;
+      expect(recorded[group][key]).toEqual(change.before);
+      recorded[group][key] = structuredClone(change.after);
+    }
     expect(text).toBe(`${JSON.stringify(recorded, null, 2)}\n`);
   });
 });

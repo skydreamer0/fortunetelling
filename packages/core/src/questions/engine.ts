@@ -36,7 +36,7 @@ import { resolveAgreementThresholds } from '../signals/directionalEvidence';
 import { EXPERIMENTAL_SYSTEMS as EXPERIMENTAL_SYSTEM_IDS } from '../signals/eligibility';
 import { toBand } from '../signals/bands';
 import { SYSTEM_IDS, type Domain, type Signal, type SignalWindow, type SystemId, type Trait } from '../signals/types';
-import catalogJson from './catalog.json';
+import catalogJson from './catalog.v2.json';
 import type {
   AnswerOptions,
   DomainConflict,
