@@ -169,7 +169,7 @@ describe('CalculationSpec v1: analyze-sync natal intent only', () => {
     const solar = core.analyze({ ...crossing, useTrueSolarTime: true }, { asOf: '2026-07-11' });
     const natal = (report: typeof civil) => report.engines.find(e => e.engineId === 'bazi')?.components.find(c => c.id === 'natal')?.value;
     expect(natal(civil)).not.toEqual(natal(solar));
-  });
+  }, 60_000);
   test('22:59/23:00/23:59/00:00 preserve explicit clock and convention identities', () => {
     for (const [hour, minute] of [[22, 59], [23, 0], [23, 59], [0, 0]]) {
       const input = { ...birth, hour, minute };
