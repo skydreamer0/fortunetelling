@@ -1,0 +1,337 @@
+{
+  "baseFixture": "reportGolden.json (core 0.5.0, unchanged)",
+  "sourceCommit": "7b7764ff62abdcc095b9fd919f993400bad02f10",
+  "sourceCI": "https://github.com/skydreamer0/fortunetelling/actions/runs/37425777507",
+  "changes": [
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "followsOptions"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "followsOptions"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "followsOptions"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "followsOptions"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "followsOptions"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "followsOptions"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "followsOptions"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "followsOptions"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "followsOptions"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "followsOptions"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "followsOptions"
+      ],
+      "before": false,
+      "after": true
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "clock"
+      ],
+      "before": "trueSolar",
+      "after": "civil"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "baziZiHourConvention"
+      ],
+      "before": "late",
+      "after": "early"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "timeContext",
+        "conventions",
+        "timeline",
+        "ziweiZiHourConvention"
+      ],
+      "before": "splitMidnight",
+      "after": "nextDayAt23"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "signals"
+      ],
+      "before": {
+        "sha256": "4e0ada8fa848d59702d066a5fed61d51099997e2d915b96900cd1cdb945e7ba4",
+        "length": 223942
+      },
+      "after": {
+        "sha256": "f6483acd710230cd0d2fcfb0dd760d941285649a0102524a31ee712a54022e80",
+        "length": 216607
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "c057e49024c8817d693c21c4d336b21760e3e51df5705d68f849e40a0dca1a21",
+        "length": 281550
+      },
+      "after": {
+        "sha256": "c37d0d112c89bcee907ee9959fa9946b6f8c1198a94586c26ef089a458b21d2b",
+        "length": 274013
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "a3f535bdd51230e6be576f20531b2f300b916865d9cdd8a18dcd2159999a77b9",
+        "length": 25380
+      },
+      "after": {
+        "sha256": "2d2155fb9a96cc8db3efecec664dc95dbd8208bbb98ed0ae752314989ad32903",
+        "length": 25938
+      }
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-1991-1986",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-ny-unknown",
+        "version"
+      ],
+      "before": "0.5.0",
+      "after": "0.5.1"
+    }
+  ]
+}

@@ -200,12 +200,18 @@ analyze({
   ziwei: { clock: 'trueSolar'|'civil', ziHourConvention: 'splitMidnight'|'nextDayAt23' },
   numerology: 'civil-local-date', dreamspell: 'civil-local-date',
   minggua: 'civil-local-time-read-as-utc+8',
-  timeline: { clock: 'trueSolar', baziZiHourConvention: 'late', ziweiZiHourConvention: 'splitMidnight',
-              followsOptions: false, skippedInSyncAnalyze: ['jyotish', 'humanDesign'] },
+  timeline: { clock: 'trueSolar'|'civil', baziZiHourConvention: 'late'|'early',
+              ziweiZiHourConvention: 'splitMidnight'|'nextDayAt23',
+              followsOptions: true, skippedInSyncAnalyze: ['jyotish', 'humanDesign'] },
 }
 ```
 
 引擎層（`engines[]` 形狀不變，部件 id／category 不變）：
+
+自 core 0.5.1 起，主報告 timeline 跟隨同一份有效時間選項（D-040）；直接呼叫
+`buildTimeline`／`buildTimelineAsync` 可傳 `useTrueSolarTime` 與八字命名的 `ziHourConvention`。
+未傳仍為 `true/late`，紫微經明確映射使用 `splitMidnight/nextDayAt23`。
+這個修正尚未讓 Ask AI／Backtest 等自行重算入口共用快照；#26 後續工作仍開放。
 
 - **八字**：`core/timeContextEngines#TimeContextBaZiEngine`。引擎吃解析後的牆鐘（真太陽時或民用時），
   四柱再以 `computePillars(ctx)`（年／月柱＝出生瞬間對精確交節瞬間；日／時柱＝所選時鐘與子時約定）覆寫並重算

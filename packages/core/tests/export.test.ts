@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   EXPORT_FILE_NAMES,
@@ -109,13 +109,18 @@ describe('buildExportBundle', () => {
 });
 
 describe('golden', () => {
-  // 刻意更新：UPDATE_GOLDEN=1 bun test packages/core/tests/export.test.ts
+  // Preserve the v0.5.0 fixture. D-040 changes only the manifest core version;
+  // every exported file hash and signal count remains pinned to the original.
   const goldenPath = join(import.meta.dir, 'fixtures', 'export.golden.json');
   test('share-redacted 檔案內容指紋固定', async () => {
     const bundle = await buildExportBundle(file, { preset: 'share-redacted', asOf: ASOF });
     const actual = { versions: bundle.manifest.versions, files: bundle.manifest.files, signalCount: (bundle.signals as any).count };
     const text = `${JSON.stringify(actual, null, 2)}\n`;
-    if (process.env.UPDATE_GOLDEN || !existsSync(goldenPath)) writeFileSync(goldenPath, text);
-    expect(text).toBe(readFileSync(goldenPath, 'utf8').replace(/\r\n/g, '\n'));
+    const original = readFileSync(goldenPath, 'utf8').replace(/\r\n/g, '\n');
+    expect(new Bun.CryptoHasher('sha256').update(original).digest('hex')).toBe('90189fb31fea2937ec78db9688a5cea49714504f054525fe46a39ecc6a860668');
+    const recorded = JSON.parse(original);
+    expect(recorded.versions.coreVersion).toBe('0.5.0');
+    recorded.versions.coreVersion = '0.5.1';
+    expect(text).toBe(`${JSON.stringify(recorded, null, 2)}\n`);
   });
 });
