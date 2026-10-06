@@ -111,9 +111,17 @@ describe('Issue #26 report replay through the real Web/core call chains', () => 
 describe('report replay metadata and source-system boundaries', () => {
   test('LifeEvents model reproduces explicit non-default backtest options', () => {
     const report = asWeb(analyze({ ...MIDNIGHT, ...civilEarly }, { asOf: AS_OF }));
-    expect(buildReportBacktestTimeline(report)).toEqual(buildBacktestTimeline(ctxOf(report), {
+    report.timeline = buildTimeline(ctxOf(report), {
+      asOf: AS_OF, systems: report.timeline!.systems, ...civilEarly,
+      systemWeights: { bazi: 0.25, ziwei: 2, numerology: 0 },
+    });
+    const actual = buildReportBacktestTimeline(report);
+    expect(actual).toEqual(buildBacktestTimeline(ctxOf(report), {
       asOf: AS_OF, systems: report.timeline!.systems, systemWeights: report.timeline!.systemWeights, ...civilEarly,
     }));
+    expect(actual.cells).not.toEqual(buildBacktestTimeline(ctxOf(report), {
+      asOf: AS_OF, systems: report.timeline.systems, ...civilEarly,
+    }).cells);
   }, 60_000);
 
   test('recorded legacy timeline defaults win over its non-default main chart', () => {
@@ -153,6 +161,20 @@ describe('report replay metadata and source-system boundaries', () => {
       expect(reportTimelineOptions(report)).toBeNull();
       expect(monthSignalProvider(report)).toBeNull();
       expect(localQuestion(report, '什麼時候買車')!.answer).toBeNull();
+      expect(canBacktest(report)).toBe(false);
+      expect(() => buildReportBacktestTimeline(report)).toThrow('重新排盤');
+      expect(reportSignalLookup(report)(signal.id)?.system).toBe(signal.system);
+    }
+    for (const systemWeights of [
+      undefined, null, {}, [], { bazi: 1 },
+      { ...original.timeline!.systemWeights, bazi: -1 },
+      { ...original.timeline!.systemWeights, bazi: Infinity },
+      { ...original.timeline!.systemWeights, bazi: '1' },
+      Object.create(original.timeline!.systemWeights),
+    ]) {
+      const report = { ...original, timeline: { ...original.timeline!, systemWeights } } as Report;
+      expect(reportTimelineOptions(report)).toBeNull();
+      expect(monthSignalProvider(report)).toBeNull();
       expect(canBacktest(report)).toBe(false);
       expect(() => buildReportBacktestTimeline(report)).toThrow('重新排盤');
       expect(reportSignalLookup(report)(signal.id)?.system).toBe(signal.system);
