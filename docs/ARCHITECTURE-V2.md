@@ -124,6 +124,8 @@ type TimeContext = {
 | `zi_hour_convention` | 23:00–00:59 | 早晚子時換日約定由各 calculator 的 config 決定 |
 | `time_unknown` | `time === null` | 需時間的系統標示不可算，不得猜測 |
 
+**輸入合理性檢查（非阻擋式）**：`checkBirthProfilePlausibility(profile, { today? })`（`profile/plausibility.ts`，由 core index 匯出）回傳 `{ code, message, hint }[]`，涵蓋時區與經度不符（標準偏移與經度平太陽時差 > 210 分鐘，門檻依 cities 表實測最大 73 分鐘與中國西部約 186 分鐘訂定）、緯經度越界或對調、日期超出 1800–2200 或在未來、timeAccuracy 與 time 矛盾（含 00:00 預設值）。警告碼以 `plausibility:` 開頭，不丟錯、不改變計算；**刻意不進入 `TimeContext.flags`**（flags 屬 canonical 輸出，會改變 Report／export golden），由呼叫端自行決定是否呈現。
+
 ### 3.4 各系統時間約定（顯式 config，不得隱含）
 
 | 系統 | 使用的時間 | 可設定項 |
