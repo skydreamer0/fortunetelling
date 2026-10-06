@@ -255,7 +255,7 @@ D-016 規定 iztro／lunar-javascript 只能出現在 `engines/`。V1-02 TimeCon
   程式呼叫時預設模型 `claude-fable-5-1`（可用 `{ model }` 覆寫）。
 
 ## D-036 方向校正：程式先算完，AI 在本機對話中經 MCP 按需查詢與比對 ✅（2026-09-30，已確認）
-細節見 [ROADMAPS.md](../ROADMAPS.md)。**決定**：程式先把能邏輯化的部分全部算完（排盤、規則、訊號、共識、時間軸），
+細節見 [HISTORY.md](HISTORY.md)。**決定**：程式先把能邏輯化的部分全部算完（排盤、規則、訊號、共識、時間軸），
 AI 在使用者本機的對話（Claude 桌面版）中，經本機 MCP server 按需查詢、跨系統比對、下結論；不需要 API key，也不需要伺服器。
 - **MCP 只包裝 core、不重算**：工具直接重用 `analyze`／`buildTimeline`／`buildConsensus`／`answerQuestion`／`analyzeCompatibility`，
   不自行實作第二套邏輯；工具輸出有大小上限，明細（evidence／modifiers）按需取。

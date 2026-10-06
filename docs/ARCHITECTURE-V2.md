@@ -8,7 +8,7 @@
 
 ## 0. 一句話
 
-**程式先算完能確定的部分，AI 在本機對話中經 MCP 按需查詢與比對，不重新排盤。**（D-036，原寫「AI 只讀結果做解讀」，已修訂；見 [ROADMAPS.md](../ROADMAPS.md)）
+**程式先算完能確定的部分，AI 在本機對話中經 MCP 按需查詢與比對，不重新排盤。**（D-036，原寫「AI 只讀結果做解讀」，已修訂；見 [HISTORY.md](HISTORY.md)）
 排盤計算（deterministic）與解讀（generative）完全拆開；AI 任何時候都不得重新排盤。流程圖末端有兩個並列出口：網站 UI，與本機 MCP server／匯出檔。
 
 ```
@@ -318,6 +318,6 @@ backtest_runs         -- 規則版本、樣本數、命中率、日期
 | **V4** | 資料庫、帳號、life_events、回驗 | 回驗報告可重現 |
 | **V5** | Question Engine + AI 解讀層 | 後驗證攔截率測試：故意餵入錯誤干支的輸出必須被丟棄 |
 
-上表 V1–V5 為歷史里程碑。現行規劃為 M0.5～M5（Profile 契約✅、本機 MCP server✅、匯出／匯入、整理 AI 層、網站對接、計算端驗證），見 [ROADMAPS.md](../ROADMAPS.md)（D-036）。
+上表 V1–V5 為歷史里程碑。現行規劃為 M0.5～M5（Profile 契約✅、本機 MCP server✅、匯出／匯入、整理 AI 層、網站對接、計算端驗證），見 [HISTORY.md](HISTORY.md)（D-036）。
 
 各任務細節會在每個里程碑開始時寫進 [TASKS.md](TASKS.md)，格式沿用現行的 HARNESS_SPEC。
