@@ -31,9 +31,10 @@ import type {
   Trait,
 } from '@fortune/core';
 import { canonicalJson } from './canonical';
-import { scrubDeep, sensitiveStringsOf, shortIdCollisions, shortSignalId, type SensitiveStrings } from './core-pure';
+import { scrubDeep, sensitiveStringsOf, shortIdCollisions, shortSignalId, directionalVotes, evidenceMatchesContext, validAgreementThresholds,
+  HIGH_CONSENSUS_MIN_SYSTEMS, type DirectionalEvidence, type AgreementThresholds, type SensitiveStrings } from './core-pure';
 
-export const PAYLOAD_VERSION = 1;
+export const PAYLOAD_VERSION = 2;
 /** Default serialised-size budget (characters of canonical JSON). */
 export const DEFAULT_MAX_PAYLOAD_CHARS = 120_000;
 
@@ -103,7 +104,9 @@ export interface PayloadTimelineDomain {
   score: number;
   band: string;
   consensus: number;
+  activityAgreement: number;
   highConsensus: boolean;
+  directionalEvidence: DirectionalEvidence | null;
   /** Systems that emitted signals for this (domain, cell). */
   systems: SystemId[];
   conflict: SignalConflict | null;
@@ -117,6 +120,7 @@ export interface PayloadTimelineCell {
 }
 
 export interface PayloadTimeline {
+  thresholds: AgreementThresholds | null;
   asOf: string;
   systems: SystemId[];
   skippedSystems: Array<{ system: string; reason: string }>;
@@ -131,13 +135,16 @@ export interface PayloadRankedWindow {
   score: number;
   band: string;
   consensus: number;
+  activityAgreement: number;
   highConsensus: boolean;
+  directionalEvidence: DirectionalEvidence[];
   conflict: Array<SignalConflict & { domain: Domain }> | null;
   supportSignalIds: string[];
   riskSignalIds: string[];
 }
 
 export interface PayloadQuestion {
+  thresholds: AgreementThresholds | null;
   category: string;
   range: { start: string; end: string } | null;
   unsupported: boolean;
@@ -267,41 +274,64 @@ function buildCharts(engines: ReportEngineLike[] | undefined): PayloadChart[] {
     });
 }
 
-function buildTimelineCells(cells: TimelineCell[] | undefined, sid: IdMapper): PayloadTimelineCell[] {
+function mapEvidence(proof: DirectionalEvidence, sid: IdMapper): DirectionalEvidence {
+  return { ...proof, window: { ...proof.window }, thresholds: { ...proof.thresholds },
+    perSystem: Object.fromEntries(Object.entries(proof.perSystem).map(([system, value]) => [system, { ...value!, signalIds: value!.signalIds.map(sid) }])) };
+}
+function proofStats(proof: DirectionalEvidence | null) {
+  const votes = directionalVotes(proof);
+  const consensus = votes ? Math.max(votes.positive.systems.length, votes.negative.systems.length) : 0;
+  return { consensus, highConsensus: consensus >= HIGH_CONSENSUS_MIN_SYSTEMS };
+}
+function buildTimelineCells(cells: TimelineCell[] | undefined, sid: IdMapper, timeline: Timeline): PayloadTimelineCell[] {
   return (cells ?? []).map((cell) => ({
     window: { grain: cell.window.grain, start: cell.window.start, end: cell.window.end },
     domains: cell.domains
       .filter((d) => d.score > 0 || (d.topSignals?.length ?? 0) > 0)
-      .map((d) => ({
+      .map((d) => {
+        const proof = timeline.schemaVersion >= 2 && evidenceMatchesContext(d.directionalEvidence, {
+          domain: d.domain, window: cell.window, thresholds: timeline.thresholds, systemWeights: timeline.systemWeights,
+          systems: timeline.systems, perSystem: d.perSystem,
+        }) ? mapEvidence(d.directionalEvidence, sid) : null;
+        return {
         domain: d.domain,
         score: d.score,
         band: d.band,
-        consensus: d.consensus,
-        highConsensus: d.highConsensus,
+        ...proofStats(proof),
+        activityAgreement: d.activityAgreement ?? d.consensus,
+        directionalEvidence: proof,
         systems: Object.keys(d.perSystem ?? {}).sort() as SystemId[],
         conflict: d.conflict,
         topSignalIds: (d.topSignals ?? []).map((s) => sid(s.id)),
-      })),
+      }; }),
   }));
 }
 
 function buildQuestion(answer: QuestionAnswer, sid: IdMapper): PayloadQuestion {
   return {
+    thresholds: validAgreementThresholds(answer.thresholds) ? { ...answer.thresholds } : null,
     category: answer.category,
     range: answer.range ? { start: answer.range.start, end: answer.range.end } : null,
     unsupported: answer.unsupported === true,
     catalogVersion: answer.catalogVersion,
-    top: (answer.top ?? []).map((w: RankedWindow) => ({
+    top: (answer.top ?? []).map((w: RankedWindow) => {
+      const proofs = (w.domainScores ?? []).flatMap(domain => evidenceMatchesContext(domain.directionalEvidence, {
+        domain: domain.domain, window: w.window, thresholds: answer.thresholds, signalIds: domain.signalIds,
+      }) ? [mapEvidence(domain.directionalEvidence, sid)] : []);
+      const consensus = Math.max(0, ...proofs.map(proof => proofStats(proof).consensus));
+      return {
       rank: w.rank,
       window: { grain: w.window.grain, start: w.window.start, end: w.window.end },
       score: w.score,
       band: w.band,
-      consensus: w.consensus,
-      highConsensus: w.highConsensus,
+      consensus,
+      activityAgreement: w.activityAgreement ?? w.consensus,
+      highConsensus: consensus >= HIGH_CONSENSUS_MIN_SYSTEMS,
+      directionalEvidence: proofs,
       conflict: w.conflict,
       supportSignalIds: w.supportSignals.map((s) => sid(s.id)),
       riskSignalIds: w.riskSignals.map((s) => sid(s.id)),
-    })),
+    }; }),
   };
 }
 
@@ -362,11 +392,12 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
     timeline: tl
       ? {
           asOf: tl.asOf,
+          thresholds: tl.schemaVersion >= 2 && validAgreementThresholds(tl.thresholds) ? { ...tl.thresholds } : null,
           systems: [...tl.systems],
           skippedSystems: tl.skippedSystems.map((s) => ({ system: s.system, reason: s.reason })),
           bandCuts: tl.bandCuts,
-          years: buildTimelineCells(tl.years, sid),
-          months: buildTimelineCells(tl.months, sid),
+          years: buildTimelineCells(tl.years, sid, tl),
+          months: buildTimelineCells(tl.months, sid, tl),
         }
       : null,
     question: answer ? buildQuestion(answer, sid) : null,
@@ -410,15 +441,32 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
   // Drop references to signals that are not in the payload.
   const keptShort = new Set(kept.map((s) => sid(s.id)));
   const filterIds = (ids: string[]) => ids.filter((id) => keptShort.has(id));
+  // Keep raw qualification values, but remove systems with no citeable evidence.
+  // This never reruns noisy-OR on the truncated signal subset.
+  const trimProof = (proof: DirectionalEvidence | null): DirectionalEvidence | null => {
+    if (!proof) return null;
+    const perSystem = Object.fromEntries(Object.entries(proof.perSystem).flatMap(([system, value]) => {
+      const signalIds = filterIds(value!.signalIds);
+      return signalIds.length ? [[system, { ...value!, signalIds }]] : [];
+    }));
+    return { ...proof, perSystem };
+  };
   if (base.timeline) {
     for (const cell of [...base.timeline.years, ...base.timeline.months]) {
-      for (const d of cell.domains) d.topSignalIds = filterIds(d.topSignalIds);
+      for (const d of cell.domains) {
+        d.topSignalIds = filterIds(d.topSignalIds);
+        d.directionalEvidence = trimProof(d.directionalEvidence);
+        Object.assign(d, proofStats(d.directionalEvidence));
+      }
     }
   }
   if (base.question) {
     for (const w of base.question.top) {
       w.supportSignalIds = filterIds(w.supportSignalIds);
       w.riskSignalIds = filterIds(w.riskSignalIds);
+      w.directionalEvidence = w.directionalEvidence.map(proof => trimProof(proof)!).filter(Boolean);
+      w.consensus = Math.max(0, ...w.directionalEvidence.map(proof => proofStats(proof).consensus));
+      w.highConsensus = w.consensus >= HIGH_CONSENSUS_MIN_SYSTEMS;
     }
   }
 

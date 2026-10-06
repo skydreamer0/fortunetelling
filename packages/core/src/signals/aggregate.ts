@@ -1,5 +1,7 @@
 import { DOMAINS, GRAINS, SYSTEM_IDS, type Domain, type Signal, type SignalWindow, type SystemId } from './types';
 import { canonicalJson } from './signalId';
+import { DIRECTIONAL_POLICY, HIGH_CONSENSUS_MIN_SYSTEMS, directionalVotes, resolveAgreementThresholds, type DirectionalEvidence } from './directionalEvidence';
+export { DEFAULT_CONSENSUS_THRESHOLD, DEFAULT_CONFLICT_THRESHOLD, HIGH_CONSENSUS_MIN_SYSTEMS } from './directionalEvidence';
 
 export interface AggregateOptions {
   /** Per-system weight wₛ (data; default 1 for any system not listed). */
@@ -32,27 +34,20 @@ export interface DomainWindowAggregate {
   /** Cross-system weighted score, 0–100. */
   score: number;
   perSystem: Partial<Record<SystemId, SystemAggregate>>;
-  /** Number of systems whose score ≥ θ. */
+  /** Positive-weight systems whose score >= theta, including experimental systems. Not directional consensus. */
+  activityAgreement: number;
+  /** Largest eligible same-direction side. */
   consensus: number;
   highConsensus: boolean;
+  directionalEvidence: DirectionalEvidence;
   conflict: SignalConflict | null;
 }
 
-export const DEFAULT_CONSENSUS_THRESHOLD = 0.5;
-export const DEFAULT_CONFLICT_THRESHOLD = 0.2;
-export const HIGH_CONSENSUS_MIN_SYSTEMS = 3;
 
 const SEP = '\u0000';
 const windowKey = (w: SignalWindow) => `${w.grain}${SEP}${w.start}${SEP}${w.end}`;
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
-function threshold(value: unknown, name: string, fallback: number): number {
-  if (value === undefined) return fallback;
-  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
-    throw new Error(`aggregateSignals: ${name} must be a finite number in [0, 1]`);
-  }
-  return value;
-}
 
 /** Copy validated own entries; inherited values must never bypass validation. */
 function systemWeights(input: AggregateOptions['systemWeights']): Partial<Record<SystemId, number>> {
@@ -105,8 +100,7 @@ export function aggregateSignals(
 ): DomainWindowAggregate[] {
   // Validate every supplied option even when there are no signals or the
   // weighted system is absent from this particular domain/window.
-  const theta = threshold(options.consensusThreshold, 'consensusThreshold', DEFAULT_CONSENSUS_THRESHOLD);
-  const tau = threshold(options.conflictThreshold, 'conflictThreshold', DEFAULT_CONFLICT_THRESHOLD);
+  const { theta, tau } = resolveAgreementThresholds(options);
   const weights = systemWeights(options.systemWeights);
   const weightOf = (s: SystemId) => weights[s] ?? 1;
 
@@ -130,7 +124,6 @@ export function aggregateSignals(
     const perSystem: Partial<Record<SystemId, SystemAggregate>> = {};
     let wSum = 0;
     let wScore = 0;
-    let consensus = 0;
     const posSystems: SystemId[] = [];
     const negSystems: SystemId[] = [];
 
@@ -157,7 +150,6 @@ export function aggregateSignals(
       wSum += w;
       wScore += w * score;
       if (w > 0) {
-        if (score >= theta) consensus++;
         if (valence > tau) posSystems.push(system);
         else if (valence < -tau) negSystems.push(system);
       }
@@ -177,13 +169,24 @@ export function aggregateSignals(
       conflict = { positive: collect(posSystems, 1), negative: collect(negSystems, -1) };
     }
 
+    const directionalEvidence: DirectionalEvidence = {
+      policy: DIRECTIONAL_POLICY, domain: g.domain, window: { ...g.window }, thresholds: { theta, tau },
+      perSystem: Object.fromEntries(Object.entries(perSystem).map(([system, data]) => [system, {
+        ...data!, signalIds: [...data!.signalIds], weight: weightOf(system as SystemId),
+      }])),
+    };
+    const votes = directionalVotes(directionalEvidence);
+    if (!votes) throw new Error('aggregateSignals: invalid directional evidence');
+    const consensus = Math.max(votes.positive.systems.length, votes.negative.systems.length);
     out.push({
       domain: g.domain,
       window: g.window,
       score: wSum > 0 ? (100 * wScore) / wSum : 0,
       perSystem,
+      activityAgreement: votes.activity.systems.length,
       consensus,
       highConsensus: consensus >= HIGH_CONSENSUS_MIN_SYSTEMS,
+      directionalEvidence,
       conflict,
     });
   }

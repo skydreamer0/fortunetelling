@@ -6,6 +6,7 @@
  * (D-028) — no qualitative wording in code.
  */
 import type { AggregateOptions, SignalConflict } from '../signals/aggregate';
+import type { AgreementThresholds, DirectionalEvidence } from '../signals/directionalEvidence';
 import type { Band, BandCuts } from '../signals/bands';
 import type { Domain, Grain, Signal, SignalWindow, SystemId, Trait } from '../signals/types';
 
@@ -102,7 +103,9 @@ export interface DomainScore {
   /** Same aggregation over risky-trait signals, 0–activity. */
   risk: number;
   consensus: number;
+  activityAgreement: number;
   highConsensus: boolean;
+  directionalEvidence: DirectionalEvidence | null;
   conflict: SignalConflict | null;
   signalIds: string[];
 }
@@ -123,6 +126,7 @@ export interface RankedWindow {
   signalIds: string[];
   /** Max per-domain consensus (systems with score ≥ θ). */
   consensus: number;
+  activityAgreement: number;
   highConsensus: boolean;
   /** Per-domain conflicts, never averaged away (D-023); null when none. */
   conflict: DomainConflict[] | null;
@@ -138,6 +142,7 @@ export interface QuestionAnswer {
   unsupported?: true;
   conventions: Record<string, string>;
   catalogVersion: number;
+  thresholds: AgreementThresholds;
   categoryVersion?: number;
   /**
    * 只在呼叫端指定 `AnswerOptions.systems` 時出現（不指定時輸出與舊版逐位元相同）。

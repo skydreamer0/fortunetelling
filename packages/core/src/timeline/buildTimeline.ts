@@ -42,13 +42,14 @@ import { evaluateBaziRules } from '../rules/bazi/evaluate';
 import { evaluateBaziTenGodRules } from '../rules/bazi/evaluateTenGods';
 import { evaluateZiweiRules } from '../rules/ziwei/evaluate';
 import { aggregateSignals, type SignalConflict, type SystemAggregate } from '../signals/aggregate';
+import { resolveAgreementThresholds, validAgreementThresholds, type AgreementThresholds, type DirectionalEvidence } from '../signals/directionalEvidence';
 import { DEFAULT_BAND_CUTS, toBand, type Band, type BandCuts } from '../signals/bands';
 import { DOMAINS, SYSTEM_IDS, type Domain, type Signal, type SignalWindow, type SystemId } from '../signals/types';
 import type { TimeContext } from '../time/types';
 import { toZiweiZiConvention, type AnalysisTimeOptions } from '../core/analyzeInput';
 import { civilDateOf, evaluateNumerologyRules } from './numerologyRules';
 
-export const TIMELINE_SCHEMA_VERSION = 1 as const;
+export const TIMELINE_SCHEMA_VERSION = 2 as const;
 
 /** Systems that contribute timeline signals, in SYSTEM_IDS order. */
 export const TIMELINE_SYSTEMS: readonly SystemId[] = Object.freeze(['bazi', 'ziwei', 'numerology', 'jyotish', 'humanDesign']);
@@ -113,7 +114,9 @@ export interface TimelineDomainCell {
   score: number;
   band: Band;
   consensus: number;
+  activityAgreement: number;
   highConsensus: boolean;
+  directionalEvidence: DirectionalEvidence | null;
   conflict: SignalConflict | null;
   /** Per-system noisy-OR score / valence (rounded to 4 decimals) and signal ids. */
   perSystem: Partial<Record<SystemId, SystemAggregate>>;
@@ -136,6 +139,8 @@ export interface Timeline {
   bandCuts: BandCuts;
   /** Effective weight of every contributing system. */
   systemWeights: Partial<Record<SystemId, number>>;
+  /** Effective raw aggregation thresholds; readers must not silently substitute defaults. */
+  thresholds: AgreementThresholds;
   years: TimelineCell[];
   months: TimelineCell[];
 }
@@ -158,6 +163,7 @@ export const TIMELINE_CONVENTIONS: Readonly<Record<string, string>> = Object.fre
   topSignals:
     'Up to 5 signals per domain, ordered by intensity × system weight (desc), then signal id (asc).',
   determinism: 'No clock reads: the output depends only on (TimeContext, options, rule/catalog versions).',
+  agreement: 'activityAgreement is attention from positive-weight systems, including experimental systems. consensus is the largest same-direction side with raw score >= theta and raw valence beyond +/-tau, excluding experimental and zero-weight systems. Three systems on one side qualify as highConsensus; opposing sides and conflicts are both retained.',
 });
 
 /**
@@ -388,7 +394,9 @@ function cellFromSignals(
       score,
       band: toBand(score, bandCuts),
       consensus: agg?.consensus ?? 0,
+      activityAgreement: agg?.activityAgreement ?? 0,
       highConsensus: agg?.highConsensus ?? false,
+      directionalEvidence: agg?.directionalEvidence ?? null,
       conflict: agg?.conflict ?? null,
       perSystem,
       topSignals,
@@ -425,6 +433,7 @@ export function buildTimelineWithBaziNatalBasis(ctx: TimeContext, opts: Timeline
 
 function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider): Timeline {
   const asOf = validateAsOf(opts?.asOf);
+  const thresholds = resolveAgreementThresholds(opts);
   if (opts.useTrueSolarTime !== undefined && typeof opts.useTrueSolarTime !== 'boolean') {
     throw new Error('buildTimeline: useTrueSolarTime must be a boolean');
   }
@@ -473,6 +482,7 @@ function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBas
     conventions: timelineConventions(systems),
     bandCuts: [bandCuts[0], bandCuts[1], bandCuts[2]],
     systemWeights,
+    thresholds,
     years: yearCells,
     months: monthCells,
   };
@@ -484,6 +494,16 @@ function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBas
 export interface RestrictTimelineOptions {
   consensusThreshold?: number;
   conflictThreshold?: number;
+}
+
+function recordedThresholds(timeline: { thresholds?: AgreementThresholds }, opts: RestrictTimelineOptions): AgreementThresholds {
+  if (!validAgreementThresholds(timeline.thresholds)) throw new Error('restrictTimeline: recorded thresholds are required');
+  const { theta, tau } = timeline.thresholds;
+  if ((opts.consensusThreshold !== undefined && opts.consensusThreshold !== theta) ||
+      (opts.conflictThreshold !== undefined && opts.conflictThreshold !== tau)) {
+    throw new Error('restrictTimeline: threshold override does not match the source timeline');
+  }
+  return { theta, tau };
 }
 
 function assertKnownSystems(systems: readonly SystemId[], fn: string): Set<SystemId> {
@@ -502,10 +522,11 @@ function assertKnownSystems(systems: readonly SystemId[], fn: string): Set<Syste
 export function restrictTimelineCell(
   cell: TimelineCell,
   systems: readonly SystemId[],
-  timeline: Pick<Timeline, 'systemWeights' | 'bandCuts'>,
+  timeline: Pick<Timeline, 'systemWeights' | 'bandCuts' | 'thresholds'>,
   opts: RestrictTimelineOptions = {},
 ): TimelineCell {
   const keep = assertKnownSystems(systems, 'restrictTimelineCell');
+  const thresholds = recordedThresholds(timeline, opts);
   const byId = new Map<string, Signal>();
   for (const d of cell.domains) {
     const total = new Set(Object.values(d.perSystem).flatMap((p) => p!.signalIds)).size;
@@ -524,8 +545,8 @@ export function restrictTimelineCell(
     {
       systemWeights,
       topSignalsPerDomain: Infinity,
-      ...(opts.consensusThreshold !== undefined ? { consensusThreshold: opts.consensusThreshold } : {}),
-      ...(opts.conflictThreshold !== undefined ? { conflictThreshold: opts.conflictThreshold } : {}),
+      consensusThreshold: thresholds.theta,
+      conflictThreshold: thresholds.tau,
     },
     bandCuts,
   );
@@ -538,12 +559,13 @@ export function restrictTimelineCell(
  */
 export function restrictTimeline(timeline: Timeline, systems: readonly SystemId[], opts: RestrictTimelineOptions = {}): Timeline {
   const keep = assertKnownSystems(systems, 'restrictTimeline');
+  const thresholds = recordedThresholds(timeline, opts);
   const systemWeights: Partial<Record<SystemId, number>> = {};
   for (const s of SYSTEM_IDS) {
     const w = timeline.systemWeights[s];
     if (keep.has(s) && w !== undefined) systemWeights[s] = w;
   }
-  const restricted = { systemWeights, bandCuts: timeline.bandCuts };
+  const restricted = { systemWeights, bandCuts: timeline.bandCuts, thresholds };
   return {
     schemaVersion: timeline.schemaVersion,
     asOf: timeline.asOf,
@@ -552,6 +574,7 @@ export function restrictTimeline(timeline: Timeline, systems: readonly SystemId[
     conventions: timelineConventions(timeline.systems.filter((s) => keep.has(s))),
     bandCuts: [timeline.bandCuts[0], timeline.bandCuts[1], timeline.bandCuts[2]],
     systemWeights,
+    thresholds,
     years: timeline.years.map((c) => restrictTimelineCell(c, systems, restricted, opts)),
     months: timeline.months.map((c) => restrictTimelineCell(c, systems, restricted, opts)),
   };
