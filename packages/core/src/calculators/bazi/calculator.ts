@@ -25,6 +25,7 @@ import { BaZiEngine } from '../../engines/BaZiEngine';
 import type { TimeContext, TimeFlag } from '../../time/types';
 import { categoryValues, componentValue, normalizeAsOf, timeContextToBirthData } from '../birthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';
+import type { BaziNatalBasisProvider } from './natalBasis';
 import {
   annualPillars,
   computePillars,
@@ -34,6 +35,7 @@ import {
   type AnnualPillar,
   type BaziAlternative,
   type BaziPillars,
+  type BaziPillarsResult,
   type LuckCycles,
   type MonthlyPillar,
   type ZiHourConvention,
@@ -224,6 +226,20 @@ export const baziCalculator: Calculator<BaziChart, BaziCalculatorConfig> = {
   // Longitude drives true solar time; the timezone drives the UTC instant.
   requires: { time: true, location: true, name: false },
   calculate(ctx: TimeContext, config: BaziCalculatorConfig = {}): ChartResult<BaziChart> {
+    return calculateBazi(ctx, config);
+  },
+};
+
+/** Internal orchestration path; deliberately absent from the public barrel/options. */
+export function calculateBaziWithNatalBasis(
+  ctx: TimeContext,
+  config: BaziCalculatorConfig,
+  natalBasis: BaziNatalBasisProvider,
+): ChartResult<BaziChart> {
+  return calculateBazi(ctx, config, natalBasis);
+}
+
+function calculateBazi(ctx: TimeContext, config: BaziCalculatorConfig, natalBasis?: BaziNatalBasisProvider): ChartResult<BaziChart> {
     const { ymd } = normalizeAsOf(config.asOf, 'bazi');
     const birth = timeContextToBirthData(ctx, { name: config.name });
     // Legacy components (civil clock); analyze() v4 uses TimeContextBaZiEngine instead.
@@ -245,9 +261,15 @@ export const baziCalculator: Calculator<BaziChart, BaziCalculatorConfig> = {
     }
 
     const pillarCfg = { useTrueSolarTime, ziHourConvention: config.ziHourConvention };
-    const pr = computePillars(ctx, pillarCfg);
+    // Keep the legacy failure/unknown-time guard above, and expose mutable
+    // projection copies rather than references to the frozen shared basis.
+    const pr = natalBasis
+      ? structuredClone(natalBasis(ctx, pillarCfg).pillars) as BaziPillarsResult
+      : computePillars(ctx, pillarCfg);
     const stats = pillarStats(pr.pillars);
-    const luck: LuckCycles = computeLuckCycles(ctx, ctx.profile.gender, pillarCfg);
+    const luck: LuckCycles = natalBasis
+      ? structuredClone(natalBasis(ctx, pillarCfg).luckCycles) as LuckCycles
+      : computeLuckCycles(ctx, ctx.profile.gender, pillarCfg);
     const birthYear = Number(ctx.local!.iso.slice(0, 4));
     const luckCycles: BaziLuckCycle[] = luck.steps.map((s) => {
       const startYear = Number(s.start.slice(0, 4));
@@ -301,7 +323,6 @@ export const baziCalculator: Calculator<BaziChart, BaziCalculatorConfig> = {
       components,
       warnings: [...warnings, ...result.errors],
     };
-  },
-};
+}
 
 export { toBaziRuleChart } from './ruleChart';

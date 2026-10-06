@@ -51,7 +51,8 @@
 import { BirthData } from './models/BirthData';
 import { BaZiEngine, TAIPEI_CONVENTION, ELEMENTS_LIMITATION, buildBaziNatalComponents } from '../engines/BaZiEngine';
 import { ZiweiEngine } from '../engines/ZiweiEngine';
-import { computePillars, luckCycles, solarYearOfAsOf, yearGanZhi, type ZiHourConvention } from '../calculators/bazi/pillars';
+import { computePillars, luckCycles, solarYearOfAsOf, yearGanZhi, type ZiHourConvention, type BaziPillarsResult, type LuckCycles } from '../calculators/bazi/pillars';
+import type { BaziNatalBasisProvider } from '../calculators/bazi/natalBasis';
 import { ResolvedBirthData } from '../calculators/ziwei/calculator';
 import { timeIndexFrom } from '../calculators/ziwei/astrolabe';
 import type { TimeContext } from '../time/types';
@@ -72,10 +73,12 @@ interface TcOptions {
 
 export class TimeContextBaZiEngine extends BaZiEngine {
   #opts: TcOptions;
+  #natalBasis?: BaziNatalBasisProvider;
 
-  constructor({ asOf, ...opts }: TcOptions & { asOf: string }) {
+  constructor({ asOf, natalBasis, ...opts }: TcOptions & { asOf: string; natalBasis?: BaziNatalBasisProvider }) {
     super({ asOf });
     this.#opts = opts;
+    this.#natalBasis = natalBasis;
   }
 
   _compute(birth: BirthData) {
@@ -83,7 +86,11 @@ export class TimeContextBaZiEngine extends BaZiEngine {
     if (ctx.utc === null || ctx.local === null || birth.timeKnown === false) return super._compute(birth);
 
     const cfg = { useTrueSolarTime, ziHourConvention };
-    const pr = computePillars(ctx, cfg);
+    // Copy each projection separately: public engine metadata remains mutable,
+    // and luck is still evaluated only after the legacy component calculation.
+    const pr = this.#natalBasis
+      ? structuredClone(this.#natalBasis(ctx, cfg).pillars) as BaziPillarsResult
+      : computePillars(ctx, cfg);
 
     // 1. Engine on the resolved wall clock (true solar / civil).
     const m = NAIVE.exec(pr.clock.iso);
@@ -109,7 +116,9 @@ export class TimeContextBaZiEngine extends BaZiEngine {
     const natalById = new Map(natal.map((c: { id: string }) => [c.id, c]));
 
     // 3. 大運 from the exact birth instant.
-    const luck = luckCycles(ctx, ctx.profile.gender, cfg);
+    const luck = this.#natalBasis
+      ? structuredClone(this.#natalBasis(ctx, cfg).luckCycles) as LuckCycles
+      : luckCycles(ctx, ctx.profile.gender, cfg);
     const startSolarStr = luck.startIso.replace('T', ' ');
     const startYear0 = Number(startSolarStr.slice(0, 4));
     const birthYear = Number(ctx.local.iso.slice(0, 4));

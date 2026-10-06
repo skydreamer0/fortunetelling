@@ -462,3 +462,46 @@ tests-only head `c0676d2d4e8e69c3c9a141d1dac6f589e19bc90a`，
 為 1260 pass／2 skip／0 fail，四套 typecheck、doctor、build 與 GitGuardian 通過；
 已透過 [PR #40](https://github.com/skydreamer0/fortunetelling/pull/40) 合併（merge `2dda69c`）。
 #26 維持部分交付，不關閉整單。
+
+
+## D-044 同步分析共用八字不可變本命基底（#26 有界續片）
+
+**範圍：** 同一次同步 `analyze` 的主盤 `TimeContextBaZiEngine` 與 timeline 八字 calculator，
+共用準確四柱 `computePillars` 與原始起運／大運 steps `luckCycles`。這只是內部、單次執行的
+`BaziNatalBasis`，不是跨入口 ChartSnapshot、snapshotId、持久快取或舊報告遷移。
+
+**契約與錯誤順序：**
+- 建立 run-local provider 時複製出生 TimeContext 與有效八字設定；使用完整 canonical
+  `{ ctx, options }` 核對每個 consumer，不只比 hash。來源或 clock／子時設定不符即拒絕。
+  私有來源深凍結，不凍結呼叫者；拿到 lazy basis 後再修改 caller 也不會改變計算來源。
+- pillars 與 raw luck 是獨立 lazy getter，各自只保存成功、深複製且深凍結的值。
+  provider 建立時不排盤、不讀時鐘；失敗不快取，下個 consumer 可以依原流程重試。
+- 主盤仍按 pillars → legacy engine → luck 順序；typed calculator 仍先跑 legacy engine，
+  時間未知或 legacy 失敗回空 chart 時不要求 natal basis。沒有把 engine 內的計算例外
+  提前到 registry 外，亦沒有改變既有 timeline 計算失敗會拋例外的邊界。
+- consumer 個別複製 pillars／luck 再建立公開結果；frozen 物件不流入 Report 或 typed chart。
+  修改一次輸出的 clock／alternatives／luck start 等欄位，不會污染 basis 或另一個 consumer。
+
+**本命與期間分離：** basis 僅保留四柱、替代盤、使用時鐘／交節資料及原始起運／steps。
+`asOf`、annualRange、annual／annualSequence／monthly、isCurrent 仍由原 consumer 投影。
+主盤大運以 asOf 午夜與完整起運 timestamp 比較；typed calculator 仍以 inclusive date 比較。
+此片特意不統一兩者既有語義；起運當日非午夜的 synthetic fixture 鎖定原有 false／true 差異。
+
+**相容與界線：** core 0.5.3、Report schema 5、公開 TimelineOptions、Profile v1、cf1／cs1、
+所有 golden 與 LOCKED FORECAST 都不變。timeline barrel 明列既有 exports，避免把內部能力
+加進公開 API。主盤 legacy `super._compute` 與 calculator 的 civil components 照舊，
+不宣稱所有重排盤已消除。獨立 `buildTimeline`／calculator 仍可不帶 provider 使用。
+紫微、Question／Backtest／MCP 跨入口共用、完整曆法矩陣與快照遷移均留後續，#26 不關閉。
+
+**驗證：** 新增 14 項合成回歸；計數 spy 委派真 `computePillars`／`luckCycles`，
+檢驗同步主盤與 timeline 的準確本命計算由兩次降為一次。涵蓋四個子時邊界×civil／solar×
+early／late、跨年／農曆年界與不同 annualRange 的原結果等價、兩種 isCurrent 原語義、
+深層不可變／caller mutation、完整來源與選項不符、unknown time、個別計算故障重試、
+legacy failure 順序、A/B/A 及獨立執行隔離、DST gap／overlap、四種 host timezone。
+故障時序測試才使用合成例外；計算／等價驗收均用真實計算器，沒有改寫 golden。
+
+既有工作區沒有 Bun，本機 tests／typecheck／doctor／build 均為 **NOT RUN**。
+先紅 tests-only head `378276c2eab7f10129a8e696c9065fd403c8243e` 的
+[CI 37502508500](https://github.com/skydreamer0/fortunetelling/actions/runs/37502508500)
+與最終精確 head 的完整 locked CI、非作者獨立驗收結果記錄於
+[Draft PR #42](https://github.com/skydreamer0/fortunetelling/pull/42)。本文件不代替執行證據。
