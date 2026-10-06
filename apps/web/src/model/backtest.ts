@@ -7,10 +7,12 @@
 
 import {
   BACKTEST_METHOD, INSUFFICIENT_SAMPLE, LIFE_EVENT_CATEGORIES, LIFE_EVENT_CATEGORY_LABELS,
+  buildBacktestTimeline, type TimeContext,
   type BacktestGroup, type BacktestMetrics, type BacktestResult, type LifeEvent, type LifeEventCategory,
 } from '../lib/core';
 import { SIGNAL_SYSTEM_NAMES, TIMELINE_DOMAINS, type TimelineDomain } from './selectors';
 import type { Report } from './types';
+import { reportTimelineOptions } from './reportTimeline';
 
 export const INSUFFICIENT_LABEL = '樣本不足，僅供參考';
 export const SUFFICIENT_LABEL = '樣本足夠可評估（仍不代表預測力）';
@@ -99,7 +101,14 @@ export function selectBacktestView(result: BacktestResult): BacktestView {
 
 /** Backtesting needs the v4 time context (report v3 has none). */
 export function canBacktest(report: Report): boolean {
-  return Boolean(report.timeContext && typeof report.asOf === 'string' && report.schemaVersion >= 4);
+  return typeof report.asOf === 'string' && reportTimelineOptions(report) !== null;
+}
+
+/** The LifeEvents compute path: never rebuild with implicit global defaults. */
+export function buildReportBacktestTimeline(report: Report) {
+  const options = reportTimelineOptions(report);
+  if (!options) throw new Error('報告缺少可重播的時間設定，請重新排盤');
+  return buildBacktestTimeline(report.timeContext as unknown as TimeContext, { asOf: report.asOf, ...options });
 }
 
 export interface EventListItem {

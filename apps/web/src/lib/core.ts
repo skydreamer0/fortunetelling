@@ -20,8 +20,8 @@ export type {
 } from '@fortune/core';
 
 // V5 Question Engine (deterministic, no AI) + the timeline it reads month signals from.
-export { answerQuestion, buildTimeline, getQuestionCategory, listQuestionCategories } from '@fortune/core';
-export type { QuestionAnswer, QuestionRange, Signal as CoreSignal, SignalWindow } from '@fortune/core';
+export { answerQuestion, buildTimeline, getQuestionCategory, listQuestionCategories, TIMELINE_SYSTEMS } from '@fortune/core';
+export type { QuestionAnswer, QuestionRange, Signal as CoreSignal, SignalWindow, TimelineOptions } from '@fortune/core';
 
 // 短訊號編號（sig_ + 8 位）：輸出可縮短，輸入接受完整編號或 ≥ 8 位前綴（前綴要唯一才解析）。
 export { resolveSignalId, shortSignalId } from '@fortune/core';

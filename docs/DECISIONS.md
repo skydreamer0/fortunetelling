@@ -330,3 +330,40 @@ PR #37 的 tests-only commit `ceebfca3853554afa4c49c1e741da78935d9d5cd` 由既�
 Web Ask AI 月訊號重算（`apps/web/src/model/askAi.ts`）、Backtest 等仍需在 #26 後續傳入有效選項／共用快照；
 MCP、匯出和 profile 契約也未因此新增時間選項輸入。不得宣稱所有入口已一致。
 不新增流派、UI 或權重；#26、#20、#24 均不可因這個切片整單結案。
+
+
+## D-041 問 AI、引用檢查與人生事件沿用報告時間軸（2026-10-06，#26 第二片）
+
+**範圍：** Web 的 `monthSignalProvider`（包含 `localQuestion` 與 `reportSignalLookup`）
+以及 `LifeEvents → buildReportBacktestTimeline → buildBacktestTimeline`，共用
+`model/reportTimeline.ts` 解析報告的有效時間約定；不新增 AI 模型、流派、資料庫或 UI 功能。
+
+- 只讀 `timeContext.conventions.timeline` 的完整 clock／八字子時／紫微子時映射與
+  `followsOptions`。新報告須與外層已記錄選項一致；缺漏、非法或矛盾資料不猜、不重新計算。
+- `followsOptions: false` 只接受 D-032 歷史的 trueSolar／late／splitMidnight 組合，
+  即使主盤記為 civil／early 也保持歷史時間軸設定，不用主盤設定改寫舊結果。
+- 重算固定使用 `report.timeline.systems` 與既有系統權重；空集合仍是空集合。
+  全局星曆稍後初始化不得讓原同步報告突然加入 jyotish／humanDesign。
+- 每份 month provider 的快取只存在該報告的 closure；LifeEvents 已計算結果綁定來源 report，
+  換報告時不呈現前一份的年分數。這不是新 snapshot/cache-key 契約。
+- core `BacktestTimelineOptions` 只增加 `useTrueSolarTime`／`ziHourConvention`，每一個
+  50 年 chunk 都傳入既有 `buildTimeline`；直接呼叫未提供值時維持 true／late。
+- 舊報告不能可靠重算時仍可查看既存結果、解析報告內已有 signal ID；問事回傳無排名，
+  回驗沿用既有重新排盤提示。
+
+**版本與封存：** core 0.5.2，Report schema 仍為 5。原 report/export golden 保持固定 SHA-256；
+新增 literal 0.5.2 delta 只有 11 份 report 與 2 份 compatibility 的版本字串，
+export 也只有 manifest coreVersion，所有計算 section 與檔案 hash 必須不變。
+沒有改寫封存預測或重新生成原 golden。
+
+**驗證：** `apps/web/tests/reportReplay.test.ts` 走實際計算器與呼叫鏈，不 mock timeline。
+覆蓋民用／真太陽跨時辰、early/late、出生農曆年末與西曆年末、查詢跨十二月／一月、
+本地 Question Engine 排名、完整／短引用、報告間快取隔離、舊報告 metadata、
+不可信 metadata fail-closed、星曆初始化前後的來源系統隔離及跨 50 年 chunk 的回驗傳遞。
+先以 tests-only commit `02237132796312d0881cd045ce5da54202b0d474` 的
+[既有 Bun CI](https://github.com/skydreamer0/fortunetelling/actions/runs/37445404579) 記錄舊行為：
+1217 pass／2 skip／7 fail，七項失敗正是非預設月訊號、排名、引用、隔離與回驗分數比較；
+再驗修正候選。工作區無 Bun，不宣稱本機測試已執行。
+
+**未交付：** CalculationSpec／ChartSnapshot、snapshotId/specHash、跨執行的快取識別、
+MCP／匯出／profile 全入口統一，以及完整 DST／曆法矩陣仍在 #26；本片不能將 #26 結案。
