@@ -12,6 +12,7 @@ import {
   type CoreSignal, type QuestionAnswer, type QuestionRange, type SignalWindow, type TimeContext,
 } from '../lib/core';
 import type { Report } from './types';
+import { reportTimelineOptions } from './reportTimeline';
 
 /** Keyword → category. First category with a hit wins only if no other category also hits. */
 export const QUESTION_KEYWORDS: ReadonlyArray<{ category: string; keywords: readonly string[] }> = [
@@ -74,8 +75,8 @@ export function monthSignalProvider(report: Report): ((window: SignalWindow) => 
 
 function monthSignalsByYear(report: Report): ((year: number) => Map<string, CoreSignal[]>) | null {
   const ctx = report.timeContext as unknown as TimeContext | null | undefined;
-  if (!ctx || !report.timeline) return null;
-  const systems = report.timeline.systems;
+  const options = reportTimelineOptions(report);
+  if (!ctx || !options) return null;
   const asOfYear = Number(report.asOf.slice(0, 4));
   const byYear = new Map<number, Map<string, CoreSignal[]>>();
   return year => {
@@ -83,7 +84,7 @@ function monthSignalsByYear(report: Report): ((year: number) => Map<string, Core
     if (!months) {
       const tl = buildTimeline(ctx, {
         asOf: year === asOfYear ? report.asOf : `${year}-01-01`,
-        years: 1, includeMonths: true, topSignalsPerDomain: Infinity, systems,
+        years: 1, includeMonths: true, topSignalsPerDomain: Infinity, ...options,
       });
       months = new Map();
       for (const cell of tl.months) {

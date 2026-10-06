@@ -1,9 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  analyze, answerQuestion, buildBacktestTimeline, buildTimeline,
+  analyze, answerQuestion, buildBacktestTimeline, buildTimeline, initEphemeris,
   type Signal, type SignalWindow, type TimeContext, type Timeline,
 } from '@fortune/core';
 import { localQuestion, monthSignalProvider, reportSignalLookup } from '../src/model/askAi';
+import { buildReportBacktestTimeline, canBacktest } from '../src/model/backtest';
+import { reportTimelineOptions } from '../src/model/reportTimeline';
 import type { Report } from '../src/model/types';
 
 // Synthetic fixtures only. The first crosses 午/未 with a clock change;
@@ -104,4 +106,97 @@ describe('Issue #26 report replay through the real Web/core call chains', () => 
       }
     }
   }, 120_000);
+});
+
+describe('report replay metadata and source-system boundaries', () => {
+  test('LifeEvents model reproduces explicit non-default backtest options', () => {
+    const report = asWeb(analyze({ ...MIDNIGHT, ...civilEarly }, { asOf: AS_OF }));
+    expect(buildReportBacktestTimeline(report)).toEqual(buildBacktestTimeline(ctxOf(report), {
+      asOf: AS_OF, systems: report.timeline!.systems, systemWeights: report.timeline!.systemWeights, ...civilEarly,
+    }));
+  }, 60_000);
+
+  test('recorded legacy timeline defaults win over its non-default main chart', () => {
+    const report = asWeb(analyze({ ...MIDNIGHT, ...civilEarly }, { asOf: AS_OF }));
+    const conventions = report.timeContext!.conventions as Record<string, unknown>;
+    report.version = '0.5.0';
+    conventions.timeline = {
+      clock: 'trueSolar', baziZiHourConvention: 'late', ziweiZiHourConvention: 'splitMidnight', followsOptions: false,
+    };
+    report.timeline = buildTimeline(ctxOf(report), { asOf: AS_OF, systems: report.timeline!.systems, ...defaults });
+    report.signals = [...new Map([...report.timeline.years, ...report.timeline.months]
+      .flatMap(cell => cell.domains.flatMap(domain => domain.topSignals)).map(signal => [signal.id, signal])).values()];
+    const before = JSON.stringify(report);
+    expect(reportTimelineOptions(report)).toMatchObject(defaults);
+    const provider = monthSignalProvider(report)!;
+    expect(sorted(provider(windowOf('2027-01')))).toEqual(monthSignals(expectedYear(report, 2027, defaults), 1));
+    expect(buildReportBacktestTimeline(report)).toEqual(buildBacktestTimeline(ctxOf(report), {
+      asOf: AS_OF, systems: report.timeline.systems, systemWeights: report.timeline.systemWeights, ...defaults,
+    }));
+    expect(JSON.stringify(report)).toBe(before);
+  }, 60_000);
+
+  test('untrusted/missing conventions disable recomputation but retain saved citation lookup', () => {
+    const original = asWeb(analyze({ ...MIDNIGHT, ...civilEarly }, { asOf: AS_OF }));
+    const signal = (original.signals as Signal[])[0];
+    const variants = [
+      undefined,
+      {},
+      { clock: 'civil', baziZiHourConvention: 'early', ziweiZiHourConvention: 'nextDayAt23' },
+      { clock: 'civil', baziZiHourConvention: 'early', ziweiZiHourConvention: 'splitMidnight', followsOptions: true },
+      { clock: 'trueSolar', baziZiHourConvention: 'late', ziweiZiHourConvention: 'splitMidnight', followsOptions: true },
+      { clock: 'civil', baziZiHourConvention: 'early', ziweiZiHourConvention: 'nextDayAt23', followsOptions: false },
+    ];
+    for (const timeline of variants) {
+      const report = structuredClone(original);
+      (report.timeContext!.conventions as Record<string, unknown>).timeline = timeline;
+      expect(reportTimelineOptions(report)).toBeNull();
+      expect(monthSignalProvider(report)).toBeNull();
+      expect(localQuestion(report, '什麼時候買車')!.answer).toBeNull();
+      expect(canBacktest(report)).toBe(false);
+      expect(() => buildReportBacktestTimeline(report)).toThrow('重新排盤');
+      expect(reportSignalLookup(report)(signal.id)?.system).toBe(signal.system);
+    }
+  }, 60_000);
+
+  test('v3 or absent timeline metadata does not invent settings or system membership', () => {
+    const report = asWeb(analyze(MIDNIGHT, { asOf: AS_OF }));
+    for (const variant of [
+      { ...report, schemaVersion: 3 },
+      { ...report, timeContext: null },
+      { ...report, timeline: null },
+      { ...report, timeline: { ...report.timeline!, systems: undefined } },
+      { ...report, timeline: { ...report.timeline!, systems: ['futureSystem'] } },
+    ] as Report[]) {
+      expect(reportTimelineOptions(variant)).toBeNull();
+      expect(monthSignalProvider(variant)).toBeNull();
+      expect(canBacktest(variant)).toBe(false);
+    }
+  });
+
+  test('late global ephemeris initialization cannot expand a report in Ask AI or LifeEvents', async () => {
+    const report = asWeb(analyze({ ...MIDNIGHT, ...civilEarly }, { asOf: AS_OF }));
+    const systems = [...report.timeline!.systems];
+    const provider = monthSignalProvider(report)!;
+    const before = sorted(provider(windowOf('2026-12')));
+    await initEphemeris();
+    expect(report.timeline!.systems).toEqual(systems);
+    expect(sorted(provider(windowOf('2026-12')))).toEqual(before);
+    expect(provider(windowOf('2027-01')).every(signal => systems.includes(signal.system))).toBe(true);
+    expect(buildReportBacktestTimeline(report).systems).toEqual(systems);
+    // Empty is also an explicit source scope, not a request for all ready systems.
+    const empty = { ...report, timeline: { ...report.timeline!, systems: [] } };
+    expect(monthSignalProvider(empty)!(windowOf('2027-01'))).toEqual([]);
+    expect(buildReportBacktestTimeline(empty).systems).toEqual([]);
+  }, 120_000);
+
+  test('backtest rejects invalid clock and zi values rather than silently defaulting', () => {
+    const report = asWeb(analyze(MIDNIGHT, { asOf: AS_OF }));
+    expect(() => buildBacktestTimeline(ctxOf(report), {
+      asOf: AS_OF, fromYear: 2026, toYear: 2026, useTrueSolarTime: 'false',
+    } as never)).toThrow('useTrueSolarTime');
+    expect(() => buildBacktestTimeline(ctxOf(report), {
+      asOf: AS_OF, fromYear: 2026, toYear: 2026, ziHourConvention: 'nextDayAt23',
+    } as never)).toThrow('ziHourConvention');
+  });
 });

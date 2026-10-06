@@ -12,12 +12,12 @@
 
 import { useMemo, useState, type FormEvent } from 'react';
 import {
-  buildBacktestTimeline, runBacktest, suggestedDomains, validateLifeEvent,
-  type BacktestTimeline, type LifeEvent, type LifeEventCategory, type TimeContext,
+  runBacktest, suggestedDomains, validateLifeEvent,
+  type BacktestTimeline, type LifeEvent, type LifeEventCategory,
 } from '../../lib/core';
 import { cleanEvents, createLifeEventStore, legacyProfileKeyOf, profileKeyOf, type LifeEventStore } from '../../lib/lifeEvents';
 import {
-  CATEGORY_OPTIONS, DOMAIN_OPTIONS, INSUFFICIENT_LABEL, canBacktest, selectBacktestView, selectEventList,
+  CATEGORY_OPTIONS, DOMAIN_OPTIONS, INSUFFICIENT_LABEL, buildReportBacktestTimeline, canBacktest, selectBacktestView, selectEventList,
   type BacktestRowView, type BacktestView,
 } from '../../model/backtest';
 import type { Report } from '../../model/types';
@@ -115,7 +115,8 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
   });
   const [form, setForm] = useState<FormState>(emptyForm);
   const [error, setError] = useState<string | null>(null);
-  const [timeline, setTimeline] = useState<BacktestTimeline | null>(null);
+  const [computed, setComputed] = useState<{ report: Report; timeline: BacktestTimeline } | null>(null);
+  const timeline = computed?.report === report ? computed.timeline : null;
   const [computing, setComputing] = useState(false);
   const backtestable = canBacktest(report);
 
@@ -181,7 +182,7 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
     // Yield a frame so the busy state paints; the build is synchronous (~1 s).
     setTimeout(() => {
       try {
-        setTimeline(buildBacktestTimeline(report.timeContext as unknown as TimeContext, { asOf: report.asOf }));
+        setComputed({ report, timeline: buildReportBacktestTimeline(report) });
         setError(null);
       } catch (cause) {
         setError(`回驗計算失敗：${(cause as Error).message}`);
@@ -277,7 +278,7 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
       )}
 
       {!backtestable ? (
-        <EmptyNote>這份報告沒有時間脈絡（舊版報告），請重新排盤後再回驗。</EmptyNote>
+        <EmptyNote>這份報告缺少可重播的時間設定，請重新排盤後再回驗。</EmptyNote>
       ) : list.length > 0 && (
         <div className="life__backtest">
           {!timeline && (

@@ -46,7 +46,7 @@ import type { ZiweiZiHourConvention } from '../calculators/ziwei/types';
 import type { AnalysisTimeOptions, BirthplaceSource } from './analyzeInput';
 
 /** Public library version (semver). Bump on any observable API change. */
-export const VERSION = '0.5.1';
+export const VERSION = '0.5.2';
 
 /**
  * Version of the `Report` shape itself, independent of code version.
