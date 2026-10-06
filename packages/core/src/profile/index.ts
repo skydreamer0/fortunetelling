@@ -7,6 +7,12 @@ export {
   TIME_ACCURACIES,
   SUPPORTED_YEAR_RANGE,
 } from './validate';
+export type { PlausibilityCode, PlausibilityWarning, PlausibilityOptions } from './plausibility';
+export {
+  checkBirthProfilePlausibility,
+  TIMEZONE_LONGITUDE_MISMATCH_MINUTES,
+  NEAR_CITY_KM,
+} from './plausibility';
 export type { City } from './cities';
 export {
   CITIES,
