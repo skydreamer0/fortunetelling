@@ -5,7 +5,7 @@
  */
 
 import type { Domain as CoreDomain, TimelineCell } from '@fortune/core';
-import { HISTORICAL_ZONE_WARNING_TEXT } from '../lib/core';
+import { HISTORICAL_ZONE_WARNING_TEXT, shortSignalId } from '../lib/core';
 import type { Component, ConsensusSummary, EngineResult, Period, Radar, Report, ScoringRule, Signal, SystemId, Timeline } from './types';
 
 export const SYSTEM_NAMES: Record<string, string> = {
@@ -590,7 +590,7 @@ function conflictSide(ids: string[], cell: CoreDomainCell, lookup: Map<string, S
     }
     // Not among the cell's top signals: still name the system that emitted it.
     const system = Object.entries(cell.perSystem ?? {}).find(([, value]) => value?.signalIds?.includes(id))?.[0];
-    return { id, systemName: system ? SIGNAL_SYSTEM_NAMES[system] ?? system : '未知系統', label: `訊號 ${id}`, text: null };
+    return { id, systemName: system ? SIGNAL_SYSTEM_NAMES[system] ?? system : '未知系統', label: `訊號 ${shortSignalId(id)}`, text: null };
   });
 }
 
@@ -785,7 +785,7 @@ export function selectConsensus(report: Report): ConsensusView | null {
     const meta = domainMeta(item.domain);
     const cell = coreCell(item.window.start, item.domain);
     const side = (ids: string[]): TimelineConflictSide[] =>
-      cell ? conflictSide(ids, cell, lookup) : ids.map(id => ({ id, systemName: '未知系統', label: `訊號 ${id}`, text: null }));
+      cell ? conflictSide(ids, cell, lookup) : ids.map(id => ({ id, systemName: '未知系統', label: `訊號 ${shortSignalId(id)}`, text: null }));
     return {
       key: `year:${item.window.start}:${item.domain}`,
       yearLabel: item.window.start.slice(0, 4),

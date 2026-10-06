@@ -3,8 +3,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildCopyPrompt, COPY_PROMPT_VERSION, DEFAULT_COPY_MAX_CHARS } from '../src/copyPrompt';
 import { checkPastedAnswer, PASTE_FLAG_LABELS } from '../src/pasteCheck';
-import { REDACTED_NAME, REDACTED_PLACE } from '../src/core-pure';
+import { REDACTED_NAME, REDACTED_PLACE, shortSignalId } from '../src/core-pure';
 import { buildCorpus, isInCorpus, VOCAB } from '../src/vocab';
+import { buildInterpretationPayload } from '../src/payload';
+import { validateSections } from '../src/validate';
 import { loadQuestion, loadReport } from './helpers';
 
 const HEADINGS = ['## 總覽', '## 本年與未來五年', '## 各領域', '## 共識與分歧', '## 問題的回答', '## 資料限制'];
@@ -45,7 +47,7 @@ describe('buildCopyPrompt — content', () => {
     expect(t).toContain('只使用下方「資料」區塊的內容');
     expect(t).toContain('不要重新排盤或推算');
     expect(t).toContain('干支、星曜、行星名稱一律不要提');
-    expect(t).toContain('〔sig_xxxxxxxxxxxxxxxx〕');
+    expect(t).toContain('〔sig_xxxxxxxx〕');
     expect(t).toContain('三套以上「已驗證」系統');
     expect(t).toContain('「高共識」');
     expect(t).toContain('必須保留矛盾');
@@ -96,10 +98,10 @@ describe('buildCopyPrompt — content', () => {
     // Question source signals are protected: kept in the data even when budget is tight.
     const small = buildCopyPrompt(report, { questionAnswer: loadQuestion(), maxChars: 16_000 });
     expect(small.payload.payload.timeline).not.toBeNull();
-    const keptIds = small.payload.signalIds;
+    const keptShort = new Set([...small.payload.signalIds].map(shortSignalId));
     for (const w of small.payload.payload.question!.top) {
       expect(w.supportSignalIds.length + w.riskSignalIds.length).toBeGreaterThan(0);
-      for (const id of [...w.supportSignalIds, ...w.riskSignalIds]) expect(keptIds.has(id)).toBe(true);
+      for (const id of [...w.supportSignalIds, ...w.riskSignalIds]) expect(keptShort.has(id)).toBe(true);
     }
   });
 
@@ -232,6 +234,71 @@ describe('browser entry stays SDK-free (D-035)', () => {
         queue.push(`${spec.slice(2)}.ts`);
       }
     }
-    expect([...seen].sort()).toEqual(['canonical.ts', 'copy.ts', 'copyPrompt.ts', 'core-pure.ts', 'pasteCheck.ts', 'payload.ts', 'schema.ts', 'validate.ts', 'vocab.ts'].sort());
+    expect([...seen].sort()).toEqual(['canonical.ts', 'copy.ts', 'copyPrompt.ts', 'core-pure.ts', 'pasteCheck.ts', 'payload.ts', 'schema.ts', 'signalIds.ts', 'validate.ts', 'vocab.ts'].sort());
+  });
+});
+
+describe('短訊號編號（複製 prompt）', () => {
+  const report = loadReport();
+  const answer = loadQuestion();
+  const prompt = buildCopyPrompt(report, { question: '哪幾個月適合買車？', questionAnswer: answer });
+  const payload = prompt.payload.payload;
+  const fullIds = [...prompt.payload.signalIds];
+
+  test('prompt 與 payload 給模型看的編號都是 sig_ + 8 位，signalIds 仍是完整編號', () => {
+    expect(fullIds.every((id) => /^sig_[0-9a-f]{16}$/.test(id))).toBe(true);
+    expect(payload.signals.every((s) => /^sig_[0-9a-f]{8}$/.test(s.id))).toBe(true);
+    const mentioned = prompt.text.match(/sig_[0-9a-f]{8,}/g) ?? [];
+    expect(mentioned.length).toBeGreaterThan(0);
+    for (const id of mentioned) expect(id).toMatch(/^sig_[0-9a-f]{8}$/);
+    // 時間軸與問事排名內的引用同樣縮短，且都指向 signals
+    const known = new Set(payload.signals.map((s) => s.id));
+    for (const w of payload.question!.top) for (const id of [...w.supportSignalIds, ...w.riskSignalIds]) expect(known.has(id)).toBe(true);
+    for (const cell of [...payload.timeline!.years, ...payload.timeline!.months]) {
+      for (const d of cell.domains) for (const id of d.topSignalIds) expect(known.has(id)).toBe(true);
+    }
+  });
+
+  test('規則文字要求照抄短編號；比完整編號省字', () => {
+    expect(prompt.text).toContain('〔sig_xxxxxxxx〕（sig_ 加 8 位十六進位）');
+    const full = buildInterpretationPayload(report, { question: answer, maxChars: Number.POSITIVE_INFINITY });
+    const short = buildInterpretationPayload(report, { question: answer, maxChars: Number.POSITIVE_INFINITY, shortIds: true });
+    expect(short.payloadJson.length).toBeLessThan(full.payloadJson.length);
+    expect(short.signalIds).toEqual(full.signalIds);
+  });
+
+  test('checkPastedAnswer：短編號、完整編號、大小寫、前綴都對得上；太短與未知不行', () => {
+    const [a, b] = fullIds;
+    const text = (cite: string) => `這段時期可能有調整，建議保留彈性並留意現金流的變化〔${cite}〕。`;
+    expect(checkPastedAnswer(prompt.payload, text(shortSignalId(a))).ok).toBe(true);
+    expect(checkPastedAnswer(prompt.payload, text(a)).ok).toBe(true);
+    expect(checkPastedAnswer(prompt.payload, text(shortSignalId(b).toUpperCase())).ok).toBe(true);
+    expect(checkPastedAnswer(prompt.payload, text(a.slice(0, 12))).ok).toBe(true);
+    expect(checkPastedAnswer(prompt.payload, text(a.slice(0, 7))).paragraphs[0].flags[0].code).toBe('unknown_citation');
+    expect(checkPastedAnswer(prompt.payload, text('sig_00000000')).paragraphs[0].flags[0].code).toBe('unknown_citation');
+  });
+
+  test('validateSections：短編號與完整編號都算存在', () => {
+    const [a] = fullIds;
+    const section = (c: string) => ({ heading: '總覽', text: '這段時期可能有調整，傾向保留彈性。', citations: [c] });
+    const ctx = { payload, payloadJson: prompt.payload.payloadJson };
+    expect(validateSections([section(shortSignalId(a)), section(a)], ctx).dropped).toEqual([]);
+    expect(validateSections([section('sig_00000000')], ctx).dropped[0].reasons[0].code).toBe('unknown_citation');
+  });
+
+  test('碰撞的編號保留完整編號，且 ambiguous 前綴不猜', () => {
+    const r = loadReport();
+    const base = r.signals![0];
+    const twin = { ...base, id: `${base.id.slice(0, 12)}ffffffff` };
+    r.signals = [base, twin, ...r.signals!.slice(1)];
+    const built = buildInterpretationPayload(r, { maxChars: Number.POSITIVE_INFINITY, shortIds: true });
+    const ids = built.payload.signals.map((s) => s.id);
+    expect(ids).toContain(base.id);
+    expect(ids).toContain(twin.id);
+    expect(ids.filter((id) => id.length === 12).length).toBe(ids.length - 2);
+    // 只寫短前綴對到兩筆 → 不猜
+    const res = checkPastedAnswer(built, `這段時期可能有調整，建議保留彈性並留意現金流的變化〔${shortSignalId(base.id)}〕。`);
+    expect(res.paragraphs[0].flags[0]?.code).toBe('unknown_citation');
+    expect(checkPastedAnswer(built, `這段時期可能有調整，建議保留彈性並留意現金流的變化〔${base.id}〕。`).ok).toBe(true);
   });
 });

@@ -31,7 +31,7 @@ import type {
   Trait,
 } from '@fortune/core';
 import { canonicalJson } from './canonical';
-import { scrubDeep, sensitiveStringsOf, type SensitiveStrings } from './core-pure';
+import { scrubDeep, sensitiveStringsOf, shortIdCollisions, shortSignalId, type SensitiveStrings } from './core-pure';
 
 export const PAYLOAD_VERSION = 1;
 /** Default serialised-size budget (characters of canonical JSON). */
@@ -186,6 +186,12 @@ export interface BuildPayloadOptions {
    * 設為 false 等同不設上限（`truncation.maxChars` 為 null）。
    */
   budget?: boolean;
+  /**
+   * 給模型看的訊號編號用短編號（`sig_` + 8 位）；與其他訊號碰撞的維持完整編號（碰撞以
+   * report.signals ∪ 問事來源訊號為範圍判斷）。預設 false（完整編號、API 路徑不變）。
+   * `BuiltPayload.signalIds` 永遠是完整編號。
+   */
+  shortIds?: boolean;
 }
 
 /** 本機使用的選項：不去識別化、不限字數。對外送出的路徑不得使用。 */
@@ -195,7 +201,7 @@ export interface BuiltPayload {
   payload: InterpretationPayload;
   /** Canonical JSON of `payload` — exactly what is sent to the model and hashed. */
   payloadJson: string;
-  /** Every signal id the model may cite. */
+  /** Every signal the model may cite — always FULL ids, even when `shortIds` shortened the payload. */
   signalIds: Set<string>;
 }
 
@@ -224,6 +230,8 @@ function compactValue(value: unknown): unknown {
   }
   return value;
 }
+
+type IdMapper = (id: string) => string;
 
 function toPayloadSignal(s: Signal): PayloadSignal {
   return {
@@ -259,7 +267,7 @@ function buildCharts(engines: ReportEngineLike[] | undefined): PayloadChart[] {
     });
 }
 
-function buildTimelineCells(cells: TimelineCell[] | undefined): PayloadTimelineCell[] {
+function buildTimelineCells(cells: TimelineCell[] | undefined, sid: IdMapper): PayloadTimelineCell[] {
   return (cells ?? []).map((cell) => ({
     window: { grain: cell.window.grain, start: cell.window.start, end: cell.window.end },
     domains: cell.domains
@@ -272,12 +280,12 @@ function buildTimelineCells(cells: TimelineCell[] | undefined): PayloadTimelineC
         highConsensus: d.highConsensus,
         systems: Object.keys(d.perSystem ?? {}).sort() as SystemId[],
         conflict: d.conflict,
-        topSignalIds: (d.topSignals ?? []).map((s) => s.id),
+        topSignalIds: (d.topSignals ?? []).map((s) => sid(s.id)),
       })),
   }));
 }
 
-function buildQuestion(answer: QuestionAnswer): PayloadQuestion {
+function buildQuestion(answer: QuestionAnswer, sid: IdMapper): PayloadQuestion {
   return {
     category: answer.category,
     range: answer.range ? { start: answer.range.start, end: answer.range.end } : null,
@@ -291,8 +299,8 @@ function buildQuestion(answer: QuestionAnswer): PayloadQuestion {
       consensus: w.consensus,
       highConsensus: w.highConsensus,
       conflict: w.conflict,
-      supportSignalIds: w.supportSignals.map((s) => s.id),
-      riskSignalIds: w.riskSignals.map((s) => s.id),
+      supportSignalIds: w.supportSignals.map((s) => sid(s.id)),
+      riskSignalIds: w.riskSignals.map((s) => sid(s.id)),
     })),
   };
 }
@@ -333,6 +341,8 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
     }
   }
   const all = [...byId.values()].map(toPayloadSignal);
+  const colliding = options.shortIds ? new Set(shortIdCollisions(byId.keys()).flat()) : new Set<string>();
+  const sid: IdMapper = (id) => (options.shortIds && !colliding.has(id) ? shortSignalId(id) : id);
 
   const tc = report.timeContext ?? null;
   const tl = report.timeline ?? null;
@@ -355,11 +365,11 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
           systems: [...tl.systems],
           skippedSystems: tl.skippedSystems.map((s) => ({ system: s.system, reason: s.reason })),
           bandCuts: tl.bandCuts,
-          years: buildTimelineCells(tl.years),
-          months: buildTimelineCells(tl.months),
+          years: buildTimelineCells(tl.years, sid),
+          months: buildTimelineCells(tl.months, sid),
         }
       : null,
-    question: answer ? buildQuestion(answer) : null,
+    question: answer ? buildQuestion(answer, sid) : null,
     notes: [...PAYLOAD_NOTES],
   };
 
@@ -385,7 +395,7 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
   let size = baseSize;
   let full = false; // strict order: once one signal does not fit, every lower-priority one is dropped too
   for (const s of priority) {
-    const len = canonicalJson(s).length + 1;
+    const len = canonicalJson({ ...s, id: sid(s.id) }).length + 1;
     if (!full && size + len <= maxChars) {
       kept.push(s);
       size += len;
@@ -398,7 +408,8 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
   const keptIds = new Set(kept.map((s) => s.id));
 
   // Drop references to signals that are not in the payload.
-  const filterIds = (ids: string[]) => ids.filter((id) => keptIds.has(id));
+  const keptShort = new Set(kept.map((s) => sid(s.id)));
+  const filterIds = (ids: string[]) => ids.filter((id) => keptShort.has(id));
   if (base.timeline) {
     for (const cell of [...base.timeline.years, ...base.timeline.months]) {
       for (const d of cell.domains) d.topSignalIds = filterIds(d.topSignalIds);
@@ -421,6 +432,6 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
   };
 
   const parts = options.redact === false ? [] : sensitiveParts(report);
-  const payload = scrubReport({ ...base, signals: kept, truncation }, parts) as InterpretationPayload;
+  const payload = scrubReport({ ...base, signals: kept.map((s) => ({ ...s, id: sid(s.id) })), truncation }, parts) as InterpretationPayload;
   return { payload, payloadJson: canonicalJson(payload), signalIds: keptIds };
 }

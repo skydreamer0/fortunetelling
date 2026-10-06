@@ -118,13 +118,23 @@ check.paragraphs[i].flags; // [{ code, label, values }]
    省略了什麼會寫在 prompt 裡，並要求 AI 在「資料限制」說明。
 4. **問題**（選填）與網站用 Question Engine 算出的月份排名，標明「確定性計算，不是 AI 產生」。
 
+### 短訊號編號（`sig_` + 8 位）
+
+完整編號是 `sig_` + 16 位十六進位（20 字），人與模型逐字抄寫容易抄錯。規則（完整編號與雜湊都不變）：
+
+- **輸出用短編號**：複製 prompt（`buildInterpretationPayload(…, { shortIds: true })`）裡 signals、timeline、question 內的編號都是 `sig_` + 8 位（12 字），prompt 規則要求逐字照抄。與同一份資料裡其他訊號碰撞的編號保留完整編號。`BuiltPayload.signalIds` 仍是完整編號。API 路徑（`interpret`）不變，仍用完整編號。
+- **輸入接受完整或 ≥ 8 位前綴**（大小寫不分）：`checkPastedAnswer`、`validateSections` 用 `resolveCitation` 比對（短編號、完整編號、前綴都映射回 payload 內的編號）；`checkAnswer` 把「回答寫的編號（小寫）」原樣交給 `signalLookup`，由呼叫端解析前綴。
+- **前綴要唯一才解析**：對到多筆（ambiguous）與查不到一律當「引用不存在」，絕不猜。少於 8 位不當作編號（`checkAnswer` 直接忽略）。
+- 規則的唯一來源是 core 的 `signals/shortId`（`resolveSignalId`、`shortSignalId`…），經 `core-pure.ts` 匯入（零 import 的純模組，`boundaries.test.ts` 已列入白名單）。
+- 版本：`COPY_PROMPT_VERSION = 'copy-v3'`、`CONVERSATION_PROMPT_VERSION = 'chat-v2'`。
+
 ### `checkPastedAnswer`（貼回檢查，建議性）
 
 網站攔截不到外部 AI 的輸出，所以這裡只**標示**、不刪改。逐段（空行分段；標題行只更新所屬章節）檢查：
 
 | code | 標示 | 條件 |
 |---|---|---|
-| `unknown_citation` | 引用不存在 | 段落中的 `sig_…` 不在資料的 signals |
+| `unknown_citation` | 引用不存在 | 段落中的 `sig_…`（短編號、完整編號或 ≥ 8 位唯一前綴）不在資料的 signals，或前綴對到多筆 |
 | `unverified_term` | 提到資料中沒有的干支／星曜／行星 | 同 `validate.ts` 的 vocab 比對（「紫微斗數」作為系統名不算星曜） |
 | `no_citation` | 沒有引用來源 | 20 字以上的內容段落沒有任何 `sig_…`（「資料限制」等說明段落除外） |
 | `fatalism` | 宿命論用語 | HonestyGuard `L2` 或 `FATALISM_PATTERNS` |

@@ -7,7 +7,7 @@
  *
  * The block contains, in order:
  *   (a) role + rules adapted from the §9 system prompt (data only, no re-derivation,
- *       〔sig_…〕 citations, 「高共識」 needs ≥ 3 systems, keep contradictions,
+ *       〔sig_xxxxxxxx〕 short-id citations (sig_ + 8 hex; collisions keep the full id), 「高共識」 needs ≥ 3 systems, keep contradictions,
  *       tendencies not fate, uncalibrated scores (D-033), say so when data can't answer);
  *   (b) the output format (markdown headings);
  *   (c) the de-identified data (D-029) — `buildInterpretationPayload` with a chat-sized
@@ -31,7 +31,7 @@ import {
   type ReportLike,
 } from './payload';
 
-export const COPY_PROMPT_VERSION = 'copy-v2';
+export const COPY_PROMPT_VERSION = 'copy-v3';
 /** Default size of the whole paste-ready text (characters). Fits common chat input limits. */
 export const DEFAULT_COPY_MAX_CHARS = 24_000;
 
@@ -69,7 +69,7 @@ const SYSTEM_GLOSSARY =
 function rulesBlock(): string {
   return `## 規則（請嚴格遵守）
 1. 只使用下方「資料」區塊的內容。不要重新排盤或推算：不得自行計算、補充或更正任何干支、四柱、大運、流年、星曜、四化、宮位、行星位置、星座、宿；資料中沒有出現的干支、星曜、行星名稱一律不要提。提到紫微斗數這套系統時請寫全名「紫微斗數」。
-2. 每個重要結論都要在句末標註引用的訊號 id，格式為〔sig_xxxxxxxxxxxxxxxx〕，逐字複製 signals[].id；可以連續列多個，例如〔sig_…〕〔sig_…〕。不得編造或改寫 id；沒有訊號支撐的內容不要寫。timeline 與 question 內出現的 id 都指向 signals。
+2. 每個重要結論都要在句末標註引用的訊號 id，格式為〔sig_xxxxxxxx〕（sig_ 加 8 位十六進位），逐字複製 signals[].id，一個字元都不要改；可以連續列多個，例如〔sig_…〕〔sig_…〕。抄錯、編造或改寫的編號會被檢查程式抓到；沒有訊號支撐的內容不要寫。timeline 與 question 內出現的 id 都指向 signals。
 3. 只有同一領域、同一時間窗有三套以上「已驗證」系統（signals[].system）的訊號同向時，才可以說「高共識」，並引用這些系統的訊號；兩套以下請寫「部分系統」或指明是哪一套系統。jyotish（印度占星／吠陀占星）是 experimental 系統，尚未與公開計算器交叉驗證：不計入「三套」，也不得拿來湊成高共識；引用它們時必須註明「（experimental 系統，可信度較低）」。
 4. 系統之間方向相反（valence 一正一負，或 conflict 欄位有值）時，必須保留矛盾並說明雙方各自的依據，不得擇一，也不得平均成中性。
 5. 分數（score 0–100）與 band（低／中／中高／高）是未校準的研究用相對指標：只平均有發出訊號的系統，不同領域、不同年份的分數不可直接比較，也不是機率或準確度。提到分數時請說明這一點。
@@ -302,19 +302,19 @@ export function buildCopyPrompt(report: ReportLike, options: CopyPromptOptions =
     const monthsDropped = hadMonths && level >= 3;
     let trimmed = trimReport(report, level);
     // Size of everything except the JSON, with a worst-case truncation note.
-    const probe = buildInterpretationPayload(trimmed, { question: answer, maxChars: 0 });
+    const probe = buildInterpretationPayload(trimmed, { question: answer, maxChars: 0, shortIds: true });
     const worst = { ...probe.payload.truncation, signalsKept: 99999, signalsTotal: 99999, droppedMaxIntensity: 0.99, overBudget: true };
     const worstNote = truncationNote({ ...probe.payload, truncation: worst }, level, monthsDropped);
     let budget = maxChars - assemble({ focus, question, payload: { ...probe, payloadJson: '' }, note: worstNote }).length;
     const render = (b: BuiltPayload) =>
       assemble({ focus, question, payload: b, note: truncationNote(b.payload, level, monthsDropped) });
 
-    let built = buildInterpretationPayload(trimmed, { question: answer, maxChars: Math.max(0, budget) });
+    let built = buildInterpretationPayload(trimmed, { question: answer, maxChars: Math.max(0, budget), shortIds: true });
     // Timeline cells list top ids of signals that may be dropped; restricting them to the
     // kept set shrinks the fixed part so more signals fit. Kept sets only grow → converges.
     for (let pass = 0; pass < 4; pass += 1) {
       const restricted = restrictTopSignals(trimmed, built.signalIds);
-      const next = buildInterpretationPayload(restricted, { question: answer, maxChars: Math.max(0, budget) });
+      const next = buildInterpretationPayload(restricted, { question: answer, maxChars: Math.max(0, budget), shortIds: true });
       if (next.signalIds.size < built.signalIds.size) break;
       const grew = next.signalIds.size > built.signalIds.size;
       trimmed = restricted;
@@ -325,7 +325,7 @@ export function buildCopyPrompt(report: ReportLike, options: CopyPromptOptions =
     // Safety net: shrink the JSON budget until the whole text fits.
     for (let i = 0; i < 5 && text.length > maxChars && budget > 0; i += 1) {
       budget -= text.length - maxChars;
-      built = buildInterpretationPayload(trimmed, { question: answer, maxChars: Math.max(0, budget) });
+      built = buildInterpretationPayload(trimmed, { question: answer, maxChars: Math.max(0, budget), shortIds: true });
       text = render(built);
     }
     const t = built.payload.truncation;

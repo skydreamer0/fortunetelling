@@ -11,6 +11,7 @@
  */
 import { HonestyGuard } from './core-pure';
 import type { InterpretationPayload } from './payload';
+import { resolveCitation } from './signalIds';
 import { isSection, type InterpretationSection } from './schema';
 import { buildCorpus, findVocabTerms, isInCorpus, VOCAB, type VocabCorpus, type VocabEntry, type VocabKind } from './vocab';
 
@@ -71,6 +72,12 @@ export interface ValidationContext {
 export function validateSections(sections: unknown[], ctx: ValidationContext): ValidationResult {
   const systemsById = new Map<string, string>();
   for (const s of ctx.payload.signals) systemsById.set(s.id, s.system);
+  const payloadIds = [...systemsById.keys()];
+  /** 引用可寫短編號、完整編號或 ≥ 8 位唯一前綴；ambiguous 與查不到都視為不存在。 */
+  const systemOf = (cited: string): string | undefined => {
+    const hit = resolveCitation(cited, payloadIds);
+    return hit === null ? undefined : systemsById.get(hit);
+  };
   const corpus: VocabCorpus = buildCorpus(ctx.payloadJson, ctx.payload);
   const vocab = ctx.vocab ?? VOCAB;
 
@@ -95,7 +102,7 @@ export function validateSections(sections: unknown[], ctx: ValidationContext): V
       reasons.push({ code: 'no_citations', detail: 'section cites no signal id' });
     }
     for (const id of citations) {
-      if (!systemsById.has(id)) {
+      if (systemOf(id) === undefined) {
         reasons.push({ code: 'unknown_citation', detail: `cited id ${JSON.stringify(id)} is not in payload.signals`, value: id });
       }
     }
@@ -121,7 +128,7 @@ export function validateSections(sections: unknown[], ctx: ValidationContext): V
 
     // (4) 「高共識」 needs ≥ 3 distinct cited systems
     if (prose.includes(HIGH_CONSENSUS_TERM)) {
-      const systems = new Set(citations.map((id) => systemsById.get(id)).filter((s): s is string => Boolean(s) && !EXPERIMENTAL_SYSTEMS.includes(s as string)));
+      const systems = new Set(citations.map((id) => systemOf(id)).filter((s): s is string => Boolean(s) && !EXPERIMENTAL_SYSTEMS.includes(s as string)));
       if (systems.size < HIGH_CONSENSUS_MIN_SYSTEMS) {
         reasons.push({
           code: 'high_consensus_unsupported',

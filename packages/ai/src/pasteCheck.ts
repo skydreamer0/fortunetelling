@@ -12,6 +12,7 @@
  */
 import { canonicalJson } from './canonical';
 import { HonestyGuard } from './core-pure';
+import { resolveCitation } from './signalIds';
 import { buildInterpretationPayload, type BuiltPayload, type InterpretationPayload, type ReportLike } from './payload';
 import { AI_HONESTY_LAYER, EXPERIMENTAL_SYSTEMS, FATALISM_PATTERNS, HIGH_CONSENSUS_MIN_SYSTEMS, HIGH_CONSENSUS_TERM } from './validate';
 import { buildCorpus, findVocabTerms, isInCorpus, VOCAB } from './vocab';
@@ -53,7 +54,8 @@ export interface PasteCheckResult {
 /** A report (checked against its full, un-truncated data), the embedded payload, or a bare payload. */
 export type PasteCheckSource = ReportLike | BuiltPayload | InterpretationPayload;
 
-const CITATION_RE = /sig_[0-9A-Za-z]+/g;
+/** 回答中的編號：抓所有 sig_ 開頭的字；比對時接受短編號與完整編號（見 resolveCitation），太短的會被標成引用不存在。 */
+const CITATION_RE = /sig_[0-9A-Za-z]+/gi;
 const HEADING_RE = /^\s{0,3}#{1,6}\s+(.*)$/;
 /** Paragraphs under these headings may legitimately have no citation. */
 const NO_CITATION_HEADINGS = /資料限制|限制|說明|免責/;
@@ -86,6 +88,11 @@ export function checkPastedAnswer(source: PasteCheckSource, answerText: string):
   const { payload, payloadJson } = resolve(source);
   const systemsById = new Map<string, string>();
   for (const s of payload.signals) systemsById.set(s.id, s.system);
+  const payloadIds = [...systemsById.keys()];
+  const systemOf = (cited: string): string | undefined => {
+    const hit = resolveCitation(cited, payloadIds);
+    return hit === null ? undefined : systemsById.get(hit);
+  };
   const corpus = buildCorpus(payloadJson, payload);
 
   const paragraphs: PastedParagraphCheck[] = [];
@@ -105,7 +112,7 @@ export function checkPastedAnswer(source: PasteCheckSource, answerText: string):
     citations.forEach((id) => allCited.add(id));
     const flags: PasteFlag[] = [];
 
-    const unknown = citations.filter((id) => !systemsById.has(id));
+    const unknown = citations.filter((id) => systemOf(id) === undefined);
     if (unknown.length) flags.push({ code: 'unknown_citation', label: PASTE_FLAG_LABELS.unknown_citation, values: unknown });
 
     const prose = text.replace(CITATION_RE, ' ').replace(SYSTEM_NAME_RE, ' ');
@@ -130,7 +137,7 @@ export function checkPastedAnswer(source: PasteCheckSource, answerText: string):
     if (fatal.length) flags.push({ code: 'fatalism', label: PASTE_FLAG_LABELS.fatalism, values: uniqSorted(fatal) });
 
     if (prose.includes(HIGH_CONSENSUS_TERM)) {
-      const systems = new Set(citations.map((id) => systemsById.get(id)).filter((s): s is string => Boolean(s) && !EXPERIMENTAL_SYSTEMS.includes(s as string)));
+      const systems = new Set(citations.map((id) => systemOf(id)).filter((s): s is string => Boolean(s) && !EXPERIMENTAL_SYSTEMS.includes(s as string)));
       if (systems.size < HIGH_CONSENSUS_MIN_SYSTEMS) {
         flags.push({ code: 'high_consensus_unsupported', label: PASTE_FLAG_LABELS.high_consensus_unsupported, values: [] });
       }

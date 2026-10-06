@@ -12,6 +12,7 @@
  *   - questions/engine  → validateQuestionRequest, catalog (imports only signals/aggregate, signals/bands, catalog.json)
  *   - analysis/HonestyGuard → zero-dependency lint
  *   - export/redact → 去識別化單一來源（M2-03、D-029），純字串函式，只 import type
+ *   - signals/shortId → 短訊號編號（純字串函式、零 import；與完整編號的對應規則唯一來源）
  * Everything else from core must be `import type` (erased at runtime).
  * `tests/boundaries.test.ts` enforces this.
  *
@@ -28,3 +29,13 @@ export {
 export { HonestyGuard } from '../../core/src/analysis/HonestyGuard';
 export { scrubDeep, sensitiveStringsOf, REDACTED_NAME, REDACTED_PLACE } from '../../core/src/export/redact';
 export type { SensitiveStrings } from '../../core/src/export/redact';
+export {
+  shortSignalId,
+  resolveSignalId,
+  shortIdCollisions,
+  shortenSignalIds,
+  isSignalIdLike,
+  SIGNAL_ID_PATTERN,
+  SHORT_ID_HEX,
+} from '../../core/src/signals/shortId';
+export type { SignalIdResolution } from '../../core/src/signals/shortId';

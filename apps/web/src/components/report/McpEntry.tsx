@@ -231,7 +231,7 @@ export function McpEntry({ report, clipboard, onDownload = downloadTextFile }: {
         <li className="ask__step">
           <h3 className="ask__step-title">檢查回答（選填）</h3>
           <p className="ask__hint">
-            把 Claude 的回答貼回來，網站用這份報告的訊號對照：引用的編號是否存在、有沒有保證式用語、「高共識」有沒有算進實驗性系統。
+            把 Claude 的回答貼回來，網站用這份報告的訊號對照：引用的編號（短編號 sig_ 加 8 位即可）是否存在、有沒有保證式用語、「高共識」有沒有算進實驗性系統。
             只在你的瀏覽器裡比對，不會送出任何資料。
           </p>
           <AnswerCheck report={report} />
