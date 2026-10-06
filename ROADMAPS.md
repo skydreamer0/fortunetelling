@@ -360,3 +360,14 @@ M0.5、M1、M2 與 M3 主線已完成，M4 完成 M4-01／02。`historical_zone_
 - V0：Bun workspaces 搬遷
 
 任務細節見 [docs/TASKS.md](docs/TASKS.md)。
+
+### 參考其他專案後的改進（2026-10-06）
+
+比對 openfate／mingpan／ziwei-mcp／librejyotish 等排盤 MCP：它們多半「只輸出確定性排盤、解釋留給 AI」，沒有人做規則訊號＋引用編號＋跨系統共識＋`check_answer`，這是我們的差異。借鏡並已落實：
+
+- **短訊號編號**：輸出用 `sig_`＋8 位（12 字，原 20 字）；輸入接受完整編號或 ≥8 位前綴，前綴必須唯一、ambiguous 不猜；碰撞時該編號保留完整形式。完整編號與雜湊不變（所有 golden 的內部編號不動）。工具在 `packages/core/src/signals/shortId.ts`，MCP（`signalIndex.ts`）、`@fortune/ai`（`signalIds.ts`、複製 prompt `copy-v3`、`chat-v2`）、網站同步。
+- **MCP 輸出瘦身**：`get_timeline` 預設改為 `yearTable`（約 21,200 → 6,700 字），`detail: true` 回完整結構；新增 `batch`（≤8 個、依序、不可巢狀、不含 `import_profile`）。
+- **`conventions` 區塊**（`get_chart`）：每次回報排盤口徑，從 core 盤面讀取，不確定的寫「未明確記錄」（librejyotish `conventions_used`、ziwei-mcp `diagnostics` 的做法）。
+- **輸入防呆**：`checkBirthProfilePlausibility`（時區與經度不符、經緯度越界或對調、日期範圍、精度矛盾），非阻擋式警告；目前尚未接進 MCP 與網站表單。
+
+**尚未做**：以 PyJHora 之類開源實作當吠陀占星第二比對來源（#14，需先同意安裝第三方套件）；四柱反查出生時間（openfate）；把輸入防呆警告接進 `import_profile`／`add-profile`／網站表單。

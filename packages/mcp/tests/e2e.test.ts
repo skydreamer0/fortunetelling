@@ -115,9 +115,9 @@ describe('stdio server (what Claude Desktop actually talks to)', () => {
     })));
     expect(good.data.ok).toBe(true);
     const bad = JSON.parse(textOf(await client.callTool({
-      name: 'check_answer', arguments: { profileId: 'sky', asOf: '2026-09-30', answerText: '一定會成功〔sig_fake0000〕。' },
+      name: 'check_answer', arguments: { profileId: 'sky', asOf: '2026-09-30', answerText: '一定會成功〔sig_deadbeef〕。' },
     })));
-    expect(bad.data.unknownCitations).toEqual(['sig_fake0000']);
+    expect(bad.data.unknownCitations).toEqual(['sig_deadbeef']);
     expect(bad.data.issues.map((i: any) => i.code).sort()).toEqual(['honesty_violation', 'unknown_citation']);
   }, 60_000);
 

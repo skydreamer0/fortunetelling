@@ -31,10 +31,10 @@ describe('check_answer', () => {
   test('不存在的 id 與保證式用語都被標出', async () => {
     const { json } = await fx.call('check_answer', {
       ...base,
-      answerText: `明年一定會升遷〔${real[0].id}〕。\n\n另有依據 sig_doesnotexist 保證成功。`,
+      answerText: `明年一定會升遷〔${real[0].id}〕。\n\n另有依據 sig_0badc0de 保證成功。`,
     });
     expect(json.data.ok).toBe(false);
-    expect(json.data.unknownCitations).toEqual(['sig_doesnotexist']);
+    expect(json.data.unknownCitations).toEqual(['sig_0badc0de']);
     const codes = json.data.issues.map((i: any) => `${i.paragraph}:${i.code}`);
     expect(codes).toEqual(expect.arrayContaining(['0:honesty_violation', '1:unknown_citation', '1:honesty_violation']));
   });
