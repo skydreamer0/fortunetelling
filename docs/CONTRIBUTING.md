@@ -31,6 +31,21 @@ report.evolution;    // 里程碑 D
 report.honesty;      // 語言規則已就位；違規稽核里程碑 D
 ```
 
+## 同步分析的 CalculationSpec（core 0.5.3）
+
+`createCalculationSpec(input)` 回傳深層不可變的來源與有效設定，以及 `specHash`。
+它與 `analyze(input)` 共用正規化入口；不執行排盤，也不初始化星曆。
+`source` 保留受支援的原始欄位，`identity` 包含 canonical 有效輸入、逐系統設定與版本。
+姓名、精確座標和時間精度都影響 identity；地名標籤、原始 alias、生成時間和 asOf 不影響。
+內容含個人出生資料及姓名，不能當成去識別化匯出。
+
+此版 scope 僅為 `analyze-sync-natal-intent`。尚未建構或共用 ChartSnapshot，不保證舊報告重播；
+也沒有改動 MCP、匯出或 profile 格式。不要把原始出生資料代入本 API 後回填舊報告的有效設定。
+specHash 使用非密碼學 FNV-1a 64-bit；未來快取須同時比較完整 canonical identity，
+且期間／asOf 必須是另一層識別，不能拿同一本命 spec 互換不同期間結果。
+依賴升級時更新 `core/calculationDependencies.json`，完整版本及 integrity 必須符合 bun.lock；
+測試會檢查同步計算 dependency closure，不能手寫猜測值。詳細邊界見 D-042。
+
 ## 新增一個命理系統（引擎外掛契約）
 
 新增系統**不改動核心**，五步：

@@ -118,8 +118,9 @@ export function resolveAnalyzeInput(input: unknown): ResolvedAnalyzeInput {
   const useTrueSolarTime = opts.useTrueSolarTime ?? true;
   if (typeof useTrueSolarTime !== 'boolean') throw new Error('Invalid useTrueSolarTime: must be a boolean.');
   const ziRaw = opts.ziHourConvention ?? 'late';
-  const ziHourConvention = ZI_ALIASES[String(ziRaw)];
-  if (!ziHourConvention || typeof ziRaw !== 'string') {
+  const ziHourConvention = typeof ziRaw === 'string' && Object.prototype.hasOwnProperty.call(ZI_ALIASES, ziRaw)
+    ? ZI_ALIASES[ziRaw] : undefined;
+  if (!ziHourConvention) {
     throw new Error(`Invalid ziHourConvention: ${JSON.stringify(ziRaw)}. Use 'late' or 'early'.`);
   }
 

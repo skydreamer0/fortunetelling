@@ -367,3 +367,55 @@ export 也只有 manifest coreVersion，所有計算 section 與檔案 hash 必�
 
 **未交付：** CalculationSpec／ChartSnapshot、snapshotId/specHash、跨執行的快取識別、
 MCP／匯出／profile 全入口統一，以及完整 DST／曆法矩陣仍在 #26；本片不能將 #26 結案。
+
+## D-042 同步 analyze 的不可變 CalculationSpec 與意圖識別（2026-10-06，#26 第三片）
+
+**範圍：** `createCalculationSpec(input)` 是既有同步 `analyze` 的建構契約；
+`analyze` 也從同一個 resolver 取得有效選項並明確傳入 DST overlap 策略。
+`identity.scope = "analyze-sync-natal-intent"` 只識別此入口的本命計算意圖，
+不是已計算的 ChartSnapshot、完整報告識別碼或舊結果可重播保證。
+
+- 原始受支援欄位保存在深複製、深凍結的 `source`；省略仍是省略，子時 alias 與時區別名保留。
+  BirthData 的 source 明確標為建構子套用預設後的 `toJSON()`，不冒稱仍是原始使用者輸入。
+- `identity` 只包含明確展開的有效值：民用生日／時間／精度、性別、姓名、未四捨五入的座標、
+  內建 canonical IANA zone，以及逐系統 clock／子時規則與已支援的固定設定。
+  姓名會影響生命靈數，故不得像既有 chartFingerprint 一樣排除。
+  時間未知固定為 null／unknown；保留的原始 hour/minute 不進有效識別碼。
+- 八字 late/early 與紫微 splitMidnight/nextDayAt23 透過既有明確映射，
+  不能只因字串相似就當作同一流派。紫微 fixLeap=true／zh-TW 來自既有 sync engine。
+  星曆系統在這個入口明確 excluded，不接受新的歲差、宮制、交點等未接入選項。
+- 版本識別包含 core 與五個相關 calculator 版本、同步計算所需完整 locked dependency closure 的
+  精確版本及套件 integrity、內建 tzdb 版本，以及六份相關規則／traits 的 canonical 內容摘要。
+  規則內容直接摘要，不把缺版本猜成 0；依賴清單有 lockfile closure 一致性回歸。
+  當前入口只接受內建時區；未來若放寬為無版本 Intl fallback，這裡仍須拒絕建立跨裝置識別碼。
+- `specHash` 是 `cs1-` + FNV-1a 64-bit；供診斷與後續比對，非密碼學、匿名化或權限 token。
+  未來快取命中還必須比較完整 canonical identity，不能只信 hash。
+  source label／provenance、asOf／期間、generatedAt 不進本命意圖識別碼。
+  同一 identity 仍不代表不同期間的整份報告可以互換。
+
+**兩項精確的輸入驗證修正：**
+1. 既有 ZI_ALIASES 普通物件會誤收 inherited key（toString／constructor／__proto__）；
+   改成 own-key 檢查後，在排盤之前明確拒絕，合法 late/early 及兩個 alias 不變。
+2. BirthData 原本用 host-local Date 驗民用日期；當 host 是 Pacific/Apia，
+   2011-12-30 會被主機的跳日誤判不存在，即使出生地是台灣。
+   改成 Date.UTC 與 UTC getters 只驗曆日；出生地時間解析與 DST 決策沒有改動。
+
+**版本與相容：** core 0.5.3；Report schema 5、Profile schema 1 不變。原 report/export golden、
+LOCKED FORECAST V1 與既有快照都不改寫。新增 literal delta 只把 11 份 report 與
+2 份 compatibility 的 0.5.2 變成 0.5.3；匯出只有 manifest coreVersion 改變，
+所有計算 section 與匯出檔案 hash 仍由舊 golden 完整比對。
+
+**驗收與限制：** 使用合成資料，覆蓋省略／明確預設／aliases、精確座標及姓名敏感度、
+深層不可變且不凍結呼叫者、版本每個維度、跨時辰真實分析、22:59／23:00／23:59／00:00，
+以及 UTC／台北／紐約／Apia 子程序的同內容比對。DST gap／overlap 在 spec 中保留請求的
+民用時刻及明確既有策略，這不是完整曆法驗收矩陣。工作區沒有 Bun；執行證據由既有 locked CI 提供。
+
+先紅證據：[CI 37456101693](https://github.com/skydreamer0/fortunetelling/actions/runs/37456101693)
+為 1230 pass／2 skip／15 fail（缺少公開 spec 契約、inherited 子時選項未拒絕）。
+首個實作候選 [CI 37456773778](https://github.com/skydreamer0/fortunetelling/actions/runs/37456773778)
+的 19 項新回歸與舊 golden 全通過；唯一失敗是 analyze.test 的舊 0.5.2 版本 literal，
+已按 0.5.3 公開 API 契約精確更新。另檢查 VERSION／package.json／bun.lock 三處版本一致。
+
+**尚未交付：** natal snapshot 共用、snapshotId、真正的 cache migration／cross-run reuse、
+舊報告 parser／回填、MCP／匯出／profile 全入口統一、async 星曆設定及完整曆法邊界矩陣。
+本切片不關閉 #26，不宣稱提高命理預測準確率。

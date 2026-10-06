@@ -24,7 +24,9 @@ import { createTimeContext } from '../time/createTimeContext';
 import { buildTimeline, TIMELINE_SYSTEMS } from '../timeline/buildTimeline';
 import { SYSTEM_IDS } from '../signals/types';
 import { buildConsensus } from '../consensus/buildConsensus';
-import { resolveAnalyzeInput, toZiweiZiConvention } from './analyzeInput';
+import { toZiweiZiConvention } from './analyzeInput';
+import { resolveCalculationSpec } from './calculationSpec';
+import { VERSION } from './version';
 import { TimeContextBaZiEngine, TimeContextZiweiEngine } from './timeContextEngines';
 import type { SystemResult } from './models/SystemResult';
 import type { BirthData, BirthDataParams, Gender } from './models/BirthData';
@@ -46,7 +48,7 @@ import type { ZiweiZiHourConvention } from '../calculators/ziwei/types';
 import type { AnalysisTimeOptions, BirthplaceSource } from './analyzeInput';
 
 /** Public library version (semver). Bump on any observable API change. */
-export const VERSION = '0.5.2';
+export { VERSION } from './version';
 
 /**
  * Version of the `Report` shape itself, independent of code version.
@@ -154,7 +156,7 @@ type ReportDraft = Omit<Report, 'insights' | 'timeContext' | 'timeline' | 'conse
  */
 export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf?: Date | string | null } = {}): Report {
   // fail fast with a clear message before running engines
-  const { birth, profile, options, birthplaceSource } = resolveAnalyzeInput(input);
+  const { birth, profile, options, birthplaceSource, spec } = resolveCalculationSpec(input);
 
   const asOfDate = asOf ? new Date(asOf) : new Date();
   if (Number.isNaN(asOfDate.getTime())) {
@@ -163,7 +165,7 @@ export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf
   const asOfStr = asOfDate.toISOString().slice(0, 10);
 
   // ① 時間標準化層（D-026）：唯一時間來源
-  const ctx = createTimeContext(profile);
+  const ctx = createTimeContext(profile, { dstOverlap: spec.identity.settings.time.dstOverlap });
 
   // 八字／紫微改吃 TimeContext（真太陽時、精確交節、晚子）；其餘引擎沿用民用日期
   const registry = createDefaultRegistry({ asOf: asOfDate })
