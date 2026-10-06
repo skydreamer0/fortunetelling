@@ -8,6 +8,7 @@ import { baziCalculator } from '../src/calculators/bazi/calculator';
 import * as baziModule from '../src/calculators/bazi/calculator';
 import * as pillars from '../src/calculators/bazi/pillars';
 import * as timelineModule from '../src/timeline/buildTimeline';
+import * as publicCore from '../src/index';
 import type { AnalyzeInput } from '../src/core/analyze';
 
 const birth: AnalyzeInput = {
@@ -60,6 +61,9 @@ describe('run-local immutable bazi natal basis', () => {
     expect(l).toHaveBeenCalledTimes(1);
     expect(REPORT_SCHEMA_VERSION).toBe(5);
     expect(report).not.toHaveProperty('snapshotId');
+    expect(publicCore).not.toHaveProperty('createBaziNatalBasisProvider');
+    expect(publicCore).not.toHaveProperty('calculateBaziWithNatalBasis');
+    expect(publicCore).not.toHaveProperty('buildTimelineWithBaziNatalBasis');
   });
 
   test('creation is lazy; each successful pure result is immutable and reused without freezing callers', async () => {
@@ -147,7 +151,19 @@ describe('run-local immutable bazi natal basis', () => {
       expect(actual).toEqual(baziCalculator.calculate(ctx, cfg));
       const engine = new TimeContextBaZiEngine({ ctx, ...cfg, natalBasis: provider } as any).run(data);
       expect(clean(engine)).toEqual(clean(new TimeContextBaZiEngine({ ctx, ...cfg }).run(data)));
+      if (asOf === basis.luckCycles.startDate) {
+        expect(basis.luckCycles.startIso.slice(11)).not.toBe('00:00:00');
+        expect(engine.components.find(component => component.id === 'daYun_1')!.value.isCurrent).toBe(false);
+        expect(actual.chart.luckCycles[0].isCurrent).toBe(true);
+      }
       projected.push(actual.chart.annualSequence);
+    }
+    for (const annualRange of [{ from: 2000, count: 3 }, { from: 2030, count: 1 }]) {
+      const cfg = { asOf: ASOF, ...options, annualRange };
+      const chart = calculateShared(ctx, cfg, provider);
+      expect(chart).toEqual(baziCalculator.calculate(ctx, cfg));
+      expect(chart.chart.annualSequence).toHaveLength(annualRange.count);
+      expect(chart.chart.annualSequence[0].year).toBe(annualRange.from);
     }
     expect(projected[0]).not.toEqual(projected[2]);
     expect(JSON.stringify(basis)).toBe(original);

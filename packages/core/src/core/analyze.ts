@@ -21,7 +21,8 @@ import { SummaryBuilder } from '../analysis/SummaryBuilder';
 import { InsightBuilder } from '../analysis/InsightBuilder';
 import { createDefaultRegistry } from '../engines/index';
 import { createTimeContext } from '../time/createTimeContext';
-import { buildTimeline, TIMELINE_SYSTEMS } from '../timeline/buildTimeline';
+import { buildTimelineWithBaziNatalBasis, TIMELINE_SYSTEMS } from '../timeline/buildTimeline';
+import { createBaziNatalBasisProvider, type BaziNatalBasisProvider } from '../calculators/bazi/natalBasis';
 import { SYSTEM_IDS } from '../signals/types';
 import { buildConsensus } from '../consensus/buildConsensus';
 import { toZiweiZiConvention } from './analyzeInput';
@@ -166,10 +167,11 @@ export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf
 
   // ① 時間標準化層（D-026）：唯一時間來源
   const ctx = createTimeContext(profile, { dstOverlap: spec.identity.settings.time.dstOverlap });
+  const baziNatalBasis = createBaziNatalBasisProvider(ctx, options);
 
   // 八字／紫微改吃 TimeContext（真太陽時、精確交節、晚子）；其餘引擎沿用民用日期
   const registry = createDefaultRegistry({ asOf: asOfDate })
-    .register(new TimeContextBaZiEngine({ asOf: asOfStr, ctx, ...options }))
+    .register(new TimeContextBaZiEngine({ asOf: asOfStr, ctx, ...options, natalBasis: baziNatalBasis }))
     .register(new TimeContextZiweiEngine({ asOf: asOfDate, ctx, ...options }));
   const engines = registry.runAll(birth);
 
@@ -242,7 +244,7 @@ export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf
   report.evolution.pending = false;
 
   // ── v4：時間脈絡、時間軸、訊號——先於誠實稽核填入，讓訊號文字受檢 ──
-  const timeline = buildSyncTimeline(ctx, asOfStr, birth.name, options);
+  const timeline = buildSyncTimeline(ctx, asOfStr, birth.name, options, baziNatalBasis);
   report.timeContext = buildReportTimeContext(ctx, options, birthplaceSource);
   report.timeline = timeline;
   report.signals = collectSignals(timeline);
@@ -264,13 +266,13 @@ export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf
  * reason 'time_unknown' (no birth time) or 'ephemeris_not_initialised'; use
  * `buildTimelineAsync(ctx, { asOf })` for the full timeline.
  */
-function buildSyncTimeline(ctx: TimeContext, asOf: string, name: string, options: AnalysisTimeOptions): Timeline {
-  const timeline = buildTimeline(ctx, {
+function buildSyncTimeline(ctx: TimeContext, asOf: string, name: string, options: AnalysisTimeOptions, baziNatalBasis: BaziNatalBasisProvider): Timeline {
+  const timeline = buildTimelineWithBaziNatalBasis(ctx, {
     asOf,
     ...options,
     systems: TIMELINE_SYSTEMS.filter(s => !EPHEMERIS_SYSTEMS.includes(s)),
     ...(name ? { name } : {}),
-  });
+  }, baziNatalBasis);
   const reason: TimelineSkipReason = ctx.utc === null ? 'time_unknown' : 'ephemeris_not_initialised';
   const skipped: SkippedSystem[] = [...timeline.skippedSystems, ...EPHEMERIS_SYSTEMS.map(system => ({ system, reason }))];
   timeline.skippedSystems = SYSTEM_IDS.flatMap(id => skipped.filter(s => s.system === id));

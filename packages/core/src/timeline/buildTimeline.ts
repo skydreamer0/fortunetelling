@@ -27,7 +27,8 @@
  */
 
 import { initEphemeris, isEphemerisReady } from '../calculators/astro/ephemeris';
-import { baziCalculator } from '../calculators/bazi/calculator';
+import { baziCalculator, calculateBaziWithNatalBasis } from '../calculators/bazi/calculator';
+import type { BaziNatalBasisProvider } from '../calculators/bazi/natalBasis';
 import { monthlyPillars } from '../calculators/bazi/pillars';
 import { toBaziRuleChart } from '../calculators/bazi/ruleChart';
 import { humanDesignCalculator } from '../calculators/humanDesign/calculator';
@@ -227,7 +228,7 @@ interface Prepared {
   skipped: SkippedSystem[];
 }
 
-function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: string, firstYear: number, years: number, opts: TimelineOptions): Prepared {
+function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: string, firstYear: number, years: number, opts: TimelineOptions, baziNatalBasis?: BaziNatalBasisProvider): Prepared {
   const evaluators: Partial<Record<SystemId, WindowEvaluator>> = {};
   const skipped: SkippedSystem[] = [];
   const timeKnown = ctx.jd !== null && ctx.utc !== null;
@@ -239,7 +240,10 @@ function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: st
     if (!systems.includes(system)) continue;
     switch (system) {
       case 'bazi': {
-        const res = baziCalculator.calculate(ctx, { ...calcConfig, useTrueSolarTime, ziHourConvention });
+        const baziConfig = { ...calcConfig, useTrueSolarTime, ziHourConvention };
+        const res = baziNatalBasis
+          ? calculateBaziWithNatalBasis(ctx, baziConfig, baziNatalBasis)
+          : baziCalculator.calculate(ctx, baziConfig);
         if (!timeKnown || !res.chart.pillars) {
           skipped.push({ system, reason: 'time_unknown' });
           break;
@@ -411,6 +415,15 @@ function validateAsOf(asOf: unknown): string {
  * `skippedSystems` with reason 'ephemeris_not_initialised'.
  */
 export function buildTimeline(ctx: TimeContext, opts: TimelineOptions): Timeline {
+  return buildTimelineInternal(ctx, opts);
+}
+
+/** Internal sync-analyze path. No caller-supplied natal object is added to TimelineOptions. */
+export function buildTimelineWithBaziNatalBasis(ctx: TimeContext, opts: TimelineOptions, natalBasis: BaziNatalBasisProvider): Timeline {
+  return buildTimelineInternal(ctx, opts, natalBasis);
+}
+
+function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider): Timeline {
   const asOf = validateAsOf(opts?.asOf);
   if (opts.useTrueSolarTime !== undefined && typeof opts.useTrueSolarTime !== 'boolean') {
     throw new Error('buildTimeline: useTrueSolarTime must be a boolean');
@@ -440,7 +453,7 @@ export function buildTimeline(ctx: TimeContext, opts: TimelineOptions): Timeline
   if (topN !== undefined && !(topN === Infinity || (Number.isInteger(topN) && topN >= 0))) {
     throw new Error(`buildTimeline: topSignalsPerDomain must be an integer ≥ 0 or Infinity, got ${topN}`);
   }
-  const { evaluators, skipped } = prepareSystems(ctx, requested, asOf, firstYear, years, opts);
+  const { evaluators, skipped } = prepareSystems(ctx, requested, asOf, firstYear, years, opts, natalBasis);
   const weightOf = (s: SystemId) => opts.systemWeights?.[s] ?? 1;
   const systems = SYSTEM_IDS.filter((s) => evaluators[s] !== undefined);
   const systemWeights: Partial<Record<SystemId, number>> = {};
