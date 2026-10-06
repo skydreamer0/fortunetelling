@@ -99,7 +99,10 @@ describe('buildCopyPrompt — content', () => {
     expect(t.trimEnd().endsWith('請開始解讀。')).toBe(true);
     // Question source signals are protected: kept in the data even when budget is tight.
     const small = buildCopyPrompt(report, { questionAnswer: loadQuestion(), maxChars: 16_000 });
-    expect(small.payload.payload.timeline).not.toBeNull();
+    expect(small.charCount).toBeLessThanOrEqual(16_000);
+    expect(small.truncated).toBe(true);
+    expect(small.payload.payload.timeline).toBeNull();
+    expect(small.text).toContain('未附命盤細節（charts）與時間表（timeline）');
     const keptShort = new Set([...small.payload.signalIds].map(shortSignalId));
     for (const w of small.payload.payload.question!.top) {
       expect(w.supportSignalIds.length + w.riskSignalIds.length).toBeGreaterThan(0);
