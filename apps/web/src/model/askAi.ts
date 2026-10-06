@@ -8,7 +8,7 @@
  */
 
 import {
-  answerQuestion, buildTimeline, getQuestionCategory,
+  answerQuestion, buildTimeline, getQuestionCategory, resolveSignalId,
   type CoreSignal, type QuestionAnswer, type QuestionRange, type SignalWindow, type TimeContext,
 } from '../lib/core';
 import type { Report } from './types';
@@ -104,6 +104,11 @@ const LOOKUP_YEARS = { before: 5, after: 10 } as const;
  * id → signal for checking a pasted Claude answer (M4-03). Cheap sources first (the report's own
  * lists), then month signals year by year (~1 s per year, cached) so any id the MCP tools could
  * have returned resolves here too. An unknown id scans every year before it is reported missing.
+ *
+ * Accepts a full id or a short id / prefix (sig_ + ≥ 8 hex, any case): resolved with core's
+ * `resolveSignalId`, so a prefix only counts when it is unique. A full 16-hex id stops scanning as
+ * soon as it is found; a shorter prefix scans every year first (once, then cached), because a
+ * not-yet-scanned year could hold a second signal with the same prefix. Ambiguous → null, never a guess.
  */
 export function reportSignalLookup(report: Report): (id: string) => { system: string } | null {
   const known = new Map<string, CoreSignal>();
@@ -118,16 +123,22 @@ export function reportSignalLookup(report: Report): (id: string) => { system: st
   const asOfYear = Number(report.asOf.slice(0, 4));
   let scanned = asOfYear - LOOKUP_YEARS.before - 1;
   const last = asOfYear + LOOKUP_YEARS.after;
-  return id => {
-    while (!known.has(id) && monthsOf && scanned < last) {
-      scanned += 1;
-      try {
-        for (const list of monthsOf(scanned).values()) list.forEach(add);
-      } catch {
-        // a year the engine cannot build simply contributes no signals
-      }
+  const scanNext = () => {
+    scanned += 1;
+    try {
+      for (const list of monthsOf!(scanned).values()) list.forEach(add);
+    } catch {
+      // a year the engine cannot build simply contributes no signals
     }
-    return known.get(id) ?? null;
+  };
+  return input => {
+    const wanted = input.trim().toLowerCase();
+    const isFull = /^sig_[0-9a-f]{16}$/.test(wanted);
+    // A full id that is already known needs no scan; anything shorter must see every year first.
+    if (resolveSignalId(wanted, []).status === 'invalid') return null;
+    while (monthsOf && scanned < last && !(isFull && known.has(wanted))) scanNext();
+    const found = resolveSignalId(wanted, known.keys());
+    return found.status === 'exact' || found.status === 'unique' ? known.get(found.id) ?? null : null;
   };
 }
 

@@ -10,7 +10,7 @@
  *   (c) `experimental_as_consensus`  把 experimental 系統（吠陀占星）當成「高共識」的依據；
  *       `high_consensus_unsupported` 寫「高共識」但引用的已驗證系統少於 3 套。
  */
-import { HonestyGuard } from './core-pure';
+import { HonestyGuard, SIGNAL_ID_PATTERN } from './core-pure';
 import { splitParagraphs } from './pasteCheck';
 import { AI_HONESTY_LAYER, EXPERIMENTAL_SYSTEMS, FATALISM_PATTERNS, HIGH_CONSENSUS_MIN_SYSTEMS, HIGH_CONSENSUS_TERM } from './validate';
 
@@ -32,7 +32,10 @@ export interface SignalRef {
 }
 
 export interface CheckAnswerOptions {
-  /** 以 id 查訊號；查不到回 undefined／null。 */
+  /**
+   * 以編號查訊號；查不到回 undefined／null。收到的是回答中寫的編號（小寫，可能是短編號或 ≥ 8 位前綴），
+   * 由呼叫端負責解析前綴：唯一才回訊號，ambiguous（對到多筆）與查不到一律回 null，絕不猜。
+   */
   signalLookup: (id: string) => SignalRef | undefined | null;
   /** 覆寫 experimental 系統清單（預設 {@link EXPERIMENTAL_SYSTEMS}）。 */
   experimentalSystems?: readonly string[];
@@ -48,7 +51,7 @@ export interface AnswerIssue {
   code: AnswerIssueCode;
   /** 段落索引（以空行分段，從 0 起算）。 */
   paragraph: number;
-  /** 問題的 id／用語（已排序、去重）。 */
+  /** 問題的編號／用語（已排序、去重；編號為回答中寫的形式）。 */
   values: string[];
   /** 給人看的說明。 */
   detail: string;
@@ -59,14 +62,18 @@ export interface AnswerIssue {
 export interface CheckAnswerResult {
   ok: boolean;
   paragraphCount: number;
-  /** 回答中出現的所有 sig_ id（排序、去重）。 */
+  /** 回答中出現的所有 sig_ 編號（小寫、照回答寫的形式，排序、去重）。 */
   citedIds: string[];
-  /** 查不到的 id。 */
+  /** 查不到（或 ambiguous）的編號。 */
   unknownCitations: string[];
   issues: AnswerIssue[];
 }
 
-const CITATION_RE = /sig_[0-9A-Za-z]+/g;
+/**
+ * 回答中的訊號編號：短編號（sig_ + 8 位）、完整編號（16 位）或其間的前綴，不分大小寫。
+ * 少於 8 位的不當作編號。比對前先轉小寫，原樣（小寫）交給 `signalLookup`。
+ */
+const CITATION_RE = new RegExp(SIGNAL_ID_PATTERN.source, 'gi');
 const EXCERPT_CHARS = 40;
 /** 句子裡有這些否定語時，提到「高共識」多半是在說「不算高共識」，不標示。 */
 const NEGATION_RE = /不(算|能|可|屬於|是|會算|宜|應)|並非|未(達|算|列入|納入)|沒有|無法|低於/;
@@ -132,13 +139,13 @@ export function checkAnswer(answerText: string, options: CheckAnswerOptions): Ch
   const paragraphs = splitParagraphs(answerText);
 
   for (const [paragraph, text] of paragraphs.entries()) {
-    const citations = uniqSorted(text.match(CITATION_RE) ?? []);
+    const citations = uniqSorted((text.match(CITATION_RE) ?? []).map((id) => id.toLowerCase()));
     citations.forEach((id) => allCited.add(id));
     const excerpt = excerptOf(text);
 
     const unknown = citations.filter((id) => systemOf(id) === null);
     if (unknown.length) {
-      issues.push({ code: 'unknown_citation', paragraph, values: unknown, detail: `引用的訊號 id 查不到：${unknown.join('、')}`, excerpt });
+      issues.push({ code: 'unknown_citation', paragraph, values: unknown, detail: `引用的訊號編號查不到（或前綴對到多筆，無法確定是哪一筆）：${unknown.join('、')}`, excerpt });
     }
 
     const prose = text.replace(CITATION_RE, ' ');

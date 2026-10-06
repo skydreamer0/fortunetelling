@@ -3,7 +3,9 @@
  *
  * 與「複製 prompt」那條路的 `checkPastedAnswer` 不同：這裡的回答來自本機 MCP，引用的是
  * `get_signal`／`answer_question` 回傳的 sig_ 編號，所以用跟 MCP `check_answer` 同一個
- * `checkAnswer`，以報告本身的訊號（含月份訊號）查編號。只標示、不改寫，是否採信由讀者判斷。
+ * `checkAnswer`，以報告本身的訊號（含月份訊號）查編號。編號可貼短編號（sig_ 加 8 位）、完整編號或
+ * 至少 8 位的前綴：前綴要在這份報告裡唯一才算數，對到多筆或查不到都標「查不到」，不猜。
+ * 只標示、不改寫，是否採信由讀者判斷。
  */
 
 import { useRef, useState } from 'react';
@@ -44,7 +46,7 @@ export function AnswerCheckView({ result }: { result: CheckAnswerResult }) {
         </ol>
       )}
       <p className="ask__method">
-        這是程式比對，不判斷內容對錯：只檢查引用的 sig_ 編號是否存在於這份報告、有沒有宿命論或保證式用語，
+        這是程式比對，不判斷內容對錯：只檢查引用的 sig_ 編號（短編號 sig_ 加 8 位、完整編號都可以，前綴要唯一）是否存在於這份報告、有沒有宿命論或保證式用語，
         以及「高共識」是否有至少 3 套已驗證系統支持（吠陀占星是實驗性系統，不計入）。
       </p>
     </div>
@@ -77,7 +79,7 @@ export function AnswerCheck({ report }: { report: Report }) {
       <label className="field">
         <span className="field__label">Claude 的回答（選填）</span>
         <textarea className="input ask__textarea" rows={6} value={text} maxLength={20000}
-          placeholder="把 Claude 桌面版的完整回答貼在這裡"
+          placeholder="把 Claude 桌面版的完整回答貼在這裡（引用的 sig_ 編號可以是短編號）"
           onChange={event => { setText(event.target.value); setResult(null); }} />
       </label>
       <div className="ask__actions">

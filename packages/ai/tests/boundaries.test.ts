@@ -23,6 +23,7 @@ const ALLOWED_CORE_RUNTIME = new Set([
   '../../core/src/questions/engine',
   '../../core/src/analysis/HonestyGuard',
   '../../core/src/export/redact',
+  '../../core/src/signals/shortId',
 ]);
 
 describe('import boundaries (D-021)', () => {
@@ -49,7 +50,7 @@ describe('import boundaries (D-021)', () => {
   test('the pure core modules themselves do not pull calculators', () => {
     const coreSrc = join(SRC, '..', '..', 'core', 'src');
     const seen = new Set<string>();
-    const queue = ['questions/engine.ts', 'analysis/HonestyGuard.ts', 'export/redact.ts'];
+    const queue = ['questions/engine.ts', 'analysis/HonestyGuard.ts', 'export/redact.ts', 'signals/shortId.ts'];
     while (queue.length) {
       const rel = queue.shift()!;
       if (seen.has(rel)) continue;

@@ -71,7 +71,7 @@ describe('對話助手與 MCP 指示（M3-04）', () => {
     expect(t.startsWith(MCP_SERVER_INSTRUCTIONS)).toBe(true);
     for (const tool of ['list_conflicts', 'get_consensus', 'check_answer', 'compare_profiles']) expect(t).toContain(tool);
     for (const kw of ['矛盾', 'experimental', '至少 3 套', '這個範圍內沒有特別突出的月份']) expect(t).toContain(kw);
-    expect(CONVERSATION_PROMPT_VERSION).toBe('chat-v1');
+    expect(CONVERSATION_PROMPT_VERSION).toBe('chat-v2');
   });
   test('用詞為台灣用語', () => {
     for (const bad of ['数据', '默认', '导出', '代码', '默認', '導出']) expect(CONVERSATION_SYSTEM_INSTRUCTION).not.toContain(bad);
@@ -80,7 +80,7 @@ describe('對話助手與 MCP 指示（M3-04）', () => {
 
 describe('實驗性系統不計入高共識；低分帶不硬推薦（M3 追加）', () => {
   test('版本字串已升版', () => {
-    expect(COPY_PROMPT_VERSION).toBe('copy-v2');
+    expect(COPY_PROMPT_VERSION).toBe('copy-v3');
     expect(INTERPRET_PROMPT_VERSION).toBe('interpret-v2');
   });
 

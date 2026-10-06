@@ -63,7 +63,7 @@ export function PasteCheckView({ result }: { result: PasteCheckResult }) {
         </ol>
       )}
       <p className="ask__method">
-        這是程式比對，不判斷內容對錯：只檢查引用的 sig_ 編號是否存在、是否提到資料裡沒有的干支／星曜／行星、
+        這是程式比對，不判斷內容對錯：只檢查引用的 sig_ 編號（短編號或完整編號）是否存在、是否提到資料裡沒有的干支／星曜／行星、
         內容段落有沒有引用，以及是否出現宿命論用語。網站無法控制外部 AI 的回答，是否採信由你判斷。
       </p>
     </div>
@@ -212,7 +212,7 @@ export function AskAi({ report, clipboard }: {
       <ol className="ask__steps">
         <li>按「複製 prompt」。</li>
         <li>開啟你自己的 AI 對話（ChatGPT、Claude、Gemini 等），貼上後送出。</li>
-        <li>回答裡的〔sig_…〕是訊號編號，可以對照本報告；想檢查回答，把它貼回下方。</li>
+        <li>回答裡的〔sig_…〕是訊號編號（sig_ 加 8 位的短編號），可以對照本報告；想檢查回答，把它貼回下方。</li>
       </ol>
 
       <details className="ask__paste" open={pasted.length > 0 || undefined}>
