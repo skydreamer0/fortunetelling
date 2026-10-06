@@ -55,7 +55,7 @@ export { VERSION } from './version';
  * Version of the `Report` shape itself, independent of code version.
  * Consumers should check this before deserializing stored reports.
  */
-export const REPORT_SCHEMA_VERSION = 5;
+export const REPORT_SCHEMA_VERSION = 6;
 
 /** Timeline systems that need the Swiss Ephemeris; sync `analyze()` never initialises it. */
 const EPHEMERIS_SYSTEMS: SystemId[] = ['jyotish', 'humanDesign'];

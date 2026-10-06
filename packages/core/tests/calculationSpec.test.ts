@@ -23,7 +23,7 @@ function assertFrozen(value: unknown) {
 describe('CalculationSpec v1: analyze-sync natal intent only', () => {
   test('public factory is available without changing Report schema', () => {
     expect(typeof (core as any).createCalculationSpec).toBe('function');
-    expect(core.REPORT_SCHEMA_VERSION).toBe(5);
+    expect(core.REPORT_SCHEMA_VERSION).toBe(6);
   });
   test('materializes only supported effective choices with separate system conventions', () => {
     const spec = createSpec(birth);

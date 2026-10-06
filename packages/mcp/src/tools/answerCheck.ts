@@ -13,7 +13,7 @@ export const answerCheckTools = [
       '檢查一段 AI 回答（可貼別的 AI 的回答，或你自己寫好的草稿）是否守規矩，結果只標示、不改寫。以空行分段，檢查：' +
       '(a) 引用的 sig_ id 是否都存在（對照 profileId 與 asOf 算出的訊號；短編號 sig_+8 位、完整編號、>=8 位前綴、大小寫不分都可解析，前綴對到多筆視為查不到）；' +
       '(b) 是否有宿命論或保證式用語（你是／注定／一定會／絕對／保證／確定發生／大吉／大凶等）；' +
-      '(c) 是否把 experimental 系統（目前只有吠陀占星 Jyotish）當成「高共識」，或寫「高共識」但引用的已驗證系統少於 3 套。' +
+      '(c) 「高共識」是否有同一領域／時間窗至少3套正權重、非experimental系統的同向raw計算證據。共同關注不等於高共識；缺證據只表示無法確認。' +
       '回傳 { ok, paragraphCount, citedIds, unknownCitations, issues[] }；每個 issue 有 code、paragraph（從 0 起算）、values、detail、excerpt。' +
       '不檢查回答是否「算對」，只檢查引用與語氣。',
     input: {
@@ -23,7 +23,7 @@ export const answerCheckTools = [
     },
     async handler(args, { analyzer }) {
       const analysis = await analyzer.get(args.profileId, args.asOf);
-      const result = checkAnswer(args.answerText, { signalLookup: id => analysis.findSignal(id) });
+      const result = checkAnswer(args.answerText, { signalLookup: id => analysis.findSignal(id), directionalEvidence: () => analysis.directionalEvidence() });
       return ok({ asOf: analysis.asOf, data: result, caveats: caveatsFor(analysis) });
     },
   }),

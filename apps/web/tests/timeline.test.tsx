@@ -298,7 +298,7 @@ describe('consensus (Report v5)', () => {
 
   test('the live analyze() report is v5 and renders the block', () => {
     const report = analyze(INPUT);
-    expect(report.schemaVersion).toBe(5);
+    expect(report.schemaVersion).toBe(6);
     expect(selectConsensus(report)).not.toBeNull();
   });
 });

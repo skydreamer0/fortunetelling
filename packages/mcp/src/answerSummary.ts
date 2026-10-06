@@ -5,6 +5,7 @@
  */
 
 import type { Domain, DomainScore, ExperimentalSensitivity, QuestionAnswer, RankedWindow } from '@fortune/core';
+import { directionalVotes } from '@fortune/core';
 
 /** 領域的台灣繁中名稱（與網站時間軸用語一致）。 */
 export const DOMAIN_LABELS: Readonly<Record<Domain, string>> = Object.freeze({
@@ -36,7 +37,7 @@ const month = (r: RankedWindow) => r.window.start.slice(0, 7);
 export function domainLine(d: DomainScore): string {
   const label = DOMAIN_LABELS[d.domain] ?? d.domain;
   if (d.signalIds.length === 0) return `${label} 0：無訊號`;
-  return `${label} ${fmt1(d.score)}：活躍${fmt1(d.activity)}／支撐${fmt1(d.support)}／風險${fmt1(d.risk)}／共識${d.consensus}${d.conflict ? '／有矛盾' : ''}`;
+  return `${label} ${fmt1(d.score)}：活躍${fmt1(d.activity)}／支撐${fmt1(d.support)}／風險${fmt1(d.risk)}／共同關注${d.activityAgreement}／同向${d.consensus}${d.conflict ? '／有矛盾' : ''}`;
 }
 
 /**
@@ -59,7 +60,12 @@ export function oneLine(r: RankedWindow): string {
   const parts = [`${DOMAIN_LABELS[best!.domain] ?? best!.domain}最突出（${fmt1(best!.score)}）`];
   parts.push(`支撐訊號 ${r.supportSignals.length} 筆、風險訊號 ${r.riskSignals.length} 筆`);
   if (r.conflict) parts.push(`${r.conflict.map(c => DOMAIN_LABELS[c.domain] ?? c.domain).join('、')}有系統矛盾`);
-  if (r.highConsensus) parts.push('有高共識領域');
+  const directions = new Set(r.domainScores.flatMap(domain => {
+    const votes = directionalVotes(domain.directionalEvidence);
+    return (['positive', 'negative'] as const).filter(direction => (votes?.[direction].systems.length ?? 0) >= 3);
+  }));
+  if (directions.has('positive')) parts.push('有同向支持高共識領域');
+  if (directions.has('negative')) parts.push('有同向壓力高共識領域');
   return `${head}：${parts.join('；')}。`;
 }
 
@@ -70,6 +76,12 @@ function compactTop(r: RankedWindow, sh: Shorten) {
     score: r.score,
     band: r.band,
     highConsensus: r.highConsensus,
+    activityAgreement: r.activityAgreement,
+    agreements: r.domainScores.flatMap(domain => {
+      const votes = directionalVotes(domain.directionalEvidence);
+      return (['positive', 'negative'] as const).flatMap(direction => (votes?.[direction].systems.length ?? 0) >= 3
+        ? [{ domain: domain.domain, direction, systems: votes![direction].systems, signalIds: sh(votes![direction].signalIds) }] : []);
+    }),
     domains: r.domainScores.map(domainLine),
     signalIds: sh(pickSignalIds(r)),
     oneLine: oneLine(r),
@@ -82,6 +94,7 @@ export const RANKING_COLUMNS = ['month', 'score', 'band'] as const;
 export function compactAnswer(answer: QuestionAnswer, sh: Shorten = ids => [...ids]) {
   return {
     category: answer.category,
+    thresholds: answer.thresholds,
     range: answer.range,
     top: answer.top.map(r => compactTop(r, sh)),
     rankingColumns: RANKING_COLUMNS,

@@ -17,7 +17,7 @@ const ISSUE_LABELS: Record<AnswerIssueCode, string> = {
   unknown_citation: '引用的訊號編號查不到',
   honesty_violation: '宿命論或保證式用語',
   experimental_as_consensus: '把實驗性系統算進高共識',
-  high_consensus_unsupported: '「高共識」引用的已驗證系統不足 3 套',
+  high_consensus_unsupported: '「高共識」缺乏至少 3 套同向計算證據',
 };
 
 /** Pure result view (exported for tests). */
@@ -47,7 +47,7 @@ export function AnswerCheckView({ result }: { result: CheckAnswerResult }) {
       )}
       <p className="ask__method">
         這是程式比對，不判斷內容對錯：只檢查引用的 sig_ 編號（短編號 sig_ 加 8 位、完整編號都可以，前綴要唯一）是否存在於這份報告、有沒有宿命論或保證式用語，
-        以及「高共識」是否有至少 3 套已驗證系統支持（吠陀占星是實驗性系統，不計入）。
+        以及「高共識」是否有同一領域／時間窗至少 3 套正權重、非實驗性系統的同向證據；共同關注不等於高共識，缺證據只表示無法確認。
       </p>
     </div>
   );
@@ -67,7 +67,7 @@ export function AnswerCheck({ report }: { report: Report }) {
     setTimeout(() => {
       if (lookupRef.current?.report !== report) lookupRef.current = { report, lookup: reportSignalLookup(report) };
       try {
-        setResult(checkAnswer(text, { signalLookup: lookupRef.current.lookup }));
+        setResult(checkAnswer(text, { signalLookup: lookupRef.current.lookup, directionalEvidence: () => lookupRef.current!.lookup.directionalEvidence() }));
       } finally {
         setBusy(false);
       }

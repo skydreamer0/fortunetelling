@@ -9,7 +9,7 @@
  *   4. it claims 「高共識」 while its citations span fewer than 3 systems.
  * Returns every reason for every dropped section, so the UI / logs can show why.
  */
-import { HonestyGuard, EXPERIMENTAL_SYSTEMS, HIGH_CONSENSUS_MIN_SYSTEMS } from './core-pure';
+import { HonestyGuard, HIGH_CONSENSUS_MIN_SYSTEMS } from './core-pure';
 import { hasHighConsensusClaim, payloadSupportsHighConsensus } from './agreement';
 import type { InterpretationPayload } from './payload';
 import { resolveCitation } from './signalIds';

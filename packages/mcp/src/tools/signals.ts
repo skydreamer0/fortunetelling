@@ -2,6 +2,7 @@ import {
   DOMAINS,
   SYSTEM_IDS,
   buildConsensus,
+  directionalVotes,
   monthsInRange,
   restrictTimeline,
   restrictTimelineCell,
@@ -95,7 +96,10 @@ function slimCell(cell: TimelineCell, domain: string | undefined, detail: boolea
         score: d.score,
         band: d.band,
         consensus: d.consensus,
+        activityAgreement: d.activityAgreement,
         highConsensus: d.highConsensus,
+        agreementDirections: (['positive', 'negative'] as const).filter(direction => (directionalVotes(d.directionalEvidence)?.[direction].systems.length ?? 0) >= 3),
+        ...(detail ? { directionalEvidence: d.directionalEvidence } : {}),
         hasConflict: d.conflict !== null,
         ...(month && !detail
           ? {}
@@ -110,7 +114,7 @@ function slimCell(cell: TimelineCell, domain: string | undefined, detail: boolea
   };
 }
 
-export const MONTH_TABLE_COLUMNS = ['month', 'score', 'band', 'consensus', 'highConsensus', 'hasConflict', 'topSignalIds', 'topSignalIdsTotal'] as const;
+export const MONTH_TABLE_COLUMNS = ['month', 'score', 'band', 'consensus', 'highConsensus', 'hasConflict', 'topSignalIds', 'topSignalIdsTotal', 'activityAgreement', 'agreementDirections'] as const;
 const MONTH_TABLE_COLUMNS_TEXT = MONTH_TABLE_COLUMNS.join(', ');
 
 /** 單一領域的逐月表格：每月一列，欄位見 MONTH_TABLE_COLUMNS（topSignalIds 依 detail 截斷規則）。 */
@@ -121,14 +125,16 @@ function monthTable(cells: readonly TimelineCell[], domain: string, detail: bool
     rows: cells.map(cell => {
       const d = cell.domains.find(x => x.domain === domain)!;
       const ids = d.topSignals.map(s => s.id);
-      return [cell.window.start.slice(0, 7), d.score, d.band, d.consensus, d.highConsensus, d.conflict !== null, sh(previewIds(ids, detail)), ids.length] as const;
+      const votes = directionalVotes(d.directionalEvidence);
+      return [cell.window.start.slice(0, 7), d.score, d.band, d.consensus, d.highConsensus, d.conflict !== null, sh(previewIds(ids, detail)), ids.length,
+        d.activityAgreement, (['positive', 'negative'] as const).filter(direction => (votes?.[direction].systems.length ?? 0) >= 3)] as const;
     }),
   };
 }
 
 /** 預設年度表每個領域列顯示的訊號 id 數（detail: true 回完整巢狀 cell）。 */
 export const YEAR_TABLE_IDS = 3;
-export const YEAR_TABLE_COLUMNS = ['year', 'domain', 'score', 'band', 'consensus', 'highConsensus', 'hasConflict', 'systems', 'topSignalIds', 'topSignalIdsTotal'] as const;
+export const YEAR_TABLE_COLUMNS = ['year', 'domain', 'score', 'band', 'consensus', 'highConsensus', 'hasConflict', 'systems', 'topSignalIds', 'topSignalIdsTotal', 'activityAgreement', 'agreementDirections'] as const;
 const YEAR_TABLE_COLUMNS_TEXT = YEAR_TABLE_COLUMNS.join(', ');
 
 /** 年度精簡表：每年每領域一列；systems = 該領域有訊號的系統（分數與筆數在 detail: true 的 perSystem）；只列前 3 個短編號與總筆數。 */
@@ -151,6 +157,8 @@ function yearTable(cells: readonly TimelineCell[], domain: string | undefined, s
             Object.keys(d.perSystem).sort(),
             sh(ids.slice(0, YEAR_TABLE_IDS)),
             ids.length,
+            d.activityAgreement,
+            (['positive', 'negative'] as const).filter(direction => (directionalVotes(d.directionalEvidence)?.[direction].systems.length ?? 0) >= 3),
           ] as const;
         }),
     ),
@@ -174,6 +182,7 @@ const agreementOut = (a: ConsensusAgreement, detail: boolean | undefined, sh: Sh
   domain: a.domain,
   window: a.window,
   consensus: a.consensus,
+  direction: a.direction,
   score: a.score,
   systems: a.systems,
   signalIds: sh(previewIds(a.signalIds, detail)),
@@ -301,7 +310,8 @@ export const signalTools = [
         : { yearsFormat: 'table' as const, yearTable: yearTable(yearCells, args.domain, sh) };
       return ok({
         asOf: analysis.asOf,
-        data: { systems: tl.systems, skippedSystems: tl.skippedSystems, ...systemsFields(sel), ...yearsOut, ...monthsOut, monthsRange: args.months ?? null },
+        data: { systems: tl.systems, skippedSystems: tl.skippedSystems, thresholds: tl.thresholds,
+          agreementSemantics: 'nonexperimental-directional-v1', ...systemsFields(sel), ...yearsOut, ...monthsOut, monthsRange: args.months ?? null },
         caveats: caveatsFor(analysis, sel),
       });
     },
@@ -330,6 +340,8 @@ export const signalTools = [
         data: {
           systems: c.systems,
           consensusThreshold: c.consensusThreshold,
+          thresholds: c.thresholds,
+          agreementSemantics: c.semantics,
           highConsensusMinSystems: c.highConsensusMinSystems,
           ...systemsFields(sel),
           years,

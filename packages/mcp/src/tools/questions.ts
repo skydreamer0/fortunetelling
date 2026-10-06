@@ -42,6 +42,7 @@ function slimWindow(r: RankedWindow, detail: boolean, sh: Shorten) {
     score: r.score,
     band: r.band,
     consensus: r.consensus,
+    activityAgreement: r.activityAgreement,
     highConsensus: r.highConsensus,
     conflict: r.conflict,
     domainScores: r.domainScores.map(d => ({ ...d, signalIds: sh(previewIds(d.signalIds, detail)), signalIdsTotal: d.signalIds.length })),
@@ -65,6 +66,7 @@ function slimRanked(r: RankedWindow) {
 export function slimAnswer(answer: QuestionAnswer, detail = false, sh: Shorten = ids => [...ids]) {
   return {
     category: answer.category,
+    thresholds: answer.thresholds,
     range: answer.range,
     top: answer.top.map(r => slimWindow(r, detail, sh)),
     ranking: answer.ranking.slice(0, RANKING_LIMIT).map(slimRanked),
@@ -171,10 +173,14 @@ export const questionTools = [
       let sensitivity: ExperimentalSensitivity | null;
       try {
         // 不篩選時走原本的路徑（輸出與改動前相同）；篩選時由 core 只採計 systemsUsed 的訊號重算。
-        answer = answerQuestion({ category, range }, provider, sel.filtered ? { systems: sel.systemsUsed } : {});
+        const aggregate = { systemWeights: analysis.timeline.systemWeights,
+          consensusThreshold: analysis.timeline.thresholds.theta, conflictThreshold: analysis.timeline.thresholds.tau };
+        answer = answerQuestion({ category, range }, provider, { aggregate, ...(sel.filtered ? { systems: sel.systemsUsed } : {}) });
+        analysis.rememberQuestionEvidence(answer);
         // 敏感度：同一問題、同一範圍，(採計的系統 ∪ 可用的實驗性系統) 對 (採計的系統 − 實驗性系統)。
         sensitivity = experimentalSensitivity({ category, range }, provider, {
           systems: sel.systemsUsed,
+          aggregate,
           experimental: EXPERIMENTAL_SYSTEM_IDS.filter(s => analysis.timeline.systems.includes(s)),
         });
       } catch (e) {

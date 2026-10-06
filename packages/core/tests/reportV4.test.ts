@@ -241,7 +241,7 @@ test('決定論、誠實稽核零違規、大小與效能', SLOW, () => {
 
 test('Report v5：consensus = buildConsensus(timeline)，v4 欄位不變', SLOW, () => {
   const report = analyze({ year: 1995, month: 7, day: 16, hour: 22, minute: 0, gender: 'male', cityId: 'tainan' }, { asOf: '2026-09-25' });
-  assert.equal(report.schemaVersion, 5);
+  assert.equal(report.schemaVersion, 6);
   assert.deepEqual(report.consensus, buildConsensus(report.timeline));
   assert.deepEqual(report.consensus.systems, ['bazi', 'ziwei', 'numerology']);
   assert.equal(report.consensus.years.length, report.timeline.years.length);

@@ -34,19 +34,27 @@ const cellOf = (start: string, domain: Domain) =>
 // ─── Synthetic timeline: exact control over perSystem / conflict ────────────
 
 function domainCell(domain: Domain, partial: Partial<TimelineDomainCell> = {}): TimelineDomainCell {
-  return { domain, score: 0, band: '低', consensus: 0, highConsensus: false, conflict: null, perSystem: {}, topSignals: [], ...partial };
+  return { domain, score: 0, band: '低', consensus: 0, activityAgreement: 0, highConsensus: false, directionalEvidence: null, conflict: null, perSystem: {}, topSignals: [], ...partial };
 }
 function yearCell(year: number, cells: TimelineDomainCell[]): TimelineCell {
   return {
     window: { grain: 'year', start: `${year}-01-01`, end: `${year}-12-31` },
-    domains: DOMAINS.map((d) => cells.find((c) => c.domain === d) ?? domainCell(d)),
+    domains: DOMAINS.map((d) => {
+      const cell = cells.find((c) => c.domain === d) ?? domainCell(d);
+      return { ...cell, directionalEvidence: Object.keys(cell.perSystem).length ? {
+        policy: 'nonexperimental-directional-v1', domain: d,
+        window: { grain: 'year', start: `${year}-01-01`, end: `${year}-12-31` }, thresholds: { theta: 0.5, tau: 0.2 },
+        perSystem: Object.fromEntries(Object.entries(cell.perSystem).map(([system, value]) => [system, { ...value!, weight: 1 }])),
+      } : null };
+    }),
   };
 }
 const sys = (score: number, valence: number, ...signalIds: string[]) => ({ score, valence, signalIds });
 
 function syntheticTimeline(): Timeline {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    thresholds: { theta: 0.5, tau: 0.2 },
     asOf: '2026-01-01',
     systems: ['bazi', 'ziwei', 'numerology'],
     skippedSystems: [],
@@ -57,7 +65,7 @@ function syntheticTimeline(): Timeline {
       yearCell(2026, [
         // Two systems supportive, one under pressure → conflict with both sides kept.
         domainCell('career', {
-          score: 60, band: '中高', consensus: 3, highConsensus: true,
+          score: 60, band: '中高', consensus: 2, activityAgreement: 3, highConsensus: false,
           perSystem: { bazi: sys(0.6, 0.5, 'b1', 'b2'), ziwei: sys(0.7, 0.4, 'z1'), numerology: sys(0.5, -0.6, 'n1') },
           conflict: { positive: ['b1', 'z1'], negative: ['n1'] },
         }),
@@ -67,7 +75,7 @@ function syntheticTimeline(): Timeline {
       yearCell(2027, [
         domainCell('self', {
           score: 80, band: '高', consensus: 3, highConsensus: true,
-          perSystem: { bazi: sys(0.8, 0.3, 'b3'), ziwei: sys(0.9, 0.2, 'z3'), numerology: sys(0.7, 0.1, 'n3') },
+          perSystem: { bazi: sys(0.8, 0.3, 'b3'), ziwei: sys(0.9, 0.3, 'z3'), numerology: sys(0.7, 0.3, 'n3') },
         }),
         domainCell('career', {
           score: 60, band: '中高', consensus: 3, highConsensus: true,
@@ -101,21 +109,25 @@ describe('buildConsensus — synthetic', () => {
         negative: { systems: ['numerology'], signalIds: ['n1'] },
       },
     ]);
-    // A conflicted cell can also be high-consensus; both are reported.
-    expect(s.years[0].highConsensus.map((a) => a.domain)).toEqual(['career']);
+    // Two positive plus one negative is shared activity, not three same-direction votes.
+    expect(s.years[0].highConsensus.map((a) => a.domain)).toEqual([]);
     expect(s.headlines.conflicts).toEqual(s.years[0].conflicts);
   });
 
   test('agreements list systems ≥ θ and their signal ids; headline order is consensus, score, domain, year', () => {
     expect(s.years[1].highConsensus.map((a) => a.domain)).toEqual(['self', 'career']);
     expect(s.years[1].highConsensus[0]).toMatchObject({ systems: ['bazi', 'ziwei', 'numerology'], signalIds: ['b3', 'n3', 'z3'], consensus: 3, score: 80 });
-    expect(s.headlines.agreements.map((a) => `${a.window.start.slice(0, 4)}:${a.domain}`)).toEqual(['2027:self', '2026:career', '2027:career']);
-    expect(s.headlines.agreements[1].signalIds).toEqual(['b1', 'b2', 'n1', 'z1']);
+    expect(s.headlines.agreements.map((a) => `${a.window.start.slice(0, 4)}:${a.domain}`)).toEqual(['2027:self', '2027:career']);
+    expect(s.headlines.agreements[1].signalIds).toEqual(['b4', 'n4', 'z4']);
   });
 
   test('θ is honoured when listing agreeing systems', () => {
-    const strict = buildConsensus(syntheticTimeline(), { consensusThreshold: 0.65 });
-    expect(strict.years[0].highConsensus[0].systems).toEqual(['ziwei']);
+    expect(() => buildConsensus(syntheticTimeline(), { consensusThreshold: 0.65 })).toThrow(/threshold/);
+    const timeline = syntheticTimeline();
+    timeline.thresholds.theta = 0.65;
+    for (const cell of timeline.years) for (const domain of cell.domains) if (domain.directionalEvidence) domain.directionalEvidence.thresholds.theta = 0.65;
+    const strict = buildConsensus(timeline);
+    expect(strict.years[0].highConsensus).toEqual([]);
     expect(strict.consensusThreshold).toBe(0.65);
   });
 
@@ -176,12 +188,11 @@ describe('buildConsensus — 1995-07-16 22:00 male Tainan, asOf 2026-09-25 (asyn
         }
       }
     }
-    expect(flagged).toBeGreaterThan(0);
-    // M5-04: humanDesign now votes only through its transit rule, so it joins an agreement only in cells where
-    // transiting gates actually clear θ. 2026 self (HD score ≈ 0.36 < θ) is a 3-system agreement without it.
-    const self2026 = summary.years[0].highConsensus.find((a) => a.domain === 'self')!;
-    expect(self2026.systems).toEqual(['bazi', 'ziwei', 'jyotish']);
-    expect(self2026.consensus).toBe(cellOf('2026-01-01', 'self').consensus);
+    expect(flagged).toBe(0);
+    // The old 18 flags were activity agreements (5 yearly, 13 monthly), not eligible directional agreement.
+    expect(timeline.years.flatMap(cell => cell.domains).filter(domain => domain.activityAgreement >= 3)).toHaveLength(5);
+    expect(timeline.months.flatMap(cell => cell.domains).filter(domain => domain.activityAgreement >= 3)).toHaveLength(13);
+    expect(timeline.months.flatMap(cell => cell.domains).filter(domain => domain.highConsensus)).toHaveLength(0);
   });
 
   test('headline agreements are the strongest, sorted deterministically', () => {

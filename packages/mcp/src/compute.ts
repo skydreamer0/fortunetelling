@@ -10,6 +10,9 @@ import {
   buildTimelineAsync,
   canonicalStringify,
   createTimeContext,
+  evidenceMatchesContext,
+  type DirectionalEvidence,
+  type QuestionAnswer,
   type ConsensusSummary,
   type Signal,
   type TimeContext,
@@ -46,6 +49,9 @@ export type Analysis = {
   resolveSignal(input: string): SignalResolution;
   /** 輸出用：縮成短編號（sig_ + 8 位）；與「已知訊號」碰撞的保留完整編號，確保輸出內每個編號都能唯一解析。 */
   shortIds(ids: readonly string[]): string[];
+  /** Run-local evidence from this analysis, resolved month caches and Question Engine results. */
+  directionalEvidence(): DirectionalEvidence[];
+  rememberQuestionEvidence(answer: QuestionAnswer): void;
 };
 
 /**
@@ -118,6 +124,9 @@ export class Analyzer {
           includeMonths: true,
           topSignalsPerDomain: Infinity,
           systems,
+          systemWeights: timeline.systemWeights,
+          consensusThreshold: timeline.thresholds.theta,
+          conflictThreshold: timeline.thresholds.tau,
         }).months;
         cellsByYear.set(year, cells);
       }
@@ -156,6 +165,26 @@ export class Analyzer {
       return r.status === 'exact' || r.status === 'unique' ? r.signal : undefined;
     };
     const shortIds = (ids: readonly string[]) => index.shortIds(ids);
-    return { file, warnings, asOf, ctx, timeline, consensus: buildConsensus(timeline), signals, monthCells, monthSignals: trackedMonthSignals, findSignal, resolveSignal, shortIds };
+    // Scoped to this Analysis generation, never keyed globally by signalId.
+    const questionEvidence = new Map<string, DirectionalEvidence>();
+    const rememberQuestionEvidence = (answer: QuestionAnswer) => {
+      for (const item of answer.ranking) for (const domain of item.domainScores) {
+        if (evidenceMatchesContext(domain.directionalEvidence, {
+          domain: domain.domain, window: item.window, thresholds: answer.thresholds, signalIds: domain.signalIds,
+        })) questionEvidence.set(canonicalStringify(domain.directionalEvidence), structuredClone(domain.directionalEvidence));
+      }
+    };
+    const directionalEvidence = () => {
+      const out = new Map(questionEvidence);
+      for (const cell of [...timeline.years, ...timeline.months, ...[...cellsByYear.values()].flat()]) {
+        for (const domain of cell.domains) if (evidenceMatchesContext(domain.directionalEvidence, {
+          domain: domain.domain, window: cell.window, thresholds: timeline.thresholds,
+          systems: timeline.systems, systemWeights: timeline.systemWeights, perSystem: domain.perSystem,
+        })) out.set(canonicalStringify(domain.directionalEvidence), domain.directionalEvidence);
+      }
+      return [...out.values()];
+    };
+    return { file, warnings, asOf, ctx, timeline, consensus: buildConsensus(timeline), signals, monthCells,
+      monthSignals: trackedMonthSignals, findSignal, resolveSignal, shortIds, directionalEvidence, rememberQuestionEvidence };
   }
 }

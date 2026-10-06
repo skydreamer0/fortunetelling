@@ -97,4 +97,14 @@ describe('#44 all AI check paths use trusted same-direction evidence', () => {
     expect(validateSections([section], f.built).kept).toHaveLength(1);
     expect(checkPastedAnswer(f.built, `沒有高共識${f.signals.map(signal => `〔${signal.id}〕`).join('')}`).ok).toBe(true);
   });
+
+  test('one negated mention cannot hide another positive or double-negative claim', () => {
+    const f = fixture([1, -1, 0]);
+    for (const text of ['去年沒有高共識，今年形成高共識', '沒有高共識但現在有高共識', '不是沒有高共識', '並非沒有高共識', '這個高共識不存在爭議', '高共識不足以構成投資建議']) {
+      const citedText = text + f.signals.map(signal => `〔${signal.id}〕`).join('');
+      expect(checkAnswer(citedText, { signalLookup: f.lookup, directionalEvidence: [f.agg.directionalEvidence] } as any).issues.some(issue => issue.code === 'high_consensus_unsupported')).toBe(true);
+      expect(validateSections([{ ...f.section, text }], f.built).dropped.flatMap(item => item.reasons).some(reason => reason.code === 'high_consensus_unsupported')).toBe(true);
+      expect(checkPastedAnswer(f.built, citedText).paragraphs.flatMap(item => item.flags).some(flag => flag.code === 'high_consensus_unsupported')).toBe(true);
+    }
+  });
 });

@@ -15,7 +15,7 @@ import { hasHighConsensusClaim, payloadSupportsHighConsensus } from './agreement
 import { HonestyGuard } from './core-pure';
 import { resolveCitation } from './signalIds';
 import { buildInterpretationPayload, type BuiltPayload, type InterpretationPayload, type ReportLike } from './payload';
-import { AI_HONESTY_LAYER, EXPERIMENTAL_SYSTEMS, FATALISM_PATTERNS, HIGH_CONSENSUS_MIN_SYSTEMS, HIGH_CONSENSUS_TERM } from './validate';
+import { AI_HONESTY_LAYER, FATALISM_PATTERNS } from './validate';
 import { buildCorpus, findVocabTerms, isInCorpus, VOCAB } from './vocab';
 
 export type PasteFlagCode = 'unknown_citation' | 'unverified_term' | 'no_citation' | 'fatalism' | 'high_consensus_unsupported';

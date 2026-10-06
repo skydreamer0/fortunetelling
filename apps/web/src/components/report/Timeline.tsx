@@ -170,13 +170,13 @@ export function TimelineDetail({ cell }: { cell: TimelineCellView | null }) {
       </header>
 
       <div className="tl-detail__flags">
-        {cell.highConsensus && <span className="tl-badge tl-badge--consensus">高共識</span>}
+        {cell.highConsensus && <span className="tl-badge tl-badge--consensus">高共識・{cell.agreementDirections.map(direction => direction === 'positive' ? '同向支持' : '同向壓力').join('／')}</span>}
         {cell.coverage && (
           <span className="tl-coverage" title="有訊號的系統數／可提供訊號的系統數">{cell.coverage.label}</span>
         )}
         {!cell.empty && (
           <span className="tl-detail__consensus">
-            {cell.consensus} 個系統訊號達門檻・來源：{cell.systems.join('、') || '—'}
+            共同關注{cell.legacyAgreement ? '（舊版）' : ''} {cell.activityAgreement} 個系統・同向 {cell.consensus} 個・來源：{cell.systems.join('、') || '—'}
           </span>
         )}
       </div>
@@ -270,7 +270,7 @@ export function ConsensusBlock({ consensus, selected, onSelect }: ConsensusBlock
     <section className="timeline__block tl-cons" aria-labelledby="tl-cons-title">
       <h3 id="tl-cons-title" className="subhead">共識與分歧</h3>
       <p className="tl-cons__lede">
-        共識：同一年同一領域，有 {minSystems} 個以上系統的訊號強度達門檻。分歧：不同系統給出相反方向的訊號，兩邊都列出，不互相抵銷。
+        高共識：同一年同一領域，有 {minSystems} 個以上正權重、非實驗性系統達強度門檻且同向支持或同向壓力。共同關注僅表示活躍，不能當成高共識。相反方向與分歧都保留。
         本報告可比對的系統：{systems.join('、') || '—'}。
       </p>
       <div className="tl-cons__cols">
@@ -287,7 +287,7 @@ export function ConsensusBlock({ consensus, selected, onSelect }: ConsensusBlock
                       <span className="tl-cons__year">{item.yearLabel}</span>
                       <span aria-hidden="true">{item.icon}</span>{item.domainLabel}
                     </span>
-                    <span className="tl-cons__count">{item.consensus} 個系統</span>
+                    <span className="tl-cons__count">{item.consensus} 個系統・{item.direction === 'positive' ? '同向支持' : '同向壓力'}</span>
                     <SystemChips systems={item.systems} />
                   </button>
                 </li>
