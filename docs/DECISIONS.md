@@ -209,7 +209,7 @@ D-016 規定 iztro／lunar-javascript 只能出現在 `engines/`。V1-02 TimeCon
   舊 `longitude/latitude` 仍以 Asia/Taipei 民用時解讀；距 120°E 超過 15° 時標 warning——海外出生請改傳 `birthplace`／`cityId`。
 - 八字 `elements.limitation` 在真太陽時模式下不再宣稱「未做真太陽時校正」。
 - 命卦、靈數、Kin 不變（民用日期；命卦仍以民用時刻視為 UTC+8）。timeline 固定使用計算器預設（真太陽時、晚子），
-  不跟隨 `useTrueSolarTime`／`ziHourConvention`（已知限制，需 timeline 開放 calculator config 才能修正）。
+  不跟隨 `useTrueSolarTime`／`ziHourConvention`（當時的已知限制；2026-10-06 由 D-040 修正）。
 
 **隱私（D-029）：** `timeContext.profile` 不含姓名；保留出生地標籤供顯示。送 AI 的 payload 仍須移除 `input.name`
 與 `birthplace.label`。
@@ -289,3 +289,30 @@ Jyotish 與 Human Design 的 calculator 與 `rules.ts` 已存在，但尚未與�
 - **驗證後**：才正式納入 public API／registry，並明確 sync／async 行為邊界。
 - M1（MCP）不被此驗證阻塞。
 - **2026-10-05 落實（M5-03）**：人類圖（38 案、兩個公開產生器）達門檻，升級為已驗證：不再標 `experimental`，計入高共識的「三套已驗證」；仍因需要星曆而不進同步 `CALCULATORS`，改列 `EPHEMERIS_CALCULATORS`（含 `verified` 旗標）。吠陀占星未達門檻，維持 `experimental`。算法有「與公開來源一致」的證據，不等於預測有效性已驗證（D-033 分數未校準仍成立）。
+
+## D-040 主報告與時間軸共用有效時間選項（2026-10-06，#26 首包）
+
+**問題與證據：** `analyze()` 已正規化真太陽時與子時選項，但 `buildSyncTimeline` 沒有傳下去，
+`prepareSystems` 重新排盤只帶 `asOf/name`，非預設報告因此混用不同本命盤。
+PR #37 的 tests-only commit `ceebfca3853554afa4c49c1e741da78935d9d5cd` 由既有 Bun CI 重現：
+[run 37424848501](https://github.com/skydreamer0/fortunetelling/actions/runs/37424848501)，1196 pass／2 skip／20 fail。
+民用／真太陽時跨時辰與 23:00 民用早子案在訊號 ID 比對即失敗；明確預設值與原 golden 通過。
+
+**決定：**
+- `analyze → buildSyncTimeline → buildTimeline` 傳同一份已正規化 `AnalysisTimeOptions`。
+- `TimelineOptions` 開放 `useTrueSolarTime` 與 `ziHourConvention`（八字 `late/early`）；未提供仍為 `true/late`。
+- 八字使用 `late`（sect=2）／`early`（sect=1）；紫微必須經既有 `toZiweiZiConvention` 映射為
+  `splitMidnight`／`nextDayAt23`。這是各計算器既有輸入契約的映射，不表示兩套系統的命理語義完全相同。
+- 主報告的 `timeContext.conventions.timeline` 記有效 clock 與逐系統子時值，`followsOptions: true`。
+- 八字 timeline 仍讀 typed `chart`，不把保留民用時相容用途的 legacy `components` 當唯一真值。
+- 同步 `analyze` 的星曆排除契約不變；直接同步／非同步 timeline 在相同指定系統與選項下應一致。
+
+**版本與封存：** core `0.5.0 → 0.5.1`，Report schema 仍為 5，calculator／catalog 版本不變（算法未改）。
+舊 `reportGolden.json`、舊匯出 golden 與已封存預測不重寫；新結果以精確版本差異逐項驗證。
+`LOCKED FORECAST V1 2026-10-03` 的既有年分、命中與內容不得因本次重算而改寫。
+非預設 early+civil fixture 的 timeline／signals／consensus 差異須以 CI 實際結果記錄，不以全量重錄掩蓋。
+
+**首包邊界：** 本包只處理主報告時間軸及直接 timeline API 的選項傳遞，不完成 CalculationSpec／ChartSnapshot。
+Web Ask AI 月訊號重算（`apps/web/src/model/askAi.ts`）、Backtest 等仍需在 #26 後續傳入有效選項／共用快照；
+MCP、匯出和 profile 契約也未因此新增時間選項輸入。不得宣稱所有入口已一致。
+不新增流派、UI 或權重；#26、#20、#24 均不可因這個切片整單結案。

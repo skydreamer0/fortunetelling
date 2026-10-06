@@ -46,7 +46,7 @@ import type { ZiweiZiHourConvention } from '../calculators/ziwei/types';
 import type { AnalysisTimeOptions, BirthplaceSource } from './analyzeInput';
 
 /** Public library version (semver). Bump on any observable API change. */
-export const VERSION = '0.5.0';
+export const VERSION = '0.5.1';
 
 /**
  * Version of the `Report` shape itself, independent of code version.
@@ -240,7 +240,7 @@ export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf
   report.evolution.pending = false;
 
   // ── v4：時間脈絡、時間軸、訊號——先於誠實稽核填入，讓訊號文字受檢 ──
-  const timeline = buildSyncTimeline(ctx, asOfStr, birth.name);
+  const timeline = buildSyncTimeline(ctx, asOfStr, birth.name, options);
   report.timeContext = buildReportTimeContext(ctx, options, birthplaceSource);
   report.timeline = timeline;
   report.signals = collectSignals(timeline);
@@ -262,9 +262,10 @@ export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf
  * reason 'time_unknown' (no birth time) or 'ephemeris_not_initialised'; use
  * `buildTimelineAsync(ctx, { asOf })` for the full timeline.
  */
-function buildSyncTimeline(ctx: TimeContext, asOf: string, name: string): Timeline {
+function buildSyncTimeline(ctx: TimeContext, asOf: string, name: string, options: AnalysisTimeOptions): Timeline {
   const timeline = buildTimeline(ctx, {
     asOf,
+    ...options,
     systems: TIMELINE_SYSTEMS.filter(s => !EPHEMERIS_SYSTEMS.includes(s)),
     ...(name ? { name } : {}),
   });
@@ -313,10 +314,10 @@ function buildReportTimeContext(ctx: TimeContext, options: AnalysisTimeOptions, 
       dreamspell: 'civil-local-date',
       minggua: 'civil-local-time-read-as-utc+8',
       timeline: {
-        clock: 'trueSolar',
-        baziZiHourConvention: 'late',
-        ziweiZiHourConvention: 'splitMidnight',
-        followsOptions: false,
+        clock,
+        baziZiHourConvention: options.ziHourConvention,
+        ziweiZiHourConvention: toZiweiZiConvention(options.ziHourConvention),
+        followsOptions: true,
         skippedInSyncAnalyze: [...EPHEMERIS_SYSTEMS],
       },
     },

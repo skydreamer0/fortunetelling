@@ -13,6 +13,7 @@ import { evaluateBaziTenGodRules } from '../src/rules/bazi/evaluateTenGods';
 import { evaluateZiweiRules } from '../src/rules/ziwei/evaluate';
 import { buildTimeline, buildTimelineAsync, dominantPeriod, type TimelineCell } from '../src/timeline/buildTimeline';
 import type { Signal } from '../src/signals/types';
+import { aggregateSignals } from '../src/signals/aggregate';
 
 const AS_OF = '2026-07-11';
 const SYSTEMS = ['bazi', 'ziwei', 'numerology'] as const;
@@ -22,9 +23,19 @@ const CROSSING: AnalyzeInput = { year: 2026, month: 2, day: 15, hour: 13, minute
 const MIDNIGHT: AnalyzeInput = { year: 1990, month: 6, day: 15, hour: 23, minute: 0, gender: 'female' };
 
 function assertSignalIds(cell: TimelineCell, system: 'bazi' | 'ziwei', expected: Signal[]) {
+  const aggregates = aggregateSignals([...expected].sort((a, b) => a.id.localeCompare(b.id)));
+  const round4 = (n: number) => Math.round(n * 10_000) / 10_000;
   for (const domain of cell.domains) {
     const ids = [...new Set(expected.filter(s => s.domain === domain.domain).map(s => s.id))].sort();
     expect([...(domain.perSystem[system]?.signalIds ?? [])].sort()).toEqual(ids);
+    const aggregate = aggregates.find(a => a.domain === domain.domain)?.perSystem[system];
+    if (aggregate) {
+      expect(domain.perSystem[system]?.score).toBe(round4(aggregate.score));
+      expect(domain.perSystem[system]?.valence).toBe(round4(aggregate.valence));
+    }
+    for (const signal of domain.topSignals.filter(s => s.system === system)) {
+      expect(signal).toEqual(expected.find(s => s.id === signal.id));
+    }
   }
 }
 

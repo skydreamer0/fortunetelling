@@ -44,6 +44,7 @@ import { aggregateSignals, type SignalConflict, type SystemAggregate } from '../
 import { DEFAULT_BAND_CUTS, toBand, type Band, type BandCuts } from '../signals/bands';
 import { DOMAINS, SYSTEM_IDS, type Domain, type Signal, type SignalWindow, type SystemId } from '../signals/types';
 import type { TimeContext } from '../time/types';
+import { toZiweiZiConvention, type AnalysisTimeOptions } from '../core/analyzeInput';
 import { civilDateOf, evaluateNumerologyRules } from './numerologyRules';
 
 export const TIMELINE_SCHEMA_VERSION = 1 as const;
@@ -67,7 +68,13 @@ export interface SkippedSystem {
   reason: TimelineSkipReason;
 }
 
-export interface TimelineOptions {
+export interface TimelineOptions extends Partial<AnalysisTimeOptions> {
+  /** Natal day/hour clock for bazi and ziwei; default true, same as analyze(). */
+  useTrueSolarTime?: boolean;
+  /** Bazi naming: late (default, sect=2) / early (sect=1).
+   * Explicitly mapped to ziwei splitMidnight / nextDayAt23; not passed through as an alias.
+   */
+  ziHourConvention?: AnalysisTimeOptions['ziHourConvention'];
   /** 'YYYY-MM-DD' (required, D-014). The first year cell is asOf's calendar year unless `fromYear` is set. */
   asOf: string;
   /** Number of year cells, default 5. */
@@ -220,10 +227,11 @@ interface Prepared {
   skipped: SkippedSystem[];
 }
 
-function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: string, firstYear: number, years: number, name?: string): Prepared {
+function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: string, firstYear: number, years: number, opts: TimelineOptions): Prepared {
   const evaluators: Partial<Record<SystemId, WindowEvaluator>> = {};
   const skipped: SkippedSystem[] = [];
   const timeKnown = ctx.jd !== null && ctx.utc !== null;
+  const { name, useTrueSolarTime = true, ziHourConvention = 'late' } = opts;
   const calcConfig = name === undefined ? { asOf } : { asOf, name };
   const asOfYear = Number(asOf.slice(0, 4));
 
@@ -231,7 +239,7 @@ function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: st
     if (!systems.includes(system)) continue;
     switch (system) {
       case 'bazi': {
-        const res = baziCalculator.calculate(ctx, calcConfig);
+        const res = baziCalculator.calculate(ctx, { ...calcConfig, useTrueSolarTime, ziHourConvention });
         if (!timeKnown || !res.chart.pillars) {
           skipped.push({ system, reason: 'time_unknown' });
           break;
@@ -259,7 +267,9 @@ function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: st
         break;
       }
       case 'ziwei': {
-        const res = ziweiCalculator.calculate(ctx, calcConfig);
+        const res = ziweiCalculator.calculate(ctx, {
+          ...calcConfig, useTrueSolarTime, ziHourConvention: toZiweiZiConvention(ziHourConvention),
+        });
         const time = res.chart.time;
         if (!timeKnown || !time) {
           skipped.push({ system, reason: 'time_unknown' });
@@ -402,6 +412,12 @@ function validateAsOf(asOf: unknown): string {
  */
 export function buildTimeline(ctx: TimeContext, opts: TimelineOptions): Timeline {
   const asOf = validateAsOf(opts?.asOf);
+  if (opts.useTrueSolarTime !== undefined && typeof opts.useTrueSolarTime !== 'boolean') {
+    throw new Error('buildTimeline: useTrueSolarTime must be a boolean');
+  }
+  if (opts.ziHourConvention !== undefined && opts.ziHourConvention !== 'late' && opts.ziHourConvention !== 'early') {
+    throw new Error("buildTimeline: ziHourConvention must be 'late' or 'early'");
+  }
   const years = opts.years ?? DEFAULT_TIMELINE_YEARS;
   if (!Number.isInteger(years) || years < 1 || years > 50) {
     throw new Error(`buildTimeline: years must be an integer in 1..50, got ${years}`);
@@ -424,7 +440,7 @@ export function buildTimeline(ctx: TimeContext, opts: TimelineOptions): Timeline
   if (topN !== undefined && !(topN === Infinity || (Number.isInteger(topN) && topN >= 0))) {
     throw new Error(`buildTimeline: topSignalsPerDomain must be an integer ≥ 0 or Infinity, got ${topN}`);
   }
-  const { evaluators, skipped } = prepareSystems(ctx, requested, asOf, firstYear, years, opts.name);
+  const { evaluators, skipped } = prepareSystems(ctx, requested, asOf, firstYear, years, opts);
   const weightOf = (s: SystemId) => opts.systemWeights?.[s] ?? 1;
   const systems = SYSTEM_IDS.filter((s) => evaluators[s] !== undefined);
   const systemWeights: Partial<Record<SystemId, number>> = {};
