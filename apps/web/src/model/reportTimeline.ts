@@ -39,13 +39,20 @@ export function reportTimelineOptions(report: Report): ReportTimelineOptions | n
 
   const systems = report.timeline.systems;
   if (!Array.isArray(systems) || systems.some(system => !TIMELINE_SYSTEMS.includes(system))) return null;
+  const weights = record(report.timeline.systemWeights);
+  if (!weights) return null;
+  const systemWeights: NonNullable<TimelineOptions['systemWeights']> = {};
+  for (const system of systems) {
+    const weight = weights[system];
+    if (typeof weight !== 'number' || !Number.isFinite(weight) || weight < 0) return null;
+    systemWeights[system] = weight;
+  }
   // Copy the report-specific scope before any lazy calculations or caches are created.
   // An empty recorded set is meaningful; never widen it to the global defaults.
   return {
     useTrueSolarTime: clock === 'trueSolar',
     ziHourConvention: baziZiHourConvention,
     systems: [...systems],
-    systemWeights: { ...report.timeline.systemWeights },
+    systemWeights,
   };
 }
-

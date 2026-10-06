@@ -167,6 +167,9 @@ describe('report replay metadata and source-system boundaries', () => {
       { ...report, timeline: null },
       { ...report, timeline: { ...report.timeline!, systems: undefined } },
       { ...report, timeline: { ...report.timeline!, systems: ['futureSystem'] } },
+      { ...report, timeline: { ...report.timeline!, systemWeights: undefined } },
+      { ...report, timeline: { ...report.timeline!, systemWeights: {} } },
+      { ...report, timeline: { ...report.timeline!, systemWeights: { ...report.timeline!.systemWeights, bazi: NaN } } },
     ] as Report[]) {
       expect(reportTimelineOptions(variant)).toBeNull();
       expect(monthSignalProvider(variant)).toBeNull();
