@@ -15,6 +15,35 @@ beforeAll(async () => {
   fx = await makeFixture();
   outside = await mkdtemp(join(tmpdir(), 'fortune-import-'));
 });
+
+describe('import_profile preserves fresh analysis after same-fingerprint overwrite', () => {
+  test('ALICE → BOB updates warmed get_chart numerology and matches a fresh Analyzer, with names still redacted', async () => {
+    const local = await makeFixture({ sky: { ...SAMPLE_PROFILE, name: 'ALICE' } });
+    try {
+      const args = { profileId: 'sky', system: 'numerology', asOf: '2026-09-30', detail: 'full' };
+      const before = await local.call('get_chart', args);
+      expect(before.isError).toBe(false);
+      const replacement = createProfileFile('sky', { ...SAMPLE_PROFILE, name: 'BOB' });
+      const oldFingerprint = (await local.store.get('sky')).file.chartFingerprint;
+      expect(replacement.chartFingerprint).toBe(oldFingerprint);
+      const imported = await local.call('import_profile', { content: serializeProfileFile(replacement), overwrite: true });
+      expect(imported.isError).toBe(false);
+      // Keep the Profile v1/cf1 meaning: a name change does not alter that fingerprint.
+      expect(imported.json.data).toMatchObject({ overwritten: true, chartChanged: false, chartFingerprint: oldFingerprint });
+      const after = await local.call('get_chart', args);
+      const { Analyzer } = await import('../src/compute');
+      const { callTool } = await import('../src/tools/index');
+      const fresh = await callTool('get_chart', args, { store: local.store, analyzer: new Analyzer(local.store) });
+      expect(after.isError).toBe(false);
+      expect(fresh.isError).toBe(false);
+      expect(after.text).toBe(fresh.text);
+      expect(after.json.data.chart).not.toEqual(before.json.data.chart);
+      expect(after.text).not.toContain('ALICE');
+      expect(after.text).not.toContain('BOB');
+    } finally { await local.cleanup(); }
+  }, 60_000);
+});
+
 afterAll(async () => {
   await fx.cleanup();
   await rm(outside, { recursive: true, force: true });

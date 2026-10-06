@@ -419,3 +419,42 @@ LOCKED FORECAST V1 與既有快照都不改寫。新增 literal delta 只把 11 
 **尚未交付：** natal snapshot 共用、snapshotId、真正的 cache migration／cross-run reuse、
 舊報告 parser／回填、MCP／匯出／profile 全入口統一、async 星曆設定及完整曆法邊界矩陣。
 本切片不關閉 #26，不宣稱提高命理預測準確率。
+
+
+## D-043 MCP Analyzer 以完整載入來源識別熱快取（#26 後續有界切片）
+
+**問題：** ProfileStore 每次讀檔並驗證，但 Analyzer 原本只以
+`profileId | chartFingerprint | asOf` 作快取 key。Profile v1 的 cf1 刻意排除姓名／地名標籤，
+且座標四捨五入到四位小數；因此同 ID 的檔案改姓名、標籤或細微座標後，舊 Analysis 仍可能命中。
+解析器修復／補上 cf1 的 warnings 也不是舊 key 的一部分。
+
+**決定：**
+- 每個 profileId/asOf 保留一個目前的 cache entry，包含完整 canonical
+  `{ file, warnings, asOf }` 與 pending Promise。file 是 ProfileStore 驗證後的完整 ProfileFileV1，
+  包括精確 profile 欄位、姓名、地名標籤、format/schemaVersion/profileId/chartFingerprint。
+- 使用完整 canonical 字串比較，不以 cf1、四捨五入、內容摘要或 core cs1 代替。
+  JSON 物件 key 排序與無關空白不影響重用；目前有效來源任何欄位／warning 改變就換 entry。
+- 每次 get 都先讀檔驗證，不能因暖快取而隱藏檔案損壞、缺漏或 profileId 不符。
+- 同來源同 asOf 的並行呼叫共用 pending，完成後也重用同一 Analysis；不同 ID／期間隔離。
+  失敗只在 entry 仍是目前 slot 擁有者時清除。不能只比對 identity：
+  A → B → A 之後，第一個 A 的延後失敗也不得刪掉第二個 A。
+
+**界線：** 這是單一 Analyzer 實例、單一執行程序內的來源失效修正，不是 ChartSnapshot、
+跨程序快取、舊報告重播或 async/sync 通用 CalculationSpec。
+本程序的計算器／規則版本固定，沒有新持久 cache 格式。
+Profile v1、cf1、core `analyze-sync-natal-intent` cs1、Report v5、既有 calculators、
+report/export golden 與 LOCKED FORECAST V1 都不改。import_profile 的 chartChanged 仍按既有 cf1 語義；
+姓名改動可以 chartChanged=false，但後續 Analysis 必須讀到新姓名。
+
+**驗證計畫與目前狀態：** 新增 11 項合成資料回歸：
+真 ProfileStore 檔案暖 cache 後覆寫姓名／label、分別微調緯度與經度、stale/missing cf1 警告與修復，
+JSON key 重排／空白、ID/asOf 隔離、壞檔拒絕、pending 共用、失敗重試、A → B → A ownership，
+以及真 import_profile → get_chart 以 ALICE 改 BOB 並與 fresh Analyzer 比對、姓名保持遮蔽。
+資料新鮮度測試使用真計算器；只有故障時序測試攔截該實例的 compute，store 觀察器仍委派真讀檔。
+先紅證據：[CI 37473204662](https://github.com/skydreamer0/fortunetelling/actions/runs/37473204662)，
+tests-only head `c0676d2d4e8e69c3c9a141d1dac6f589e19bc90a`，
+1254 pass／2 skip／6 fail。六項失敗正是姓名改動後 get_chart 未更新、
+姓名／精確座標／label／warnings 仍沿用舊 Analysis，以及 A → B → A 被同一舊 pending 吃掉。
+其餘五項保護回歸與既有測試通過。工作區沒有 Bun，修正候選仍須既有 frozen-lock CI 完整驗證，
+不以非作者靜態檢查代替測試結果。
+#26 維持部分交付，不關閉整單。

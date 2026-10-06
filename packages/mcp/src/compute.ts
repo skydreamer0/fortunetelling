@@ -1,6 +1,6 @@
 /**
  * The only place the server calls core to compute. Everything is derived from one
- * `(profile file, asOf)` pair and cached by `(profileId, chartFingerprint, asOf)`; tools read
+ * `(profile file, asOf)` pair and cached by the complete validated loaded source; tools read
  * from {@link Analysis} and never recompute (ROADMAP principle 6: MCP only wraps core).
  */
 
@@ -8,6 +8,7 @@ import {
   buildConsensus,
   buildTimeline,
   buildTimelineAsync,
+  canonicalStringify,
   createTimeContext,
   type ConsensusSummary,
   type Signal,
@@ -67,20 +68,32 @@ export function assertAsOf(asOf: unknown): asserts asOf is string {
 }
 
 export class Analyzer {
-  private cache = new Map<string, Promise<Analysis>>();
+  // One current generation per profile/asOf. cf1 is a portable chart fingerprint,
+  // not complete calculation/source identity: it excludes name/label and rounds
+  // coordinates. This private, in-process cache is not a cs1 or snapshot contract.
+  private cache = new Map<string, { identity: string; pending: Promise<Analysis> }>();
 
   constructor(private store: ProfileStore) {}
 
   async get(profileId: string, asOf: string): Promise<Analysis> {
     assertAsOf(asOf);
     const { file, warnings } = await this.store.get(profileId);
-    const key = `${file.profileId}|${file.chartFingerprint}|${asOf}`;
-    let pending = this.cache.get(key);
-    if (!pending) {
-      pending = this.compute(file, warnings, asOf);
-      this.cache.set(key, pending);
-      pending.catch(() => this.cache.delete(key));
-    }
+    const key = canonicalStringify({ profileId: file.profileId, asOf });
+    // Include exact profile values, all validated file metadata and the parser's
+    // current warnings. Store validation remains before every cache lookup.
+    // Use full canonical bytes, not a lossy fingerprint or collision-prone hash.
+    const identity = canonicalStringify({ file, warnings, asOf });
+    const cached = this.cache.get(key);
+    if (cached?.identity === identity) return cached.pending;
+
+    const pending = this.compute(file, warnings, asOf);
+    const entry = { identity, pending };
+    this.cache.set(key, entry);
+    pending.catch(() => {
+      // An older generation can reject after a newer source replaced its slot,
+      // including A → B → A. Only the owning entry may evict itself.
+      if (this.cache.get(key) === entry) this.cache.delete(key);
+    });
     return pending;
   }
 
