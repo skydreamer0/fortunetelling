@@ -17,7 +17,10 @@ import {
   type ProfileFileV1,
 } from '@fortune/core';
 import { ToolError } from './errors';
+import { SignalIndex, type SignalResolution } from './signalIndex';
 import type { ProfileStore } from './store';
+
+export type { SignalResolution } from './signalIndex';
 
 export type Analysis = {
   file: ProfileFileV1;
@@ -33,8 +36,15 @@ export type Analysis = {
   monthCells(year: number): TimelineCell[];
   /** Month signals of one calendar year ('YYYY-MM' → signals), one `buildTimeline` per year, cached. */
   monthSignals(year: number): Map<string, Signal[]>;
-  /** Any signal this analysis (or a question answer) can cite; looks through the resolvable years. */
+  /** Any signal this analysis (or a question answer) can cite; accepts a full id or a >= 8-hex prefix. Undefined when none / ambiguous. */
   findSignal(id: string): Signal | undefined;
+  /**
+   * 完整編號或前綴解析。先查已知訊號（timeline + 已建過的年份）；命中（exact／唯一）就停，
+   * 找不到或有歧義才由 asOf 年向外逐年擴大（每年只建一次 timeline，結果快取）。
+   */
+  resolveSignal(input: string): SignalResolution;
+  /** 輸出用：縮成短編號（sig_ + 8 位）；與「已知訊號」碰撞的保留完整編號，確保輸出內每個編號都能唯一解析。 */
+  shortIds(ids: readonly string[]): string[];
 };
 
 /**
@@ -114,18 +124,25 @@ export class Analyzer {
       }
       return months;
     };
-    const timelineIndex = new Map(signals.map(signal => [signal.id, signal]));
-    const findSignal = (id: string): Signal | undefined => {
-      const direct = timelineIndex.get(id);
-      if (direct) return direct;
-      for (let year = min; year <= max; year++) {
-        for (const list of monthSignals(year).values()) {
-          const hit = list.find(signal => signal.id === id);
-          if (hit) return hit;
-        }
-      }
-      return undefined;
+    // 已知訊號宇宙（見 signalIndex.ts）：timeline 全部訊號 + 每個已建過的年份的月訊號。
+    const index = new SignalIndex(
+      signals,
+      { min, max, center: asOfYear },
+      year => [...monthSignals(year).values()].flat(),
+    );
+    // 任何人取過某年的 monthSignals（例如 answer_question 的月訊號提供者），該年就併入宇宙，
+    // 這樣輸出過的月份編號一定在碰撞檢查的範圍內。
+    const trackedMonthSignals = (year: number) => {
+      const months = monthSignals(year);
+      index.absorbYear(year);
+      return months;
     };
-    return { file, warnings, asOf, ctx, timeline, consensus: buildConsensus(timeline), signals, monthCells, monthSignals, findSignal };
+    const resolveSignal = (input: string): SignalResolution => index.resolve(input);
+    const findSignal = (id: string): Signal | undefined => {
+      const r = index.resolve(id);
+      return r.status === 'exact' || r.status === 'unique' ? r.signal : undefined;
+    };
+    const shortIds = (ids: readonly string[]) => index.shortIds(ids);
+    return { file, warnings, asOf, ctx, timeline, consensus: buildConsensus(timeline), signals, monthCells, monthSignals: trackedMonthSignals, findSignal, resolveSignal, shortIds };
   }
 }

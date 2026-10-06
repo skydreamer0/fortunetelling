@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { EXPERIMENTAL_SYSTEMS, humanDesignCalculator, initEphemeris, jyotishCalculator, runCalculators, type Component } from '@fortune/core';
 import type { Analysis } from '../compute';
+import { conventionsFor } from '../conventions';
 import { caveatsFor, ok, type Caveat } from '../envelope';
 import { defineTool } from './types';
 
@@ -69,7 +70,7 @@ export const chartTools = [
     description:
       'Natal chart of one system for a profile, computed by core (never recomputed here). detail="full" returns the complete chart, components and warnings. ' +
       'detail="summary" (default) returns only chart fields whose JSON is short (<=240 chars; the rest are listed in omittedChartFields), ' +
-      'components as {id, value} with value truncated to 80 chars, and warnings. The name is never included. ' +
+      'components as {id, value} with value truncated to 80 chars, and warnings. The name is never included. Always has conventions { items, source, notRecorded }: the conventions this chart used (e.g. 八字 子時換日／真太陽時, 紫微 年分界／閏月, 吠陀 歲差／交點／整宮制／Vimshottari 年長, 人類圖 交點／星曆), read from the chart or core source; unknown items say 未明確記錄. ' +
       'If the system needs a birth time and it is unknown, returns available:false with a reason instead of guessing. ' +
       'jyotish is experimental (caveat experimental:<system>); humanDesign passed cross-validation (M5-03) and has no such caveat. Both need the ephemeris (async).',
     input: {
@@ -105,7 +106,7 @@ export const chartTools = [
       return ok({
         asOf: args.asOf,
         caveats,
-        data: { system, available: true, detail, version: res.version, ...redact(body, name) },
+        data: { system, available: true, detail, version: res.version, conventions: conventionsFor(system, res.chart, analysis.ctx), ...redact(body, name) },
       });
     },
   }),

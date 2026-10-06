@@ -20,6 +20,9 @@ export const DOMAIN_LABELS: Readonly<Record<Domain, string>> = Object.freeze({
   health: '身心',
 });
 
+/** 輸出用短編號轉換（見 Analysis.shortIds）；預設不縮短。 */
+export type Shorten = (ids: readonly string[]) => string[];
+
 /** 精簡版每名最多引用的訊號 id 數。 */
 export const COMPACT_SIGNAL_IDS = 3;
 
@@ -60,7 +63,7 @@ export function oneLine(r: RankedWindow): string {
   return `${head}：${parts.join('；')}。`;
 }
 
-function compactTop(r: RankedWindow) {
+function compactTop(r: RankedWindow, sh: Shorten) {
   return {
     rank: r.rank,
     month: month(r),
@@ -68,7 +71,7 @@ function compactTop(r: RankedWindow) {
     band: r.band,
     highConsensus: r.highConsensus,
     domains: r.domainScores.map(domainLine),
-    signalIds: pickSignalIds(r),
+    signalIds: sh(pickSignalIds(r)),
     oneLine: oneLine(r),
   };
 }
@@ -76,11 +79,11 @@ function compactTop(r: RankedWindow) {
 export const RANKING_COLUMNS = ['month', 'score', 'band'] as const;
 
 /** 預設精簡版：前 3 名（各含一行理由）與 [月份, 分數, band] 排名表。 */
-export function compactAnswer(answer: QuestionAnswer) {
+export function compactAnswer(answer: QuestionAnswer, sh: Shorten = ids => [...ids]) {
   return {
     category: answer.category,
     range: answer.range,
-    top: answer.top.map(compactTop),
+    top: answer.top.map(r => compactTop(r, sh)),
     rankingColumns: RANKING_COLUMNS,
     ranking: answer.ranking.map(r => [month(r), r.score, r.band] as const),
     catalogVersion: answer.catalogVersion,

@@ -50,14 +50,15 @@ bun run --filter @fortune/mcp add-profile sky \
 |---|---|
 | `list_profiles` | 列出可用 profile（只有 id 與指紋，不含姓名、生日） |
 | `get_profile` | 性別、時間精度、時區；姓名與出生資料要加 `includeName`／`includeBirthData` 才會回 |
-| `get_chart` | 單一系統命盤（`summary`／`full`） |
+| `get_chart` | 單一系統命盤（`summary`／`full`）；每次都附 `conventions`（這張盤採用的口徑，見下方「排盤口徑 `conventions`」） |
 | `get_time_context` | 真太陽時、節氣、農曆，以及邊界與夏令時間等 flags |
-| `list_signals` / `get_signal` | 規則訊號（可篩選、分頁）與單筆完整證據 |
-| `get_timeline` | 逐年各領域分數；加 `months: {start,end}`（`YYYY-MM`，最多 36 個月）才回逐月；指定 `domain` 時逐月為每月一列的 `monthTable`。可帶 `systems`／`verifiedOnly` |
+| `list_signals` / `get_signal` | 規則訊號（可篩選、分頁）與單筆完整證據。`get_signal` 的 `signalId` 接受短編號、完整編號或 ≥ 8 位前綴（見下方「短訊號編號」）；回 `signal`（`id` 為完整編號）與 `shortId` |
+| `get_timeline` | 逐年各領域分數，預設為精簡年度表 `yearTable`（每年每領域一列，只列前 3 個短編號與總筆數，約 6.7 KB；`detail: true` 回完整年度 cell）；加 `months: {start,end}`（`YYYY-MM`，最多 36 個月）才回逐月；指定 `domain` 時逐月為每月一列的 `monthTable`。可帶 `systems`／`verifiedOnly` |
 | `get_consensus` / `list_conflicts` | 跨系統共識與矛盾；`get_consensus` 可帶 `systems`／`verifiedOnly`（`list_conflicts` 不篩選） |
 | `answer_question` / `list_question_categories` | 問事（例如「哪幾個月適合買車」）月份排名；先用 `list_question_categories` 取得 category id，或直接帶 `question` 讓固定關鍵字表決定類別（比對不到或並列會回 `invalid_args` 與 `availableCategories`，不猜）。預設精簡回傳前 3 名＋排名表，附 `experimentalSensitivity`；可帶 `systems`／`verifiedOnly` |
 | `compare_profiles` | 雙人合盤（姓名與出生資料不會出現在結果中） |
 | `check_answer` | 貼回一段 AI 回答（`profileId`、`asOf`、`answerText`），檢查引用的 `sig_` id 是否存在、有無宿命論或保證式用語、有沒有把 experimental 系統（目前只有 Jyotish）當成「高共識」。只標示、不改寫；回 `{ ok, citedIds, unknownCitations, issues[] }` |
+| `batch` | 把最多 8 個唯讀查詢合成一次往返（`calls: [{ tool, args }]`），依序在行程內執行、共用分析快取；每個結果各自成功或帶結構化錯誤，不可巢狀、不可放 `import_profile` |
 | `import_profile` | 匯入網站匯出的 `.fortune.json`（`content` 全文或 `path` 路徑二選一）。已存在同名 profile 不會覆蓋，要 `overwrite: true`；指紋缺漏或過期會重算並警告 |
 
 成功回應的外殼是 `{ asOf, versionsHash, caveats, data }`，`versions` 為選用欄位；錯誤回應是 `{ error }`（[實作](../packages/mcp/src/envelope.ts)）：
@@ -67,9 +68,28 @@ bun run --filter @fortune/mcp add-profile sky \
 - `caveats`：Claude 不該過度相信的地方——分數未校準、時間邊界、未參與的系統，以及仍標 `experimental` 的 Jyotish。[人類圖已有兩站 38 案交叉驗證](../packages/core/tests/fixtures/validation/humandesign-validation-report.md)，M5-03 起視為已驗證（不再有 `experimental:humanDesign` caveat，可計入高共識）；[吠陀占星已有 30 案獨立對照，但仍缺兩個公開吠陀計算器 ≥ 20 案](../packages/core/tests/fixtures/validation/jyotish-validation-report.md)，[experimental 標記](../packages/core/src/portable/versions.ts)仍保留。計算結果對照不代表預測有效性已驗證。
 - 回應太大時不會截斷，而是回 `response_too_large` 並提示縮小範圍。
 
+短訊號編號：
+
+- 工具回傳給模型的訊號編號一律是短編號 `sig_` + 8 位十六進位（12 字；完整編號是 `sig_` + 16 位、20 字，逐字抄寫太容易抄錯）。完整編號與雜湊不變，`get_signal` 回應的 `signal.id` 仍是完整編號，並另帶 `shortId`。
+- 輸入容錯：`get_signal` 的 `signalId` 與 `check_answer` 回答中引用的編號，都接受短編號、完整編號或 ≥ 8 位的前綴，大小寫不分。前綴對到多筆（極罕見）時，`get_signal` 回 `ambiguous_signal` 錯誤，`error.details.matches` 列出候選的完整編號；`check_answer` 視為查不到。
+- 碰撞保護：輸出前會對 server 已知的訊號檢查短編號是否碰撞，碰撞的那幾個保留完整編號，所以輸出內的每個編號都能被唯一解析。
+- 前綴解析先查已快取的訊號（timeline 全部訊號與已建過的年份），找到唯一一筆就停；找不到才由 `asOf` 年向外逐年擴大（`asOf` 前 5 年到後 10 年，每年只建一次）。取捨：唯一命中後不再為了確認而掃完所有年份，但輸出端的碰撞檢查已涵蓋輸出過的年份。
+
+`batch`：
+
+- `calls` 最多 8 個，依序執行，不可巢狀、不可包含 `import_profile`（會寫檔）；其他唯讀工具皆可。
+- 回應 `{ count, results[] }`，每筆 `{ index, tool, ok: true, asOf, data }` 或 `{ index, tool, ok: false, error }`；單筆失敗不影響其他筆。各筆的 `caveats` 合併去重放在外層。
+- 整個回應受同一個大小上限約束：累計超過後，其餘呼叫回 `response_too_large`，不會讓整批失敗。
+
+排盤口徑 `conventions`：
+
+- `get_chart` 每次回報這張盤實際採用的口徑：`{ items, source, notRecorded }`。能從 core 回傳的盤面讀到的（八字子時換日／真太陽時、紫微子時與時鐘、吠陀歲差／交點／整宮制／Vimshottari 年長、人類圖交點）直接讀盤面；其餘照 core 原始碼與檔頭文件寫，`source` 列出對應檔案；查不到明確紀錄的寫「未明確記錄」並列在 `notRecorded`，不猜。
+- 口徑是本 server 呼叫 core 的預設值（不傳覆寫設定）。例如八字預設真太陽時、晚子時（子正換日）；紫微預設真太陽時、分早晚子；吠陀預設 Lahiri、平均交點、整宮制、年長 365.25 日；人類圖預設真交點、Moshier 星曆。
+
 回傳瘦身：
 
-- `get_timeline`、`get_consensus` 很長的訊號清單（`signalIds`、`topSignalIds`）預設只保留前 5 筆，旁邊的 `…Total` 欄位是完整筆數。帶 `detail: true` 取得完整清單；單一訊號用 `get_signal`。
+- `get_timeline` 預設把年度區塊改成精簡表（`yearsFormat: "table"`，欄位在 `yearTable.columns`）：每年每領域一列 `[year, domain, score, band, consensus, highConsensus, hasConflict, systems, topSignalIds, topSignalIdsTotal]`。`systems` 是該領域有訊號的系統（各系統分數與筆數需要 `detail: true`），`topSignalIds` 只列前 3 個短編號、`topSignalIdsTotal` 是完整筆數。sky 範例（`asOf` 2026-09-30）預設回應由約 21,000 字降到約 6,700 字。**行為變更**：舊的 `years[]` 巢狀 cell 現在要帶 `detail: true` 才會回（此時 `yearsFormat: "cells"`，含 `perSystem` 與完整 id 清單）；`months`、`domain`、`systems`、`verifiedOnly`、`monthsFormat`、`range` 語意不變。
+- `get_consensus` 很長的訊號清單（`signalIds`）預設只保留前 5 筆，旁邊的 `…Total` 欄位是完整筆數；`get_consensus` 因為編號縮短由約 4,300 字降到約 3,900 字，結構不變（年度 `highConsensus` 與 `headlines.agreements` 有重疊，但兩者用途不同，保留）。帶 `detail: true` 取得完整清單；單一訊號用 `get_signal`。逐月 cell／`monthTable` 的訊號清單同樣預設前 5 筆。
 - `answer_question` 預設是精簡版（典型 12 個月約 3.3～3.7 KB，目標 < 4 KB）：
   - `top`：前 3 名，每名 `{ rank, month, score, band, highConsensus, domains, signalIds, oneLine }`。`domains` 是每個領域一行摘要（例：「財運 54.1：活躍61.1／支撐54.2／風險7／共識2」，數字取小數 1 位）；`signalIds` 最多 3 個（支撐最強 2 個＋風險最強 1 個，不足依序補），都能用 `get_signal` 查到；`oneLine` 是程式以固定模板產生的一句話理由（不經 LLM）。
   - `ranking`：每個月一列 `[月份, 分數, band]`（`rankingColumns` 說明欄位），不截斷。

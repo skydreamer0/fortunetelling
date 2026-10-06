@@ -55,9 +55,12 @@ function overlaps(w: SignalWindow, b: { lo: string; hi: string } | null): boolea
 
 const cmp = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
 
-function slim(s: Signal) {
+/** 把一串完整編號縮成輸出用的短編號（碰撞者保留完整編號）。 */
+export type Shorten = (ids: readonly string[]) => string[];
+
+function slim(s: Signal, sh: Shorten) {
   return {
-    id: s.id,
+    id: sh([s.id])[0],
     system: s.system,
     ruleId: s.ruleId,
     domain: s.domain,
@@ -82,7 +85,7 @@ function decodeCursor(cursor: string): number {
 }
 
 /** Month cells (many per response) leave out `perSystem` unless `detail`; year cells always carry it. */
-function slimCell(cell: TimelineCell, domain: string | undefined, detail: boolean | undefined, month = false) {
+function slimCell(cell: TimelineCell, domain: string | undefined, detail: boolean | undefined, sh: Shorten, month = false) {
   return {
     window: cell.window,
     domains: cell.domains
@@ -101,7 +104,7 @@ function slimCell(cell: TimelineCell, domain: string | undefined, detail: boolea
                 Object.entries(d.perSystem).map(([sys, a]) => [sys, { score: a!.score, valence: a!.valence, signalCount: a!.signalIds.length }]),
               ),
             }),
-        topSignalIds: previewIds(d.topSignals.map(s => s.id), detail),
+        topSignalIds: sh(previewIds(d.topSignals.map(s => s.id), detail)),
         topSignalIdsTotal: d.topSignals.length,
       })),
   };
@@ -111,15 +114,46 @@ export const MONTH_TABLE_COLUMNS = ['month', 'score', 'band', 'consensus', 'high
 const MONTH_TABLE_COLUMNS_TEXT = MONTH_TABLE_COLUMNS.join(', ');
 
 /** 單一領域的逐月表格：每月一列，欄位見 MONTH_TABLE_COLUMNS（topSignalIds 依 detail 截斷規則）。 */
-function monthTable(cells: readonly TimelineCell[], domain: string, detail: boolean | undefined) {
+function monthTable(cells: readonly TimelineCell[], domain: string, detail: boolean | undefined, sh: Shorten) {
   return {
     domain,
     columns: MONTH_TABLE_COLUMNS,
     rows: cells.map(cell => {
       const d = cell.domains.find(x => x.domain === domain)!;
       const ids = d.topSignals.map(s => s.id);
-      return [cell.window.start.slice(0, 7), d.score, d.band, d.consensus, d.highConsensus, d.conflict !== null, previewIds(ids, detail), ids.length] as const;
+      return [cell.window.start.slice(0, 7), d.score, d.band, d.consensus, d.highConsensus, d.conflict !== null, sh(previewIds(ids, detail)), ids.length] as const;
     }),
+  };
+}
+
+/** 預設年度表每個領域列顯示的訊號 id 數（detail: true 回完整巢狀 cell）。 */
+export const YEAR_TABLE_IDS = 3;
+export const YEAR_TABLE_COLUMNS = ['year', 'domain', 'score', 'band', 'consensus', 'highConsensus', 'hasConflict', 'systems', 'topSignalIds', 'topSignalIdsTotal'] as const;
+const YEAR_TABLE_COLUMNS_TEXT = YEAR_TABLE_COLUMNS.join(', ');
+
+/** 年度精簡表：每年每領域一列；systems = 該領域有訊號的系統（分數與筆數在 detail: true 的 perSystem）；只列前 3 個短編號與總筆數。 */
+function yearTable(cells: readonly TimelineCell[], domain: string | undefined, sh: Shorten) {
+  return {
+    columns: YEAR_TABLE_COLUMNS,
+    rows: cells.flatMap(cell =>
+      cell.domains
+        .filter(d => !domain || d.domain === domain)
+        .map(d => {
+          const ids = d.topSignals.map(s => s.id);
+          return [
+            cell.window.start.slice(0, 4),
+            d.domain,
+            d.score,
+            d.band,
+            d.consensus,
+            d.highConsensus,
+            d.conflict !== null,
+            Object.keys(d.perSystem).sort(),
+            sh(ids.slice(0, YEAR_TABLE_IDS)),
+            ids.length,
+          ] as const;
+        }),
+    ),
   };
 }
 
@@ -128,21 +162,21 @@ const filterYears =<T extends { window: SignalWindow }>(items: T[], range: Range
   return items.filter(i => overlaps(i.window, b));
 };
 
-const conflictOut = (c: ConsensusConflict) => ({
+const conflictOut = (c: ConsensusConflict, sh: Shorten) => ({
   domain: c.domain,
   window: c.window,
   score: c.score,
-  positive: c.positive,
-  negative: c.negative,
+  positive: { ...c.positive, signalIds: sh(c.positive.signalIds) },
+  negative: { ...c.negative, signalIds: sh(c.negative.signalIds) },
 });
 
-const agreementOut = (a: ConsensusAgreement, detail: boolean | undefined) => ({
+const agreementOut = (a: ConsensusAgreement, detail: boolean | undefined, sh: Shorten) => ({
   domain: a.domain,
   window: a.window,
   consensus: a.consensus,
   score: a.score,
   systems: a.systems,
-  signalIds: previewIds(a.signalIds, detail),
+  signalIds: sh(previewIds(a.signalIds, detail)),
   signalIdsTotal: a.signalIds.length,
 });
 
@@ -179,28 +213,36 @@ export const signalTools = [
         .sort((x, y) => y.intensity - x.intensity || cmp(x.id, y.id));
       const page = rows.slice(offset, offset + limit);
       const next = offset + limit < rows.length ? encodeCursor(offset + limit) : null;
-      return ok({ asOf: analysis.asOf, data: { signals: page.map(slim), nextCursor: next, total: rows.length }, caveats: caveatsFor(analysis) });
+      return ok({ asOf: analysis.asOf, data: { signals: page.map(x => slim(x, analysis.shortIds)), nextCursor: next, total: rows.length }, caveats: caveatsFor(analysis) });
     },
   }),
   defineTool({
     name: 'get_signal',
-    description: 'Full Signal by id, including evidence.modifiers, evidence.componentIds, ruleVersion and target. Ids come from list_signals, get_timeline, get_consensus or list_conflicts.',
+    description:
+      'Full Signal by id, including evidence.modifiers, evidence.componentIds, ruleVersion and target. signalId accepts the short id the tools return (sig_ + 8 hex), the full id (sig_ + 16 hex), or any prefix of >= 8 hex; case-insensitive. ' +
+      'The response has signal (id = full id) and shortId. A prefix matching several signals returns error ambiguous_signal with the full ids in details.matches; pass one of those. ' +
+      'Ids come from list_signals, get_timeline, get_consensus, list_conflicts or answer_question.',
     input: { profileId, asOf, signalId: z.string().min(1) },
     async handler(args, { analyzer }) {
       const analysis = await analyzer.get(args.profileId, args.asOf);
-      const signal = analysis.findSignal(args.signalId);
-      if (!signal) {
-        throw new ToolError('unknown_signal', `No signal '${args.signalId}' for this profile and asOf`, 'Use list_signals to find valid ids; ids depend on profile and asOf.');
+      const r = analysis.resolveSignal(args.signalId);
+      if (r.status === 'ambiguous') {
+        throw new ToolError('ambiguous_signal', `Prefix '${args.signalId}' matches ${r.matches.length} signals`, 'Pass one of details.matches (full ids) or a longer prefix.', { matches: r.matches });
       }
-      return ok({ asOf: analysis.asOf, data: { signal }, caveats: caveatsFor(analysis) });
+      if (!('signal' in r)) {
+        throw new ToolError('unknown_signal', `No signal '${args.signalId}' for this profile and asOf`, r.status === 'invalid' ? "Ids look like 'sig_' + 8 to 16 hex digits (short id or full id); use list_signals to find valid ids." : 'Use list_signals to find valid ids; ids depend on profile and asOf.');
+      }
+      return ok({ asOf: analysis.asOf, data: { signal: r.signal, shortId: analysis.shortIds([r.signal.id])[0] }, caveats: caveatsFor(analysis) });
     },
   }),
   defineTool({
     name: 'get_timeline',
     description:
-      'Compact timeline: { years, months } cells, each { window, domains[] } where each domain has score (0-100 cross-system), band, consensus (systems >= threshold), highConsensus, ' +
-      'hasConflict, perSystem { score (0-1), valence, signalCount } (year cells always; month cells only with detail: true) and topSignalIds (first 5 ids; topSignalIdsTotal = full count; detail: true returns all; resolve with get_signal). ' +
-      'years: yearly cells for the next years, filtered by range ({start,end} as YYYY or YYYY-MM, window overlap). ' +
+      'Compact timeline. Signal ids are short ids (sig_ + 8 hex); get_signal accepts them. ' +
+      `Default (no detail): years come as yearTable { columns, rows } = one row per year and domain [${YEAR_TABLE_COLUMNS_TEXT}] (yearsFormat 'table'); systems = systems with signals in that domain, topSignalIds = first ${YEAR_TABLE_IDS} short ids, topSignalIdsTotal = full count. ` +
+      "detail: true returns the full yearly cells instead (yearsFormat 'cells', years[] each { window, domains[] } with score (0-100 cross-system), band, consensus, highConsensus, hasConflict, perSystem { score (0-1), valence, signalCount }, all topSignalIds). " +
+      'Month cells: perSystem only with detail: true; topSignalIds first 5 (topSignalIdsTotal = full count). ' +
+      'years: yearly rows/cells for the next years, filtered by range ({start,end} as YYYY or YYYY-MM, window overlap). ' +
       `months: ALWAYS [] unless the months parameter is given. months = {start,end} as YYYY-MM returns one cell per month in that inclusive range (max ${MAX_MONTHS} months, within asOf-5..asOf+10 years). ` +
       'Months outside the asOf year are computed for that year (core builds month cells per year). Use domain to shrink the response; response_too_large means narrow months or domain. ' +
       `With domain + months (and no detail) months come as monthTable { domain, columns, rows } = one row per month [${MONTH_TABLE_COLUMNS_TEXT}] instead of nested cells (monthsFormat: 'cells' forces cells). ` +
@@ -237,7 +279,8 @@ export const signalTools = [
       // 篩選時由 core 從指定系統的訊號重算每個 cell；不篩選時直接用原 timeline（輸出不變）。
       const tl = sel.filtered ? restrictTimeline(analysis.timeline, sel.systemsUsed) : analysis.timeline;
       const restrictCell = (cell: TimelineCell) => (sel.filtered ? restrictTimelineCell(cell, sel.systemsUsed, analysis.timeline) : cell);
-      const years = filterYears(tl.years, args.range).map(c => slimCell(c, args.domain, args.detail));
+      const sh = analysis.shortIds;
+      const yearCells = filterYears(tl.years, args.range);
       const monthCells: TimelineCell[] = [];
       if (monthBounds) {
         for (let y = Number(monthBounds.lo.slice(0, 4)); y <= Number(monthBounds.hi.slice(0, 4)); y++) {
@@ -251,11 +294,14 @@ export const signalTools = [
       const format = monthBounds ? (args.monthsFormat ?? (args.domain && !args.detail ? 'table' : 'cells')) : 'cells';
       const monthsOut =
         format === 'table'
-          ? { monthsFormat: 'table' as const, monthTable: monthTable(monthCells, args.domain!, args.detail) }
-          : { monthsFormat: 'cells' as const, months: monthCells.map(c => slimCell(c, args.domain, args.detail, true)) };
+          ? { monthsFormat: 'table' as const, monthTable: monthTable(monthCells, args.domain!, args.detail, sh) }
+          : { monthsFormat: 'cells' as const, months: monthCells.map(c => slimCell(c, args.domain, args.detail, sh, true)) };
+      const yearsOut = args.detail
+        ? { yearsFormat: 'cells' as const, years: yearCells.map(c => slimCell(c, args.domain, args.detail, sh)) }
+        : { yearsFormat: 'table' as const, yearTable: yearTable(yearCells, args.domain, sh) };
       return ok({
         asOf: analysis.asOf,
-        data: { systems: tl.systems, skippedSystems: tl.skippedSystems, ...systemsFields(sel), years, ...monthsOut, monthsRange: args.months ?? null },
+        data: { systems: tl.systems, skippedSystems: tl.skippedSystems, ...systemsFields(sel), ...yearsOut, ...monthsOut, monthsRange: args.months ?? null },
         caveats: caveatsFor(analysis, sel),
       });
     },
@@ -263,7 +309,7 @@ export const signalTools = [
   defineTool({
     name: 'get_consensus',
     description:
-      'Cross-system consensus: years[] each { window, highConsensus[] agreements (domain, consensus, score, systems, signalIds (first 5; signalIdsTotal = full count; detail: true returns all)), conflictCount }, ' +
+      'Cross-system consensus (signal ids are short ids, sig_ + 8 hex): years[] each { window, highConsensus[] agreements (domain, consensus, score, systems, signalIds (first 5; signalIdsTotal = full count; detail: true returns all)), conflictCount }, ' +
       'headlines.agreements (top agreements), conflictCount total, systems and thresholds. Conflict details: use list_conflicts. range = {start,end} as YYYY or YYYY-MM filters years. ' +
       'systems / verifiedOnly recompute consensus from only those systems (list_conflicts is not filtered); the response always has systemsUsed, excludedSystems, experimentalIncluded.',
     input: { profileId, asOf, range: flexRange.optional(), systems: systemsInput, verifiedOnly: verifiedOnlyInput, detail: detailInput },
@@ -271,12 +317,13 @@ export const signalTools = [
       const analysis = await analyzer.get(args.profileId, args.asOf);
       const sel = resolveSystems(analysis, args.systems, args.verifiedOnly);
       const c = sel.filtered ? buildConsensus(restrictTimeline(analysis.timeline, sel.systemsUsed)) : analysis.consensus;
+      const sh = analysis.shortIds;
       const years = filterYears(c.years, args.range).map(y => ({
         window: y.window,
-        highConsensus: y.highConsensus.map(a => agreementOut(a, args.detail)),
+        highConsensus: y.highConsensus.map(a => agreementOut(a, args.detail, sh)),
         conflictCount: y.conflicts.length,
       }));
-      const agreements = filterYears(c.headlines.agreements, args.range).map(a => agreementOut(a, args.detail));
+      const agreements = filterYears(c.headlines.agreements, args.range).map(a => agreementOut(a, args.detail, sh));
       const conflictCount = filterYears(c.headlines.conflicts, args.range).length;
       return ok({
         asOf: analysis.asOf,
@@ -297,11 +344,11 @@ export const signalTools = [
     name: 'list_conflicts',
     description:
       'Conflicts where one system leans supportive and another is under pressure: each { domain, window, score, positive { systems, signalIds }, negative { systems, signalIds } }. ' +
-      'Signal ids resolve via get_signal. range = {start,end} as YYYY or YYYY-MM filters by window.',
+      'Signal ids are short ids (sig_ + 8 hex); get_signal resolves them. range = {start,end} as YYYY or YYYY-MM filters by window.',
     input: { profileId, asOf, range: flexRange.optional() },
     async handler(args, { analyzer }) {
       const analysis = await analyzer.get(args.profileId, args.asOf);
-      const conflicts = filterYears(analysis.consensus.headlines.conflicts, args.range).map(conflictOut);
+      const conflicts = filterYears(analysis.consensus.headlines.conflicts, args.range).map(c => conflictOut(c, analysis.shortIds));
       return ok({ asOf: analysis.asOf, data: { conflicts, total: conflicts.length }, caveats: caveatsFor(analysis) });
     },
   }),
