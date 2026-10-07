@@ -76,3 +76,28 @@ describe('M4-03 貼回 Claude 回答檢查', () => {
     expect(lookup(twin.id)?.system).toBe(twin.system);
   });
 });
+
+describe('incremental answer lookup', () => {
+  test('known full ID keeps the zero-scan fast path', async () => {
+    const lookup = reportSignalLookup(report);
+    const id = report.timeline!.years[0].domains.flatMap(d => d.topSignals)[0].id;
+    let yields = 0;
+    await lookup.prepare([id], new AbortController().signal, async () => { yields++; });
+    expect(yields).toBe(0);
+    expect(lookup(id)?.id).toBe(id);
+  });
+  test('cancellation at a task boundary prevents further yearly work', async () => {
+    const lookup = reportSignalLookup(report);
+    const controller = new AbortController();
+    let yields = 0;
+    await expect(lookup.prepare(['sig_fa0e0000'], controller.signal, async () => {
+      yields++;
+      if (yields === 2) controller.abort();
+    })).rejects.toMatchObject({ name: 'AbortError' });
+    expect(yields).toBe(2);
+  }, 60_000);
+  test('already aborted work is rejected even for a cached full ID', async () => {
+    const controller = new AbortController(); controller.abort();
+    await expect(reportSignalLookup(report).prepare([report.timeline!.years[0].domains.flatMap(d => d.topSignals)[0].id], controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
+  });
+});

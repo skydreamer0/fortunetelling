@@ -121,7 +121,11 @@ const LOOKUP_YEARS = { before: 5, after: 10 } as const;
  * soon as it is found; a shorter prefix scans every year first (once, then cached), because a
  * not-yet-scanned year could hold a second signal with the same prefix. Ambiguous → null, never a guess.
  */
-export type ReportSignalLookup = ((id: string) => CoreSignal | null) & { directionalEvidence(): DirectionalEvidence[] };
+export type ReportSignalLookup = ((id: string) => CoreSignal | null) & {
+  directionalEvidence(): DirectionalEvidence[];
+  /** Prepare the same lookup incrementally; a single year's calculation remains synchronous. */
+  prepare(ids: readonly string[], signal: AbortSignal, yieldTask?: () => Promise<void>): Promise<void>;
+};
 export function reportSignalLookup(report: Report): ReportSignalLookup {
   const known = new Map<string, CoreSignal>();
   const add = (signal: CoreSignal | null | undefined) => {
@@ -161,7 +165,19 @@ export function reportSignalLookup(report: Report): ReportSignalLookup {
     const found = resolveSignalId(wanted, known.keys());
     return found.status === 'exact' || found.status === 'unique' ? known.get(found.id) ?? null : null;
   };
-  return Object.assign(lookup, { directionalEvidence: () => [...proofs, ...(monthsOf?.directionalEvidence() ?? [])] });
+  const prepare: ReportSignalLookup['prepare'] = async (ids, signal, yieldTask = () => new Promise(resolve => setTimeout(resolve, 0))) => {
+    signal.throwIfAborted();
+    const wanted = ids.map(id => id.trim().toLowerCase()).filter(id => resolveSignalId(id, []).status !== 'invalid');
+    const needsScan = () => Boolean(monthsOf && scanned < last && wanted.some(id => !/^sig_[0-9a-f]{16}$/.test(id) || !known.has(id)));
+    while (needsScan()) {
+      // A task boundary lets paint/input/cancellation run between years, not during buildTimeline.
+      await yieldTask();
+      signal.throwIfAborted();
+      if (needsScan()) scanNext();
+    }
+    signal.throwIfAborted();
+  };
+  return Object.assign(lookup, { prepare, directionalEvidence: () => [...proofs, ...(monthsOf?.directionalEvidence() ?? [])] });
 }
 
 export interface LocalQuestion {
