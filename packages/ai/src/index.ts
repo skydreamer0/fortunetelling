@@ -14,7 +14,7 @@
 export { PAYLOAD_VERSION, DEFAULT_MAX_PAYLOAD_CHARS, LOCAL_PAYLOAD_OPTIONS, PAYLOAD_NOTES,
   scrubReport, sensitiveParts, buildInterpretationPayload } from './payload';
 export type { ReportComponentLike, ReportEngineLike, ReportLike, PayloadSignal,
-  PayloadChartComponent, PayloadChart, PayloadTimelineDomain, PayloadTimelineCell,
+  PayloadChartComponent, PayloadChart, PayloadConflict, PayloadTimelineDomain, PayloadTimelineCell,
   PayloadTimeline, PayloadRankedWindow, PayloadQuestion, PayloadTruncation,
   InterpretationPayload, BuildPayloadOptions, BuiltPayload } from './payload';
 export * from './prompts';

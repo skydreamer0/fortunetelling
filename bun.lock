@@ -25,7 +25,7 @@
     },
     "packages/ai": {
       "name": "@fortune/ai",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@fortune/core": "workspace:*",
       },

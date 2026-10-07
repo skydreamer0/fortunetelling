@@ -34,7 +34,7 @@ import { canonicalJson } from './canonical';
 import { scrubDeep, sensitiveStringsOf, shortIdCollisions, shortSignalId, directionalVotes, evidenceMatchesContext, validAgreementThresholds,
   HIGH_CONSENSUS_MIN_SYSTEMS, type DirectionalEvidence, type AgreementThresholds, type SensitiveStrings } from './core-pure';
 
-export const PAYLOAD_VERSION = 2;
+export const PAYLOAD_VERSION = 3;
 /** Default serialised-size budget (characters of canonical JSON). */
 export const DEFAULT_MAX_PAYLOAD_CHARS = 120_000;
 
@@ -99,6 +99,12 @@ export interface PayloadChart {
   errors?: string[];
 }
 
+/** Source disagreement remains present even when a side has no attached citations. */
+export interface PayloadConflict extends SignalConflict {
+  /** Original side references not supplied in this payload (selection, missing source, or budget). */
+  omittedCount: { positive: number; negative: number };
+}
+
 export interface PayloadTimelineDomain {
   domain: Domain;
   score: number;
@@ -109,7 +115,7 @@ export interface PayloadTimelineDomain {
   directionalEvidence: DirectionalEvidence | null;
   /** Systems that emitted signals for this (domain, cell). */
   systems: SystemId[];
-  conflict: SignalConflict | null;
+  conflict: PayloadConflict | null;
   /** Top signal ids of this cell (only ids present in `signals`). */
   topSignalIds: string[];
 }
@@ -138,7 +144,7 @@ export interface PayloadRankedWindow {
   activityAgreement: number;
   highConsensus: boolean;
   directionalEvidence: DirectionalEvidence[];
-  conflict: Array<SignalConflict & { domain: Domain }> | null;
+  conflict: Array<PayloadConflict & { domain: Domain }> | null;
   supportSignalIds: string[];
   riskSignalIds: string[];
 }
@@ -274,6 +280,20 @@ function buildCharts(engines: ReportEngineLike[] | undefined): PayloadChart[] {
     });
 }
 
+/** Keep source full IDs until each fresh budget render can test exact membership. */
+function prepareConflict(source: SignalConflict | null): PayloadConflict | null {
+  return source ? { positive: [...source.positive], negative: [...source.negative], omittedCount: { positive: 0, negative: 0 } } : null;
+}
+
+function projectConflict(source: PayloadConflict, kept: ReadonlySet<string>, sid: IdMapper): PayloadConflict {
+  const positive = source.positive.filter(id => kept.has(id));
+  const negative = source.negative.filter(id => kept.has(id));
+  return {
+    positive: positive.map(sid), negative: negative.map(sid),
+    omittedCount: { positive: source.positive.length - positive.length, negative: source.negative.length - negative.length },
+  };
+}
+
 function mapEvidence(proof: DirectionalEvidence, sid: IdMapper): DirectionalEvidence {
   return { ...proof, window: { ...proof.window }, thresholds: { ...proof.thresholds },
     perSystem: Object.fromEntries(Object.entries(proof.perSystem).map(([system, value]) => [system, { ...value!, signalIds: value!.signalIds.map(sid) }])) };
@@ -301,7 +321,7 @@ function buildTimelineCells(cells: TimelineCell[] | undefined, sid: IdMapper, ti
         activityAgreement: d.activityAgreement ?? d.consensus,
         directionalEvidence: proof,
         systems: Object.keys(d.perSystem ?? {}).sort() as SystemId[],
-        conflict: d.conflict,
+        conflict: prepareConflict(d.conflict),
         topSignalIds: (d.topSignals ?? []).map((s) => sid(s.id)),
       }; }),
   }));
@@ -328,7 +348,7 @@ function buildQuestion(answer: QuestionAnswer, sid: IdMapper): PayloadQuestion {
       activityAgreement: w.activityAgreement ?? w.consensus,
       highConsensus: consensus >= HIGH_CONSENSUS_MIN_SYSTEMS,
       directionalEvidence: proofs,
-      conflict: w.conflict,
+      conflict: w.conflict?.map(conflict => ({ ...prepareConflict(conflict)!, domain: conflict.domain })) ?? null,
       supportSignalIds: w.supportSignals.map((s) => sid(s.id)),
       riskSignalIds: w.riskSignals.map((s) => sid(s.id)),
     }; }),
@@ -451,6 +471,7 @@ export function buildInterpretationPayloadFromSelection(report: ReportLike, opti
     for (const cell of [...candidate.timeline.years, ...candidate.timeline.months]) {
       for (const d of cell.domains) {
         d.topSignalIds = filterIds(d.topSignalIds);
+        if (d.conflict) d.conflict = projectConflict(d.conflict, keptIds, sid);
         d.directionalEvidence = trimProof(d.directionalEvidence);
         Object.assign(d, proofStats(d.directionalEvidence));
       }
@@ -459,6 +480,7 @@ export function buildInterpretationPayloadFromSelection(report: ReportLike, opti
   if (candidate.question) {
     for (const w of candidate.question.top) {
       w.supportSignalIds = filterIds(w.supportSignalIds);
+      if (w.conflict) w.conflict = w.conflict.map(conflict => ({ ...projectConflict(conflict, keptIds, sid), domain: conflict.domain }));
       w.riskSignalIds = filterIds(w.riskSignalIds);
       w.directionalEvidence = w.directionalEvidence.map(proof => trimProof(proof)!).filter(Boolean);
       w.consensus = Math.max(0, ...w.directionalEvidence.map(proof => proofStats(proof).consensus));

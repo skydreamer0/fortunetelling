@@ -607,3 +607,56 @@ copy prompt沿既有fallback縮減，保留明確省略說明。
 
 本PR明列依賴 #67，保留其已驗收分支不動。Actions維持使用者指定的停用狀態，
 只在已批准workspace以官方Bun與frozen依賴驗證；LOCKED FORECAST與封存資料沒有改寫。
+
+## D-047 AI payload 保留矛盾存在性與可解析引用（#30 有限續片）
+
+**範圍：** 接 D-046 記錄的既有 AI 出口缺陷，只處理 `payload.ts` 中 Timeline／Question
+兩種 conflict 的序列化，對應 #30「衝突不能因 top N 截斷而消失」及 #27「回傳 evidence id
+可解析」的有限工程不變式。不實作完整 Fact V2、group、方向模型或新的命理語意。
+
+**契約：** Payload3 的 `PayloadConflict` 保留 `positive`／`negative` 兩個可引用 ID 陣列，
+新增 `omittedCount: { positive, negative }`。原 conflict 非 null 時，即使一側或兩側 ID
+都未附，輸出仍非 null；省略不是沒有矛盾，也不是重算原始分數後得到的結論。
+每側「輸出 ID 數＋omittedCount」等於原側引用數。omittedCount 只表示本 payload 未提供，
+原因可能是原Report缺訊號、Report7相容選材或字數預算，不能一律說成budget裁切。
+
+先複製原 full-ID 陣列；每次 fresh renderPrefix 先核完整ID在本次留存集合中，再使用
+同一 sid 函式縮短。不能先縮短後比對，否則未選來源和真訊號共8位prefix可能冒認。
+兩個真正選入的full ID撞prefix仍保留完整ID。Timeline與Question共用prepare/project helper，
+每次從原base重新計算省略數，二分搜尋／重試不累加舊裁切狀態，也不修改caller。
+
+**提示與版本：** AI package 0.1.1、payloadVersion3、interpret-v4、copy-v5。
+提示保留矛盾存在性；只引用實際附上的IDs，缺侧依據標資料限制，不得補造。
+core0.6.1、Report7、Timeline2、Consensus2、MCP原工具回應與conversation指示不變。
+三個validator仍做既有引用membership檢查，沒有新增命理或自然語言推論器。
+
+**容量：** AI候選池、保護Question來源優先序、強度/id排序與原cap都不變。
+新增提示在真實轉職Question／16k copy造成16013字的反例已先紅；原五次safety net
+只從舊budget扣13，未吃掉173字既存slack，會反覆產生同一結果。
+修正為同時以「實際payloadJson長度−超額」收緊budget，每輪有進展，不提高cap或盲增重試。
+不可再縮metadata本身超過API預算時仍回overBudget=true，沒有宣稱任何預算都能容納資料。
+
+**先紅後綠與字面差異：** 原9項測試0pass／9fail，修後全過；另補真Question16k上限反例。
+涵蓋full/short、缺來源共prefix冒認、真碰撞、單側／兩側完全省略、Timeline與Question、
+多輪budget守恆、輸入不可變、三validator引用與null反例。
+獨審固定seed24情境×2種ID模式×6預算共288次payload、1152側守恆檢查通過。
+
+#68的 `report-selection.v0.6.0.json` 原八組literal保持不變，先用精確base重現後新增
+`report-selection.payload-v3.delta.json`。測試先核before，再核明列after，不從當前實作推預期。
+以下為同一civil/early合成案例；數量變化只來自序列化或固定提示／預算，不是算法改分：
+
+| 路徑 | 留存訊號 before→after | 懸空conflict引用 before→after |
+| --- | ---: | ---: |
+| 200k full ID | 347→347 | 3→0 |
+| 200k short ID | 372→372 | 16→0 |
+| 200k含Question | 346→346 | 4→0 |
+| local、無budget | 511→511 | 3→0 |
+| copy16k無Question | 51→50 | 提示變長，保持原cap |
+| copy16k含Question | 43→43 | 保持原cap |
+| copy24k無Question／含Question | 13→13／9→9 | 保持原cap |
+
+原Report、core分數／算法／來源、export檔案、封存預測與既有golden都不改。
+D-046的NOT FIXED是當時Payload2歷史紀錄；此有限修復從Payload3起生效，不回寫舊payload。
+最終精確head的本地全套、獨立評審與容量矩陣見
+[Draft PR #69](https://github.com/skydreamer0/fortunetelling/pull/69)。本PR依賴#68（間接#67），
+兩個base分支零改；Actions依使用者指示停用，僅用既有批准workspace/Bun與frozen依賴。

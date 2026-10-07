@@ -7,6 +7,7 @@ import { validateSections } from '../src/validate';
 import { checkPastedAnswer } from '../src/pasteCheck';
 import { checkAnswer } from '../src/checkAnswer';
 import { loadQuestion } from './helpers';
+import { localQuestion } from '../../../apps/web/src/model/askAi';
 
 const window={grain:'month',start:'2027-01-01',end:'2027-01-31'} as const;
 const make=(system:'bazi'|'ziwei',valence:number,index:number):Signal=>createSignal({system,ruleId:system+'.fixture',ruleVersion:1,target:String(index),domain:'career',trait:'opportunity',intensity:0.8,valence,window});
@@ -110,6 +111,15 @@ describe('#30 AI conflict projection: preserve disagreement and only cite attach
     expect(validateSections([{heading:'方向',text,citations:[missing]}],built).dropped[0].reasons.some(r=>r.code==='unknown_citation')).toBe(true);
     expect(checkPastedAnswer(built,`來源〔${missing}〕`).ok).toBe(false);
     expect(checkAnswer(`來源〔${missing}〕`,{signalLookup:lookup}).ok).toBe(false);
+  });
+
+  test('real Question copy prompt shrinks from actual payload size and respects 16k',()=>{
+    const report=analyze({year:1990,month:6,day:15,hour:23,minute:30,gender:'female',useTrueSolarTime:false,ziHourConvention:'early'},{asOf:'2027-01-15'});
+    const question='2027 年何時轉職？';const answer=localQuestion(JSON.parse(JSON.stringify(report)),question)!.answer;
+    expect(answer).not.toBeNull();
+    const copy=buildCopyPrompt(JSON.parse(JSON.stringify(report)),{question,questionAnswer:answer,maxChars:16000});
+    expect(copy.charCount).toBeLessThanOrEqual(16000); // previous safety-net stalled at16013 despite5 retries
+    assertResolved(copy.payload);
   });
 
   test('no original conflict stays null; copy prompts retain an explicit omission explanation',()=>{

@@ -32,7 +32,7 @@ import {
   type ReportLike,
 } from './payload';
 
-export const COPY_PROMPT_VERSION = 'copy-v4';
+export const COPY_PROMPT_VERSION = 'copy-v5';
 /** Default size of the whole paste-ready text (characters). Fits common chat input limits. */
 export const DEFAULT_COPY_MAX_CHARS = 24_000;
 
@@ -72,7 +72,7 @@ function rulesBlock(): string {
 1. 只使用下方「資料」區塊的內容。不要重新排盤或推算：不得自行計算、補充或更正任何干支、四柱、大運、流年、星曜、四化、宮位、行星位置、星座、宿；資料中沒有出現的干支、星曜、行星名稱一律不要提。提到紫微斗數這套系統時請寫全名「紫微斗數」。
 2. 每個重要結論都要在句末標註引用的訊號 id，格式為〔sig_xxxxxxxx〕（sig_ 加 8 位十六進位），逐字複製 signals[].id，一個字元都不要改；可以連續列多個，例如〔sig_…〕〔sig_…〕。抄錯、編造或改寫的編號會被檢查程式抓到；沒有訊號支撐的內容不要寫。timeline 與 question 內出現的 id 都指向 signals。
 3. 「高共識」只依directionalEvidence：同一領域、同一時間窗至少三套正權重、非experimental系統，raw強度達thresholds.theta且raw方向超過thresholds.tau，並引用同側各系統。positive叫同向支持，negative叫同向壓力；兩側達標就都保留。activityAgreement只叫共同關注；中性、零權重、jyotish不計入同向票。不要從四捨五入值或引用子集合重算；舊報告缺證據就說無法確認同向高共識。計算交叉比對不代表預測已驗證，experimental引用必須註明。
-4. 系統之間方向相反（valence 一正一負，或 conflict 欄位有值）時，必須保留矛盾並說明雙方各自的依據，不得擇一，也不得平均成中性。
+4. 系統之間方向相反（valence 一正一負，或 conflict 欄位有值）時，必須保留矛盾並說明雙方各自的依據，不得擇一，也不得平均成中性。conflict.omittedCount表示該側未附的訊號引用數，不等於沒有矛盾；只能引用留存的ID，缺側依據要列為資料限制，不得補造。
 5. 分數（score 0–100）與 band（低／中／中高／高）是未校準的研究用相對指標：只平均有發出訊號的系統，不同領域、不同年份的分數不可直接比較，也不是機率或準確度。提到分數時請說明這一點。
 6. 大運、流年、流月等隨時間變動的內容只是「傾向」，不是命定：請用「這段時期」「可能」「傾向」等語氣。不要寫「你是……」（包括「你是否」）、「你天生」、「注定」、「永遠」、「絕對」、「一定會」、「從不」；不要用吉／凶、大吉、大凶、凶兆、劫數、必定等宿命論用語，改為描述特徵（變動、壓力、支撐、機會）與可以採取的行動。
 7. 資料無法回答的事，請直接說「這份資料無法回答」並說明缺少什麼，不要自行發揮或用一般命理知識補上。
@@ -110,7 +110,7 @@ function dataGuide(asOf: string | null): string {
   return `## 資料說明
 - 基準日（asOf）：${asOf ?? '未提供'}。「本年」指基準日所在的年份。
 - profile：只有性別、出生時間精度與時區。charts：各系統的命盤計算結果。signals[]：規則產生的訊號，欄位 id、system、ruleId、domain、trait、intensity（強度 0–1）、valence（方向 −1～+1）、window（生效期間）、evidence.text（依據）。
-- timeline.years／timeline.months：每格分數（score）、band、共同關注數（activityAgreement）、最大同向系統數（consensus）、highConsensus、原始計票證據（directionalEvidence）、發出訊號的系統（systems）、矛盾（conflict）及topSignalIds；θ／τ沿用thresholds。
+- timeline.years／timeline.months：每格分數（score）、band、共同關注數（activityAgreement）、最大同向系統數（consensus）、highConsensus、原始計票證據（directionalEvidence）、發出訊號的系統（systems）、矛盾（conflict，含各側未附訊號引用數omittedCount）及topSignalIds；θ／τ沿用thresholds。
 - question（若有）：網站 Question Engine 以程式計算的月份排名，supportSignalIds 為支持訊號、riskSignalIds 為風險訊號。
 - signals 與 months 只列基準月起的月份（之前的月份已過去，未提供）。
 - domain 對照：${DOMAIN_GLOSSARY}。
@@ -327,7 +327,9 @@ export function buildCopyPrompt(report: ReportLike, options: CopyPromptOptions =
     let text = render(built);
     // Safety net: shrink the JSON budget until the whole text fits.
     for (let i = 0; i < 5 && text.length > maxChars && budget > 0; i += 1) {
-      budget -= text.length - maxChars;
+      const overflow = text.length - maxChars;
+      // Consume existing slack too: otherwise small overflows can repeat unchanged.
+      budget = Math.min(budget - overflow, built.payloadJson.length - overflow);
       built = buildInterpretationPayloadFromSelection(trimmed, { question: answer, maxChars: Math.max(0, budget), shortIds: true });
       text = render(built);
     }
