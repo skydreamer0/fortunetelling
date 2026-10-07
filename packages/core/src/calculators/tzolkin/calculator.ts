@@ -40,7 +40,7 @@ export interface TzolkinChart {
   } | null;
 }
 
-export const TZOLKIN_CALCULATOR_VERSION = '0.1.0';
+export const TZOLKIN_CALCULATOR_VERSION = '0.1.1';
 
 /** Typed view of the engine components. */
 export function extractTzolkinChart(components: readonly Component[]): TzolkinChart {

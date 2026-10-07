@@ -1,3 +1,4 @@
+import dateOnlyDelta from './fixtures/export.v0.6.4.delta.json';
 import calendarValidationDelta from './fixtures/export.v0.6.3.delta.json';
 import asOfDelta from './fixtures/export.v0.6.2.delta.json';
 import evidenceDelta from './fixtures/export.v0.6.1.delta.json';
@@ -125,7 +126,7 @@ describe('golden', () => {
     const recorded = JSON.parse(original);
     expect(recorded.versions.coreVersion).toBe('0.5.0');
     recorded.versions.coreVersion = '0.5.3';
-    for (const change of [...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes, ...calendarValidationDelta.changes]) {
+    for (const change of [...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes, ...calendarValidationDelta.changes, ...dateOnlyDelta.changes]) {
       const [group, key] = change.path;
       expect(recorded[group][key]).toEqual(change.before);
       recorded[group][key] = structuredClone(change.after);

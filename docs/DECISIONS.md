@@ -738,3 +738,52 @@ UTC 計算 sections、六個 export 檔案 hash 及 1191 signalCount 不改。
 原 #72 分支不動。精確候選與完整本地／非作者驗收見 [Draft PR #73](https://github.com/skydreamer0/fortunetelling/pull/73)。
 #26／#54 仍是部分交付，不勾完全部曆法矩陣、不新增 ChartSnapshot 或 schema。
 Actions 維持停用，只用原 cloud workspace 與既有批准 Bun／frozen 依賴；封存預測不改。
+
+## D-050 日期型 calculator 保留原輸入民用日（#26／#54 有限片）
+
+**既有契約與缺陷：** `calculators/types.ts` L64–69 已明定生命靈數／馬雅 Kin 的日期來自
+使用者輸入的當地日曆日，不因時區偏移改變；ARCHITECTURE-V2 §3.1/§3.4 和既有
+`calculators.test.ts` 的主盤 parity 亦支持此契約。Numerology timeline 明確採 `ctx.profile.date`。
+但兩個 typed adapter 原先共用需時刻的 `timeContextToBirthData`，讀取 `ctx.local.iso`：
+已知出生時間在整日 gap 中被順延，便連同出生日期數值一起換掉；時間未知時反而仍用原日。
+
+| 匿名 fixture，asOf 2026-07-11 | 原 profile.date | ctx 解出的日 | typed 原 lifePath／personalYear／Kin | 修後（與主盤／unknown 相同） |
+| --- | --- | --- | --- | --- |
+| Pacific/Apia 12:00 | 2011-12-30 | 2011-12-31 | 11／8／112 | 1／7／111 |
+| Pacific/Kiritimati 12:00 | 1994-12-31 | 1995-01-01 | 8／3／148 | 3／8／147 |
+
+**修正範圍：** 新增 internal `profileDateToBirthData`，沿用舊 bridge 的其餘欄位與 name
+覆寫語義，再以 canonical `ctx.profile.date` 的 Y/M/D 重建 BirthData。只有 Numerology／Tzolkin
+兩 adapter 改用它；不進 calculator/root barrel。原 `timeContextToBirthData` 不改，其他計算器
+繼續使用其既有 resolved clock；NumerologyEngine、DreamspellEngine、Tzolkin 錨定、算法、
+timeline、規則、分數與主盤資料來源均不改。這是恢復已有輸入日期契約，不新增流派或日期選項。
+
+**gap 不是被消除：** 真 Apia／Kiritimati 的 `TimeContext` 仍包含原 requestedLocal、順延後
+resolvedLocal、1440 分鐘 gap 與 `requiresConfirmation: true`。主報告及既有 MCP flags/caveats
+路由保持；本片沒有把不存在的出生時刻默認成已確認。日期型 chart 不再因是否填入出生時間
+而換生日，不代表需要時刻的系統也改回原日。caller ctx／profile 不可被 helper 改寫。
+
+**先紅後綠與隔離：** tests-only `4d9bc85e` 由作者和非作者各自跑出 3 pass／5 fail，
+五紅為兩 adapter 的主盤 parity、known／unknown chart、literal、name override 後的錯日值。
+修後八新測全過（獨審324斷言）；加十三個既有 calculator 測試共21／0。
+四個獨立 host TZ 包含 UTC、Taipei、New York、Apia，另有前後有效日期與同日 DST gap／overlap
+控制；原 asOf 必填／非法錯誤、空字串 name override 及 ctx 不變均保留。
+非作者另核12組真 analyze：所有 ctx、舊 bridge、main engines、timeline、signals hash 前後不變，
+只有兩個 known 整日-gap typed chart 改成原生日，其他10組 typed chart 不變。
+
+**版本與精確差異：** core 0.6.4；Numerology／Tzolkin calculator 各 0.1.0→0.1.1，以識別
+這次可見的輸入適配修正。Report7／Timeline2／Consensus2不升schema，其他calculator版本不改。
+CalculationSpec 依既有身份規則包含 core 與兩個 calculator 版本，所以 specHash 會改；沒有
+改 hash 算法或宣稱跨版本身份相同。匿名 Apia fixture（name=ALICE、lat=-13.8333、lng=-171.75）
+為 `cs1-5fc5e5e02e49a76c`→`cs1-bfaaa2c611638c37`，出生／設定欄位保持。
+
+原 golden 和全部舊 delta 保留。新增 `reportGolden.v0.6.4.delta.json` 只列13個 core版本字串；
+`export.v0.6.4.delta.json` 列 coreVersion、兩 calculator版本與 `chart.json` 的 hash：
+`8e87bd618f2add78`→`836bc01639308290`。逐欄核對該固定 UTC 匯出 chart 只有兩個內嵌版本變動，
+計算值不變；其餘五檔 hash、所有檔案大小和1191 signalCount保持。這份常規fixture沒有gap，
+兩個真錯日的行為差異由上述專用回歸及 literal 錨定，不用重錄整批golden掩蓋。
+
+完整本地與非作者驗收、精確head見 [Draft PR #75](https://github.com/skydreamer0/fortunetelling/pull/75)。
+本片stack已驗#73 `d2794a66827881f8782fbb01133309b24de6f598`，間接#72，原分支不改。
+#26／#54仍為部分交付，不勾完整矩陣／snapshot AC。Actions、allowlist與部署設定未改，
+只用原workspace與已批准Bun/frozen依賴；LOCKED FORECAST和原預測未動。

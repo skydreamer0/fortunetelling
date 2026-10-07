@@ -49,7 +49,7 @@ export interface NumerologyChart {
   digitFrequency: Record<string, number> | null;
 }
 
-export const NUMEROLOGY_CALCULATOR_VERSION = '0.1.0';
+export const NUMEROLOGY_CALCULATOR_VERSION = '0.1.1';
 
 function numberOf(components: readonly Component[], id: string): NumerologyNumber | null {
   const v = componentValue<{ number: number; isMaster: boolean }>(components, id);
