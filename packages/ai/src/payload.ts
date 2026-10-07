@@ -34,7 +34,7 @@ import { canonicalJson } from './canonical';
 import { scrubDeep, sensitiveStringsOf, shortIdCollisions, shortSignalId, directionalVotes, evidenceMatchesContext, validAgreementThresholds,
   HIGH_CONSENSUS_MIN_SYSTEMS, type DirectionalEvidence, type AgreementThresholds, type SensitiveStrings } from './core-pure';
 
-export const PAYLOAD_VERSION = 2;
+export const PAYLOAD_VERSION = 3;
 /** Default serialised-size budget (characters of canonical JSON). */
 export const DEFAULT_MAX_PAYLOAD_CHARS = 120_000;
 
@@ -99,6 +99,12 @@ export interface PayloadChart {
   errors?: string[];
 }
 
+/** Source disagreement remains present even when a side has no attached citations. */
+export interface PayloadConflict extends SignalConflict {
+  /** Original side references not supplied in this payload (selection, missing source, or budget). */
+  omittedCount: { positive: number; negative: number };
+}
+
 export interface PayloadTimelineDomain {
   domain: Domain;
   score: number;
@@ -109,7 +115,7 @@ export interface PayloadTimelineDomain {
   directionalEvidence: DirectionalEvidence | null;
   /** Systems that emitted signals for this (domain, cell). */
   systems: SystemId[];
-  conflict: SignalConflict | null;
+  conflict: PayloadConflict | null;
   /** Top signal ids of this cell (only ids present in `signals`). */
   topSignalIds: string[];
 }
@@ -138,7 +144,7 @@ export interface PayloadRankedWindow {
   activityAgreement: number;
   highConsensus: boolean;
   directionalEvidence: DirectionalEvidence[];
-  conflict: Array<SignalConflict & { domain: Domain }> | null;
+  conflict: Array<PayloadConflict & { domain: Domain }> | null;
   supportSignalIds: string[];
   riskSignalIds: string[];
 }
@@ -190,18 +196,18 @@ export interface BuildPayloadOptions {
   redact?: boolean;
   /**
    * 是否套用字數預算（超過就先丟強度最低的訊號）。預設 true（向下相容）。
-   * 設為 false 等同不設上限（`truncation.maxChars` 為 null）。
+   * 設為 false 等同不設上限（`truncation.maxChars` 為 null），仍使用同一 AI 候選投影。
    */
   budget?: boolean;
   /**
    * 給模型看的訊號編號用短編號（`sig_` + 8 位）；與其他訊號碰撞的維持完整編號（碰撞以
-   * report.signals ∪ 問事來源訊號為範圍判斷）。預設 false（完整編號、API 路徑不變）。
+   * AI 已選的 Report 訊號 ∪ 問事來源訊號為範圍判斷）。預設 false（完整編號、API 路徑不變）。
    * `BuiltPayload.signalIds` 永遠是完整編號。
    */
   shortIds?: boolean;
 }
 
-/** 本機使用的選項：不去識別化、不限字數。對外送出的路徑不得使用。 */
+/** 本機使用的選項：同一 AI 候選投影，不去識別化、不限字數。對外送出的路徑不得使用。 */
 export const LOCAL_PAYLOAD_OPTIONS = Object.freeze({ redact: false, budget: false }) satisfies BuildPayloadOptions;
 
 export interface BuiltPayload {
@@ -274,6 +280,20 @@ function buildCharts(engines: ReportEngineLike[] | undefined): PayloadChart[] {
     });
 }
 
+/** Keep source full IDs until each fresh budget render can test exact membership. */
+function prepareConflict(source: SignalConflict | null): PayloadConflict | null {
+  return source ? { positive: [...source.positive], negative: [...source.negative], omittedCount: { positive: 0, negative: 0 } } : null;
+}
+
+function projectConflict(source: PayloadConflict, kept: ReadonlySet<string>, sid: IdMapper): PayloadConflict {
+  const positive = source.positive.filter(id => kept.has(id));
+  const negative = source.negative.filter(id => kept.has(id));
+  return {
+    positive: positive.map(sid), negative: negative.map(sid),
+    omittedCount: { positive: source.positive.length - positive.length, negative: source.negative.length - negative.length },
+  };
+}
+
 function mapEvidence(proof: DirectionalEvidence, sid: IdMapper): DirectionalEvidence {
   return { ...proof, window: { ...proof.window }, thresholds: { ...proof.thresholds },
     perSystem: Object.fromEntries(Object.entries(proof.perSystem).map(([system, value]) => [system, { ...value!, signalIds: value!.signalIds.map(sid) }])) };
@@ -301,7 +321,7 @@ function buildTimelineCells(cells: TimelineCell[] | undefined, sid: IdMapper, ti
         activityAgreement: d.activityAgreement ?? d.consensus,
         directionalEvidence: proof,
         systems: Object.keys(d.perSystem ?? {}).sort() as SystemId[],
-        conflict: d.conflict,
+        conflict: prepareConflict(d.conflict),
         topSignalIds: (d.topSignals ?? []).map((s) => sid(s.id)),
       }; }),
   }));
@@ -328,7 +348,7 @@ function buildQuestion(answer: QuestionAnswer, sid: IdMapper): PayloadQuestion {
       activityAgreement: w.activityAgreement ?? w.consensus,
       highConsensus: consensus >= HIGH_CONSENSUS_MIN_SYSTEMS,
       directionalEvidence: proofs,
-      conflict: w.conflict,
+      conflict: w.conflict?.map(conflict => ({ ...prepareConflict(conflict)!, domain: conflict.domain })) ?? null,
       supportSignalIds: w.supportSignals.map((s) => sid(s.id)),
       riskSignalIds: w.riskSignals.map((s) => sid(s.id)),
     }; }),
@@ -354,13 +374,26 @@ export function sensitiveParts(report: ReportLike): SensitiveStrings[] {
 
 // ─── main ───────────────────────────────────────────────────────────────────
 
+/** Internal compatibility projection; Report7 completeness does not change AI selection. */
+export function selectInterpretationReport(report: ReportLike): ReportLike {
+  if ((report.schemaVersion ?? 0) < 7 || !report.timeline) return report;
+  const selected = new Set([...report.timeline.years, ...report.timeline.months]
+    .flatMap(cell => cell.domains.flatMap(domain => domain.topSignals.map(signal => signal.id))));
+  return { ...report, signals: report.signals?.filter(signal => selected.has(signal.id)) };
+}
+
 export function buildInterpretationPayload(report: ReportLike, options: BuildPayloadOptions = {}): BuiltPayload {
+  return buildInterpretationPayloadFromSelection(selectInterpretationReport(report), options);
+}
+
+/** Internal builder for copyPrompt, which fixes selection before level/refill trimming. */
+export function buildInterpretationPayloadFromSelection(report: ReportLike, options: BuildPayloadOptions = {}): BuiltPayload {
   const budgeted = options.budget !== false;
   const maxChars = budgeted ? (options.maxChars ?? DEFAULT_MAX_PAYLOAD_CHARS) : Number.POSITIVE_INFINITY;
   const reportedMax = Number.isFinite(maxChars) ? maxChars : null;
   const answer = options.question ?? null;
 
-  // All candidate signals: report.signals ∪ question source signals (de-duplicated by id).
+  // All candidate signals: selected Report signals ∪ question source signals (de-duplicated by id).
   const byId = new Map<string, Signal>();
   for (const s of report.signals ?? []) if (s && typeof s.id === 'string') byId.set(s.id, s);
   const protectedIds = new Set<string>();
@@ -438,6 +471,7 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
     for (const cell of [...candidate.timeline.years, ...candidate.timeline.months]) {
       for (const d of cell.domains) {
         d.topSignalIds = filterIds(d.topSignalIds);
+        if (d.conflict) d.conflict = projectConflict(d.conflict, keptIds, sid);
         d.directionalEvidence = trimProof(d.directionalEvidence);
         Object.assign(d, proofStats(d.directionalEvidence));
       }
@@ -446,6 +480,7 @@ export function buildInterpretationPayload(report: ReportLike, options: BuildPay
   if (candidate.question) {
     for (const w of candidate.question.top) {
       w.supportSignalIds = filterIds(w.supportSignalIds);
+      if (w.conflict) w.conflict = w.conflict.map(conflict => ({ ...projectConflict(conflict, keptIds, sid), domain: conflict.domain }));
       w.riskSignalIds = filterIds(w.riskSignalIds);
       w.directionalEvidence = w.directionalEvidence.map(proof => trimProof(proof)!).filter(Boolean);
       w.consensus = Math.max(0, ...w.directionalEvidence.map(proof => proofStats(proof).consensus));

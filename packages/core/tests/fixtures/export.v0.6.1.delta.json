@@ -1,0 +1,23 @@
+{
+  "version": "0.6.1",
+  "decision": "D-046",
+  "reason": "Issue #50 only advances core and Report versions in the manifest; every exported file hash and signalCount remains pinned to the #67 output.",
+  "changes": [
+    {
+      "path": [
+        "versions",
+        "coreVersion"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "versions",
+        "reportSchemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    }
+  ]
+}

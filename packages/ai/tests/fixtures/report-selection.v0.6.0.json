@@ -1,0 +1,72 @@
+{
+  "200k": {
+    "hash": "6ba2b7d4da6dc45ccd1d54d001101846b0f545d4bf94b8cec633ae1735bfd80a",
+    "kept": 347,
+    "missing": [
+      "sig_3bee8b7fc6566c9f",
+      "sig_aef5567a4765c516",
+      "sig_d75e6211d128b256"
+    ]
+  },
+  "200k-short": {
+    "hash": "38f7230cd732141aec8995cca471879a5a351e1a75e703082707d23e6ba2a6dc",
+    "kept": 372,
+    "missing": [
+      "sig_0a6bdfed8c1ec42e",
+      "sig_1492a630d3344fae",
+      "sig_19a8ddf757a6bf3b",
+      "sig_1c92f5d0cc09605c",
+      "sig_2a33d168c3bd9f11",
+      "sig_3bee8b7fc6566c9f",
+      "sig_3c3a90d04cbc9c04",
+      "sig_969bab0065717564",
+      "sig_9be1ad5dcae4ed33",
+      "sig_9cea905f072e3843",
+      "sig_a9fb68ebc3513db4",
+      "sig_aef5567a4765c516",
+      "sig_bc296dcfcc31bed6",
+      "sig_c050f81784811c78",
+      "sig_d75e6211d128b256",
+      "sig_fe000316e33b83d7"
+    ]
+  },
+  "200k-question": {
+    "hash": "4989f0d650c497121539cdf71f8a067d6befd1639eab4e606948b90b90b7f14f",
+    "kept": 346,
+    "missing": [
+      "sig_3bee8b7fc6566c9f",
+      "sig_3c3a90d04cbc9c04",
+      "sig_aef5567a4765c516",
+      "sig_d75e6211d128b256"
+    ]
+  },
+  "local": {
+    "hash": "c7ab8695ca8bbe31c2ff5e6f43eb5a8fb80a0a7f1b81fcff35ed72d1ff908b64",
+    "kept": 511,
+    "missing": [
+      "sig_3bee8b7fc6566c9f",
+      "sig_aef5567a4765c516",
+      "sig_d75e6211d128b256"
+    ]
+  },
+  "copy-16000-false": {
+    "hash": "db0b261dec5278d32bbf393e9f52037dcf336f8bc73b45d7a0307f2604e5a77e",
+    "kept": 51,
+    "chars": 15966
+  },
+  "copy-16000-true": {
+    "hash": "ab3cf35654c6961f7a35927b243a0aa7607d5bd7eec42e100a0a6927b39bb31d",
+    "kept": 43,
+    "chars": 15815
+  },
+  "copy-24000-false": {
+    "hash": "82ce3d36db613c8497abb1773cf1233a21f36083dd571dcc30620b5a746de027",
+    "kept": 13,
+    "chars": 23741
+  },
+  "copy-24000-true": {
+    "hash": "27f6b562fe9a5f7e16efe25bdaf7db2ef255ead58f15832daed1781e817dc725",
+    "kept": 9,
+    "chars": 23843
+  }
+}

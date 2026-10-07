@@ -59,7 +59,7 @@ describe('run-local immutable bazi natal basis', () => {
     expect(report.timeline.systems).toContain('bazi');
     expect(p).toHaveBeenCalledTimes(1);
     expect(l).toHaveBeenCalledTimes(1);
-    expect(REPORT_SCHEMA_VERSION).toBe(6);
+    expect(REPORT_SCHEMA_VERSION).toBe(7);
     expect(report).not.toHaveProperty('snapshotId');
     expect(publicCore).not.toHaveProperty('createBaziNatalBasisProvider');
     expect(publicCore).not.toHaveProperty('calculateBaziWithNatalBasis');

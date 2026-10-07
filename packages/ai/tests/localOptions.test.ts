@@ -80,8 +80,8 @@ describe('對話助手與 MCP 指示（M3-04）', () => {
 
 describe('實驗性系統不計入高共識；低分帶不硬推薦（M3 追加）', () => {
   test('版本字串已升版', () => {
-    expect(COPY_PROMPT_VERSION).toBe('copy-v4');
-    expect(INTERPRET_PROMPT_VERSION).toBe('interpret-v3');
+    expect(COPY_PROMPT_VERSION).toBe('copy-v5');
+    expect(INTERPRET_PROMPT_VERSION).toBe('interpret-v4');
   });
 
   test('兩份 prompt 都有 experimental 規則與「沒有特別突出」規則', () => {
