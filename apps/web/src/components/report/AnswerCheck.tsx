@@ -87,9 +87,9 @@ export function AnswerCheck({ report }: { report: Report }) {
     setBusy(true);
     setResult(null);
     setFailure(null);
-    if (lookupRef.current?.report !== report) lookupRef.current = { report, lookup: reportSignalLookup(report) };
-    const lookup = lookupRef.current.lookup;
     try {
+      if (lookupRef.current?.report !== report) lookupRef.current = { report, lookup: reportSignalLookup(report) };
+      const lookup = lookupRef.current.lookup;
       // Reuse the authoritative citation parser without any expensive lookup work.
       const ids = checkAnswer(text, { signalLookup: () => null }).citedIds;
       await lookup.prepare(ids, controller.signal);
