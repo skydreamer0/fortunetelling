@@ -1,7 +1,8 @@
 /**
  * @fileoverview Numerology calculator — adapter over the v1 `NumerologyEngine` (V1-03).
  *
- * Uses the birthplace's local civil date (ARCHITECTURE-V2 §3.4); works with
+ * Uses the input profile's local calendar date (ARCHITECTURE-V2 §3.4), not a
+ * clock-gap-shifted date; works with
  * an unknown birth time. Name-derived numbers (expression / soulUrge /
  * personality) are null when the name has no Latin letters — the engine's
  * warning is passed through. Personal year/month are evaluated at `asOf`.
@@ -11,7 +12,8 @@
 
 import { NumerologyEngine } from '../../engines/NumerologyEngine';
 import type { TimeContext } from '../../time/types';
-import { categoryValues, componentValue, normalizeAsOf, timeContextToBirthData } from '../birthData';
+import { categoryValues, componentValue, normalizeAsOf } from '../birthData';
+import { profileDateToBirthData } from '../profileDateBirthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';
 import { displayNumber } from './numerology';
 
@@ -85,7 +87,7 @@ export const numerologyCalculator: Calculator<NumerologyChart> = {
   requires: { time: false, location: false, name: false },
   calculate(ctx: TimeContext, config: CalculatorConfig = {}): ChartResult<NumerologyChart> {
     const { date } = normalizeAsOf(config.asOf, 'numerology');
-    const birth = timeContextToBirthData(ctx, { name: config.name });
+    const birth = profileDateToBirthData(ctx, { name: config.name });
     const result = new NumerologyEngine({ asOf: date }).run(birth);
     const components = result.components as Component[];
     return {

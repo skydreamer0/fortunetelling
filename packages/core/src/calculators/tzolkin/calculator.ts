@@ -2,7 +2,8 @@
  * @fileoverview Tzolkin (Dreamspell) calculator — adapter over the v1
  * `DreamspellEngine` (V1-03).
  *
- * Uses the birthplace's local civil date (ARCHITECTURE-V2 §3.4, anchor D-004);
+ * Uses the input profile's local calendar date (ARCHITECTURE-V2 §3.4, anchor D-004),
+ * not a clock-gap-shifted date;
  * no time, location or asOf needed.
  *
  * @module calculators/tzolkin/calculator
@@ -10,7 +11,8 @@
 
 import { DreamspellEngine } from '../../engines/DreamspellEngine';
 import type { TimeContext } from '../../time/types';
-import { componentValue, timeContextToBirthData } from '../birthData';
+import { componentValue } from '../birthData';
+import { profileDateToBirthData } from '../profileDateBirthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';
 import type { Castle, KinRef } from './tzolkin';
 
@@ -60,7 +62,7 @@ export const tzolkinCalculator: Calculator<TzolkinChart> = {
   version: TZOLKIN_CALCULATOR_VERSION,
   requires: { time: false, location: false, name: false },
   calculate(ctx: TimeContext, config: CalculatorConfig = {}): ChartResult<TzolkinChart> {
-    const birth = timeContextToBirthData(ctx, { name: config.name });
+    const birth = profileDateToBirthData(ctx, { name: config.name });
     const result = new DreamspellEngine().run(birth);
     const components = result.components as Component[];
     return {
