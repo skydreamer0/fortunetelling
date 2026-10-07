@@ -190,18 +190,18 @@ export interface BuildPayloadOptions {
   redact?: boolean;
   /**
    * 是否套用字數預算（超過就先丟強度最低的訊號）。預設 true（向下相容）。
-   * 設為 false 等同不設上限（`truncation.maxChars` 為 null）。
+   * 設為 false 等同不設上限（`truncation.maxChars` 為 null），仍使用同一 AI 候選投影。
    */
   budget?: boolean;
   /**
    * 給模型看的訊號編號用短編號（`sig_` + 8 位）；與其他訊號碰撞的維持完整編號（碰撞以
-   * report.signals ∪ 問事來源訊號為範圍判斷）。預設 false（完整編號、API 路徑不變）。
+   * AI 已選的 Report 訊號 ∪ 問事來源訊號為範圍判斷）。預設 false（完整編號、API 路徑不變）。
    * `BuiltPayload.signalIds` 永遠是完整編號。
    */
   shortIds?: boolean;
 }
 
-/** 本機使用的選項：不去識別化、不限字數。對外送出的路徑不得使用。 */
+/** 本機使用的選項：同一 AI 候選投影，不去識別化、不限字數。對外送出的路徑不得使用。 */
 export const LOCAL_PAYLOAD_OPTIONS = Object.freeze({ redact: false, budget: false }) satisfies BuildPayloadOptions;
 
 export interface BuiltPayload {
@@ -354,13 +354,26 @@ export function sensitiveParts(report: ReportLike): SensitiveStrings[] {
 
 // ─── main ───────────────────────────────────────────────────────────────────
 
+/** Internal compatibility projection; Report7 completeness does not change AI selection. */
+export function selectInterpretationReport(report: ReportLike): ReportLike {
+  if ((report.schemaVersion ?? 0) < 7 || !report.timeline) return report;
+  const selected = new Set([...report.timeline.years, ...report.timeline.months]
+    .flatMap(cell => cell.domains.flatMap(domain => domain.topSignals.map(signal => signal.id))));
+  return { ...report, signals: report.signals?.filter(signal => selected.has(signal.id)) };
+}
+
 export function buildInterpretationPayload(report: ReportLike, options: BuildPayloadOptions = {}): BuiltPayload {
+  return buildInterpretationPayloadFromSelection(selectInterpretationReport(report), options);
+}
+
+/** Internal builder for copyPrompt, which fixes selection before level/refill trimming. */
+export function buildInterpretationPayloadFromSelection(report: ReportLike, options: BuildPayloadOptions = {}): BuiltPayload {
   const budgeted = options.budget !== false;
   const maxChars = budgeted ? (options.maxChars ?? DEFAULT_MAX_PAYLOAD_CHARS) : Number.POSITIVE_INFINITY;
   const reportedMax = Number.isFinite(maxChars) ? maxChars : null;
   const answer = options.question ?? null;
 
-  // All candidate signals: report.signals ∪ question source signals (de-duplicated by id).
+  // All candidate signals: selected Report signals ∪ question source signals (de-duplicated by id).
   const byId = new Map<string, Signal>();
   for (const s of report.signals ?? []) if (s && typeof s.id === 'string') byId.set(s.id, s);
   const protectedIds = new Set<string>();

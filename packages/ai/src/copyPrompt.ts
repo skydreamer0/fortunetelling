@@ -22,7 +22,8 @@
 import type { QuestionAnswer, Signal, Timeline, TimelineCell } from '@fortune/core';
 import { listQuestionCategories, type SensitiveStrings } from './core-pure';
 import {
-  buildInterpretationPayload,
+  buildInterpretationPayloadFromSelection,
+  selectInterpretationReport,
   scrubReport,
   sensitiveParts,
   type BuiltPayload,
@@ -288,6 +289,8 @@ function cleanQuestion(text: string | undefined, secrets: SensitiveStrings[]): s
 }
 
 export function buildCopyPrompt(report: ReportLike, options: CopyPromptOptions = {}): CopyPrompt {
+  // Fix the legacy AI selection before level trimming or top-reference refill.
+  report = selectInterpretationReport(report);
   const maxChars = options.maxChars ?? DEFAULT_COPY_MAX_CHARS;
   const secrets = sensitiveParts(report);
   const question = cleanQuestion(options.question, secrets);
@@ -302,19 +305,19 @@ export function buildCopyPrompt(report: ReportLike, options: CopyPromptOptions =
     const monthsDropped = hadMonths && level >= 3;
     let trimmed = trimReport(report, level);
     // Size of everything except the JSON, with a worst-case truncation note.
-    const probe = buildInterpretationPayload(trimmed, { question: answer, maxChars: 0, shortIds: true });
+    const probe = buildInterpretationPayloadFromSelection(trimmed, { question: answer, maxChars: 0, shortIds: true });
     const worst = { ...probe.payload.truncation, signalsKept: 99999, signalsTotal: 99999, droppedMaxIntensity: 0.99, overBudget: true };
     const worstNote = truncationNote({ ...probe.payload, truncation: worst }, level, monthsDropped);
     let budget = maxChars - assemble({ focus, question, payload: { ...probe, payloadJson: '' }, note: worstNote }).length;
     const render = (b: BuiltPayload) =>
       assemble({ focus, question, payload: b, note: truncationNote(b.payload, level, monthsDropped) });
 
-    let built = buildInterpretationPayload(trimmed, { question: answer, maxChars: Math.max(0, budget), shortIds: true });
+    let built = buildInterpretationPayloadFromSelection(trimmed, { question: answer, maxChars: Math.max(0, budget), shortIds: true });
     // Timeline cells list top ids of signals that may be dropped; restricting them to the
     // kept set shrinks the fixed part so more signals fit. Kept sets only grow → converges.
     for (let pass = 0; pass < 4; pass += 1) {
       const restricted = restrictTopSignals(trimmed, built.signalIds);
-      const next = buildInterpretationPayload(restricted, { question: answer, maxChars: Math.max(0, budget), shortIds: true });
+      const next = buildInterpretationPayloadFromSelection(restricted, { question: answer, maxChars: Math.max(0, budget), shortIds: true });
       if (next.signalIds.size < built.signalIds.size) break;
       const grew = next.signalIds.size > built.signalIds.size;
       trimmed = restricted;
@@ -325,7 +328,7 @@ export function buildCopyPrompt(report: ReportLike, options: CopyPromptOptions =
     // Safety net: shrink the JSON budget until the whole text fits.
     for (let i = 0; i < 5 && text.length > maxChars && budget > 0; i += 1) {
       budget -= text.length - maxChars;
-      built = buildInterpretationPayload(trimmed, { question: answer, maxChars: Math.max(0, budget), shortIds: true });
+      built = buildInterpretationPayloadFromSelection(trimmed, { question: answer, maxChars: Math.max(0, budget), shortIds: true });
       text = render(built);
     }
     const t = built.payload.truncation;

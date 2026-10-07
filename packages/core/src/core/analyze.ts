@@ -21,7 +21,7 @@ import { SummaryBuilder } from '../analysis/SummaryBuilder';
 import { InsightBuilder } from '../analysis/InsightBuilder';
 import { createDefaultRegistry } from '../engines/index';
 import { createTimeContext } from '../time/createTimeContext';
-import { buildTimelineWithBaziNatalBasis, TIMELINE_SYSTEMS } from '../timeline/buildTimeline';
+import { buildTimelineEvidenceWithBaziNatalBasis, TIMELINE_SYSTEMS } from '../timeline/buildTimeline';
 import { createBaziNatalBasisProvider, type BaziNatalBasisProvider } from '../calculators/bazi/natalBasis';
 import { SYSTEM_IDS } from '../signals/types';
 import { buildConsensus } from '../consensus/buildConsensus';
@@ -55,7 +55,7 @@ export { VERSION } from './version';
  * Version of the `Report` shape itself, independent of code version.
  * Consumers should check this before deserializing stored reports.
  */
-export const REPORT_SCHEMA_VERSION = 6;
+export const REPORT_SCHEMA_VERSION = 7;
 
 /** Timeline systems that need the Swiss Ephemeris; sync `analyze()` never initialises it. */
 const EPHEMERIS_SYSTEMS: SystemId[] = ['jyotish', 'humanDesign'];
@@ -126,7 +126,7 @@ export interface Report {
   honesty: { languageRules: { layer: LayerCode; name: string; rule: string }[]; violations: Violation[]; pending: boolean };
   /** v4: TimeContext (profile without name) + `conventions` */
   timeContext: ReportTimeContext;
-  /** v4: every timeline `topSignals` entry, deduped by id, sorted by id */
+  /** v7: complete timeline evidence before display top-N; unique and sorted by id. v4–v6 contained only displayed signals. */
   signals: Signal[];
   /** v4: sync `buildTimeline` (5 years + 12 months of the asOf year) */
   timeline: Timeline;
@@ -244,10 +244,10 @@ export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf
   report.evolution.pending = false;
 
   // ── v4：時間脈絡、時間軸、訊號——先於誠實稽核填入，讓訊號文字受檢 ──
-  const timeline = buildSyncTimeline(ctx, asOfStr, birth.name, options, baziNatalBasis);
+  const { timeline, signals } = buildSyncTimeline(ctx, asOfStr, birth.name, options, baziNatalBasis);
   report.timeContext = buildReportTimeContext(ctx, options, birthplaceSource);
   report.timeline = timeline;
-  report.signals = collectSignals(timeline);
+  report.signals = signals;
   // ── v5：跨系統共識／矛盾摘要（只重排 timeline 已有的判定，不另算分數，D-033）──
   report.consensus = buildConsensus(timeline);
 
@@ -266,8 +266,8 @@ export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf
  * reason 'time_unknown' (no birth time) or 'ephemeris_not_initialised'; use
  * `buildTimelineAsync(ctx, { asOf })` for the full timeline.
  */
-function buildSyncTimeline(ctx: TimeContext, asOf: string, name: string, options: AnalysisTimeOptions, baziNatalBasis: BaziNatalBasisProvider): Timeline {
-  const timeline = buildTimelineWithBaziNatalBasis(ctx, {
+function buildSyncTimeline(ctx: TimeContext, asOf: string, name: string, options: AnalysisTimeOptions, baziNatalBasis: BaziNatalBasisProvider): { timeline: Timeline; signals: Signal[] } {
+  const { timeline, signals } = buildTimelineEvidenceWithBaziNatalBasis(ctx, {
     asOf,
     ...options,
     systems: TIMELINE_SYSTEMS.filter(s => !EPHEMERIS_SYSTEMS.includes(s)),
@@ -276,7 +276,7 @@ function buildSyncTimeline(ctx: TimeContext, asOf: string, name: string, options
   const reason: TimelineSkipReason = ctx.utc === null ? 'time_unknown' : 'ephemeris_not_initialised';
   const skipped: SkippedSystem[] = [...timeline.skippedSystems, ...EPHEMERIS_SYSTEMS.map(system => ({ system, reason }))];
   timeline.skippedSystems = SYSTEM_IDS.flatMap(id => skipped.filter(s => s.system === id));
-  return timeline;
+  return { timeline, signals };
 }
 
 /**
@@ -328,15 +328,3 @@ function buildReportTimeContext(ctx: TimeContext, options: AnalysisTimeOptions, 
   };
 }
 
-/** Every timeline `topSignals` entry (years + months), deduped by id, sorted by id. */
-function collectSignals(timeline: Timeline): Signal[] {
-  const byId = new Map<string, Signal>();
-  for (const cell of [...timeline.years, ...timeline.months]) {
-    for (const domain of cell.domains) {
-      for (const signal of domain.topSignals) {
-        if (!byId.has(signal.id)) byId.set(signal.id, signal);
-      }
-    }
-  }
-  return [...byId.values()].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-}

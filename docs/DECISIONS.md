@@ -554,3 +554,56 @@ conversation `chat-v3`、interpret `interpret-v3`、copy `copy-v4`。Question ca
 依使用者指示停用，沒有啟用、觸發、以新環境替代或修改安全設定。最終精確 head 驗收記錄於
 [Draft PR #67](https://github.com/skydreamer0/fortunetelling/pull/67)。LOCKED FORECAST、封存預測與
 既有算法不修改；新增 schema 不代表预測準確度提升。
+
+## D-046 Report 完整訊號證據與顯示 top N 分離（#50）
+
+**問題：** Report v4–v6 的 `signals` 只收 timeline 各格的 `topSignals` 聯集，
+`perSystem.signalIds`、方向證據與矛盾卻保留未裁切的 IDs。1991-10-05 14:00 female、
+asOf 2026-10-07 的既有合成測試輸入只有506個 signals，737個引用中缺231；
+1990-06-15 23:30 female、civil/early、asOf 2027-01-15 則缺256個，其中3個矛盾引用也查不到。
+
+**決策：** Report7 的 `signals` 是同次 timeline build 已評估的完整訊號庫，依 id 去重、
+排序並保留完整內容；各格 `topSignals` 仍僅控制顯示數量。私有 build/Cell 接收 run-local Map，
+在 top N 前收集原始訊號；內部 `buildTimelineEvidenceWithBaziNatalBasis` 回傳
+`{ timeline, signals }` 給 analyze，沒有再次呼叫計算器或規則。原 public `buildTimeline`、
+TimelineOptions 與既有本命共用 wrapper 的契約保持不變，不新增 callback 或全域狀態。
+新增 wrapper 不經 public barrel 匯出。這是 #27 完整來源與顯示分離的有限修補，尚未實作
+Fact V2、snapshotId、evidenceGroup、SchoolPack 或跨報告證據識別。
+
+**版本與相容：** core 0.6.1 是訊號可解析性的 bugfix；Report7 明確區別完整性契約，
+舊 Report4–6 不能倒稱證據完整，也不自動補造或重排其缺失訊號。Timeline2、Consensus2、
+Signal 格式／id、規則／算法不改。原 report golden 與既有所有 delta 留存，新增
+`reportGolden.v0.6.1.delta.json` 的34個精確 before→after section，僅 core版本、Report版本、
+signals 改變；完整timeline／consensus／排盤／honesty section 不变。
+portable export 與 MCP 原本就用 Infinity 建完整資料，所以不誤稱它們有此缺口；
+export 六個檔案 hashes 與1191 signalCount全部不變，新增delta只改manifest兩個版本欄位。
+
+**驗收：** 真鏈先紅7測為1 pass／6 fail，再修到7/7通過。
+涵蓋所有 timeline top/perSystem/directional/conflict 与 consensus各side/headline訊號引用，
+逐個核 system、domain、完整 grain/start/end 與原始內容；JSON roundtrip後仍可解析。
+topN=0／1／預設／Infinity 的完整庫、分數與proof完全相同，只有顯示清單不同。
+準確八字 pillars／luck各一次；三種八字／紫微規則每種仍只評估5年＋12月共17次。
+另涵蓋unknown time、不同clock/子時/asOf的A/B/A隔離、輸出可變性與獨立Infinity參照。
+新增資料的Report容量、AI預算與既有回歸另由作者及非作者獨立核對；不提高既有容量上限。
+最終 exact-head 全套與獨立驗收見 [Draft PR #68](https://github.com/skydreamer0/fortunetelling/pull/68)。
+
+**界線與既有出口限制：** #50 的AC是 Report 本身的引用完整性。AI payload 是獨立裁切格式：
+既有實作沒有同步 map/trim timeline conflict 的 IDs，低預算與shortIds路徑仍可能有懸空／
+未縮短 conflict引用；此問題在 #67 基線已存在，本片記為 **NOT FIXED**，需獨立後續修正。
+部分完整Report的不可再縮payload metadata已超過60k／70k，既有API會回 `overBudget=true`；
+這不等於所有預算必然可容納。獨審42組容量案例中，copy prompt在16k／24k均在cap內；
+直接改用完整庫會讓civil/early的一個200k案例因選材改變，懸空conflict引用3→4，
+因此本片加入最小AI相容投影：Report7有timeline時，AI仍使用原topSignals聯集的IDs，
+從完整signals取內容，再聯集Question保護來源；舊Report或無timeline時保留原signals fallback。
+copyPrompt在任何level裁切／refill之前固定此投影，再走內部prepared builder，避免二次選材。
+public AI API保持既有exports，不新增選材option、不假裝Report6、不改caller。
+shortIds碰撞範圍與budget:false均只作用於此AI候選集；完整Report不等於AI摘要。
+新增基線literal hashes鎖定200k／short／Question／local與16k／24k copy輸出，只正規化宣告的
+Report schema6→7 metadata；先紅3項後修復。獨審42例在只正規化schema metadata後，payload/copy hashes、選材、字數與原缺ID全部零差異。
+這項相容處理消除新增惡化，既有conflict出口缺陷
+仍是NOT FIXED，不宣稱AI摘要已滿足完整Report的不變式。
+copy prompt沿既有fallback縮減，保留明確省略說明。
+本片不宣稱已修好所有派生格式或 #46 未知引用掃描的UI阻塞。
+
+本PR明列依賴 #67，保留其已驗收分支不動。Actions維持使用者指定的停用狀態，
+只在已批准workspace以官方Bun與frozen依賴驗證；LOCKED FORECAST與封存資料沒有改寫。

@@ -177,7 +177,7 @@ test('出生地解析：birthplace > cityId > 舊經緯度（Asia/Taipei）> 預
   assert.ok(approx.flags.some(f => f.code === 'near_shichen_boundary'));
 });
 
-test('timeline：5 年 + 12 月；jyotish／humanDesign 在同步 analyze 一律略過；signals 為 topSignals 去重聯集', SLOW, () => {
+test('timeline：5 年 + 12 月；jyotish／humanDesign 在同步 analyze 一律略過；signals 為完整證據庫，topSignals 只控制顯示', SLOW, () => {
   const report = analyze({ year: 1991, month: 10, day: 5, hour: 14, minute: 0, gender: 'female', name: 'Mei' }, { asOf: AS_OF });
   const { timeline, signals } = report;
   assert.equal(timeline.asOf, AS_OF);
@@ -195,7 +195,10 @@ test('timeline：5 年 + 12 月；jyotish／humanDesign 在同步 analyze 一律
   for (const cell of [...timeline.years, ...timeline.months]) {
     for (const d of cell.domains) for (const s of d.topSignals) top.add(s.id);
   }
-  assert.deepEqual([...top].sort(), ids);
+  assert.ok([...top].every(id => ids.includes(id as string)), 'displayed evidence exists in the complete store');
+  const referenced = new Set([...timeline.years, ...timeline.months].flatMap(c => c.domains.flatMap(d => Object.values(d.perSystem).flatMap(p => p!.signalIds))));
+  assert.deepEqual([...referenced].sort(), ids);
+  assert.ok(ids.length > top.size, 'fixture includes evidence outside display top N');
   assert.ok(signals.length > 0);
   assert.ok(signals.every(s => typeof s.evidence.text === 'string'));
 });
@@ -241,7 +244,7 @@ test('決定論、誠實稽核零違規、大小與效能', SLOW, () => {
 
 test('Report v5：consensus = buildConsensus(timeline)，v4 欄位不變', SLOW, () => {
   const report = analyze({ year: 1995, month: 7, day: 16, hour: 22, minute: 0, gender: 'male', cityId: 'tainan' }, { asOf: '2026-09-25' });
-  assert.equal(report.schemaVersion, 6);
+  assert.equal(report.schemaVersion, 7);
   assert.deepEqual(report.consensus, buildConsensus(report.timeline));
   assert.deepEqual(report.consensus.systems, ['bazi', 'ziwei', 'numerology']);
   assert.equal(report.consensus.years.length, report.timeline.years.length);

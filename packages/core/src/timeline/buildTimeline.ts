@@ -348,6 +348,7 @@ function buildCell(
   weightOf: (s: SystemId) => number,
   opts: TimelineOptions,
   bandCuts: BandCuts,
+  evidence?: Map<string, Signal>,
 ): TimelineCell {
   const byId = new Map<string, Signal>();
   for (const system of SYSTEM_IDS) {
@@ -355,6 +356,8 @@ function buildCell(
     if (!ev) continue;
     for (const s of ev(w)) if (!byId.has(s.id)) byId.set(s.id, s);
   }
+  // Preserve the same evaluated signals before display-only top-N truncation.
+  if (evidence) for (const [id, signal] of byId) if (!evidence.has(id)) evidence.set(id, signal);
   return cellFromSignals(w, [...byId.values()], weightOf, opts, bandCuts);
 }
 
@@ -431,7 +434,14 @@ export function buildTimelineWithBaziNatalBasis(ctx: TimeContext, opts: Timeline
   return buildTimelineInternal(ctx, opts, natalBasis);
 }
 
-function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider): Timeline {
+/** Internal report assembly: the public timeline API still returns only Timeline. */
+export function buildTimelineEvidenceWithBaziNatalBasis(ctx: TimeContext, opts: TimelineOptions, natalBasis: BaziNatalBasisProvider): { timeline: Timeline; signals: Signal[] } {
+  const evidence = new Map<string, Signal>();
+  const timeline = buildTimelineInternal(ctx, opts, natalBasis, evidence);
+  return { timeline, signals: [...evidence.values()].sort((a, b) => cmp(a.id, b.id)) };
+}
+
+function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider, evidence?: Map<string, Signal>): Timeline {
   const asOf = validateAsOf(opts?.asOf);
   const thresholds = resolveAgreementThresholds(opts);
   if (opts.useTrueSolarTime !== undefined && typeof opts.useTrueSolarTime !== 'boolean') {
@@ -468,11 +478,11 @@ function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBas
   const systemWeights: Partial<Record<SystemId, number>> = {};
   for (const s of systems) systemWeights[s] = weightOf(s);
 
-  const yearCells = Array.from({ length: years }, (_, i) => buildCell(yearWindow(firstYear + i), evaluators, weightOf, opts, bandCuts));
+  const yearCells = Array.from({ length: years }, (_, i) => buildCell(yearWindow(firstYear + i), evaluators, weightOf, opts, bandCuts, evidence));
   const monthCells =
     opts.includeMonths === false
       ? []
-      : Array.from({ length: 12 }, (_, i) => buildCell(monthWindow(Number(asOf.slice(0, 4)), i + 1), evaluators, weightOf, opts, bandCuts));
+      : Array.from({ length: 12 }, (_, i) => buildCell(monthWindow(Number(asOf.slice(0, 4)), i + 1), evaluators, weightOf, opts, bandCuts, evidence));
 
   return {
     schemaVersion: TIMELINE_SCHEMA_VERSION,

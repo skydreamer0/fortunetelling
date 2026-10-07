@@ -10,7 +10,13 @@
  * Anthropic client（`interpret`、`parseQuestion`、`createAnthropicComplete`…）是選用層，
  * 不在這裡匯出，請改用 `@fortune/ai/client`，避免主線帶進 `@anthropic-ai/sdk`。
  */
-export * from './payload';
+// Keep internal prepared-selection helpers out of the public AI API.
+export { PAYLOAD_VERSION, DEFAULT_MAX_PAYLOAD_CHARS, LOCAL_PAYLOAD_OPTIONS, PAYLOAD_NOTES,
+  scrubReport, sensitiveParts, buildInterpretationPayload } from './payload';
+export type { ReportComponentLike, ReportEngineLike, ReportLike, PayloadSignal,
+  PayloadChartComponent, PayloadChart, PayloadTimelineDomain, PayloadTimelineCell,
+  PayloadTimeline, PayloadRankedWindow, PayloadQuestion, PayloadTruncation,
+  InterpretationPayload, BuildPayloadOptions, BuiltPayload } from './payload';
 export * from './prompts';
 export * from './schema';
 export * from './vocab';

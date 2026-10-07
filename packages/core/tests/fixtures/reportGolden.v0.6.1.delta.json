@@ -1,0 +1,373 @@
+{
+  "version": "0.6.1",
+  "decision": "D-046",
+  "reason": "Issue #50: Report7 stores all same-build timeline signals before display top-N. Algorithm, score, timeline, consensus, source IDs and original fixtures unchanged.",
+  "changes": [
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "schemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "signals"
+      ],
+      "before": {
+        "sha256": "68f5c8e47e8c2c0a22b3b78464c236f1c01d22732c51928500c8414dfb418ba3",
+        "length": 213326
+      },
+      "after": {
+        "sha256": "7d6a72ba823c0c0938adcea7eea6684042d176f65f44cb2fe78496c83b1ff6ed",
+        "length": 335227
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "schemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "signals"
+      ],
+      "before": {
+        "sha256": "6c8611401f64941db6204208ca50ca2e0c04d77b2ad1b304cb6d83f53267af70",
+        "length": 222526
+      },
+      "after": {
+        "sha256": "d05604da5de79fab5eea2744d28f7ab1ee48af581f52441c30a5df05d67ec467",
+        "length": 346080
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "schemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "signals"
+      ],
+      "before": {
+        "sha256": "be6c796e0c5fa07bcfc02b236b4f42c3d6d8437447c6b4656e7d9ee2c920dda5",
+        "length": 226485
+      },
+      "after": {
+        "sha256": "fcba89ad12a8a815e1a51d13dbd550355c17c2875c873a86b4bee6e0596ee603",
+        "length": 342143
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "schemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "signals"
+      ],
+      "before": {
+        "sha256": "188e19d5b324f3cf5a3c648fa8fa2b091e86aa58edbc87cb8413ec27aa66a1a7",
+        "length": 217561
+      },
+      "after": {
+        "sha256": "d197e2cbeb6a78f122a95fb438e82e6d121a1880a1e859aaba637183f1a094c1",
+        "length": 339815
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "schemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "signals"
+      ],
+      "before": {
+        "sha256": "bde58d0a2d35959ee5b14a50c7b0b1a149a6a3d8424ef6017dd033541ad7291c",
+        "length": 223894
+      },
+      "after": {
+        "sha256": "df9c17b585a5a58f17d697683245ddda678bd5f5d6623d172bdbb8684d7ad657",
+        "length": 351049
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "schemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "signals"
+      ],
+      "before": {
+        "sha256": "f6483acd710230cd0d2fcfb0dd760d941285649a0102524a31ee712a54022e80",
+        "length": 216607
+      },
+      "after": {
+        "sha256": "5ca25aadd30071d2606ba5dd2a2bce73144f3afd8562f05cfcbb0d3e9d54556d",
+        "length": 345378
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "schemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "schemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "signals"
+      ],
+      "before": {
+        "sha256": "6c91d8b8c24e86032fef0750b1e1efa59e095d0b5e8ab154e30d0f116b188d85",
+        "length": 219083
+      },
+      "after": {
+        "sha256": "b6d53c2330007a967a84752ff79279f319a9ab6e7ef90a378a1923462f62e8fc",
+        "length": 359308
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "schemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "signals"
+      ],
+      "before": {
+        "sha256": "a5c14115468bdc24d017ad733bf1b2b1c577b3571e7c9b5a44ddb2d479c07059",
+        "length": 217078
+      },
+      "after": {
+        "sha256": "49215eb14917ee2ac5128118c6fe88ec344555eaaccaf9b7e80cf4fb9cde876c",
+        "length": 396252
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "schemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "signals"
+      ],
+      "before": {
+        "sha256": "242822ea53a7d2c2af674102706a6e0bcee15319b3356032dd52c44c0a7aa6c4",
+        "length": 218281
+      },
+      "after": {
+        "sha256": "982b1dabf6470a15641815cbb5282ebf3bec35969d061a87fda291d3422f8f6c",
+        "length": 335421
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "schemaVersion"
+      ],
+      "before": 6,
+      "after": 7
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "signals"
+      ],
+      "before": {
+        "sha256": "e283a510dbd467bdbde49930209ae1eac7bc36f0e07bf41006cbc7e4fba78925",
+        "length": 205690
+      },
+      "after": {
+        "sha256": "10af7b82b4218a9f4c2205138c0c7847ccecd77b556a7f8b9f69e761421761ef",
+        "length": 311615
+      }
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-1991-1986",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-ny-unknown",
+        "version"
+      ],
+      "before": "0.6.0",
+      "after": "0.6.1"
+    }
+  ]
+}

@@ -297,9 +297,9 @@ describe('consensus (Report v5)', () => {
     expect(html.match(/data-key="year:/g)).toHaveLength(50);
   });
 
-  test('the live analyze() report is v5 and renders the block', () => {
+  test('the live Report7 renders the consensus block', () => {
     const report = analyze(INPUT);
-    expect(report.schemaVersion).toBe(6);
+    expect(report.schemaVersion).toBe(7);
     expect(selectConsensus(report)).not.toBeNull();
   });
 });
