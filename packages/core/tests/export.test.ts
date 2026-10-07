@@ -127,9 +127,14 @@ describe('golden', () => {
     expect(recorded.versions.coreVersion).toBe('0.5.0');
     recorded.versions.coreVersion = '0.5.3';
     for (const change of [...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes, ...calendarValidationDelta.changes, ...dateOnlyDelta.changes]) {
-      const [group, key] = change.path;
-      expect(recorded[group][key]).toEqual(change.before);
-      recorded[group][key] = structuredClone(change.after);
+      let parent = recorded;
+      for (const key of change.path.slice(0, -1)) {
+        expect(parent[key]).toBeDefined();
+        parent = parent[key];
+      }
+      const key = change.path.at(-1)!;
+      expect(parent[key]).toEqual(change.before);
+      parent[key] = structuredClone(change.after);
     }
     expect(text).toBe(`${JSON.stringify(recorded, null, 2)}\n`);
   });
