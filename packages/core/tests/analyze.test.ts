@@ -70,7 +70,7 @@ test('Report Schema v5 = v4 欄位 + consensus（v4 = v3 + timeContext／signals
   assert.equal(report.honesty.pending, false);
   assert.equal(report.schemaVersion, 7);
   assert.equal(REPORT_SCHEMA_VERSION, 7);
-  assert.equal(VERSION, '0.6.1');
+  assert.equal(VERSION, '0.6.2');
   for (const key of V4_KEYS) assert.ok(key in report, `v4 key ${key} missing`);
   assert.deepEqual(Object.keys(report).filter(k => !V3_KEYS.includes(k)).sort(), ['consensus', 'signals', 'timeContext', 'timeline']);
   assert.deepEqual(Object.keys(report).filter(k => !V4_KEYS.includes(k)), ['consensus']);

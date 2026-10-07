@@ -1,3 +1,4 @@
+import asOfDelta from './fixtures/export.v0.6.2.delta.json';
 import evidenceDelta from './fixtures/export.v0.6.1.delta.json';
 import agreementDelta from './fixtures/export.v0.6.0.delta.json';
 import { describe, expect, test } from 'bun:test';
@@ -123,7 +124,7 @@ describe('golden', () => {
     const recorded = JSON.parse(original);
     expect(recorded.versions.coreVersion).toBe('0.5.0');
     recorded.versions.coreVersion = '0.5.3';
-    for (const change of [...agreementDelta.changes, ...evidenceDelta.changes]) {
+    for (const change of [...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes]) {
       const [group, key] = change.path;
       expect(recorded[group][key]).toEqual(change.before);
       recorded[group][key] = structuredClone(change.after);

@@ -298,7 +298,10 @@ export class ZiweiEngine extends BaseEngine {
     const target = this.asOf ? new Date(this.asOf) : new Date();
     let horoscope: ReturnType<Astrolabe['horoscope']> | null = null;
     try {
-      horoscope = astrolabe.horoscope(target);
+      // iztro/lunar-lite reads Date fields in the host timezone. Pass the same
+      // UTC calendar components used by the report's asOf label, preserving
+      // UTC time-of-day while avoiding a host-dependent move across lunar New Year.
+      horoscope = astrolabe.horoscope(target.toISOString().slice(0, 19).replace('T', ' '));
     } catch (err) {
       result.warn(`運限計算失敗（${target.toISOString().slice(0, 10)}）：${(err as Error).message}`);
     }

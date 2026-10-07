@@ -660,3 +660,43 @@ D-046的NOT FIXED是當時Payload2歷史紀錄；此有限修復從Payload3起�
 最終精確head的本地全套、獨立評審與容量矩陣見
 [Draft PR #69](https://github.com/skydreamer0/fortunetelling/pull/69)。本PR依賴#68（間接#67），
 兩個base分支零改；Actions依使用者指示停用，僅用既有批准workspace/Bun與frozen依賴。
+
+## D-048 紫微 asOf 的 UTC 日期適配與主機時區一致性（#26／#54 有限片）
+
+**缺陷：** Report.asOf 及 calculator 的 normalizeAsOf 已用 `Date.toISOString()` 的UTC日，
+但 ZiweiEngine 把原Date物件交給iztro；鎖定依賴 lunar-lite 0.2.8 的 normalizeDateStr(Date)
+會讀主機本地getFullYear/getMonth/getDate/getHours。相同輸入與同一asOf標記因此可能算到不同農曆年：
+
+| asOf輸入 | 宣告UTC日 | 原錯誤主機 | 原結果 | 修後 |
+| --- | --- | --- | --- | --- |
+| 2026-02-17／UTC午夜Date | 2026-02-17 | America/New_York | 乙巳，虛歲退一年 | 丙午，與UTC一致 |
+| 2026-02-16T23:30:00Z | 2026-02-16 | Asia/Taipei、Pacific/Apia | 丙午，虛歲提前一年 | 乙巳，與UTC一致 |
+| 含正／負offset的ISO timestamp | toISOString對應日 | 跨日主機 | 主盤與標記可能不同日 | 與同一UTC日一致 |
+
+**最小修法：** 僅在 ZiweiEngine 的 horoscope 呼叫，將既有target轉成
+`target.toISOString().slice(0,19).replace('T',' ')`。lunar-lite對此字串直接拆UTC年月日及時分秒，
+不再由主機時區換日；保留原UTC時間分量到秒（原Date分支亦只取到秒）。
+不修改asOf parser、不轉出生地時區、不截去原UTC時分秒、不設dayjs全域選項。
+出生日期、真太陽時、子時、閏月、iztro全域config、私有astrolabe及大限probe的本地7/1均不改。
+
+**入口相容：** analyze／typed calculator仍按原方式解析Date與string。legacy ZiweiEngine
+的null仍沿原clock fallback；typed calculator仍要求明確asOf。invalid Date／string保留既有
+BaseEngine錯誤结果與calculator例外；未知出生時間仍skip，不因適配多跑盤。
+本片保證現有引擎輸出的年度／小限／大限視圖一致，不宣稱所有iztro hourly或DST情境均已處理。
+
+**先紅後綠：** tests-only ae00fb32在Bun1.4.2為1pass／4fail；有一項初稿非法日期訊息誤紅
+（Bun實際為Invalid Date）已先更正，不計入此RED證據。修後5/5、752斷言通過。
+矩陣使用4個獨立TZ程序、2種出生設定（solar/late、civil/early）、7種asOf日期／Date／offset入口，
+含農曆年前／當日／後日、正負時區跨日、null凍鐘、invalid、unknown；主盤和typed calculator
+走真函式，沒有mock命盤。UTC整份矩陣前後逐欄相等；非作者另24-case matrix確認只修上述錯日，
+natal、完整timeline、period sequences、current decades、errors及unknown狀態保持原值。
+
+**版本與golden：** core0.6.2，Report7／Timeline2／Consensus2不升版；不是排盤算法或模型改版。
+原golden與先前delta全部保存。先重現精確base69基準後，新增reportGolden.v0.6.2.delta.json
+只改11個Report與2個compatibility的版本字串；export.v0.6.2.delta.json只改manifest coreVersion。
+UTC所有計算section、六個export檔案hash及1191 signalCount保持不變。
+最終本地全套、非作者獨立驗收與精確head見 [Draft PR #70](https://github.com/skydreamer0/fortunetelling/pull/70)。
+
+本片只是#26/#54既有主機一致性AC的一個真缺陷修復，不勾完全部曆法矩陣、不做ChartSnapshot／
+紫微重用／Fact V2或新schema。PR依賴已驗#69（間接#68/#67），原三分支不改；Actions維持停用，
+只用原cloud workspace、已批准官方Bun及frozen依賴；沒有改封存預測或部署。
