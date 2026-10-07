@@ -695,8 +695,11 @@ natal、完整timeline、period sequences、current decades、errors及unknown�
 原golden與先前delta全部保存。先重現精確base69基準後，新增reportGolden.v0.6.2.delta.json
 只改11個Report與2個compatibility的版本字串；export.v0.6.2.delta.json只改manifest coreVersion。
 UTC所有計算section、六個export檔案hash及1191 signalCount保持不變。
-最終本地全套、非作者獨立驗收與精確head見 [Draft PR #70](https://github.com/skydreamer0/fortunetelling/pull/70)。
+最終本地全套、非作者獨立驗收與精確head見 [Draft PR #72](https://github.com/skydreamer0/fortunetelling/pull/72)。
 
 本片只是#26/#54既有主機一致性AC的一個真缺陷修復，不勾完全部曆法矩陣、不做ChartSnapshot／
-紫微重用／Fact V2或新schema。PR依賴已驗#69（間接#68/#67），原三分支不改；Actions維持停用，
-只用原cloud workspace、已批准官方Bun及frozen依賴；沒有改封存預測或部署。
+紫微重用／Fact V2或新schema。原Draft70於修正版保存前只合入tests-only ae00fb32；後續PR71
+把該tests-only tree帶到master d10951e，因此不能把70的merged旗標當成修復已上線。
+修正版93edead4與原分支保留，另由最新master開PR72交付相同source/test，加上本段交付紀錄校正。
+內容核對確認#67/#68/#69都已在master，沒有重新實作；不改原分支或已合PR。
+Actions維持停用，只用原cloud workspace、已批准官方Bun及frozen依賴；沒有改封存預測或部署。
