@@ -30,8 +30,9 @@ export function parseIsoDate(value: unknown): YMD {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value ?? ''));
   if (!match) throw new Error('請選擇有效的出生日期');
   const [, year, month, day] = match.map(Number) as [number, number, number, number];
-  const date = new Date(year, month - 1, day);
-  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+  // A Gregorian date remains valid when the host timezone skipped that civil day.
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
     throw new Error('這個國曆日期不存在');
   }
   return { year, month, day };
