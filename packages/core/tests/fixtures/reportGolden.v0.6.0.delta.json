@@ -1,0 +1,553 @@
+{
+  "version": "0.6.0",
+  "decision": "D-045",
+  "reason": "Issues #43/#44: validated aggregation input; raw, threshold-provenanced eligible directional agreement. Activity, noisy-OR scores, ranking, chart algorithms and source signals preserved.",
+  "changes": [
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "schemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "6861a743609dd0a11adb514452b99738d6aabb5e169ebcbfbdc4c6589b88b3e2",
+        "length": 269655
+      },
+      "after": {
+        "sha256": "db03a134940ef8161ccf2263dc8775392d0fd8215ec00ec4a0b6705861c6dbba",
+        "length": 343811
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "84f1dfe4381b31d5b5e7d314aa4099e25e8aa7bcf00b109f0810a8c55df108f3",
+        "length": 21130
+      },
+      "after": {
+        "sha256": "1c7710efe046c50f3e7db81a61c8fa3459a1bcef9869de65ba67498fc783a64f",
+        "length": 19064
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "schemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "d0f846c6efa5eee126e53956863f61c8fa6ea17f14260586107052a125ecaa32",
+        "length": 279408
+      },
+      "after": {
+        "sha256": "2517d97f52fd9bc346f56435aec5be7141e0eeda4acafded631aa86a5266a8cb",
+        "length": 353542
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "978bd57a307af79db8482929d233ff997a7e5018b60b0e5b34560dc7c59fd32a",
+        "length": 23288
+      },
+      "after": {
+        "sha256": "f575810abfcb7c6c93516f58134bc4bbd8348e76ac1a55d1d7af198dee8c9061",
+        "length": 20130
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "schemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "43b2d6290eb01bb1bbdc2968498d071b56f94c2939331e5559141dc4253f311b",
+        "length": 284228
+      },
+      "after": {
+        "sha256": "50e4a234c3f617497e4ccc81d33de9497e712bbf671691176164bdb2409001ac",
+        "length": 358355
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "58ca944164f0910d924e30c8b4ad3562cfbf11136c9addc45a02323bca12dd9f",
+        "length": 21833
+      },
+      "after": {
+        "sha256": "07156244b0b02296af402d0129a10fffe1333cc265c506fd102b1eea5c7b52b5",
+        "length": 20089
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "schemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "4b652ee459ae8bc267a6d1402a5199b2204bc4365803f55f1fb28789f8ce3b96",
+        "length": 274794
+      },
+      "after": {
+        "sha256": "be3b10457305c7f080827dcab85ca289031a8cfd6c6bb1a36417e574b2489b35",
+        "length": 347830
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "711ce6b1b69cddddf52becb95a9a3df741fba5d8b363c1bbb5fc3148010ad922",
+        "length": 21165
+      },
+      "after": {
+        "sha256": "d850b5945fc3e1011b97c4a231146f810bb36335c91083d6f791c78e37743183",
+        "length": 20302
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "schemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "84c5e54b0fa3b007d76a85a8904a01037529b7fa5546cf22fe7915cf7d6bc430",
+        "length": 281614
+      },
+      "after": {
+        "sha256": "870f77fa2260f4b439cd541a4ed065dd42f4b8b107cd8b72f4d78da107e7d9f1",
+        "length": 355881
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "e309f0c7105f8fb857694f29f7ba2f6569442a3cb4ce9da1fa34637a9dad127c",
+        "length": 26092
+      },
+      "after": {
+        "sha256": "bcc20561f1f5fe80678bc80f8de27b5e2a359acc0d983df658f8fc6863de55d5",
+        "length": 21937
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "schemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "c37d0d112c89bcee907ee9959fa9946b6f8c1198a94586c26ef089a458b21d2b",
+        "length": 274013
+      },
+      "after": {
+        "sha256": "7d4fc5ce7dccf71f35f784d17df6073f5ae6d903ac766c07adc623631dafd5eb",
+        "length": 347304
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "2d2155fb9a96cc8db3efecec664dc95dbd8208bbb98ed0ae752314989ad32903",
+        "length": 25938
+      },
+      "after": {
+        "sha256": "ef0e9c100237c61d237b8c9357528f68c6c7f4b64963b72b55dc1d2e4a958305",
+        "length": 22059
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "schemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "7b84cb8d05bb3b1df943793eb85a1eb09de5d56e5804dd74a00d03607ee433af",
+        "length": 50739
+      },
+      "after": {
+        "sha256": "dbd8180545de270d487dcc394f22b2af465a477516cafedcb7b18cb46ccfd9f0",
+        "length": 72507
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "f28c96c16cba5a440b9bb8880cf395f08878d37db6cf12f03a9a08720be65465",
+        "length": 16572
+      },
+      "after": {
+        "sha256": "00fc9e1151e8874cc4f53eff8a1672dde9200d13a4c87ae84605596e1b09e9a8",
+        "length": 16635
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "schemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "413d677c8587179acda8818d40db476f2377087fbcefdfedb2b7588872418677",
+        "length": 277048
+      },
+      "after": {
+        "sha256": "f6bfb2880184b8882d51bef2953e78baa36f60717bd550680cdde137e39b4bb8",
+        "length": 350608
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "8dee3830efc82f5322700c97a01af6d956c299486cf62146681bafaf525d0207",
+        "length": 22311
+      },
+      "after": {
+        "sha256": "0f006b711cf9acadf396a550682948b9232129f739cbcd138f88f9320fb29adf",
+        "length": 20157
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "schemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "5813df5510756c7d7ddd89bf11b81357fa88ec53b23e5a51e1b814c23463dbb3",
+        "length": 275590
+      },
+      "after": {
+        "sha256": "9d5ea4e350fa27f870117f451ace90ea4d891a9b83bb1377d1ef8573e514b24b",
+        "length": 351380
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "38d0dfdc01da9072592e278a5e49da0eae046880525df1081c1ab7325b1d58d8",
+        "length": 22973
+      },
+      "after": {
+        "sha256": "aa092b52358d34975f66091c40c494dbe355582451f39601e5980475468b2fdd",
+        "length": 19607
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "schemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "179e5b201fc02d72aed177f7627bdf4c9b2fe75d77a8a2c411ac8e0e7abc543e",
+        "length": 275307
+      },
+      "after": {
+        "sha256": "812638361e495887cf4174ed2d2c02c110904198eca212ec66c4497ec8207930",
+        "length": 349154
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "1d9d99e02feb51ec8ac754f209363516ec56886c4062d838d790caa88c8ac59b",
+        "length": 22676
+      },
+      "after": {
+        "sha256": "06ca21cf5fa67d307e009bddbe4c69f96decdfc1f738e36b2d3b7fa46069b598",
+        "length": 20698
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "schemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "timeline"
+      ],
+      "before": {
+        "sha256": "4649dd35304b37a3a0f9371a70e1120e89eefbe1aa61fc922fd940318cf9f6b0",
+        "length": 260634
+      },
+      "after": {
+        "sha256": "d3dc6fd7c1dd29e711372b1677391480084199ab5054d5fb74ec6f6ee7ba2e65",
+        "length": 330942
+      }
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "consensus"
+      ],
+      "before": {
+        "sha256": "48051550c5d9cd93a182368f29aca84576966f5b2f8786c704dbde967af189da",
+        "length": 21307
+      },
+      "after": {
+        "sha256": "a1eb313c91ac54d16572c99ea6e3982924e5c1b9fd754acd0a73c18025e8849b",
+        "length": 19605
+      }
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-1991-1986",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-ny-unknown",
+        "version"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    }
+  ]
+}

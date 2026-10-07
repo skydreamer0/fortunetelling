@@ -3,7 +3,7 @@
  * differed from its timeline before core 0.5.1, so its options are not a fallback.
  * Missing or contradictory metadata means no recomputation; saved signals remain readable.
  */
-import { TIMELINE_SYSTEMS, type TimelineOptions } from '../lib/core';
+import { TIMELINE_SYSTEMS, validAgreementThresholds, type TimelineOptions } from '../lib/core';
 import type { Report } from './types';
 
 export interface ReportTimelineOptions {
@@ -11,6 +11,8 @@ export interface ReportTimelineOptions {
   ziHourConvention: 'late' | 'early';
   systems: NonNullable<TimelineOptions['systems']>;
   systemWeights: TimelineOptions['systemWeights'];
+  consensusThreshold?: number;
+  conflictThreshold?: number;
 }
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -38,6 +40,8 @@ export function reportTimelineOptions(report: Report): ReportTimelineOptions | n
   }
 
   const systems = report.timeline.systems;
+  const thresholds = report.timeline.schemaVersion >= 2 ? report.timeline.thresholds : null;
+  if (report.timeline.schemaVersion >= 2 && !validAgreementThresholds(thresholds)) return null;
   if (!Array.isArray(systems) || systems.some(system => !TIMELINE_SYSTEMS.includes(system))) return null;
   const weights = record(report.timeline.systemWeights);
   if (!weights || (Object.getPrototypeOf(weights) !== Object.prototype && Object.getPrototypeOf(weights) !== null)) return null;
@@ -55,5 +59,6 @@ export function reportTimelineOptions(report: Report): ReportTimelineOptions | n
     ziHourConvention: baziZiHourConvention,
     systems: [...systems],
     systemWeights,
+    ...(thresholds ? { consensusThreshold: thresholds.theta, conflictThreshold: thresholds.tau } : {}),
   };
 }

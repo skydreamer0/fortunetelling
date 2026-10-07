@@ -21,11 +21,11 @@
  * @module consensus/buildConsensus
  */
 
-import { DEFAULT_CONSENSUS_THRESHOLD, HIGH_CONSENSUS_MIN_SYSTEMS } from '../signals/aggregate';
+import { HIGH_CONSENSUS_MIN_SYSTEMS, directionalVotes, evidenceMatchesContext, validAgreementThresholds, type AgreementThresholds, type AgreementSide } from '../signals/directionalEvidence';
 import { DOMAINS, SYSTEM_IDS, type Domain, type SignalWindow, type SystemId } from '../signals/types';
 import type { Timeline, TimelineCell, TimelineDomainCell } from '../timeline/buildTimeline';
 
-export const CONSENSUS_SCHEMA_VERSION = 1 as const;
+export const CONSENSUS_SCHEMA_VERSION = 2 as const;
 
 /** Default number of agreements kept in `headlines.agreements` (conflicts are never capped). */
 export const DEFAULT_HEADLINE_AGREEMENTS = 5;
@@ -48,8 +48,9 @@ export interface ConsensusSide {
   signalIds: string[];
 }
 
-/** A high-consensus (domain, year): ≥ 3 systems with noisy-OR score ≥ θ. */
+/** A high-consensus side: ≥ 3 eligible positive-weight systems with raw score ≥ θ and same-sign valence beyond τ. */
 export interface ConsensusAgreement extends ConsensusSide {
+  direction: 'positive' | 'negative';
   domain: Domain;
   window: SignalWindow;
   /** Number of systems whose score ≥ θ (copied from the timeline cell). */
@@ -98,7 +99,9 @@ export interface ConsensusSummary {
   asOf: string;
   /** Systems that contributed to the timeline (SYSTEM_IDS order). */
   systems: SystemId[];
-  consensusThreshold: number;
+  consensusThreshold: number | null;
+  thresholds: AgreementThresholds | null;
+  semantics: 'directional' | 'legacy-activity-only';
   highConsensusMinSystems: number;
   years: ConsensusYear[];
   headlines: {
@@ -136,19 +139,15 @@ function sideOf(cell: TimelineDomainCell, ids: readonly string[]): ConsensusSide
   return { systems, signalIds: [...wanted].sort(cmp) };
 }
 
-function agreementOf(cell: TimelineDomainCell, window: SignalWindow, theta: number): ConsensusAgreement {
-  const systems = SYSTEM_IDS.filter((s) => {
-    const p = cell.perSystem?.[s];
-    return p !== undefined && p.score >= theta;
-  });
-  const ids = new Set(systems.flatMap((s) => cell.perSystem[s]!.signalIds));
+function agreementOf(cell: TimelineDomainCell, window: SignalWindow, direction: 'positive' | 'negative', side: AgreementSide): ConsensusAgreement {
   return {
     domain: cell.domain,
     window: copyWindow(window),
-    consensus: cell.consensus,
+    direction,
+    consensus: side.systems.length,
     score: cell.score,
-    systems,
-    signalIds: [...ids].sort(cmp),
+    systems: [...side.systems],
+    signalIds: [...side.signalIds],
   };
 }
 
@@ -187,7 +186,10 @@ function coverageOf(cells: readonly TimelineCell[], available: readonly SystemId
  * only on (timeline, options): same input → byte-identical JSON.
  */
 export function buildConsensus(timeline: Timeline, options: ConsensusOptions = {}): ConsensusSummary {
-  const theta = options.consensusThreshold ?? DEFAULT_CONSENSUS_THRESHOLD;
+  const thresholds = timeline.schemaVersion >= 2 && validAgreementThresholds(timeline.thresholds) ? { ...timeline.thresholds } : null;
+  if (options.consensusThreshold !== undefined && (!thresholds || options.consensusThreshold !== thresholds.theta)) {
+    throw new Error('buildConsensus: threshold override does not match the source timeline');
+  }
   const maxAgreements = options.maxHeadlineAgreements ?? DEFAULT_HEADLINE_AGREEMENTS;
   if (!Number.isInteger(maxAgreements) || maxAgreements < 0) {
     throw new Error(`buildConsensus: maxHeadlineAgreements must be an integer ≥ 0, got ${maxAgreements}`);
@@ -198,7 +200,17 @@ export function buildConsensus(timeline: Timeline, options: ConsensusOptions = {
     const highConsensus: ConsensusAgreement[] = [];
     const conflicts: ConsensusConflict[] = [];
     for (const d of cell.domains) {
-      if (d.highConsensus) highConsensus.push(agreementOf(d, cell.window, theta));
+      if (evidenceMatchesContext(d.directionalEvidence, {
+        domain: d.domain, window: cell.window, thresholds, systemWeights: timeline.systemWeights,
+        systems: timeline.systems, perSystem: d.perSystem,
+      })) {
+        const votes = directionalVotes(d.directionalEvidence)!;
+        for (const direction of ['positive', 'negative'] as const) {
+          if (votes[direction].systems.length >= HIGH_CONSENSUS_MIN_SYSTEMS) {
+            highConsensus.push(agreementOf(d, cell.window, direction, votes[direction]));
+          }
+        }
+      }
       if (d.conflict) conflicts.push(conflictOf(d, cell.window));
     }
     return { window: copyWindow(cell.window), highConsensus: byDomain(highConsensus), conflicts: byDomain(conflicts) };
@@ -226,7 +238,9 @@ export function buildConsensus(timeline: Timeline, options: ConsensusOptions = {
     schemaVersion: CONSENSUS_SCHEMA_VERSION,
     asOf: timeline.asOf,
     systems,
-    consensusThreshold: theta,
+    consensusThreshold: thresholds?.theta ?? null,
+    thresholds,
+    semantics: thresholds ? 'directional' : 'legacy-activity-only',
     highConsensusMinSystems: HIGH_CONSENSUS_MIN_SYSTEMS,
     years,
     headlines: { agreements, conflicts },

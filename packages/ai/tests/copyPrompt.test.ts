@@ -48,7 +48,9 @@ describe('buildCopyPrompt — content', () => {
     expect(t).toContain('不要重新排盤或推算');
     expect(t).toContain('干支、星曜、行星名稱一律不要提');
     expect(t).toContain('〔sig_xxxxxxxx〕');
-    expect(t).toContain('三套以上「已驗證」系統');
+    expect(t).toContain('至少三套正權重、非experimental系統');
+    expect(t).toContain('同向支持');
+    expect(t).toContain('同向壓力');
     expect(t).toContain('「高共識」');
     expect(t).toContain('必須保留矛盾');
     expect(t).toContain('不是命定');
@@ -97,7 +99,10 @@ describe('buildCopyPrompt — content', () => {
     expect(t.trimEnd().endsWith('請開始解讀。')).toBe(true);
     // Question source signals are protected: kept in the data even when budget is tight.
     const small = buildCopyPrompt(report, { questionAnswer: loadQuestion(), maxChars: 16_000 });
-    expect(small.payload.payload.timeline).not.toBeNull();
+    expect(small.charCount).toBeLessThanOrEqual(16_000);
+    expect(small.truncated).toBe(true);
+    expect(small.payload.payload.timeline).toBeNull();
+    expect(small.text).toContain('未附命盤細節（charts）與時間表（timeline）');
     const keptShort = new Set([...small.payload.signalIds].map(shortSignalId));
     for (const w of small.payload.payload.question!.top) {
       expect(w.supportSignalIds.length + w.riskSignalIds.length).toBeGreaterThan(0);
@@ -199,11 +204,12 @@ describe('checkPastedAnswer — paste-back checker', () => {
     expect(Object.values(PASTE_FLAG_LABELS)).toContain('宿命論用語');
   });
 
-  test('「高共識」 is fine with citations from ≥ 3 systems; 紫微斗數 as a system name is not a star', () => {
+  test('legacy three-system citations lack proof; 紫微斗數 is still not a star', () => {
     const report = loadReport();
     const three = ['bazi', 'ziwei', 'numerology'].map((sys) => report.signals!.find((s) => s.system === sys)!.id);
     const r = checkPastedAnswer(report, `紫微斗數、八字與靈數在這裡高共識${three.map((id) => `〔${id}〕`).join('')}。`);
-    expect(r.ok).toBe(true);
+    expect(r.ok).toBe(false);
+    expect(r.paragraphs[0].flags.map(f => f.code)).toEqual(['high_consensus_unsupported']);
   });
 
   test('accepts a report (full data) or a bare payload; pure and deterministic', () => {
@@ -234,7 +240,7 @@ describe('browser entry stays SDK-free (D-035)', () => {
         queue.push(`${spec.slice(2)}.ts`);
       }
     }
-    expect([...seen].sort()).toEqual(['canonical.ts', 'copy.ts', 'copyPrompt.ts', 'core-pure.ts', 'pasteCheck.ts', 'payload.ts', 'schema.ts', 'signalIds.ts', 'validate.ts', 'vocab.ts'].sort());
+    expect([...seen].sort()).toEqual(['agreement.ts', 'canonical.ts', 'copy.ts', 'copyPrompt.ts', 'core-pure.ts', 'pasteCheck.ts', 'payload.ts', 'schema.ts', 'signalIds.ts', 'validate.ts', 'vocab.ts'].sort());
   });
 });
 

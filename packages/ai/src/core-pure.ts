@@ -39,3 +39,9 @@ export {
   SHORT_ID_HEX,
 } from '../../core/src/signals/shortId';
 export type { SignalIdResolution } from '../../core/src/signals/shortId';
+export { EXPERIMENTAL_SYSTEMS } from '../../core/src/signals/eligibility';
+export {
+  DIRECTIONAL_POLICY, HIGH_CONSENSUS_MIN_SYSTEMS, directionalVotes, evidenceMatchesContext,
+  supportsHighConsensusCitations, validAgreementThresholds,
+} from '../../core/src/signals/directionalEvidence';
+export type { DirectionalEvidence, AgreementThresholds, AgreementCitation } from '../../core/src/signals/directionalEvidence';

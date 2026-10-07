@@ -47,7 +47,7 @@ export function buildExportReadme(input: ReadmeInput): string {
     '1. 先讀 `manifest.json`：確認 asOf、哪些系統參與、哪些被略過（例如時間未知）。',
     '2. 讀 `consensus.json`：找出多系統同向（高共識）與保留的矛盾；矛盾不要抹平。',
     '3. 需要依據時，用 `timeline.json` 的 `topSignalIds` 到 `signals.json` 查訊號，每個結論都引用 `signal.id`。',
-    '4. 只有三套以上系統同向才說「高共識」；單一系統的結論要標明來源系統。',
+    '4. activityAgreement只表示共同關注；高共識只認同一領域／時間窗的directionalEvidence：至少三套正權重、非experimental系統依raw值及thresholds同向。positive為同向支持、negative為同向壓力，兩側達標都保留；舊報告缺證據不得回填成高共識。',
     '5. 不要說宿命論式的斷言；用「傾向」「這段期間較適合」等語氣，並說明不確定性。',
     '',
   ];

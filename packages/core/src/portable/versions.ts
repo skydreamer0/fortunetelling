@@ -21,14 +21,15 @@ import ziweiCatalog from '../rules/ziwei/catalog.json';
 import ziweiTraits from '../traits/ziwei.json';
 import ziweiModifiers from '../traits/ziweiModifiers.json';
 import numerologyCatalog from '../timeline/numerologyCatalog.json';
-import questionCatalog from '../questions/catalog.json';
+import questionCatalog from '../questions/catalog.v2.json';
 import jyotishCatalog from '../calculators/jyotish/catalog.json';
 import humanDesignCatalog from '../calculators/humanDesign/catalog.json';
+import { EXPERIMENTAL_SYSTEMS } from '../signals/eligibility';
 
 export type EphemerisState = 'not_initialized' | 'moshier';
 
 /** Systems whose calculators have not been cross-validated yet (D-039). humanDesign passed the gate in M5-03 (38 cases, 2 public generators); jyotish is still short of the gate. */
-export const EXPERIMENTAL_SYSTEMS: readonly string[] = Object.freeze(['jyotish']);
+export { EXPERIMENTAL_SYSTEMS } from '../signals/eligibility';
 
 export type VersionInfo = {
   /** `null` for time-independent answers (e.g. listing profiles). */

@@ -33,10 +33,11 @@ describe('輸出一律是短編號', () => {
       ['answer_question', { ...base, category: 'vehicle_purchase', range: { start: '2027-01', end: '2027-12' }, detail: true }],
     ];
     for (const [name, args] of calls) {
-      const { text, isError } = await fx.call(name, args);
+      const { text, isError, json } = await fx.call(name, args);
       expect(isError).toBe(false);
       const ids = text.match(/sig_[0-9a-f]+/g) ?? [];
-      expect(ids.length).toBeGreaterThan(0);
+      if (name === 'get_consensus') expect(json.data.headlines.agreements).toEqual([]);
+      else expect(ids.length).toBeGreaterThan(0);
       for (const id of ids) expect(id).toMatch(SHORT);
     }
   }, 120_000);

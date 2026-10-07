@@ -5,7 +5,7 @@
  */
 
 import type { Domain as CoreDomain, TimelineCell } from '@fortune/core';
-import { HISTORICAL_ZONE_WARNING_TEXT, shortSignalId } from '../lib/core';
+import { HISTORICAL_ZONE_WARNING_TEXT, shortSignalId, directionalVotes, evidenceMatchesContext } from '../lib/core';
 import type { Component, ConsensusSummary, EngineResult, Period, Radar, Report, ScoringRule, Signal, SystemId, Timeline } from './types';
 
 export const SYSTEM_NAMES: Record<string, string> = {
@@ -500,6 +500,9 @@ export interface TimelineCellView {
   empty: boolean;
   consensus: number;
   highConsensus: boolean;
+  activityAgreement: number;
+  agreementDirections: Array<'positive' | 'negative'>;
+  legacyAgreement: boolean;
   conflict: null | { positive: TimelineConflictSide[]; negative: TimelineConflictSide[] };
   /** Systems that emitted signals for this cell (繁中). */
   systems: string[];
@@ -652,6 +655,11 @@ function buildGrid(report: Report, grain: 'year' | 'month'): TimelineGrid | null
         .filter(([, value]) => (value?.signalIds?.length ?? 0) > 0)
         .map(([system]) => SIGNAL_SYSTEM_NAMES[system] ?? system);
       const topSignals = (found?.topSignals ?? []).map(toSignalView);
+      const votes = found && timeline.schemaVersion >= 2 && evidenceMatchesContext(found.directionalEvidence, {
+        domain: found.domain, window: cell.window, thresholds: timeline.thresholds, systems: timeline.systems,
+        systemWeights: timeline.systemWeights, perSystem: found.perSystem,
+      }) ? directionalVotes(found.directionalEvidence) : null;
+      const directionalCount = votes ? Math.max(votes.positive.systems.length, votes.negative.systems.length) : 0;
       return {
         key: `${grain}:${cell.window.start}:${meta.domain}`,
         domain: meta.domain,
@@ -665,8 +673,11 @@ function buildGrid(report: Report, grain: 'year' | 'month'): TimelineGrid | null
         score,
         band: isBand(found?.band) ? found.band : bandOf(score, cuts),
         empty: !found || (systems.length === 0 && topSignals.length === 0),
-        consensus: found?.consensus ?? 0,
-        highConsensus: Boolean(found?.highConsensus),
+        consensus: directionalCount,
+        activityAgreement: found?.activityAgreement ?? found?.consensus ?? 0,
+        highConsensus: directionalCount >= 3,
+        agreementDirections: (['positive', 'negative'] as const).filter(direction => (votes?.[direction].systems.length ?? 0) >= 3),
+        legacyAgreement: timeline.schemaVersion < 2,
         conflict: found?.conflict
           ? { positive: conflictSide(found.conflict.positive, found, lookup), negative: conflictSide(found.conflict.negative, found, lookup) }
           : null,
@@ -722,6 +733,7 @@ export function findTimelineCell(key: string | null, ...grids: (TimelineGrid | n
 export interface ConsensusSystemChip { system: string; name: string }
 
 export interface ConsensusAgreementView {
+  direction: 'positive' | 'negative';
   /** Timeline cell key (`year:${start}:${domain}`) so the UI can open the detail panel. */
   key: string;
   yearLabel: string;
@@ -768,7 +780,15 @@ export function selectConsensus(report: Report): ConsensusView | null {
   const coreCell = (start: string, domain: string) =>
     timeline.years.find(cell => cell.window.start === start)?.domains.find(item => item.domain === domain) ?? null;
 
-  const agreements = (consensus.headlines.agreements ?? []).map((item): ConsensusAgreementView => {
+  const agreements = (consensus.schemaVersion >= 2 && timeline.schemaVersion >= 2 ? consensus.headlines.agreements ?? [] : []).filter(item => {
+    const source = coreCell(item.window.start, item.domain);
+    if (!source || !evidenceMatchesContext(source.directionalEvidence, {
+      domain: item.domain, window: item.window, thresholds: timeline.thresholds, systems: timeline.systems,
+      systemWeights: timeline.systemWeights, perSystem: source.perSystem,
+    })) return false;
+    const side = directionalVotes(source.directionalEvidence)?.[item.direction];
+    return Boolean(side && side.systems.length >= 3 && side.systems.length === item.systems.length && item.systems.every(system => side.systems.includes(system)));
+  }).map((item): ConsensusAgreementView => {
     const meta = domainMeta(item.domain);
     return {
       key: `year:${item.window.start}:${item.domain}`,
@@ -777,6 +797,7 @@ export function selectConsensus(report: Report): ConsensusView | null {
       domainLabel: meta?.label ?? item.domain,
       icon: meta?.icon ?? '',
       consensus: item.consensus,
+      direction: item.direction,
       systems: chips(item.systems ?? []),
     };
   });

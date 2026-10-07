@@ -74,7 +74,7 @@ describe('buildTimeline (sync, fresh process without initEphemeris)', () => {
     const { ms, tl } = JSON.parse(proc.stdout.toString()) as { ms: number; tl: Timeline };
     console.log(`sync buildTimeline (fresh process): ${ms.toFixed(0)} ms`);
 
-    expect(tl.schemaVersion).toBe(1);
+    expect(tl.schemaVersion).toBe(2);
     expect(tl.asOf).toBe(ASOF);
     expect(tl.systems).toEqual(SYNC_SYSTEMS);
     expect(tl.skippedSystems).toEqual([

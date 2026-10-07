@@ -9,7 +9,8 @@
  *   4. it claims 「高共識」 while its citations span fewer than 3 systems.
  * Returns every reason for every dropped section, so the UI / logs can show why.
  */
-import { HonestyGuard } from './core-pure';
+import { HonestyGuard, HIGH_CONSENSUS_MIN_SYSTEMS } from './core-pure';
+import { hasHighConsensusClaim, payloadSupportsHighConsensus } from './agreement';
 import type { InterpretationPayload } from './payload';
 import { resolveCitation } from './signalIds';
 import { isSection, type InterpretationSection } from './schema';
@@ -57,10 +58,10 @@ export const FATALISM_PATTERNS: ReadonlyArray<{ id: string; pattern: RegExp }> =
 ];
 
 export const HIGH_CONSENSUS_TERM = '高共識';
-export const HIGH_CONSENSUS_MIN_SYSTEMS = 3;
+export { HIGH_CONSENSUS_MIN_SYSTEMS } from './core-pure';
 
 /** 尚未與公開計算器交叉驗證的系統 id（與 core 的 experimental 一致，D-039）；不計入高共識。 */
-export const EXPERIMENTAL_SYSTEMS: readonly string[] = Object.freeze(['jyotish']);
+export { EXPERIMENTAL_SYSTEMS } from './core-pure';
 
 export interface ValidationContext {
   payload: InterpretationPayload;
@@ -126,13 +127,12 @@ export function validateSections(sections: unknown[], ctx: ValidationContext): V
       if (pattern.test(prose)) reasons.push({ code: 'fatalism', value: id, detail: `fatalistic wording ${pattern.source}` });
     }
 
-    // (4) 「高共識」 needs ≥ 3 distinct cited systems
-    if (prose.includes(HIGH_CONSENSUS_TERM)) {
-      const systems = new Set(citations.map((id) => systemOf(id)).filter((s): s is string => Boolean(s) && !EXPERIMENTAL_SYSTEMS.includes(s as string)));
-      if (systems.size < HIGH_CONSENSUS_MIN_SYSTEMS) {
+    // (4) Count only a recorded, eligible same-direction side from one domain/window.
+    if (hasHighConsensusClaim(prose)) {
+      if (!payloadSupportsHighConsensus(ctx.payload, citations)) {
         reasons.push({
           code: 'high_consensus_unsupported',
-          detail: `「${HIGH_CONSENSUS_TERM}」 requires citations from ≥ ${HIGH_CONSENSUS_MIN_SYSTEMS} systems, got ${systems.size}`,
+          detail: `「${HIGH_CONSENSUS_TERM}」缺乏同一領域／時間窗至少 ${HIGH_CONSENSUS_MIN_SYSTEMS} 套合資格系統的同向計算證據；共同關注不等於高共識`,
         });
       }
     }

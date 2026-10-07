@@ -1,0 +1,103 @@
+{
+  "version": "0.6.0",
+  "decision": "D-045",
+  "reason": "Issues #43/#44: validated aggregation input; raw, threshold-provenanced eligible directional agreement. Activity, noisy-OR scores, ranking, chart algorithms and source signals preserved.",
+  "changes": [
+    {
+      "path": [
+        "versions",
+        "coreVersion"
+      ],
+      "before": "0.5.3",
+      "after": "0.6.0"
+    },
+    {
+      "path": [
+        "versions",
+        "reportSchemaVersion"
+      ],
+      "before": 5,
+      "after": 6
+    },
+    {
+      "path": [
+        "versions",
+        "timelineSchemaVersion"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "versions",
+        "consensusSchemaVersion"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "versions",
+        "catalogs"
+      ],
+      "before": {
+        "bazi": 1,
+        "baziTenGod": 1,
+        "ziwei": 1,
+        "ziweiTraits": 1,
+        "ziweiModifiers": 1,
+        "numerology": 1,
+        "questions": 1,
+        "jyotish": 1,
+        "humanDesign": 2
+      },
+      "after": {
+        "bazi": 1,
+        "baziTenGod": 1,
+        "ziwei": 1,
+        "ziweiTraits": 1,
+        "ziweiModifiers": 1,
+        "numerology": 1,
+        "questions": 2,
+        "jyotish": 1,
+        "humanDesign": 2
+      }
+    },
+    {
+      "path": [
+        "files",
+        "timeline.json"
+      ],
+      "before": {
+        "hash": "0f475e295a6839fe"
+      },
+      "after": {
+        "hash": "ec57852d5692f832"
+      }
+    },
+    {
+      "path": [
+        "files",
+        "consensus.json"
+      ],
+      "before": {
+        "hash": "8407c7ba837203b1"
+      },
+      "after": {
+        "hash": "bad459a48ce09dea"
+      }
+    },
+    {
+      "path": [
+        "files",
+        "README.md"
+      ],
+      "before": {
+        "hash": "be270df9db56e36d"
+      },
+      "after": {
+        "hash": "19142c0390cdb25e"
+      }
+    }
+  ]
+}

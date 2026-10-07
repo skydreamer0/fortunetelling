@@ -125,7 +125,7 @@ test('public analyze contract holds for golden and sourced celebrity charts', SL
     const expected = fixture.expected;
 
     assert.deepEqual(Object.keys(report).sort(), [...REPORT_KEYS].sort(), fixture.id);
-    assert.equal(report.schemaVersion, 5, fixture.id);
+    assert.equal(report.schemaVersion, 6, fixture.id);
     assert.ok(report.summary.sentences.length >= 3, fixture.id);
     assert.equal(report.asOf, fixture.asOf, fixture.id);
     assert.deepEqual(report.input, v3Input(fixture.input), fixture.id);

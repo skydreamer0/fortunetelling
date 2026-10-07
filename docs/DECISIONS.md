@@ -505,3 +505,52 @@ legacy failure 順序、A/B/A 及獨立執行隔離、DST gap／overlap、四種
 [CI 37502508500](https://github.com/skydreamer0/fortunetelling/actions/runs/37502508500)
 與最終精確 head 的完整 locked CI、非作者獨立驗收結果記錄於
 [Draft PR #42](https://github.com/skydreamer0/fortunetelling/pull/42)。本文件不代替執行證據。
+
+## D-045 輸入防護與可追溯同向共識（#43 → #44）
+
+**決策：** `consensus` 改為同一 domain／評估 window 內、符合資格的最大同側票數；
+`highConsensus` 要求該側至少三套。正向稱「同向支持」，負向稱「同向壓力」；兩側皆達標
+就保留兩側與矛盾。這是計算交叉比對，不代表任何預測效度已驗證。
+
+**#43 輸入契約：** 全部給定權重與 θ／τ 在處理訊號前驗證，即使訊號為空或系統未出現。
+權重須有限且 ≥0，門檻須有限且在 [0,1]；明示 undefined 仍等同省略。只接受 plain own-key
+權重記錄，不讀繼承值。相同 id、相同完整 payload 只算一次；相同 id 的不同 payload 明確拒絕，
+不以 first-wins 製造順序依賴。零權重保留診斷值，但不投票、不列為衝突。noisy-OR、加權均值、
+valence 累積與排序公式均未改。
+
+**#44 唯一判票來源：** `signals/directionalEvidence.ts` 以 raw、未四捨五入的每系統
+score／valence／weight、完整來源 IDs，以及實際 θ／τ 計票。score ≥ θ 才有活動票；
+valence > τ 是正向，valence < −τ 是負向，恰等於邊界仍中性。活動數移至
+`activityAgreement`，包含正權重 experimental；同向票另外排除 experimental。
+資格清單是無 calculator 依賴的單一純來源，固定排除 jyotish，humanDesign 中性不投方向票。
+experimental 訊號與原有衝突仍保留。既有 AI 額外 experimental 排除只能收窄，不能解除固定排除。
+
+證據驗證拒絕非法 raw 值、未知系統、空／重複 ID 跨系統歸屬、未經 own-entry 驗證的值；
+消費端另核 domain／window／θτ／權重／實際來源成員。AI 的三條檢查路徑共享同一判票規則，
+引用必須對上同一證據的同側系統與 IDs，不可從任意引用子集合重算 noisy-OR、跨 domain／window
+湊三票，亦不可從 rounded display 值還原判票。高共識文字逐次判斷局部否定，保留混合肯否、
+雙重否定與「不足以構成投資建議」等仍然肯定高共識前提的檢查。
+
+**沿路 provenance：** Timeline 的 build／restrict、Consensus、Question、export、MCP
+預設精簡與詳細回應、Web 重放與未來年份檢查皆攜帶 θ／τ／權重來源。Question proof 的 window
+是其評估 window；source 訊號保留原 window，引用須可對應該評估。MCP 的未來月份與問事證據
+只放在同一次 Analysis 物件內；Web 同樣只使用同份 report／replay 的資料。signalId 本身不綁
+profile 或 spec，因此此證據不是跨報告防偽、ChartSnapshot 或完整 #26。
+
+**容量與舊資料：** AI payload 依既有 protected → intensity → id 優先序保留 prefix，
+每次從未裁切 base 重建，裁掉不可引用 IDs／系統後重算可聲稱的高共識，再去識別化、以真正
+序列化長度驗預算。保留來源 raw 值，不拿裁後子集合重算強度。缺證據的舊 Report／Timeline
+僅標舊活動語義，不能把舊 highConsensus 當新同向結論；Web 重算也不冒充舊報告原值。
+
+**版本：** core 0.6.0、Report 6、Timeline 2、Consensus 2、AI payload 2；
+conversation `chat-v3`、interpret `interpret-v3`、copy `copy-v4`。Question catalog v1
+保持原檔，新增 v2 只變版本與 conventions，categories／traitPreferences／scoring 完全相同。
+原 report／export／Question／MCP golden 保留，新增 v0.6.0 before→after 字面 delta，
+測試先核 before，再核 after。依獨立 baseline 對照，排盤、source signals、Question 分數／排名
+與公式未變；export 的 profile／chart／signals hashes 與 signalCount 未變。
+
+**驗證與界線：** 見 [#43/#44 驗收與差異表](validation/consensus-4344.md)。
+本次使用使用者批准的既有 workspace-local 官方 Bun 1.4.2 與 frozen 依賴；GitHub Actions
+依使用者指示停用，沒有啟用、觸發、以新環境替代或修改安全設定。最終精確 head 驗收記錄於
+[Draft PR #67](https://github.com/skydreamer0/fortunetelling/pull/67)。LOCKED FORECAST、封存預測與
+既有算法不修改；新增 schema 不代表预測準確度提升。

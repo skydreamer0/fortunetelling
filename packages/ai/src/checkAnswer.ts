@@ -10,7 +10,8 @@
  *   (c) `experimental_as_consensus`  把 experimental 系統（吠陀占星）當成「高共識」的依據；
  *       `high_consensus_unsupported` 寫「高共識」但引用的已驗證系統少於 3 套。
  */
-import { HonestyGuard, SIGNAL_ID_PATTERN } from './core-pure';
+import { HonestyGuard, SIGNAL_ID_PATTERN, supportsHighConsensusCitations, type AgreementCitation } from './core-pure';
+import { hasHighConsensusClaim } from './agreement';
 import { splitParagraphs } from './pasteCheck';
 import { AI_HONESTY_LAYER, EXPERIMENTAL_SYSTEMS, FATALISM_PATTERNS, HIGH_CONSENSUS_MIN_SYSTEMS, HIGH_CONSENSUS_TERM } from './validate';
 
@@ -29,6 +30,10 @@ export const ASSERTION_PATTERNS: ReadonlyArray<{ id: string; pattern: RegExp }> 
 export interface SignalRef {
   /** 訊號所屬系統 id（例如 `bazi`、`jyotish`）。 */
   system: string;
+  id?: string;
+  domain?: string;
+  window?: AgreementCitation['window'];
+  valence?: number;
 }
 
 export interface CheckAnswerOptions {
@@ -37,8 +42,10 @@ export interface CheckAnswerOptions {
    * 由呼叫端負責解析前綴：唯一才回訊號，ambiguous（對到多筆）與查不到一律回 null，絕不猜。
    */
   signalLookup: (id: string) => SignalRef | undefined | null;
-  /** 覆寫 experimental 系統清單（預設 {@link EXPERIMENTAL_SYSTEMS}）。 */
+  /** 額外排除的 experimental 系統；不能解禁 core 的固定排除清單。 */
   experimentalSystems?: readonly string[];
+  /** From the SAME report/analysis. Lazy retrieval runs after citation resolution fills period caches. */
+  directionalEvidence?: readonly unknown[] | (() => readonly unknown[]);
 }
 
 export type AnswerIssueCode =
@@ -123,16 +130,17 @@ function experimentalNamedInConsensusSentence(prose: string): string[] {
 }
 
 export function checkAnswer(answerText: string, options: CheckAnswerOptions): CheckAnswerResult {
-  const experimental = new Set(options.experimentalSystems ?? EXPERIMENTAL_SYSTEMS);
-  const systemCache = new Map<string, string | null>();
-  const systemOf = (id: string): string | null => {
-    let hit = systemCache.get(id);
+  const experimental = new Set([...EXPERIMENTAL_SYSTEMS, ...(options.experimentalSystems ?? [])]);
+  const referenceCache = new Map<string, SignalRef | null>();
+  const referenceOf = (id: string): SignalRef | null => {
+    let hit = referenceCache.get(id);
     if (hit === undefined) {
-      hit = options.signalLookup(id)?.system ?? null;
-      systemCache.set(id, hit);
+      hit = options.signalLookup(id) ?? null;
+      referenceCache.set(id, hit);
     }
     return hit;
   };
+  const systemOf = (id: string): string | null => referenceOf(id)?.system ?? null;
 
   const issues: AnswerIssue[] = [];
   const allCited = new Set<string>();
@@ -155,17 +163,18 @@ export function checkAnswer(answerText: string, options: CheckAnswerOptions): Ch
       issues.push({ code: 'honesty_violation', paragraph, values: terms, detail: `含宿命論或保證式用語：${terms.join('、')}`, excerpt });
     }
 
-    const consensusSentences = prose.split(/[。！？!?\n；;]/).filter((s) => s.includes(HIGH_CONSENSUS_TERM));
-    // 每一句提到「高共識」的都在否定（例如「不算高共識」）→ 是誠實的說法，不檢查
-    if (consensusSentences.length > 0 && !consensusSentences.every((s) => NEGATION_RE.test(s))) {
+    if (hasHighConsensusClaim(prose)) {
       const systems = citations.map(systemOf).filter((s): s is string => s !== null);
       const cited = uniqSorted(systems);
       const citedExperimental = cited.filter((s) => experimental.has(s));
       const verified = cited.filter((s) => !experimental.has(s));
       const named = experimentalNamedInConsensusSentence(prose);
 
-      if (verified.length < HIGH_CONSENSUS_MIN_SYSTEMS) {
-        if (citedExperimental.length > 0) {
+      const evidence = typeof options.directionalEvidence === 'function' ? options.directionalEvidence() : options.directionalEvidence ?? [];
+      const refs = citations.flatMap(id => { const ref = referenceOf(id); return ref && !experimental.has(ref.system) ? [{ ...ref, id: ref.id ?? id }] : []; });
+      const supported = supportsHighConsensusCitations(evidence, refs);
+      if (!supported) {
+        if (citedExperimental.length > 0 && verified.length < HIGH_CONSENSUS_MIN_SYSTEMS) {
           issues.push({
             code: 'experimental_as_consensus',
             paragraph,
@@ -178,7 +187,7 @@ export function checkAnswer(answerText: string, options: CheckAnswerOptions): Ch
             code: 'high_consensus_unsupported',
             paragraph,
             values: verified,
-            detail: `「高共識」需要至少 ${HIGH_CONSENSUS_MIN_SYSTEMS} 套已驗證系統的訊號，目前引用 ${verified.length} 套`,
+            detail: `無法確認同一領域／時間窗至少 ${HIGH_CONSENSUS_MIN_SYSTEMS} 套合資格系統的同向計算證據；共同關注不等於高共識`,
             excerpt,
           });
         }

@@ -165,11 +165,11 @@ describe('aggregateSignals', () => {
   });
 
   test('consensus count and highConsensus', () => {
-    const two = [sig({ system: 'bazi', intensity: 0.5 }), sig({ system: 'ziwei', intensity: 0.6 }), sig({ system: 'numerology', intensity: 0.49 })];
+    const two = [sig({ system: 'bazi', intensity: 0.5, valence: 0.7 }), sig({ system: 'ziwei', intensity: 0.6, valence: 0.7 }), sig({ system: 'numerology', intensity: 0.49, valence: 0.7 })];
     const [a] = aggregateSignals(two);
     expect(a.consensus).toBe(2);
     expect(a.highConsensus).toBe(false);
-    const three = [...two, sig({ system: 'tzolkin', intensity: 0.9 })];
+    const three = [...two, sig({ system: 'tzolkin', intensity: 0.9, valence: 0.7 })];
     const [b] = aggregateSignals(three);
     expect(b.consensus).toBe(3);
     expect(b.highConsensus).toBe(true);

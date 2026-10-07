@@ -32,9 +32,11 @@
  * Pure: no clock access (D-014), no LLM (D-021).
  */
 import { aggregateSignals, type DomainWindowAggregate } from '../signals/aggregate';
+import { resolveAgreementThresholds } from '../signals/directionalEvidence';
+import { EXPERIMENTAL_SYSTEMS as EXPERIMENTAL_SYSTEM_IDS } from '../signals/eligibility';
 import { toBand } from '../signals/bands';
 import { SYSTEM_IDS, type Domain, type Signal, type SignalWindow, type SystemId, type Trait } from '../signals/types';
-import catalogJson from './catalog.json';
+import catalogJson from './catalog.v2.json';
 import type {
   AnswerOptions,
   DomainConflict,
@@ -173,6 +175,7 @@ function unsupportedAnswer(input: unknown, catalog: QuestionCatalog): QuestionAn
     unsupported: true,
     conventions: { ...catalog.conventions },
     catalogVersion: catalog.version,
+    thresholds: resolveAgreementThresholds(),
   };
 }
 
@@ -223,6 +226,7 @@ function scoreWindow(
   let wTotal = 0;
   let wScore = 0;
   let consensus = 0;
+  let activityAgreement = 0;
   let highConsensus = false;
   const conflicts: DomainConflict[] = [];
   const domainScores: DomainScore[] = category.domains.map(({ domain, weight }) => {
@@ -231,7 +235,7 @@ function scoreWindow(
     if (!base) {
       return {
         domain, weight, score: 0, activity: 0, support: 0, risk: 0,
-        consensus: 0, highConsensus: false, conflict: null, signalIds: [],
+        consensus: 0, activityAgreement: 0, highConsensus: false, directionalEvidence: null, conflict: null, signalIds: [],
       };
     }
     const systems = Object.keys(base.perSystem);
@@ -249,13 +253,15 @@ function scoreWindow(
     const score = clamp100(a * activity + sw * support - rw * risk);
     wScore += weight * score;
     consensus = Math.max(consensus, base.consensus);
+    activityAgreement = Math.max(activityAgreement, base.activityAgreement);
     highConsensus ||= base.highConsensus;
     if (base.conflict) conflicts.push({ domain, ...base.conflict });
     const signalIds = [...new Set(Object.values(base.perSystem).flatMap((v) => v!.signalIds))].sort(cmp);
     return {
       domain, weight,
       score: round4(score), activity: round4(activity), support: round4(support), risk: round4(risk),
-      consensus: base.consensus, highConsensus: base.highConsensus, conflict: base.conflict, signalIds,
+      consensus: base.consensus, activityAgreement: base.activityAgreement, highConsensus: base.highConsensus,
+      directionalEvidence: base.directionalEvidence, conflict: base.conflict, signalIds,
     };
   });
 
@@ -269,6 +275,7 @@ function scoreWindow(
     riskSignals: filtered.filter((s) => risky.has(s.trait)).sort(bySignalStrength),
     signalIds: filtered.map((s) => s.id),
     consensus,
+    activityAgreement,
     highConsensus,
     conflict: conflicts.length > 0 ? conflicts : null,
   };
@@ -318,6 +325,7 @@ export function answerQuestion(
     conventions: { ...catalog.conventions },
     catalogVersion: catalog.version,
     categoryVersion: category.version,
+    thresholds: resolveAgreementThresholds(opts.aggregate),
   };
   if (systemSet) {
     answer.systemFilter = {
@@ -348,7 +356,7 @@ export function normalizeSystems(systems: readonly unknown[]): SystemId[] {
  * 不從 portable/versions 匯入（那會把 calculators 拉進純模組，違反 D-021 匯入邊界）；
  * 測試會確認它與 EXPERIMENTAL_SYSTEMS 一致。
  */
-export const EXPERIMENTAL_SYSTEM_IDS: readonly SystemId[] = Object.freeze(['jyotish'] as SystemId[]);
+export { EXPERIMENTAL_SYSTEM_IDS };
 
 export interface SensitivityOptions extends Omit<AnswerOptions, 'topN'> {
   /** 比較前幾名，預設 3。 */

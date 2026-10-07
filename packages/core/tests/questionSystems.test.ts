@@ -5,6 +5,7 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import baseline from './fixtures/questionSystems.baseline.json';
+import agreementDelta from './fixtures/questionSystems.v0.6.0.delta.json';
 import {
   EXPERIMENTAL_SYSTEM_IDS,
   QUESTION_CATALOG,
@@ -63,15 +64,17 @@ beforeAll(async () => {
 
 const sha = (x: unknown) => createHash('sha256').update(JSON.stringify(x)).digest('hex');
 
-describe('不指定 systems：與改動前逐位元相同', () => {
-  test('16 個（類別 × 範圍）與改動前的 sha256 相同', () => {
+describe('不指定 systems：保留舊基準並套用 D-045 字面差異', () => {
+  test('16 個（類別 × 範圍）只接受已審查的 v0.6.0 sha256', () => {
     const entries = Object.entries(baseline).filter(([k]) => !k.startsWith('$'));
     expect(entries.length).toBe(16);
     for (const [key, hash] of entries) {
       const [category, start, end] = key.split('|');
       const a = answerQuestion({ category, range: { start, end } }, provider);
       expect(a.systemFilter).toBeUndefined();
-      expect(`${key} ${sha(a)}`).toBe(`${key} ${hash}`);
+      const delta = (agreementDelta.changes as Record<string, {before:string; after:string}>)[key];
+      expect(delta.before).toBe(hash);
+      expect(`${key} ${sha(a)}`).toBe(`${key} ${delta.after}`);
     }
   });
 });

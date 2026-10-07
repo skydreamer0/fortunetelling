@@ -97,13 +97,14 @@ describe('post-validation interception (V5-04)', () => {
     expect(r2.dropped[0].reasons.some((x) => x.code === 'unverified_term' && x.value === '財帛宮')).toBe(true);
   });
 
-  test('「高共識」 allowed when citations span ≥ 3 systems', () => {
+  test('legacy citations from ≥ 3 systems still require directional proof', () => {
     const systems = new Map<string, string>();
     for (const s of built.payload.signals) if (!systems.has(s.system)) systems.set(s.system, s.id);
     expect(systems.size).toBeGreaterThanOrEqual(3);
     const section = { heading: '共識', text: '多套系統在這段時期呈現高共識的變動傾向。', citations: [...systems.values()].slice(0, 3) };
     const r = validateSections([section], { payload: built.payload, payloadJson: built.payloadJson });
-    expect(r.kept).toHaveLength(1);
+    expect(r.kept).toHaveLength(0);
+    expect(r.dropped[0].reasons.some(x => x.code === 'high_consensus_unsupported')).toBe(true);
   });
 
   test('end-to-end through interpret(): dropped sections reported, kept sections returned', async () => {

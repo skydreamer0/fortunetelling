@@ -5,17 +5,22 @@ import { EXPERIMENTAL_SYSTEMS } from '../src/validate';
 const FULL_SIGNALS: Record<string, string> = {
   sig_ba2100001234abcd: 'bazi',
   sig_21e100001234abcd: 'ziwei',
-  sig_a57000001234abcd: 'westernAstrology',
+  sig_a57000001234abcd: 'numerology',
   sig_f1a000001234abcd: 'jyotish',
   sig_d00000011234abcd: 'humanDesign',
-  sig_00a000001234abcd: 'numerology',
+  sig_00a000001234abcd: 'tzolkin',
 };
 /** 呼叫端負責解析前綴：唯一才回訊號，ambiguous 與查不到回 null。 */
 const signalLookup = (id: string) => {
   const hits = Object.keys(FULL_SIGNALS).filter((full) => full.startsWith(id));
-  return hits.length === 1 ? { system: FULL_SIGNALS[hits[0]] } : null;
+  return hits.length === 1 ? { id: hits[0], system: FULL_SIGNALS[hits[0]], domain: 'wealth', valence: 1,
+    window: { grain: 'year' as const, start: '2026-01-01', end: '2026-12-31' } } : null;
 };
-const run = (text: string) => checkAnswer(text, { signalLookup });
+const evidence = { policy: 'nonexperimental-directional-v1', domain: 'wealth',
+  window: { grain: 'year', start: '2026-01-01', end: '2026-12-31' }, thresholds: { theta: 0.5, tau: 0.2 },
+  perSystem: Object.fromEntries(Object.entries(FULL_SIGNALS).map(([id, system]) => [system, { score: 0.8, valence: 1, weight: 1, signalIds: [id] }])),
+};
+const run = (text: string) => checkAnswer(text, { signalLookup, directionalEvidence: [evidence] });
 const codes = (text: string) => run(text).issues.map((i) => i.code);
 
 describe('checkAnswer (a) 引用', () => {

@@ -9,6 +9,7 @@
 
 import {
   answerQuestion, buildTimeline, getQuestionCategory, resolveSignalId,
+  evidenceMatchesContext, type DirectionalEvidence,
   type CoreSignal, type QuestionAnswer, type QuestionRange, type SignalWindow, type TimeContext,
 } from '../lib/core';
 import type { Report } from './types';
@@ -73,13 +74,15 @@ export function monthSignalProvider(report: Report): ((window: SignalWindow) => 
   return window => monthsOf(Number(window.start.slice(0, 4))).get(window.start.slice(0, 7)) ?? [];
 }
 
-function monthSignalsByYear(report: Report): ((year: number) => Map<string, CoreSignal[]>) | null {
+type MonthSignalsSource = ((year: number) => Map<string, CoreSignal[]>) & { directionalEvidence(): DirectionalEvidence[] };
+function monthSignalsByYear(report: Report): MonthSignalsSource | null {
   const ctx = report.timeContext as unknown as TimeContext | null | undefined;
   const options = reportTimelineOptions(report);
   if (!ctx || !options) return null;
   const asOfYear = Number(report.asOf.slice(0, 4));
   const byYear = new Map<number, Map<string, CoreSignal[]>>();
-  return year => {
+  const proofs: DirectionalEvidence[] = [];
+  const read = (year: number) => {
     let months = byYear.get(year);
     if (!months) {
       const tl = buildTimeline(ctx, {
@@ -91,11 +94,18 @@ function monthSignalsByYear(report: Report): ((year: number) => Map<string, Core
         const byId = new Map<string, CoreSignal>();
         for (const domain of cell.domains) for (const signal of domain.topSignals) byId.set(signal.id, signal);
         months.set(cell.window.start.slice(0, 7), [...byId.values()]);
+        if (options.consensusThreshold !== undefined && options.conflictThreshold !== undefined) {
+          for (const domain of cell.domains) if (evidenceMatchesContext(domain.directionalEvidence, {
+            domain: domain.domain, window: cell.window, thresholds: tl.thresholds, systems: tl.systems,
+            systemWeights: tl.systemWeights, perSystem: domain.perSystem,
+          })) proofs.push(domain.directionalEvidence);
+        }
       }
       byYear.set(year, months);
     }
     return months;
   };
+  return Object.assign(read, { directionalEvidence: () => proofs });
 }
 
 /** Same reach as the MCP server's `get_signal`: asOf year −5 … +10 (RESOLVABLE_YEARS in @fortune/mcp). */
@@ -111,7 +121,8 @@ const LOOKUP_YEARS = { before: 5, after: 10 } as const;
  * soon as it is found; a shorter prefix scans every year first (once, then cached), because a
  * not-yet-scanned year could hold a second signal with the same prefix. Ambiguous → null, never a guess.
  */
-export function reportSignalLookup(report: Report): (id: string) => { system: string } | null {
+export type ReportSignalLookup = ((id: string) => CoreSignal | null) & { directionalEvidence(): DirectionalEvidence[] };
+export function reportSignalLookup(report: Report): ReportSignalLookup {
   const known = new Map<string, CoreSignal>();
   const add = (signal: CoreSignal | null | undefined) => {
     if (signal && typeof signal.id === 'string') known.set(signal.id, signal);
@@ -121,6 +132,15 @@ export function reportSignalLookup(report: Report): (id: string) => { system: st
     for (const domain of cell.domains) domain.topSignals.forEach(add);
   }
   const monthsOf = monthSignalsByYear(report);
+  const proofs: DirectionalEvidence[] = [];
+  if (report.timeline && report.timeline.schemaVersion >= 2) {
+    const timeline = report.timeline;
+    for (const cell of [...timeline.years, ...timeline.months]) for (const domain of cell.domains) {
+      if (evidenceMatchesContext(domain.directionalEvidence, { domain: domain.domain, window: cell.window,
+        thresholds: timeline.thresholds, systems: timeline.systems, systemWeights: timeline.systemWeights, perSystem: domain.perSystem,
+      })) proofs.push(domain.directionalEvidence);
+    }
+  }
   const asOfYear = Number(report.asOf.slice(0, 4));
   let scanned = asOfYear - LOOKUP_YEARS.before - 1;
   const last = asOfYear + LOOKUP_YEARS.after;
@@ -132,7 +152,7 @@ export function reportSignalLookup(report: Report): (id: string) => { system: st
       // a year the engine cannot build simply contributes no signals
     }
   };
-  return input => {
+  const lookup = (input: string) => {
     const wanted = input.trim().toLowerCase();
     const isFull = /^sig_[0-9a-f]{16}$/.test(wanted);
     // A full id that is already known needs no scan; anything shorter must see every year first.
@@ -141,6 +161,7 @@ export function reportSignalLookup(report: Report): (id: string) => { system: st
     const found = resolveSignalId(wanted, known.keys());
     return found.status === 'exact' || found.status === 'unique' ? known.get(found.id) ?? null : null;
   };
+  return Object.assign(lookup, { directionalEvidence: () => [...proofs, ...(monthsOf?.directionalEvidence() ?? [])] });
 }
 
 export interface LocalQuestion {
@@ -158,10 +179,21 @@ export function localQuestion(report: Report, text: string): LocalQuestion | nul
   const range = questionRange(text, report.asOf);
   const categoryName = getQuestionCategory(category)?.name ?? category;
   const provider = monthSignalProvider(report);
+  const options = reportTimelineOptions(report);
   let answer: QuestionAnswer | null = null;
-  if (provider) {
+  if (provider && options) {
     try {
-      answer = answerQuestion({ category, range }, provider);
+      answer = answerQuestion({ category, range }, provider, { aggregate: {
+        systemWeights: options.systemWeights, consensusThreshold: options.consensusThreshold, conflictThreshold: options.conflictThreshold,
+      } });
+      // Legacy metadata can replay scores, but cannot attest to a historical
+      // directional policy/threshold. Do not backfill a new high-consensus claim.
+      if (options.consensusThreshold === undefined || options.conflictThreshold === undefined) {
+        for (const item of answer.ranking) {
+          item.consensus = 0; item.highConsensus = false;
+          for (const domain of item.domainScores) { domain.consensus = 0; domain.highConsensus = false; domain.directionalEvidence = null; }
+        }
+      }
     } catch {
       answer = null;
     }
