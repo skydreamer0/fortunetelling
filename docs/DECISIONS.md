@@ -703,3 +703,38 @@ UTC所有計算section、六個export檔案hash及1191 signalCount保持不變�
 修正版93edead4與原分支保留，另由最新master開PR72交付相同source/test，加上本段交付紀錄校正。
 內容核對確認#67/#68/#69都已在master，沒有重新實作；不改原分支或已合PR。
 Actions維持停用，只用原cloud workspace、已批准官方Bun及frozen依賴；沒有改封存預測或部署。
+
+## D-049 Gregorian 日期驗證不依主機時區（#26／#54 有限片）
+
+**缺陷：** `parseIsoDate` 與 BaZiEngine 的 asOf 驗證，用本地 `new Date(year, month - 1, day)`
+再比對本地年月日。Pacific/Apia 在 2011-12-30 跳過整個民用日，造成相同合法 Gregorian 日期
+只在該 host 被拒絕。真 analyze 因而回傳空八字主盤及 valid-calendar-date error，timeline
+再將空盤按既有邏輯列為 time_unknown；UTC、Taipei、New York 則都有八字的 16 個 components。
+
+**最小修法：** 兩處改用 `new Date(Date.UTC(year, month - 1, day))`，並比對 UTC getters。
+驗證的是 Gregorian 日期欄位，不是該 host 是否經歷過這個民用日。原正規表示式、輸入 coercion、
+errors 與驗證顺序不變；BaZiEngine 後續 Solar 計算不改，unknown time 仍先 skip。
+Date.UTC 保留原 JS constructor 對 0–99 年的 1900 映射，因此 `0000`–`0099` 仍被拒絕，
+`0100-01-01`、`9999-12-31` 仍接受；沒有改用 setUTCFullYear 擴張合法範圍。
+閏日／不存在日期、Gregorian 與 lunar parser 的不同既有範圍、錯誤字串均保留。
+
+**出生地語義保持：** Gregorian 日期合法，不表示該日期在指定出生地有實際時刻。
+真正出生地 Pacific/Apia 的 2011-12-30 12:00，TimeContext 仍標記 1440 分鐘 gap、
+resolvedLocal 2011-12-31T12:00:00、UTC 2011-12-30T22:00:00Z，並 requiresConfirmation=true。
+不修改 resolveWallTime、DST 政策、出生時間／真太陽／子時、任何曆法算法或空盤狀態模型。
+
+**回歸與相容：** tests-only `051eb870` 在 Bun 1.4.2 為 4 pass／3 fail；三項失敗均重現
+Apia 的 parser、legacy engine 與真 analyze 鏈錯誤。修後七新測及十一原測共 18 pass／0 fail。
+四個獨立 TZ 程序覆蓋跳日之前／當日／之後、世紀閏日、月份／日越界、格式／Date 入口、
+低年与四位數上下界，並保住真出生地 gap 與 unknown-time 的負控。typed calculator 和 analyze
+都走真函式；修正前後的 UTC 完整矩陣逐欄相同，不以 mock 掩蓋盤面來源。
+
+core 0.6.3；Report 7、Timeline 2、Consensus 2 及 calculator 算法版本不變。
+原 golden 與所有既有 delta 保留。新增 `reportGolden.v0.6.3.delta.json` 僅列 11 個 Report
+與 2 個 compatibility 版本字串；`export.v0.6.3.delta.json` 僅列 manifest coreVersion。
+UTC 計算 sections、六個 export 檔案 hash 及 1191 signalCount 不改。
+
+本片 stack 精確 #72 head `5fde5514996c41e7df9c6afe5c9786611e8c0744`，保留紫微日期修正，
+原 #72 分支不動。精確候選與完整本地／非作者驗收見 [Draft PR #73](https://github.com/skydreamer0/fortunetelling/pull/73)。
+#26／#54 仍是部分交付，不勾完全部曆法矩陣、不新增 ChartSnapshot 或 schema。
+Actions 維持停用，只用原 cloud workspace 與既有批准 Bun／frozen 依賴；封存預測不改。
