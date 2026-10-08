@@ -18,6 +18,8 @@ const ISSUE_LABELS: Record<AnswerIssueCode, string> = {
   honesty_violation: '宿命論或保證式用語',
   experimental_as_consensus: '把實驗性系統算進高共識',
   high_consensus_unsupported: '「高共識」缺乏至少 3 套同向計算證據',
+  month_recommendation_when_abstained: '引擎未排名，回答仍推薦月份',
+  question_context_missing: '缺少原問事資料，無法核對月份推薦',
 };
 
 /** Pure result view (exported for tests). */

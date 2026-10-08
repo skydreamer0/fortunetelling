@@ -184,7 +184,7 @@ export interface LocalQuestion {
   category: string;
   categoryName: string;
   range: QuestionRange;
-  /** null when the report cannot provide month signals (old report, time unknown) or the engine failed. */
+  /** Unavailable sources are explicitly insufficient_evidence, not evaluated zero scores. */
   answer: QuestionAnswer | null;
 }
 
@@ -213,6 +213,12 @@ export function localQuestion(report: Report, text: string): LocalQuestion | nul
     } catch {
       answer = null;
     }
+  }
+  if (!answer) {
+    answer = answerQuestion({ category, range }, () => []);
+    // The source was never successfully evaluated: do not expose synthetic zero-month diagnostics.
+    answer.ranking = [];
+    answer.abstentionReasons = [{ code: 'source_unavailable', message: '這份報告缺少可重放的月份資料，或月份計算未完成；不能把未取得的資料當成已評估的零分，不提供月份排名。' }];
   }
   return { category, categoryName, range, answer };
 }

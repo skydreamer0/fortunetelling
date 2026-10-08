@@ -1,0 +1,19 @@
+{
+  "version": "0.7.0",
+  "decision": "D-051",
+  "reason": "New Question contract metadata, empty recommendations, chronological unranked diagnostics with source references; original v0.6.0 fixture unchanged.",
+  "changes": {
+    "aq-detail|vehicle_purchase": {
+      "before": "fc7716ecb520c1eb50fd6b872b5e9062e71f5f1b341168d8a8b56ca44a3a1bf1",
+      "after": "c8f6b7c55e33b5bf81abbf93642bb68a6c301d32c31d85a078e58ca56a4c72b7",
+      "status": "no_clear_advantage",
+      "topCount": 0
+    },
+    "aq-detail|job_change": {
+      "before": "89f03a3c0dd7930095975aab403542bf825d2b22e2c88087735364d87b8f2169",
+      "after": "d30d4fa482f7af8a6b30e93b7ebd8fd8a626dbe9ae0cf2a206f3d64f4b07b26f",
+      "status": "ranked",
+      "topCount": 3
+    }
+  }
+}

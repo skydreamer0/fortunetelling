@@ -160,7 +160,7 @@ describe('report replay metadata and source-system boundaries', () => {
       (report.timeContext!.conventions as Record<string, unknown>).timeline = timeline;
       expect(reportTimelineOptions(report)).toBeNull();
       expect(monthSignalProvider(report)).toBeNull();
-      expect(localQuestion(report, '什麼時候買車')!.answer).toBeNull();
+      expect(localQuestion(report, '什麼時候買車')!.answer).toMatchObject({status:'insufficient_evidence',top:[],abstentionReasons:[{code:'source_unavailable'}]});
       expect(canBacktest(report)).toBe(false);
       expect(() => buildReportBacktestTimeline(report)).toThrow('重新排盤');
       expect(reportSignalLookup(report)(signal.id)?.system).toBe(signal.system);

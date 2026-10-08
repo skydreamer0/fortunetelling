@@ -4,6 +4,7 @@
  * 不含 Anthropic client（選用，請用 `@fortune/ai/client`）。
  */
 export * from './checkAnswer';
+export { questionContextOf } from './questionPolicy';
 export * from './instructions';
 export { buildInterpretationPayload, LOCAL_PAYLOAD_OPTIONS } from './payload';
 export type { BuildPayloadOptions, BuiltPayload } from './payload';

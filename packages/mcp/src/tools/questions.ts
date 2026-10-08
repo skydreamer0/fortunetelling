@@ -9,6 +9,7 @@ import {
   timeContextToBirthData,
   type ExperimentalSensitivity,
   type QuestionAnswer,
+  type QuestionWindow,
   type RankedWindow,
   type Signal,
   type SignalWindow,
@@ -59,8 +60,9 @@ function slimWindow(r: RankedWindow, detail: boolean, sh: Shorten) {
   };
 }
 
-function slimRanked(r: RankedWindow) {
-  return { rank: r.rank, window: r.window, score: r.score, band: r.band, highConsensus: r.highConsensus };
+function slimRanked(r: QuestionWindow, diagnostic: boolean, detail: boolean, sh: Shorten) {
+  return { rank: diagnostic ? null : r.rank, window: r.window, score: r.score, band: r.band, highConsensus: r.highConsensus,
+    ...(diagnostic ? { signalIds: sh(previewIds(r.signalIds, detail)), signalIdsTotal: r.signalIds.length } : {}) };
 }
 
 /**
@@ -69,11 +71,15 @@ function slimRanked(r: RankedWindow) {
  */
 export function slimAnswer(answer: QuestionAnswer, detail = false, sh: Shorten = ids => [...ids]) {
   return {
+    status: answer.status,
+    abstentionReasons: answer.abstentionReasons,
+    rankingPolicy: answer.rankingPolicy,
+    rankingKind: answer.status === 'ranked' ? 'ranked' as const : 'diagnostic' as const,
     category: answer.category,
     thresholds: answer.thresholds,
     range: answer.range,
-    top: answer.top.map(r => slimWindow(r, detail, sh)),
-    ranking: answer.ranking.slice(0, RANKING_LIMIT).map(slimRanked),
+    top: (answer.status === 'ranked' ? answer.top : []).map(r => slimWindow(r, detail, sh)),
+    ranking: answer.ranking.slice(0, RANKING_LIMIT).map(r => slimRanked(r, answer.status !== 'ranked', detail, sh)),
     rankingTotal: answer.ranking.length,
     ...(detail ? { conventions: answer.conventions } : { conventionsOmitted: true as const }),
     catalogVersion: answer.catalogVersion,
@@ -90,6 +96,24 @@ export function defaultRange(asOf: string): { start: string; end: string } {
   const last = year * 12 + (month - 1) + 11;
   const pad = (n: number) => String(n).padStart(2, '0');
   return { start: `${asOf.slice(0, 4)}-${pad(month)}`, end: `${Math.floor(last / 12)}-${pad((last % 12) + 1)}` };
+}
+
+/** Shared by answer_question and check_answer: never trust a client-supplied status. */
+export function computeQuestionContext(analysis: Analysis, category: string, range: { start: string; end: string }, systems?: readonly string[], verifiedOnly?: boolean) {
+  const n = monthsInRange(range);
+  const years = resolvableYearRange(analysis.asOf);
+  if (!YM.test(range.start) || !YM.test(range.end) || n < 1 || n > MAX_MONTHS ||
+      Number(range.start.slice(0, 4)) < years.min || Number(range.end.slice(0, 4)) > years.max) {
+    throw new ToolError('invalid_args', `question range must span 1..36 months within ${years.min}-${years.max}`);
+  }
+  const sel = resolveSystems(analysis, systems, verifiedOnly);
+  const aggregate = { systemWeights: analysis.timeline.systemWeights,
+    consensusThreshold: analysis.timeline.thresholds.theta, conflictThreshold: analysis.timeline.thresholds.tau };
+  const answer = answerQuestion({ category, range }, monthSignalProvider(analysis), {
+    aggregate, ...(sel.filtered ? { systems: sel.systemsUsed } : {}),
+  });
+  analysis.rememberQuestionEvidence(answer);
+  return answer;
 }
 
 export const questionTools = [
@@ -109,7 +133,7 @@ export const questionTools = [
   defineTool({
     name: 'answer_question',
     description:
-      "Rank the months of a range (max 36) for a question category, using core's deterministic Question Engine over the profile's timeline signals. " +
+      "Evaluate months (max 36) using core's deterministic Question Engine. Read status and abstentionReasons first: only ranked may recommend months; tied/no_clear_advantage/insufficient_evidence/unsupported have top=[]. Non-ranked ranking is chronological diagnostics, not a recommendation. " +
       'First call list_question_categories to get a category id and pass it as category. ' +
       'Alternatively pass question (your own wording of the question) with category omitted: a fixed keyword table picks the category, and if nothing or several categories match you get invalid_args with availableCategories (no guessing, no LLM). ' +
       'The response says how it was chosen: categoryResolvedFrom "explicit" | "question". ' +
@@ -170,7 +194,9 @@ export const questionTools = [
       const caveats = caveatsFor(analysis, sel);
       if (!getQuestionCategory(category)) {
         const answer = answerQuestion({ category, range }, () => []);
-        return ok({ asOf, caveats, data: { unsupported: true as const, category: answer.category, categoryResolvedFrom, range: answer.range, rangeResolvedFrom, ...systemsFields(sel), ...(detail ? { conventions: answer.conventions } : { conventionsOmitted: true as const }), catalogVersion: answer.catalogVersion, availableCategories } });
+        return ok({ asOf, caveats, data: { ...compactAnswer(answer), unsupported: true as const,
+          questionContext: { category, range, ...(systems ? { systems } : {}), ...(verifiedOnly !== undefined ? { verifiedOnly } : {}) },
+          categoryResolvedFrom, rangeResolvedFrom, ...systemsFields(sel), ...(detail ? { conventions: answer.conventions } : { conventionsOmitted: true as const }), availableCategories } });
       }
       const provider = monthSignalProvider(analysis);
       let answer: QuestionAnswer;
@@ -179,14 +205,13 @@ export const questionTools = [
         // 不篩選時走原本的路徑（輸出與改動前相同）；篩選時由 core 只採計 systemsUsed 的訊號重算。
         const aggregate = { systemWeights: analysis.timeline.systemWeights,
           consensusThreshold: analysis.timeline.thresholds.theta, conflictThreshold: analysis.timeline.thresholds.tau };
-        answer = answerQuestion({ category, range }, provider, { aggregate, ...(sel.filtered ? { systems: sel.systemsUsed } : {}) });
-        analysis.rememberQuestionEvidence(answer);
+        answer = computeQuestionContext(analysis, category, range, systems, verifiedOnly);
         // 敏感度：同一問題、同一範圍，(採計的系統 ∪ 可用的實驗性系統) 對 (採計的系統 − 實驗性系統)。
-        sensitivity = experimentalSensitivity({ category, range }, provider, {
+        sensitivity = answer.status === 'ranked' ? experimentalSensitivity({ category, range }, provider, {
           systems: sel.systemsUsed,
           aggregate,
           experimental: EXPERIMENTAL_SYSTEM_IDS.filter(s => analysis.timeline.systems.includes(s)),
-        });
+        }) : null;
       } catch (e) {
         if (e instanceof ToolError) throw e;
         throw new ToolError('invalid_args', e instanceof Error ? e.message : String(e));
@@ -194,6 +219,7 @@ export const questionTools = [
       const warn = sensitivity ? sensitivityCaveat(sensitivity) : null;
       if (warn) caveats.push(warn);
       const extra = {
+        questionContext: { category, range, ...(systems ? { systems } : {}), ...(verifiedOnly !== undefined ? { verifiedOnly } : {}) },
         categoryResolvedFrom,
         rangeResolvedFrom,
         ...systemsFields(sel),

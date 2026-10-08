@@ -82,6 +82,25 @@ export interface QuestionCatalog {
   scoring: ScoringCoefficients;
   defaults: { grain: 'month'; minMonths: number; maxMonths: number };
   categories: QuestionCategory[];
+  /** Present in catalog v3 (schema 2); archived catalogs remain immutable. */
+  rankingPolicy?: QuestionRankingPolicy;
+}
+
+export interface QuestionRankingPolicy {
+  bandCuts: BandCuts;
+  minimumBand: '中';
+  insufficientScoreMax: 0;
+  tiePolicy: 'abstain-on-top-score-tie';
+}
+
+export type QuestionStatus = 'ranked' | 'tied' | 'no_clear_advantage' | 'insufficient_evidence' | 'unsupported';
+export type AbstentionReasonCode = 'unsupported_category' | 'no_signals' | 'all_zero_scores' | 'all_low_band' | 'top_score_tie' | 'source_unavailable' | 'legacy_policy_missing';
+export interface AbstentionReason { code: AbstentionReasonCode; message: string }
+export interface QuestionDecision {
+  status: QuestionStatus;
+  abstentionReasons: AbstentionReason[];
+  /** Effective, validated policy; minimumScore is derived from bandCuts[0]. */
+  rankingPolicy: QuestionRankingPolicy & { minimumScore: number };
 }
 
 // ─── answer ───────────────────────────────────────────────────────────────────
@@ -132,12 +151,12 @@ export interface RankedWindow {
   conflict: DomainConflict[] | null;
 }
 
-export interface QuestionAnswer {
+export interface QuestionAnswerV2 {
   category: string;
   range: QuestionRange | null;
-  /** All months of the range, sorted by score desc then earlier window. Empty when unsupported. */
+  /** Diagnostic score order, NOT a recommendation when status is not ranked. */
   ranking: RankedWindow[];
-  /** First (up to) 3 entries of `ranking`. */
+  /** Historical replay: first topN rows. Live v3: present only for ranked decisions. */
   top: RankedWindow[];
   unsupported?: true;
   conventions: Record<string, string>;
@@ -145,10 +164,17 @@ export interface QuestionAnswer {
   thresholds: AgreementThresholds;
   categoryVersion?: number;
   /**
-   * 只在呼叫端指定 `AnswerOptions.systems` 時出現（不指定時輸出與舊版逐位元相同）。
+   * 只在呼叫端指定 `AnswerOptions.systems` 時出現；逐位元舊版重播須走 replayQuestionAnswerV2。
    * 說明這次排名採計了哪些系統的訊號、排除了哪些。
    */
   systemFilter?: SystemFilterInfo;
+}
+
+/** New live answers always contain an explicit decision; historical v2 replay is a separate API. */
+export type QuestionWindow = Omit<RankedWindow, 'rank'> & { rank: number | null };
+export interface QuestionAnswer extends Omit<QuestionAnswerV2, 'ranking'>, QuestionDecision {
+  /** ranked: score order; otherwise chronological diagnostics with rank:null. */
+  ranking: QuestionWindow[];
 }
 
 /** 指定系統時的採計紀錄（皆依 SYSTEM_IDS 順序）。 */

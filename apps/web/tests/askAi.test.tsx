@@ -81,14 +81,15 @@ describe('question → category by keywords (no AI) + local Question Engine', ()
     expect(questionRange('2026 到 2030', '2026-09-25')).toEqual({ start: '2026-09', end: '2029-08' });
   });
 
-  test('「什麼時候適合買車」 → vehicle_purchase, local ranking, top months in the prompt', () => {
+  test('「什麼時候適合買車」 → vehicle_purchase, low-band reason in the prompt', () => {
     const question = '2026～2027 什麼時候適合買車？';
     const local = localQuestion(report, question)!;
     expect(local.category).toBe('vehicle_purchase');
     expect(local.categoryName).toBe('購車時機');
     expect(local.range).toEqual({ start: '2026-09', end: '2027-12' });
     const top = local.answer!.top;
-    expect(top).toHaveLength(3);
+    expect(top).toEqual([]);
+    expect(local.answer!.status).toBe('no_clear_advantage');
     const prompt = buildCopyPrompt(report as never, { focus: 'question', question, questionAnswer: local.answer });
     expect(prompt.text).toContain(`「${question}」`);
     expect(prompt.text).toContain('Question Engine 確定性計算，不是 AI 產生');
@@ -96,7 +97,8 @@ describe('question → category by keywords (no AI) + local Question Engine', ()
     expect(prompt.charCount).toBeLessThanOrEqual(24_000);
     const status = renderToStaticMarkup(<QuestionStatus text={question} local={local} ranking={false} />);
     expect(status).toContain('購車時機');
-    expect(status).toContain(top.map(window => window.window.start.slice(0, 7)).join('、'));
+    expect(status).toContain(local.answer!.abstentionReasons[0].message);
+    expect(status).not.toContain('網站計算的前');
   });
 
   test('unknown question → no ranking, prompt still built with the question', () => {

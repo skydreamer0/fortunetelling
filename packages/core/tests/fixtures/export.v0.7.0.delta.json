@@ -1,0 +1,24 @@
+{
+  "version": "0.7.0",
+  "decision": "D-051",
+  "reason": "Only manifest core/catalog version metadata changes; no chart/source files change.",
+  "changes": [
+    {
+      "path": [
+        "versions",
+        "coreVersion"
+      ],
+      "before": "0.6.4",
+      "after": "0.7.0"
+    },
+    {
+      "path": [
+        "versions",
+        "catalogs",
+        "questions"
+      ],
+      "before": 2,
+      "after": 3
+    }
+  ]
+}

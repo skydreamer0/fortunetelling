@@ -32,7 +32,7 @@ import {
   type ReportLike,
 } from './payload';
 
-export const COPY_PROMPT_VERSION = 'copy-v5';
+export const COPY_PROMPT_VERSION = 'copy-v6';
 /** Default size of the whole paste-ready text (characters). Fits common chat input limits. */
 export const DEFAULT_COPY_MAX_CHARS = 24_000;
 
@@ -78,7 +78,7 @@ function rulesBlock(): string {
 7. 資料無法回答的事，請直接說「這份資料無法回答」並說明缺少什麼，不要自行發揮或用一般命理知識補上。
 8. 不做醫療、法律、投資的確定建議；涉及健康或財務時只描述訊號代表的傾向，並建議諮詢專業人士。
 9. 資料已去識別化（沒有姓名、出生地、出生日期時間），請不要詢問或推測這些個人資料。
-10. 若 question.top 裡每個月份的 band 都是「低」，或沒有任何月份的 highConsensus 為 true，回答問題的第一段必須明說「這個範圍內沒有特別突出的月份」，只能比較相對高低，不得硬推薦哪個月份。`;
+10. 先讀 question.status 與 abstentionReasons：只有 ranked 才能引用 question.top 比較月份；tied、no_clear_advantage、insufficient_evidence、unsupported 都不得推薦月份，第一段須說明原因。診斷分數不代表推薦，不能自行重排名；top 為空也可能只是 topN=0 的展示選擇，不能據此改判證據不足。`;
 }
 
 function formatBlock(focus: CopyPromptFocus, hasQuestion: boolean, hasRanking: boolean, asOfYear: string | null): string {
@@ -111,7 +111,7 @@ function dataGuide(asOf: string | null): string {
 - 基準日（asOf）：${asOf ?? '未提供'}。「本年」指基準日所在的年份。
 - profile：只有性別、出生時間精度與時區。charts：各系統的命盤計算結果。signals[]：規則產生的訊號，欄位 id、system、ruleId、domain、trait、intensity（強度 0–1）、valence（方向 −1～+1）、window（生效期間）、evidence.text（依據）。
 - timeline.years／timeline.months：每格分數（score）、band、共同關注數（activityAgreement）、最大同向系統數（consensus）、highConsensus、原始計票證據（directionalEvidence）、發出訊號的系統（systems）、矛盾（conflict，含各側未附訊號引用數omittedCount）及topSignalIds；θ／τ沿用thresholds。
-- question（若有）：網站 Question Engine 以程式計算的月份排名，supportSignalIds 為支持訊號、riskSignalIds 為風險訊號。
+- question（若有）：網站 Question Engine 的 status 與不排名原因；只有 ranked 才有可展示的月份，supportSignalIds 為支持訊號、riskSignalIds 為風險訊號。
 - signals 與 months 只列基準月起的月份（之前的月份已過去，未提供）。
 - domain 對照：${DOMAIN_GLOSSARY}。
 - system 對照：${SYSTEM_GLOSSARY}。
@@ -234,13 +234,18 @@ function questionBlock(question: string | null, p: InterpretationPayload): strin
   if (q) {
     const cat = listQuestionCategories().find((c) => c.id === q.category);
     lines.push('');
-    lines.push('### 網站計算的月份排名（Question Engine 確定性計算，不是 AI 產生）');
-    if (q.unsupported) {
+    lines.push('### 網站計算的問事結果（Question Engine 確定性計算，不是 AI 產生）');
+    const range = q.range ? `；範圍 ${q.range.start}～${q.range.end}` : '';
+    lines.push(`類別：${cat?.name ?? q.category}（${q.category}）${range}；問事目錄版本 ${q.catalogVersion}。`);
+    if (q.status !== 'ranked') {
+      lines.push(`狀態：${q.status}；不提供月份排名。`);
+      lines.push(...q.abstentionReasons.map(reason => reason.message));
+      lines.push('不得從診斷分數或其他時間軸自行推薦月份。');
+    } else if (q.unsupported) {
       lines.push('網站的問事目錄不支援這類問題，沒有月份排名。');
     } else {
-      const range = q.range ? `；範圍 ${q.range.start}～${q.range.end}` : '';
-      lines.push(`類別：${cat?.name ?? q.category}（${q.category}）${range}；問事目錄版本 ${q.catalogVersion}。`);
-      if (q.top.length === 0) lines.push('（範圍內沒有可排名的月份。）');
+
+      if (q.top.length === 0) lines.push('（狀態為 ranked；這次展示未列出月份，不代表證據不足。）');
       for (const w of q.top) {
         const cite = (ids: string[]) => (ids.length ? ids.map((id) => `〔${id}〕`).join('') : '無');
         const conflict = w.conflict && w.conflict.length ? `；有系統間矛盾（${w.conflict.map((c) => c.domain).join('、')}）` : '';
@@ -271,7 +276,7 @@ function assemble(parts: {
     `# 命理報告解讀請求（${COPY_PROMPT_VERSION}）`,
     '你是一位謹慎、誠實的命理報告解讀者。下方「資料」是一個命理網站用程式確定性計算好的結果（多套系統的命盤、訊號與分數），已經去除姓名、出生地與出生日期時間。請只根據這份資料，用繁體中文寫出清楚、可追溯的解讀。',
     rulesBlock(),
-    formatBlock(parts.focus, hasQuestion, Boolean(p.question && !p.question.unsupported), asOf ? asOf.slice(0, 4) : null),
+    formatBlock(parts.focus, hasQuestion, Boolean(p.question?.status === 'ranked' && p.question.top.length > 0), asOf ? asOf.slice(0, 4) : null),
     dataGuide(asOf),
     `## 資料（JSON）\n${parts.note ?? '資料完整：沒有省略訊號。'}\n\`\`\`json\n${parts.payload.payloadJson}\n\`\`\``,
   ];

@@ -62,7 +62,7 @@ describe('對話助手與 MCP 指示（M3-04）', () => {
   test('MCP server instructions 500 字內，含必要守則', () => {
     const t = MCP_SERVER_INSTRUCTIONS;
     expect(t.length).toBeLessThanOrEqual(500);
-    for (const kw of ['list_profiles', 'asOf', 'answer_question', 'get_signal', '〔sig_', '高共識', 'Jyotish', 'Human Design', '未校準', '沒有哪個月特別突出', 'systems', 'verifiedOnly', 'experimentalSensitivity.changed', '未驗證系統']) {
+    for (const kw of ['list_profiles', 'asOf', 'answer_question', 'get_signal', '〔sig_', '高共識', 'Jyotish', 'Human Design', '未校準', 'abstentionReasons', 'systems', 'verifiedOnly', 'experimentalSensitivity.changed', '未驗證系統']) {
       expect(t).toContain(kw);
     }
   });
@@ -70,8 +70,8 @@ describe('對話助手與 MCP 指示（M3-04）', () => {
     const t = CONVERSATION_SYSTEM_INSTRUCTION;
     expect(t.startsWith(MCP_SERVER_INSTRUCTIONS)).toBe(true);
     for (const tool of ['list_conflicts', 'get_consensus', 'check_answer', 'compare_profiles']) expect(t).toContain(tool);
-    for (const kw of ['矛盾', 'experimental', '至少 3 套', '這個範圍內沒有特別突出的月份']) expect(t).toContain(kw);
-    expect(CONVERSATION_PROMPT_VERSION).toBe('chat-v3');
+    for (const kw of ['矛盾', 'experimental', '至少 3 套', 'no_clear_advantage']) expect(t).toContain(kw);
+    expect(CONVERSATION_PROMPT_VERSION).toBe('chat-v4');
   });
   test('用詞為台灣用語', () => {
     for (const bad of ['数据', '默认', '导出', '代码', '默認', '導出']) expect(CONVERSATION_SYSTEM_INSTRUCTION).not.toContain(bad);
@@ -80,8 +80,8 @@ describe('對話助手與 MCP 指示（M3-04）', () => {
 
 describe('實驗性系統不計入高共識；低分帶不硬推薦（M3 追加）', () => {
   test('版本字串已升版', () => {
-    expect(COPY_PROMPT_VERSION).toBe('copy-v5');
-    expect(INTERPRET_PROMPT_VERSION).toBe('interpret-v4');
+    expect(COPY_PROMPT_VERSION).toBe('copy-v6');
+    expect(INTERPRET_PROMPT_VERSION).toBe('interpret-v5');
   });
 
   test('兩份 prompt 都有 experimental 規則與「沒有特別突出」規則', () => {
@@ -90,8 +90,8 @@ describe('實驗性系統不計入高共識；低分帶不硬推薦（M3 追加�
       expect(text).toContain('已驗證');
       expect(text).toContain('experimental');
       expect(text).toContain('不計入');
-      expect(text).toContain('這個範圍內沒有特別突出的月份');
-      expect(text).toContain('不得硬推薦');
+      expect(text).toContain('no_clear_advantage');
+      expect(text).toContain('不得推薦月份');
     }
     expect(copy).toContain('吠陀占星');
     expect(copy).toContain('尚未驗證');

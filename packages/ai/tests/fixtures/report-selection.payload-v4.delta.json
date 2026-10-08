@@ -1,0 +1,96 @@
+{
+  "payloadVersion": 4,
+  "decision": "D-051",
+  "reason": "Question status gate, legacy-policy fail-closed, and versioned prompts; no source signal/chart computation changes.",
+  "changes": {
+    "200k": {
+      "before": {
+        "hash": "95085d0269b122287fc1a73b8af2f9404885f15988bdd178d0dff93972cf958c",
+        "kept": 347,
+        "missing": []
+      },
+      "after": {
+        "hash": "272cf972147e3d5271338865749c359559038952da64a10ef502fa01312f7295",
+        "kept": 347,
+        "missing": []
+      }
+    },
+    "200k-short": {
+      "before": {
+        "hash": "783e0d33b3bf377f150fd924ee4d5c7781b3854a4d3170222120cf8a4eb2f514",
+        "kept": 372,
+        "missing": []
+      },
+      "after": {
+        "hash": "cec609b8e7436b7216bf937eef6b24367a7e45786c8ec1971d8fc7ab3fb74edb",
+        "kept": 372
+      }
+    },
+    "200k-question": {
+      "before": {
+        "hash": "dabfb95724668e1e4cb2f6e9e4bde49827dbe5efe28923b9088d99fcfd978a68",
+        "kept": 346,
+        "missing": []
+      },
+      "after": {
+        "hash": "01bb291a59334379d6c92232e78a036b964ea0ade555412f4f93d090240478db",
+        "kept": 346
+      }
+    },
+    "local": {
+      "before": {
+        "hash": "7cc42fc09cc11a96e27299ac23664b2cf0b7bca34d194bbf0c9e531a7361e803",
+        "kept": 511,
+        "missing": []
+      },
+      "after": {
+        "hash": "31ee5a65eb2692a1331be22542571e42e5825107bd355a36a6460b8c25181452",
+        "kept": 511
+      }
+    },
+    "copy-16000-false": {
+      "before": {
+        "hash": "f19c70ea94af041be748a87a0fc50df8df8b28616c0433093ac9889280e5d456",
+        "kept": 50,
+        "chars": 15824
+      },
+      "after": {
+        "hash": "4d9875abf91ef247d4f15e203299ce432fd3ec65353faea10aec07688ba8fb8e",
+        "kept": 50
+      }
+    },
+    "copy-16000-true": {
+      "before": {
+        "hash": "6c18c0897e3c2ef71796d25b1f31137fcbf5b2e5431ae9e8fd50ed97b985d9ea",
+        "kept": 43,
+        "chars": 15907
+      },
+      "after": {
+        "hash": "5cf3fdec4fbc50df821ba27271c62ce60100bf4aed85cadac8b22e1dbc796fd3",
+        "kept": 47
+      }
+    },
+    "copy-24000-false": {
+      "before": {
+        "hash": "6e424edc791d87904dc1323e8294ae3fd3f7810e672062b47c353fff8ce00d0f",
+        "kept": 13,
+        "chars": 23833
+      },
+      "after": {
+        "hash": "17daf6cb8331c6d538b5434df744d300bf2ac1086e645ae691eb32137b012716",
+        "kept": 13
+      }
+    },
+    "copy-24000-true": {
+      "before": {
+        "hash": "fcac80a74a700f53688b50827e91fcb90d130c433b9a05dfe0bbb141da9241a4",
+        "kept": 9,
+        "chars": 23935
+      },
+      "after": {
+        "hash": "ae8a2377b6c25fdf780db3f17a68870ad68ab71331925cb5a18e2a620d24cf85",
+        "kept": 11
+      }
+    }
+  }
+}

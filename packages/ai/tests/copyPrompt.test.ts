@@ -7,7 +7,7 @@ import { REDACTED_NAME, REDACTED_PLACE, shortSignalId } from '../src/core-pure';
 import { buildCorpus, isInCorpus, VOCAB } from '../src/vocab';
 import { buildInterpretationPayload } from '../src/payload';
 import { validateSections } from '../src/validate';
-import { loadQuestion, loadReport } from './helpers';
+import { loadQuestion, loadRankedQuestion, loadReport } from './helpers';
 
 const HEADINGS = ['## 總覽', '## 本年與未來五年', '## 各領域', '## 共識與分歧', '## 問題的回答', '## 資料限制'];
 
@@ -38,6 +38,19 @@ describe('buildCopyPrompt — de-identification (D-029)', () => {
 });
 
 describe('buildCopyPrompt — content', () => {
+  test('#45 review: a real ranked answer retains non-empty copy-prompt citation coverage', () => {
+    const answer=loadRankedQuestion();
+    const prompt=buildCopyPrompt(loadReport(),{question:'何時買車？',questionAnswer:answer});
+    const question=prompt.payload.payload.question!;
+    expect(question.status).toBe('ranked');expect(question.top).toHaveLength(3);
+    const cited=[...prompt.text.matchAll(/〔(sig_[0-9a-f]+)〕/g)].map(match=>match[1]);
+    expect(cited.length).toBeGreaterThan(0);
+    const known=new Set(prompt.payload.payload.signals.map(signal=>signal.id));
+    for(const id of cited)expect(known.has(id)).toBe(true);
+    const topIds=question.top.flatMap(row=>[...row.supportSignalIds,...row.riskSignalIds]);
+    expect(topIds.length).toBeGreaterThan(0);
+    for(const id of topIds){expect(known.has(id)).toBe(true);expect(cited).toContain(id);}
+  });
   const report = loadReport();
   const prompt = buildCopyPrompt(report, { question: '2026 下半年什麼時候適合買車？', questionAnswer: loadQuestion() });
 
@@ -82,7 +95,8 @@ describe('buildCopyPrompt — content', () => {
     expect(payload.profile).toEqual({ gender: 'female', timeAccuracy: 'exact', timezone: 'Asia/Taipei' });
     const ids = new Set(payload.signals.map((s: { id: string }) => s.id));
     const cited = [...prompt.text.matchAll(/〔(sig_[0-9a-f]+)〕/g)].map((m) => m[1]);
-    expect(cited.length).toBeGreaterThan(0);
+    expect(cited).toEqual([]); // archived answer has no attested ranking policy
+    expect(ids.size).toBeGreaterThan(0);
     for (const id of cited) expect(ids.has(id)).toBe(true);
   });
 
@@ -93,16 +107,16 @@ describe('buildCopyPrompt — content', () => {
     expect(t).toContain('「2026 下半年什麼時候適合買車？」');
     expect(t).toContain('Question Engine 確定性計算，不是 AI 產生');
     expect(t).toContain('購車時機（vehicle_purchase）；範圍 2026-07～2026-12');
-    expect(t).toMatch(/1\. 2026-12：分數 [\d.]+/);
-    expect(t).toMatch(/2\. 2026-11：/);
-    expect(t).toMatch(/3\. 2026-08：/);
+    expect(t).toContain('legacy_policy_missing');
+    expect(t).toContain('不提供月份排名');
+    expect(t).not.toMatch(/1\. 2026-12：/);
     expect(t.trimEnd().endsWith('請開始解讀。')).toBe(true);
     // Question source signals are protected: kept in the data even when budget is tight.
     const small = buildCopyPrompt(report, { questionAnswer: loadQuestion(), maxChars: 16_000 });
     expect(small.charCount).toBeLessThanOrEqual(16_000);
     expect(small.truncated).toBe(true);
-    expect(small.payload.payload.timeline).toBeNull();
-    expect(small.text).toContain('未附命盤細節（charts）與時間表（timeline）');
+    expect(small.payload.payload.question!.top).toEqual([]);
+    expect(small.payload.payload.question!.status).toBe('insufficient_evidence');
     const keptShort = new Set([...small.payload.signalIds].map(shortSignalId));
     for (const w of small.payload.payload.question!.top) {
       expect(w.supportSignalIds.length + w.riskSignalIds.length).toBeGreaterThan(0);
@@ -240,7 +254,7 @@ describe('browser entry stays SDK-free (D-035)', () => {
         queue.push(`${spec.slice(2)}.ts`);
       }
     }
-    expect([...seen].sort()).toEqual(['agreement.ts', 'canonical.ts', 'copy.ts', 'copyPrompt.ts', 'core-pure.ts', 'pasteCheck.ts', 'payload.ts', 'schema.ts', 'signalIds.ts', 'validate.ts', 'vocab.ts'].sort());
+    expect([...seen].sort()).toEqual(['agreement.ts', 'canonical.ts', 'copy.ts', 'copyPrompt.ts', 'core-pure.ts', 'pasteCheck.ts', 'payload.ts', 'questionPolicy.ts', 'schema.ts', 'signalIds.ts', 'validate.ts', 'vocab.ts'].sort());
   });
 });
 

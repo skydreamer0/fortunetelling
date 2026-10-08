@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { REDACTED_NAME, REDACTED_PLACE } from '../src/core-pure';
 import { buildInterpretationPayload } from '../src/payload';
-import { loadQuestion, loadReport } from './helpers';
+import { loadQuestion, loadRankedQuestion, loadReport } from './helpers';
 
 describe('buildInterpretationPayload — de-identification (D-029)', () => {
   test('no name, birthplace label, birth date/time or coordinates in the payload', () => {
@@ -88,7 +88,7 @@ describe('buildInterpretationPayload — size budget', () => {
   });
 
   test('question source signals are kept before others', () => {
-    const q = loadQuestion();
+    const q = loadRankedQuestion();
     const { payload, signalIds } = buildInterpretationPayload(loadReport(), { question: q, maxChars: 70_000 });
     expect(payload.truncation.signalsDropped).toBeGreaterThan(0);
     for (const w of q.top) for (const s of [...w.supportSignals, ...w.riskSignals]) expect(signalIds.has(s.id)).toBe(true);

@@ -113,6 +113,9 @@ describe('post-validation interception (V5-04)', () => {
     const result = await interpret(report, { complete: fn, question: loadQuestion(), store: createMemoryStore() });
     expect(result.sections).toEqual([valid]);
     expect(result.dropped).toHaveLength(Object.keys(bad).length);
-    expect(result.question).toEqual({ category: 'vehicle_purchase', unsupported: false });
+    expect(result.schemaVersion).toBe(2);
+    expect(result.question).toMatchObject({ category: 'vehicle_purchase', unsupported: false,
+      status: 'insufficient_evidence', range: {start:'2026-07',end:'2026-12'},catalogVersion:1,
+      abstentionReasons:[{code:'legacy_policy_missing'}] });
   });
 });
