@@ -122,8 +122,11 @@ export function McpEntry({ report, clipboard, onDownload = downloadTextFile }: {
 
       <p className="ask__privacy" role="note">
         <strong>隱私</strong>
-        下載的 .fortune.json 含出生日期、時間、出生地與姓名，只會存在你自己的電腦。
-        本機 MCP 預設不會把姓名與出生資料交給 Claude，要明確要求才會提供。網站不會替你寫入任何檔案。
+        下載的 .fortune.json 由你保存在本機，含出生日期、時間、出生地與已填寫的姓名，請妥善保管。
+        排盤與 MCP 工具運算在本機執行，但 MCP 工具回傳的資料會進入 Claude 的 AI 對話上下文。
+        <code>get_profile</code> 預設不回姓名與原始出生欄位；其他工具仍可能回傳可識別資訊，例如
+        <code>get_time_context</code> 的日期與時間，以及命盤衍生資料。
+        若把檔案全文貼給 AI，其中的個人資料也會進入對話，分享前請確認內容與接收對象。
       </p>
 
       <ol className="ask__flow">
