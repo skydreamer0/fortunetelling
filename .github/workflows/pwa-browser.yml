@@ -36,6 +36,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.4.2'
+          no-cache: true
 
       - name: Install locked dependencies without lifecycle scripts
         run: bun install --frozen-lockfile --ignore-scripts
@@ -84,7 +85,7 @@ jobs:
           '
 
       - name: Typecheck browser harness
-        run: bun node_modules/typescript/bin/tsc -p apps/web/tsconfig.pwa-browser.json
+        run: bun run --cwd apps/web --bun tsc -p tsconfig.pwa-browser.json
 
       - name: Run positive and negative PWA controls
         timeout-minutes: 4

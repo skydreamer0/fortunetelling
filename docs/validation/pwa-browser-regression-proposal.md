@@ -1,8 +1,10 @@
 # #18 GitHub-hosted browser regression candidate
 
-Status: **STOCK-CHROME WIRING CANDIDATE; BROWSER EXECUTION NOT RUN / NOT ACCEPTED**. The saved Draft #88 checkpoint passed bounded source review and existing repository CI, which did not execute this harness. This continuation adds an exact official Playwright dev dependency, a genuinely Bun-generated lockfile update, and a narrow PR workflow; it selects the runner's preinstalled stable Google Chrome with its sandbox required. Independent review of this revision and live execution are still required. Real dependency typecheck, sandboxed browser execution, positive/negative controls, update lifecycle, and timeout/cleanup failure paths are NOT RUN.
+Status: **STOCK-CHROME WIRING CANDIDATE; BROWSER EXECUTION NOT RUN / NOT ACCEPTED**. The saved Draft #88 checkpoint passed bounded source review and existing repository CI, which did not execute this harness. This continuation adds an exact official Playwright dev dependency, a genuinely Bun-generated lockfile update, and a narrow PR workflow; it selects the runner's preinstalled stable Google Chrome with its sandbox required. Independent review of the invocation correction and live execution are still required. Real dependency typecheck passed locally after the correction described below. Hosted typecheck, sandboxed browser execution, positive/negative controls, update lifecycle, and timeout/cleanup failure paths remain NOT RUN.
 
-Local dependency preparation used existing Bun 1.4.2 with `bun add --dev --exact --lockfile-only --ignore-scripts playwright@1.64.0`. It resolved official registry metadata/packages into a dedicated cache and generated package/lock changes without creating `node_modules` or running lifecycle scripts. It did not install or launch a browser, install OS packages, or run this harness. No package scripts or application entry points are added. The existing CI and Pages workflows are unchanged. No Actions run is manually dispatched or rerun.
+Initial local dependency preparation used existing Bun 1.4.2 with `bun add --dev --exact --lockfile-only --ignore-scripts playwright@1.64.0`. It resolved official registry metadata/packages into a dedicated cache and generated package/lock changes without creating `node_modules` or running lifecycle scripts. It did not install or launch a browser, install OS packages, or run this harness. No package scripts or application entry points are added. The existing CI and Pages workflows are unchanged. No Actions run is manually dispatched or rerun.
+
+The first hosted attempt at head `b252dd256a968737267b2981b1fa07a04e3d7cff` stopped before browser launch because the command incorrectly assumed a root `node_modules/typescript/bin/tsc`. TypeScript is installed in the web workspace. A subsequent local `bun install --frozen-lockfile --ignore-scripts` installed the locked dependencies without changing package/lock bytes. The corrected workspace command below resolved TypeScript 7.0.2 and passed the real dedicated typecheck. Setup Bun now explicitly has `no-cache: true`; its success-only cache-save post step was skipped in the first failed attempt. That first attempt confirmed stock Chrome 154.0.8037.97, Playwright 1.64.0, Bun 1.4.2, uid 1001 and Ubuntu image 20261004.327.1, but did not launch the sandboxed browser or execute either control.
 
 ## Existing baseline
 
@@ -20,7 +22,7 @@ The workflow runs these commands after checking out the reviewed PR tree:
 
 ```sh
 bun install --frozen-lockfile --ignore-scripts
-bun node_modules/typescript/bin/tsc -p apps/web/tsconfig.pwa-browser.json
+bun run --cwd apps/web --bun tsc -p tsconfig.pwa-browser.json
 PWA_BROWSER_CHECK=1 bun apps/web/scripts/pwa-browser-check.ts
 ```
 
@@ -28,7 +30,7 @@ PWA_BROWSER_CHECK=1 bun apps/web/scripts/pwa-browser-check.ts
 
 The workflow has only a path-filtered `pull_request` trigger targeting master: `apps/web/pwa/**`, this script, its independent tsconfig, root package/lock, and its own workflow. A new `workflow_dispatch` file would not reliably be dispatchable before it exists on the default branch, so it is not used to validate this unmerged Draft. There are no schedule, deployment, push, manual-dispatch, or `pull_request_target` triggers. The job timeout is 10 minutes; the harness step has a 4-minute cap above its internal 15-second launch and 120-second test limits. Existing cleanup remains required. An always-run step prints `runtime.json` and `results.json` to the job log; browser launch diagnostics are enabled with `DEBUG=pw:browser`. Missing results are explicitly incomplete, never PASS. No `continue-on-error` is used. No artifacts or caches are uploaded, avoiding new retained artifact-storage usage; trace ZIPs and failure screenshots remain runner-local diagnostics and are not claimed as retained evidence.
 
-The independent typecheck is mandatory because the ordinary web tsconfig does not include this script. It must resolve real Playwright and Bun types after dependency installation; no stub types are supplied to fake acceptance. This candidate's typecheck and Bun/Playwright runtime compatibility are NOT RUN. Playwright's sandbox default is false, so the explicit true setting must remain. If the stock runner cannot launch with this requirement, record a blocker instead of changing security settings or switching browsers silently.
+The independent typecheck is mandatory because the ordinary web tsconfig does not include this script. It must resolve real Playwright and Bun types after dependency installation; no stub types are supplied to fake acceptance. The corrected local dedicated typecheck passed; hosted typecheck and Bun/Playwright browser runtime compatibility remain unverified. Playwright's sandbox default is false, so the explicit true setting must remain. If the stock runner cannot launch with this requirement, record a blocker instead of changing security settings or switching browsers silently.
 
 ## What the candidate actually tests
 
