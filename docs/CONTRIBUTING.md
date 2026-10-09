@@ -1,6 +1,8 @@
 # 協作者指南
 
-> 對應 [PLAN-FOR-AUDIT.md](PLAN-FOR-AUDIT.md)（架構計畫）與 [ARCHITECTURE.md](ARCHITECTURE.md)。
+> 文件入口見 [README.md](README.md)，架構與後續契約見 [ARCHITECTURE.md](ARCHITECTURE.md)、
+> [ARCHITECTURE-V2.md](ARCHITECTURE-V2.md) 與 [DECISIONS.md](DECISIONS.md)。
+> v1 外部審計計畫已[歸檔](archive/2026-07-v1/PLAN-FOR-AUDIT.md)，不代表現行技術選型。
 
 ## 快速開始
 

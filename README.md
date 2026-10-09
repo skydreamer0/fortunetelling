@@ -14,7 +14,7 @@
 ![MCP](https://img.shields.io/badge/MCP-14%20tools-d97757?style=flat-square)
 ![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?style=flat-square)
 
-[快速開始](#-快速開始) · [Claude 桌面版](#-搭配-claude-桌面版本機-mcp) · [安裝到 iPhone](#-安裝到-iphonepwa) · [架構](#-架構) · [Roadmap](./ROADMAPS.md)
+[文件索引](./docs/README.md) · [快速開始](#-快速開始) · [Claude 桌面版](#-搭配-claude-桌面版本機-mcp) · [安裝到 iPhone](#-安裝到-iphonepwa) · [架構](#%EF%B8%8F-架構) · [Roadmap](./ROADMAPS.md)
 
 </div>
 

@@ -361,7 +361,7 @@ M0.5、M1、M2 與 M3 主線已完成，M4 完成 M4-01／02。`historical_zone_
 - Phase 5 UI：React + TS、年鑑風格設計、名人命盤整合測試、Report v3、合盤
 - V0：Bun workspaces 搬遷
 
-任務細節見 [docs/TASKS.md](TASKS.md)。
+上述已完成任務的原文見 [archive/2026-07-v1/TASKS.md](archive/2026-07-v1/TASKS.md)；原始路徑與取代關係見 [archive 索引](archive/README.md)。
 
 ### 參考其他專案後的改進（2026-10-06）
 
