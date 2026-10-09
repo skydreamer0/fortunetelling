@@ -1,0 +1,124 @@
+{
+  "version": "0.8.0",
+  "decision": "D-052",
+  "reason": "#51 requires explicit timeline settings. Existing complete inputs retain calculation results; only core version literals change.",
+  "changes": [
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-1991-1986",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-ny-unknown",
+        "version"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    }
+  ]
+}

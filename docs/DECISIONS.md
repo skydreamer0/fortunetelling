@@ -795,3 +795,42 @@ CalculationSpec 依既有身份規則包含 core 與兩個 calculator 版本，�
 只有 ranked 有 top。其他狀態 top=[]，逐月診斷依月份排序、rank=null，附 abstentionReasons。topN=0 只影響展示。原計分、權重與每月 source evidence 不變，不增加多軸或敏感度算法。MCP、Web、AI payload／prompt／三個 checker 使用相同狀態；check_answer 用同 profileId/asOf 與完整原 questionContext 重算，不信任外部 status。
 
 core 0.7.0、Payload4、Interpretation2、copy-v6／interpret-v5／chat-v4。舊 PR77 catalog2 逐位元契約由顯式 replayQuestionAnswerV2 驗證；不宣稱可重算 catalog1 或 LOCKED FORECAST V1。舊快照和所有既有 delta 保留，新差異另檔。完整邊界、fixture 說明與驗證見 [question-abstention-45.md](validation/question-abstention-45.md)。
+
+## D-052 Timeline 必填有效時間設定（#51 有限契約切片）
+
+**缺陷與邊界：** `TimelineOptions` 原為 `Partial<AnalysisTimeOptions>`，下游
+`prepareSystems` 解構靜默補 true/late；JavaScript 呼叫漏值或明傳 undefined 仍會成功。
+這與 #51 的「漏傳設定不得靜默套預設」AC 相反。本片只交付該 AC；不建立 ChartSnapshot、
+不選姓名是否進 snapshotId、不定 Report8，不宣稱 Timeline／Question／Backtest 已共用本命。
+#53 的 async 星曆 spec，以及 #27 的 Fact identity 契約都未實作。
+
+**修法：** Timeline 和 BacktestOptions 的 useTrueSolarTime／ziHourConvention 皆改必填，
+下游去掉解構預設，缺漏或 undefined 明確拋錯。async 在任何星曆初始化前先驗時間設定。
+合法 false 與 late/early 原值直傳，既有八字／紫微映射、signal IDs、演算法、期間與權重不改。
+所有實際 source caller 已盤點：analyze、Web Ask AI、Web 回驗原本就帶完整有效值；
+只改必需的 MCP analysis／逐年月投影與 export 入口，不修改 UI 實作。
+
+**Profile v1 不是補猜歷史報告：** master `docs/MCP-SETUP.md` 已明寫 server 使用
+真太陽時／晚子（紫微分早晚子）。`calculators/bazi/calculator.ts` 檔頭明載 true/late，
+`calculators/ziwei/calculator.ts` 明載 true/splitMidnight；export 原來無覆寫地呼叫同一批
+calculator 與 Timeline。因此此兩入口明傳 true/late 是既有固定政策的顯式展開。
+Profile schema 未增加選項，也不推定 Web 所下載 profile 能攜帶該報告的非預設設定。
+Web 歷史報告仍沿用 reportTimelineOptions 的嚴格既有 metadata；缺漏、矛盾資料不重算。
+
+**版本與相容：** 必填選項是公開 0.x API 的收緊，core 升為0.8.0，不把它偽裝成
+完全向後相容的patch；使用者須在自己的直接 Timeline／Backtest 呼叫提供有效值。
+Report7、Timeline2、Consensus2、BacktestTimeline1、Profile1、calculator 和 hash 演算法不改。
+core 版本原本就在 CalculationSpec identity 內，所以 specHash 隨0.8.0改变屬既有版本語義。
+本次不發布 package；package.json與bun.lock僅對齊workspace版本。
+
+舊 Report/export golden 和全部歷史 delta 保持原檔。先在精確master68a29d6跑過
+reportGolden/export的12項基準，再新增 reportGolden.v0.8.0.delta.json 的13個版本literal，
+及 export.v0.8.0.delta.json 的manifest coreVersion單一literal。
+不允許計算section、任何export內檔hash或signalCount為遷就本修法而更新。
+
+**先紅證據：** 測試先存於tests-only9024c3f，在Bun1.4.2為1pass／11fail；
+十項缺值同步／回驗案例都被舊程式接受，async隔離程序也回accepted且啟動星曆。
+最早兩版測試草稿的子程序路徑／stdout解析失敗已更正，不計入RED證據。
+後續型別斷言另保護四個必填欄位。最終測試、完整checks與獨立驗收以PR紀錄為準。
+
+不改Actions、權限、正式DB、安全設定、LOCKED FORECAST或部署流程；本輪只保存Draft候選。

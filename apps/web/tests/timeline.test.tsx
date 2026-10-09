@@ -21,7 +21,7 @@ const tainan = findCity('tainan')!;
 const ctx = createTimeContext({
   date: '1995-07-16', time: '22:00', timeAccuracy: 'exact', gender: 'male', birthplace: cityToBirthplace(tainan),
 });
-const timeline: Timeline = buildTimeline(ctx, { asOf: ASOF, systems: ['bazi', 'ziwei', 'numerology'] });
+const timeline: Timeline = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: ['bazi', 'ziwei', 'numerology'] });
 
 const INPUT: BirthInput = {
   name: '', year: 1995, month: 7, day: 16, hour: 22, minute: 0, timeKnown: true,

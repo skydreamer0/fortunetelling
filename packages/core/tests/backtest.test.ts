@@ -283,15 +283,15 @@ const ctx = createTimeContext(PROFILE);
 
 describe('buildTimeline fromYear / topSignalsPerDomain (additive options)', () => {
   test('defaults unchanged; a 2026 cell is identical whether built from 2026 or from 2018', () => {
-    const def = buildTimeline(ctx, { asOf: ASOF, systems: SYNC });
+    const def = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC });
     expect(def.years[0].window.start).toBe('2026-01-01');
     expect(def.months[0].window.start).toBe('2026-01-01');
-    const early = buildTimeline(ctx, { asOf: ASOF, systems: SYNC, fromYear: 2018, years: 9 });
+    const early = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC, fromYear: 2018, years: 9 });
     expect(early.years.map((c) => c.window.start.slice(0, 4))).toEqual(['2018', '2019', '2020', '2021', '2022', '2023', '2024', '2025', '2026']);
     expect(early.months[0].window.start).toBe('2026-01-01');
     const strip = (c: typeof def.years[0]) => c.domains.map((d) => [d.domain, d.score, d.perSystem]);
     expect(strip(early.years[8])).toEqual(strip(def.years[0]));
-    const all = buildTimeline(ctx, { asOf: ASOF, systems: SYNC, topSignalsPerDomain: Infinity, includeMonths: false });
+    const all = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC, topSignalsPerDomain: Infinity, includeMonths: false });
     for (const [i, cell] of all.years.entries()) {
       for (const [j, d] of cell.domains.entries()) {
         const ids = new Set(Object.values(d.perSystem).flatMap((p) => p!.signalIds));
@@ -299,7 +299,7 @@ describe('buildTimeline fromYear / topSignalsPerDomain (additive options)', () =
         expect(d.score).toBe(def.years[i].domains[j].score);
       }
     }
-    expect(() => buildTimeline(ctx, { asOf: ASOF, topSignalsPerDomain: -1 })).toThrow();
+    expect(() => buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, topSignalsPerDomain: -1 })).toThrow();
   });
 });
 
@@ -322,7 +322,7 @@ function hitTable(r: BacktestResult): string {
 }
 
 describe('demo: 1995-07-16 22:00 male Tainan, own life events (sync systems)', () => {
-  const tl = buildBacktestTimeline(ctx, { asOf: ASOF, systems: SYNC });
+  const tl = buildBacktestTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC });
   const r = runBacktest(MY_EVENTS, tl, { seed: 'demo-v4' });
 
   test('timeline spans birth+15 … asOf year; every event is in range', () => {

@@ -264,7 +264,7 @@ export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf
  * another caller happened to initialise the ephemeris — so the report never
  * depends on global state (D-014). They are listed in `skippedSystems` with
  * reason 'time_unknown' (no birth time) or 'ephemeris_not_initialised'; use
- * `buildTimelineAsync(ctx, { asOf })` for the full timeline.
+ * `buildTimelineAsync(ctx, { asOf, ...effectiveTimeOptions })` for the full timeline.
  */
 function buildSyncTimeline(ctx: TimeContext, asOf: string, name: string, options: AnalysisTimeOptions, baziNatalBasis: BaziNatalBasisProvider): { timeline: Timeline; signals: Signal[] } {
   const { timeline, signals } = buildTimelineEvidenceWithBaziNatalBasis(ctx, {

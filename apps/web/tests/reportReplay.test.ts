@@ -218,10 +218,10 @@ describe('report replay metadata and source-system boundaries', () => {
   test('backtest rejects invalid clock and zi values rather than silently defaulting', () => {
     const report = asWeb(analyze(MIDNIGHT, { asOf: AS_OF }));
     expect(() => buildBacktestTimeline(ctxOf(report), {
-      asOf: AS_OF, fromYear: 2026, toYear: 2026, useTrueSolarTime: 'false',
+      asOf: AS_OF, fromYear: 2026, toYear: 2026, useTrueSolarTime: 'false', ziHourConvention: 'late',
     } as never)).toThrow('useTrueSolarTime');
     expect(() => buildBacktestTimeline(ctxOf(report), {
-      asOf: AS_OF, fromYear: 2026, toYear: 2026, ziHourConvention: 'nextDayAt23',
+      asOf: AS_OF, fromYear: 2026, toYear: 2026, useTrueSolarTime: true, ziHourConvention: 'nextDayAt23',
     } as never)).toThrow('ziHourConvention');
   });
 });

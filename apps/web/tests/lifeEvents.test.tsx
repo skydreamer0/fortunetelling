@@ -117,7 +117,7 @@ describe('人生事件 panel', () => {
   });
 
   test('results: per-domain hit rate vs baseline, all labelled 樣本不足，僅供參考, no predictive claim', () => {
-    const tl = buildBacktestTimeline(report.timeContext as unknown as TimeContext, {
+    const tl = buildBacktestTimeline(report.timeContext as unknown as TimeContext, { useTrueSolarTime: true, ziHourConvention: 'late',
       asOf: report.asOf, systems: ['bazi', 'ziwei', 'numerology'],
     });
     const view = selectBacktestView(runBacktest(EVENTS, tl, { seed: key }));
