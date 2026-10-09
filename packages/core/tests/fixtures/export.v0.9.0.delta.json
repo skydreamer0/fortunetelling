@@ -1,0 +1,15 @@
+{
+  "version": "0.9.0",
+  "decision": "D-053",
+  "reason": "#46 cooperative orchestration retains complete calculation outputs; this explicit release delta changes only core provenance literals.",
+  "changes": [
+    {
+      "path": [
+        "versions",
+        "coreVersion"
+      ],
+      "before": "0.8.0",
+      "after": "0.9.0"
+    }
+  ]
+}

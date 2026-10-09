@@ -1,3 +1,4 @@
+import cooperativeDelta from './fixtures/export.v0.9.0.delta.json';
 import requiredOptionsDelta from './fixtures/export.v0.8.0.delta.json';
 import abstentionDelta from './fixtures/export.v0.7.0.delta.json';
 import dateOnlyDelta from './fixtures/export.v0.6.4.delta.json';
@@ -128,7 +129,7 @@ describe('golden', () => {
     const recorded = JSON.parse(original);
     expect(recorded.versions.coreVersion).toBe('0.5.0');
     recorded.versions.coreVersion = '0.5.3';
-    for (const change of [...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes, ...calendarValidationDelta.changes, ...dateOnlyDelta.changes, ...abstentionDelta.changes, ...requiredOptionsDelta.changes]) {
+    for (const change of [...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes, ...calendarValidationDelta.changes, ...dateOnlyDelta.changes, ...abstentionDelta.changes, ...requiredOptionsDelta.changes, ...cooperativeDelta.changes]) {
       let parent = recorded;
       for (const key of change.path.slice(0, -1)) {
         expect(parent[key]).toBeDefined();

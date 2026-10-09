@@ -35,8 +35,9 @@ import { humanDesignCalculator } from '../calculators/humanDesign/calculator';
 import { evaluateHumanDesignRules } from '../calculators/humanDesign/rules';
 import { buildJyotishChart } from '../calculators/jyotish/calculator';
 import { evaluateJyotishRules } from '../calculators/jyotish/rules';
-import { createAstrolabe, monthlySequence, yearlySequence } from '../calculators/ziwei/astrolabe';
-import { ziweiCalculator } from '../calculators/ziwei/calculator';
+import { createAstrolabe, monthlySequenceSteps, yearlySequenceSteps } from '../calculators/ziwei/astrolabe';
+import { calculateZiweiSteps } from '../calculators/ziwei/calculator';
+import { finishCalculation, type CalculationSteps } from '../core/calculationSteps';
 import { toZiweiRuleChart } from '../calculators/ziwei/ruleChart';
 import { evaluateBaziRules } from '../rules/bazi/evaluate';
 import { evaluateBaziTenGodRules } from '../rules/bazi/evaluateTenGods';
@@ -48,6 +49,7 @@ import { DOMAINS, SYSTEM_IDS, type Domain, type Signal, type SignalWindow, type 
 import type { TimeContext } from '../time/types';
 import { toZiweiZiConvention, type AnalysisTimeOptions } from '../core/analyzeInput';
 import { civilDateOf, evaluateNumerologyRules } from './numerologyRules';
+import { finishCooperatively, supportedTimelineEnvironment, TimelineEnvironmentChangedError } from './cooperative';
 
 export const TIMELINE_SCHEMA_VERSION = 2 as const;
 
@@ -234,7 +236,7 @@ interface Prepared {
   skipped: SkippedSystem[];
 }
 
-function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: string, firstYear: number, years: number, opts: TimelineOptions, baziNatalBasis?: BaziNatalBasisProvider): Prepared {
+function* prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: string, firstYear: number, years: number, opts: TimelineOptions, baziNatalBasis?: BaziNatalBasisProvider): CalculationSteps<Prepared> {
   const evaluators: Partial<Record<SystemId, WindowEvaluator>> = {};
   const skipped: SkippedSystem[] = [];
   const timeKnown = ctx.jd !== null && ctx.utc !== null;
@@ -277,7 +279,7 @@ function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: st
         break;
       }
       case 'ziwei': {
-        const res = ziweiCalculator.calculate(ctx, {
+        const res = yield* calculateZiweiSteps(ctx, {
           ...calcConfig, useTrueSolarTime, ziHourConvention: toZiweiZiConvention(ziHourConvention),
         });
         const time = res.chart.time;
@@ -286,11 +288,15 @@ function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: st
           break;
         }
         const astrolabe = createAstrolabe(time.date, time.timeIndex, ctx.profile.gender);
+        yield;
+        const yearly = yield* yearlySequenceSteps(astrolabe, firstYear - 1, years + 1);
+        const previousMonths = yield* monthlySequenceSteps(astrolabe, asOfYear - 1);
+        const currentMonths = yield* monthlySequenceSteps(astrolabe, asOfYear);
         const rc = toZiweiRuleChart(res, {
           // Lunar years firstYear−1 … last year: the Gregorian year cells overlap all of them.
-          yearlySequence: yearlySequence(astrolabe, firstYear - 1, years + 1),
+          yearlySequence: yearly,
           // Gregorian Jan/Feb of the asOf year fall in the previous lunar year.
-          monthlySequence: [...monthlySequence(astrolabe, asOfYear - 1), ...monthlySequence(astrolabe, asOfYear)],
+          monthlySequence: [...previousMonths, ...currentMonths],
         });
         evaluators.ziwei = (w) => {
           if (w.grain === 'year') {
@@ -330,6 +336,7 @@ function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: st
       default:
         skipped.push({ system, reason: 'no_timeline_rules' });
     }
+    yield;
   }
   return { evaluators, skipped };
 }
@@ -451,6 +458,37 @@ function validateTimeOptions(opts: TimelineOptions): void {
 }
 
 function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider, evidence?: Map<string, Signal>): Timeline {
+  return finishCalculation(buildTimelineSteps(ctx, opts, natalBasis, evidence));
+}
+
+export interface TimelineCooperativeControl {
+  signal: AbortSignal;
+  /** Must yield a task for input/paint opportunities; rejection is propagated. */
+  yieldTask?: () => Promise<void>;
+}
+
+/**
+ * Cooperative report projection with the same calculations as buildTimeline.
+ * Requires an explicit subset of bazi/ziwei/numerology (the sync Web report scope).
+ * Known-time Ziwei requires the already-established zh-TW/default iztro state.
+ * Does not initialize ephemeris or change/restore global configuration. Boundary
+ * checks are not a plugin/resource audit or cross-global-configuration isolation.
+ * Inputs are copied before the first yield; only a complete Timeline is returned.
+ * One next() unit remains indivisible. buildTimelineAsync retains its old meaning.
+ */
+export async function buildTimelineCooperatively(ctx: TimeContext, opts: TimelineOptions,
+  { signal, yieldTask = () => new Promise(resolve => setTimeout(resolve, 0)) }: TimelineCooperativeControl): Promise<Timeline> {
+  signal.throwIfAborted();
+  if (!Array.isArray(opts?.systems) || opts.systems.some(system => !['bazi', 'ziwei', 'numerology'].includes(system))) {
+    throw new TimelineEnvironmentChangedError('Cooperative timeline requires an explicit bazi/ziwei/numerology report scope');
+  }
+  const context = structuredClone(ctx), options = structuredClone(opts);
+  const verify = options.systems!.includes('ziwei') && context.jd !== null && context.utc !== null
+    ? supportedTimelineEnvironment() : () => {};
+  return finishCooperatively(buildTimelineSteps(context, options), signal, yieldTask, verify);
+}
+
+function* buildTimelineSteps(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider, evidence?: Map<string, Signal>): CalculationSteps<Timeline> {
   const asOf = validateAsOf(opts?.asOf);
   const thresholds = resolveAgreementThresholds(opts);
   validateTimeOptions(opts);
@@ -476,17 +514,22 @@ function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBas
   if (topN !== undefined && !(topN === Infinity || (Number.isInteger(topN) && topN >= 0))) {
     throw new Error(`buildTimeline: topSignalsPerDomain must be an integer ≥ 0 or Infinity, got ${topN}`);
   }
-  const { evaluators, skipped } = prepareSystems(ctx, requested, asOf, firstYear, years, opts, natalBasis);
+  const { evaluators, skipped } = yield* prepareSystems(ctx, requested, asOf, firstYear, years, opts, natalBasis);
   const weightOf = (s: SystemId) => opts.systemWeights?.[s] ?? 1;
   const systems = SYSTEM_IDS.filter((s) => evaluators[s] !== undefined);
   const systemWeights: Partial<Record<SystemId, number>> = {};
   for (const s of systems) systemWeights[s] = weightOf(s);
 
-  const yearCells = Array.from({ length: years }, (_, i) => buildCell(yearWindow(firstYear + i), evaluators, weightOf, opts, bandCuts, evidence));
-  const monthCells =
-    opts.includeMonths === false
-      ? []
-      : Array.from({ length: 12 }, (_, i) => buildCell(monthWindow(Number(asOf.slice(0, 4)), i + 1), evaluators, weightOf, opts, bandCuts, evidence));
+  const yearCells: TimelineCell[] = [];
+  for (let i = 0; i < years; i++) {
+    yearCells.push(buildCell(yearWindow(firstYear + i), evaluators, weightOf, opts, bandCuts, evidence));
+    yield;
+  }
+  const monthCells: TimelineCell[] = [];
+  if (opts.includeMonths !== false) for (let i = 0; i < 12; i++) {
+    monthCells.push(buildCell(monthWindow(Number(asOf.slice(0, 4)), i + 1), evaluators, weightOf, opts, bandCuts, evidence));
+    yield;
+  }
 
   return {
     schemaVersion: TIMELINE_SCHEMA_VERSION,

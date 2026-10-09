@@ -21,6 +21,7 @@
  */
 
 import { BirthData } from '../../core/models/BirthData';
+import { finishCalculation, type CalculationSteps } from '../../core/calculationSteps';
 import { ZiweiEngine } from '../../engines/ZiweiEngine';
 import type { TimeBasis, TimeContext } from '../../time/types';
 import { categoryValues, componentValue, normalizeAsOf, timeContextToBirthData } from '../birthData';
@@ -28,12 +29,12 @@ import type { Calculator, CalculatorConfig, ChartResult, Component } from '../ty
 import {
   birthLunarYearOf,
   createAstrolabe,
-  decadeSequence,
+  decadeSequenceSteps,
   lunarYearOf,
-  monthlySequence,
+  monthlySequenceSteps,
   natalChart,
   timeIndexFrom,
-  yearlySequence,
+  yearlySequenceSteps,
 } from './astrolabe';
 import type {
   ZiweiZiHourConvention,
@@ -186,61 +187,73 @@ export const ziweiCalculator: Calculator<ZiweiChart, ZiweiCalculatorConfig> = {
   // location: true solar time needs the birthplace longitude.
   requires: { time: true, location: true, name: false },
   calculate(ctx: TimeContext, config: ZiweiCalculatorConfig = {}): ChartResult<ZiweiChart> {
-    const { date: asOfDate, ymd: asOfYmd } = normalizeAsOf(config.asOf, 'ziwei');
-    const legacy = timeContextToBirthData(ctx, { name: config.name });
-    const useTrueSolarTime = config.useTrueSolarTime ?? true;
-    const time = timeIndexFrom(ctx, { useTrueSolarTime, ziHourConvention: config.ziHourConvention });
+    return finishCalculation(calculateZiweiSteps(ctx, config));
+  },
+};
 
-    if (time === null) {
-      // With timeKnown=false the engine itself returns no components (no guessing).
-      const result = new ZiweiEngine({ asOf: asOfDate }).run(legacy);
-      const components = result.components as Component[];
-      return {
-        system: 'ziwei',
-        version: ZIWEI_CALCULATOR_VERSION,
-        chart: { ...extractZiweiChart(components), ...EMPTY_EXTRAS },
-        components,
-        warnings: [...flagWarnings(ctx, 'civil'), ...result.errors],
-      };
-    }
+/** Internal shared orchestration. No extra public calculator capability or shared cache. */
+export function* calculateZiweiSteps(ctx: TimeContext, config: ZiweiCalculatorConfig = {}): CalculationSteps<ChartResult<ZiweiChart>> {
+  const { date: asOfDate, ymd: asOfYmd } = normalizeAsOf(config.asOf, 'ziwei');
+  const legacy = timeContextToBirthData(ctx, { name: config.name });
+  const useTrueSolarTime = config.useTrueSolarTime ?? true;
+  const time = timeIndexFrom(ctx, { useTrueSolarTime, ziHourConvention: config.ziHourConvention });
 
-    const { alternatives, ...primary } = time;
-    const result = new ZiweiEngine({ asOf: asOfDate }).run(new ResolvedBirthData(legacy, primary));
+  if (time === null) {
+    // With timeKnown=false the engine itself returns no components (no guessing).
+    const result = new ZiweiEngine({ asOf: asOfDate }).run(legacy);
     const components = result.components as Component[];
-
-    const gender = ctx.profile.gender;
-    const astrolabe = createAstrolabe(primary.date, primary.timeIndex, gender);
-    const natal = natalChart(astrolabe);
-    const birthLunarYear = birthLunarYearOf(astrolabe);
-    const asOfLunarYear = lunarYearOf(asOfYmd);
-
-    const engineChart = extractZiweiChart(components);
-    const chart: ZiweiChart = {
-      ...engineChart,
-      ...natal,
-      // Keep the engine's decade/yearly views (component-backed) alongside the sequences.
-      decades: engineChart.decades,
-      yearly: engineChart.yearly,
-      time: primary,
-      alternatives: alternatives.map((alt) => ({
-        ...natalChart(createAstrolabe(alt.date, alt.timeIndex, gender)),
-        resolution: alt,
-      })),
-      birthLunarYear,
-      decadeSequence: decadeSequence(astrolabe, birthLunarYear),
-      yearlySequence: yearlySequence(astrolabe, asOfLunarYear - ZIWEI_YEARLY_BEFORE, ZIWEI_YEARLY_COUNT),
-      monthlySequence: monthlySequence(astrolabe, asOfLunarYear),
-    };
-
-    const warnings = flagWarnings(ctx, primary.basis);
-    if (alternatives.some((a) => a.reasons.includes('civil_time'))) warnings.push('palace_differs_from_civil');
-
     return {
       system: 'ziwei',
       version: ZIWEI_CALCULATOR_VERSION,
-      chart,
+      chart: { ...extractZiweiChart(components), ...EMPTY_EXTRAS },
       components,
-      warnings: [...warnings, ...result.errors],
+      warnings: [...flagWarnings(ctx, 'civil'), ...result.errors],
     };
-  },
-};
+  }
+
+  const { alternatives, ...primary } = time;
+  const result = new ZiweiEngine({ asOf: asOfDate }).run(new ResolvedBirthData(legacy, primary));
+  yield;
+  const components = result.components as Component[];
+
+  const gender = ctx.profile.gender;
+  const astrolabe = createAstrolabe(primary.date, primary.timeIndex, gender);
+  yield;
+  const natal = natalChart(astrolabe);
+  const birthLunarYear = birthLunarYearOf(astrolabe);
+  const asOfLunarYear = lunarYearOf(asOfYmd);
+
+  const alternativeCharts: ZiweiChart["alternatives"] = [];
+  for (const alt of alternatives) {
+    alternativeCharts.push({ ...natalChart(createAstrolabe(alt.date, alt.timeIndex, gender)), resolution: alt });
+    yield;
+  }
+  const decades = yield* decadeSequenceSteps(astrolabe, birthLunarYear);
+  const yearly = yield* yearlySequenceSteps(astrolabe, asOfLunarYear - ZIWEI_YEARLY_BEFORE, ZIWEI_YEARLY_COUNT);
+  const monthly = yield* monthlySequenceSteps(astrolabe, asOfLunarYear);
+  const engineChart = extractZiweiChart(components);
+  const chart: ZiweiChart = {
+    ...engineChart,
+    ...natal,
+    // Keep the engine's decade/yearly views (component-backed) alongside the sequences.
+    decades: engineChart.decades,
+    yearly: engineChart.yearly,
+    time: primary,
+    alternatives: alternativeCharts,
+    birthLunarYear,
+    decadeSequence: decades,
+    yearlySequence: yearly,
+    monthlySequence: monthly,
+  };
+
+  const warnings = flagWarnings(ctx, primary.basis);
+  if (alternatives.some((a) => a.reasons.includes('civil_time'))) warnings.push('palace_differs_from_civil');
+
+  return {
+    system: 'ziwei',
+    version: ZIWEI_CALCULATOR_VERSION,
+    chart,
+    components,
+    warnings: [...warnings, ...result.errors],
+  };
+}

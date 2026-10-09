@@ -4,8 +4,8 @@ import type { CalculationSteps } from '../core/calculationSteps';
 
 /** A failed environment check must never become an empty, successfully scanned year. */
 export class TimelineEnvironmentChangedError extends Error {
-  constructor() {
-    super('Cooperative timeline requires unchanged zh-TW/default iztro settings');
+  constructor(message = 'Cooperative timeline requires unchanged zh-TW/default iztro settings') {
+    super(message);
     this.name = 'TimelineEnvironmentChangedError';
   }
 }

@@ -8,7 +8,7 @@
  */
 
 import {
-  answerQuestion, buildTimeline, getQuestionCategory, resolveSignalId,
+  answerQuestion, buildTimeline, buildTimelineCooperatively, TimelineEnvironmentChangedError, getQuestionCategory, resolveSignalId,
   evidenceMatchesContext, type DirectionalEvidence,
   type CoreSignal, type QuestionAnswer, type QuestionRange, type SignalWindow, type TimeContext,
 } from '../lib/core';
@@ -74,22 +74,25 @@ export function monthSignalProvider(report: Report): ((window: SignalWindow) => 
   return window => monthsOf(Number(window.start.slice(0, 4))).get(window.start.slice(0, 7)) ?? [];
 }
 
-type MonthSignalsSource = ((year: number) => Map<string, CoreSignal[]>) & { directionalEvidence(): DirectionalEvidence[] };
+type MonthSignalsDraft = { months: Map<string, CoreSignal[]>; proofs: DirectionalEvidence[] };
+type MonthSignalsSource = ((year: number) => Map<string, CoreSignal[]>) & {
+  stage(year: number, signal: AbortSignal, yieldTask: () => Promise<void>): Promise<MonthSignalsDraft>;
+  commit(year: number, draft: MonthSignalsDraft): void;
+  directionalEvidence(): DirectionalEvidence[];
+};
 function monthSignalsByYear(report: Report): MonthSignalsSource | null {
   const ctx = report.timeContext as unknown as TimeContext | null | undefined;
   const options = reportTimelineOptions(report);
   if (!ctx || !options) return null;
   const asOfYear = Number(report.asOf.slice(0, 4));
-  const byYear = new Map<number, Map<string, CoreSignal[]>>();
+  const byYear = new Map<number, MonthSignalsDraft>();
   const proofs: DirectionalEvidence[] = [];
-  const read = (year: number) => {
-    let months = byYear.get(year);
-    if (!months) {
-      const tl = buildTimeline(ctx, {
-        asOf: year === asOfYear ? report.asOf : `${year}-01-01`,
-        years: 1, includeMonths: true, topSignalsPerDomain: Infinity, ...options,
-      });
-      months = new Map();
+  const timelineOptions = (year: number) => ({
+    asOf: year === asOfYear ? report.asOf : `${year}-01-01`,
+    years: 1, includeMonths: true, topSignalsPerDomain: Infinity, ...options,
+  });
+  const project = (tl: ReturnType<typeof buildTimeline>): MonthSignalsDraft => {
+      const months = new Map<string, CoreSignal[]>(), stagedProofs: DirectionalEvidence[] = [];
       for (const cell of tl.months) {
         const byId = new Map<string, CoreSignal>();
         for (const domain of cell.domains) for (const signal of domain.topSignals) byId.set(signal.id, signal);
@@ -98,14 +101,32 @@ function monthSignalsByYear(report: Report): MonthSignalsSource | null {
           for (const domain of cell.domains) if (evidenceMatchesContext(domain.directionalEvidence, {
             domain: domain.domain, window: cell.window, thresholds: tl.thresholds, systems: tl.systems,
             systemWeights: tl.systemWeights, perSystem: domain.perSystem,
-          })) proofs.push(domain.directionalEvidence);
+          })) stagedProofs.push(domain.directionalEvidence);
         }
       }
-      byYear.set(year, months);
-    }
-    return months;
+      return { months, proofs: stagedProofs };
   };
-  return Object.assign(read, { directionalEvidence: () => proofs });
+  const commit = (year: number, draft: MonthSignalsDraft) => {
+    if (byYear.has(year)) return;
+    byYear.set(year, draft);
+    proofs.push(...draft.proofs);
+  };
+  const read = (year: number) => {
+    let draft = byYear.get(year);
+    if (!draft) {
+      draft = project(buildTimeline(ctx, timelineOptions(year)));
+      commit(year, draft);
+    }
+    return draft.months;
+  };
+  const stage = async (year: number, signal: AbortSignal, yieldTask: () => Promise<void>) => {
+    const cached = byYear.get(year);
+    if (cached) return cached;
+    const tl = await buildTimelineCooperatively(ctx, timelineOptions(year), { signal, yieldTask });
+    signal.throwIfAborted();
+    return project(tl); // No cache/proof publication here, including partial years.
+  };
+  return Object.assign(read, { stage, commit, directionalEvidence: () => proofs });
 }
 
 /** Same reach as the MCP server's `get_signal`: asOf year −5 … +10 (RESOLVABLE_YEARS in @fortune/mcp). */
@@ -123,7 +144,7 @@ const LOOKUP_YEARS = { before: 5, after: 10 } as const;
  */
 export type ReportSignalLookup = ((id: string) => CoreSignal | null) & {
   directionalEvidence(): DirectionalEvidence[];
-  /** Prepare the same lookup incrementally; a single year's calculation remains synchronous. */
+  /** Prepare the same lookup in bounded units; publish only complete owned years. */
   prepare(ids: readonly string[], signal: AbortSignal, yieldTask?: () => Promise<void>): Promise<void>;
 };
 export function reportSignalLookup(report: Report): ReportSignalLookup {
@@ -148,6 +169,11 @@ export function reportSignalLookup(report: Report): ReportSignalLookup {
   const asOfYear = Number(report.asOf.slice(0, 4));
   let scanned = asOfYear - LOOKUP_YEARS.before - 1;
   const last = asOfYear + LOOKUP_YEARS.after;
+  let active: AbortController | null = null;
+  const supersede = () => {
+    active?.abort(new DOMException('Citation preparation superseded', 'AbortError'));
+    active = null;
+  };
   const scanNext = () => {
     scanned += 1;
     try {
@@ -161,21 +187,53 @@ export function reportSignalLookup(report: Report): ReportSignalLookup {
     const isFull = /^sig_[0-9a-f]{16}$/.test(wanted);
     // A full id that is already known needs no scan; anything shorter must see every year first.
     if (resolveSignalId(wanted, []).status === 'invalid') return null;
+    if (monthsOf && scanned < last && !(isFull && known.has(wanted))) supersede();
     while (monthsOf && scanned < last && !(isFull && known.has(wanted))) scanNext();
     const found = resolveSignalId(wanted, known.keys());
     return found.status === 'exact' || found.status === 'unique' ? known.get(found.id) ?? null : null;
   };
   const prepare: ReportSignalLookup['prepare'] = async (ids, signal, yieldTask = () => new Promise(resolve => setTimeout(resolve, 0))) => {
     signal.throwIfAborted();
-    const wanted = ids.map(id => id.trim().toLowerCase()).filter(id => resolveSignalId(id, []).status !== 'invalid');
-    const needsScan = () => Boolean(monthsOf && scanned < last && wanted.some(id => !/^sig_[0-9a-f]{16}$/.test(id) || !known.has(id)));
-    while (needsScan()) {
-      // A task boundary lets paint/input/cancellation run between years, not during buildTimeline.
-      await yieldTask();
-      signal.throwIfAborted();
-      if (needsScan()) scanNext();
+    supersede();
+    const controller = new AbortController();
+    active = controller;
+    const abort = () => controller.abort(signal.reason);
+    signal.addEventListener('abort', abort, { once: true });
+    if (signal.aborted) abort();
+    const currentSignal = controller.signal;
+    try {
+      const wanted = ids.map(id => id.trim().toLowerCase()).filter(id => resolveSignalId(id, []).status !== 'invalid');
+      const needsScan = () => Boolean(monthsOf && scanned < last && wanted.some(id => !/^sig_[0-9a-f]{16}$/.test(id) || !known.has(id)));
+      while (needsScan()) {
+        currentSignal.throwIfAborted();
+        const year = scanned + 1;
+        let schedulerFailed = false;
+        const yieldCurrent = async () => {
+          currentSignal.throwIfAborted();
+          try { await yieldTask(); } catch (error) { schedulerFailed = true; throw error; }
+          currentSignal.throwIfAborted();
+        };
+        let draft: MonthSignalsDraft;
+        try {
+          draft = await monthsOf!.stage(year, currentSignal, yieldCurrent);
+        } catch (error) {
+          currentSignal.throwIfAborted(); // Actual abort state/reason, never error.name.
+          if (schedulerFailed || error instanceof TimelineEnvironmentChangedError) throw error;
+          // Preserve existing engine-error policy, but not cancellation/environment failures.
+          scanned = year;
+          continue;
+        }
+        currentSignal.throwIfAborted();
+        // One non-yielding commit: partial work cannot poison cache, proofs or cursor.
+        monthsOf!.commit(year, draft);
+        for (const list of draft.months.values()) list.forEach(add);
+        scanned = year;
+      }
+      currentSignal.throwIfAborted();
+    } finally {
+      signal.removeEventListener('abort', abort);
+      if (active === controller) active = null;
     }
-    signal.throwIfAborted();
   };
   return Object.assign(lookup, { prepare, directionalEvidence: () => [...proofs, ...(monthsOf?.directionalEvidence() ?? [])] });
 }

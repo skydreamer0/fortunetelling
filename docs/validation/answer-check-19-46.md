@@ -260,3 +260,46 @@ The revision selects the unique year-range heading and rejects that missing-busy
 control. Neither fix proves identical-A request provenance or background abort;
 those limitations are explicit in the JSON receipt and remain open. All negative
 controls above mutate evidence records only, not production code at runtime.
+
+## #46 cooperative runtime candidate (native repair acceptance pending)
+
+The delivered PR90 diagnostic measured maximum cold citation Long Tasks of
+814/827 ms on its desktop/mobile-width stock-Chrome runner. Follow-on synthetic
+Bun profiling separated annual setup from cells: setup accounted for about 95%
+and nested Ziwei for about 89% of the recorded instrumented total. These are
+different runtimes/conditions, not a cross-device guarantee or a speedup claim.
+
+The minimal runtime candidate shares canonical generator steps between existing
+synchronous Ziwei sequence/calculator/timeline calls and a new cooperative bridge.
+It retains all sequences, formulas, period scope, ordering and IDs. It introduces
+no Worker/dependency and does not repurpose buildTimelineAsync. New cooperative
+calls require the existing Web bazi/ziwei/numerology scope and known-time Ziwei's
+already-established zh-TW/default iztro environment; existing synchronous public
+APIs, including ZiweiEngine's language option, remain unchanged.
+
+The guard only observes its documented language/getConfig snapshots. It cannot
+audit plugins/resources or a change away and back between checks. It does not
+restore globals. Each indivisible step is checked before/after; a suspended
+scheduler itself must settle. Scheduler failure, actual signal cancellation and
+environment rejection do not count as an empty successful year. Web preparation
+keeps month signals/proofs local until a complete current-owned year can commit
+together with the scanned cursor. A cancelled partial year is retried from its
+beginning; completed-year caching and the full asOf−5…+10 reach are retained.
+
+Local synthetic gates cover 23 baseline Timeline/Calculator outputs, all fields
+and exact serialization, the explicit 0.8→0.9 release-only metadata/hash delta,
+partial-year custom abort/rollback/retry, scheduler failure, foreign public zh-CN
+engine interference, supported clock/zi report interleaving, old A after B/new A,
+synchronous scan ownership and a real 16-year lookup against every expected
+monthly signal. Microtask schedulers in these tests provide deterministic ordering,
+not browser responsiveness evidence. Original golden and historical deltas remain
+unchanged; see D-053 for provenance and persistence-compatibility boundaries.
+
+The PR91 initial three-file NOT WIRED checkpoint and its first automatic run test
+the unchanged production application. They are not post-repair measurements.
+Before accepting this runtime candidate, inspect its exact source/tree, complete
+checks, non-author review and the existing native harness's fresh automatic run.
+Compare native Long Tasks/trusted-input/actual cancellation effects under the same
+documented conditions; do not invent a performance success threshold. No new
+browser/screenshot/physical-input claim is established by this preparation text.
+Issue #19/#46 acceptance remains open pending that evidence and its UX review.
