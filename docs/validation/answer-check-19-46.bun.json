@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-09T13:22:12.231Z",
+  "scope": "Bun real-engine diagnostics only; browser acceptance remains unverified",
+  "source": {
+    "head": "716622fbdddc9eb670142b335fc7a8c7ed462664",
+    "worktree": "",
+    "diagnosticSha256": "75c662003878ac4e17404846d2645325f8440d57cbe999735060172ca4c9d142"
+  },
+  "runtime": {
+    "bun": "1.4.2",
+    "os": "linux",
+    "release": "6.18.44",
+    "arch": "x64",
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "logicalCpus": 9,
+    "loadAverageAtStart": [
+      1.07,
+      0.73,
+      0.58
+    ],
+    "loadAverageAtEnd": [
+      1.72,
+      0.91,
+      0.64
+    ]
+  },
+  "fixture": {
+    "input": {
+      "name": "Synthetic answer-check QA",
+      "year": 1995,
+      "month": 7,
+      "day": 16,
+      "hour": 22,
+      "minute": 0,
+      "timeKnown": true,
+      "gender": "male",
+      "calendarType": "solar",
+      "cityId": "tainan",
+      "timeAccuracy": "exact"
+    },
+    "asOf": "2026-09-25",
+    "coreVersion": "0.7.0",
+    "reportSchemaVersion": 7,
+    "systems": [
+      "bazi",
+      "ziwei",
+      "numerology"
+    ],
+    "knownId": "sig_a334990c2c77a41d",
+    "missingId": "sig_fa0e0000",
+    "answer": "這段時期傾向有支撐〔sig_a334990c2c77a41d〕。\n\n一定會成功〔sig_fa0e0000〕。"
+  },
+  "reportGenerationMs": 1152.538626,
+  "scenarios": {
+    "knownFullId": {
+      "elapsedMs": 0.3401040000001103,
+      "yieldBoundaries": 0,
+      "timerTurns": 0,
+      "aborted": false,
+      "synchronousSegmentsMs": [],
+      "maxSynchronousSegmentMs": null
+    },
+    "fullScan": {
+      "elapsedMs": 11845.965445,
+      "yieldBoundaries": 16,
+      "timerTurns": 16,
+      "aborted": false,
+      "synchronousSegmentsMs": [
+        739.105654,
+        803.6320070000002,
+        685.4224899999999,
+        633.1217770000003,
+        822.4264869999997,
+        805.2076029999998,
+        729.991653,
+        926.5400389999995,
+        809.6138529999989,
+        785.1919939999989,
+        822.8346710000005,
+        691.261242999999,
+        692.1344100000006,
+        612.9728560000003,
+        633.6164119999994,
+        626.8850320000001
+      ],
+      "maxSynchronousSegmentMs": 926.5400389999995
+    },
+    "cachedRepeat": {
+      "elapsedMs": 0.03220800000053714,
+      "yieldBoundaries": 0,
+      "timerTurns": 0,
+      "aborted": false,
+      "synchronousSegmentsMs": [],
+      "maxSynchronousSegmentMs": null
+    },
+    "cancelled": {
+      "elapsedMs": 672.1901269999998,
+      "yieldBoundaries": 2,
+      "timerTurns": 2,
+      "aborted": true,
+      "synchronousSegmentsMs": [
+        668.1446390000001
+      ],
+      "maxSynchronousSegmentMs": 668.1446390000001
+    },
+    "resumed": {
+      "elapsedMs": 9221.414663000001,
+      "yieldBoundaries": 15,
+      "timerTurns": 15,
+      "aborted": false,
+      "synchronousSegmentsMs": [
+        727.5494419999995,
+        887.1136559999995,
+        586.842435999999,
+        557.1684539999987,
+        534.0909470000006,
+        544.4414980000001,
+        585.8163249999998,
+        593.3305379999983,
+        592.1076130000001,
+        625.3279870000006,
+        567.372962999998,
+        578.745852,
+        581.9171380000007,
+        586.1033339999994,
+        649.0809139999983
+      ],
+      "maxSynchronousSegmentMs": 887.1136559999995
+    }
+  },
+  "answerResult": {
+    "paragraphCount": 2,
+    "citedIds": [
+      "sig_a334990c2c77a41d",
+      "sig_fa0e0000"
+    ],
+    "unknownCitations": [
+      "sig_fa0e0000"
+    ],
+    "issueCodes": [
+      "unknown_citation",
+      "honesty_violation"
+    ]
+  },
+  "assertions": "passed",
+  "limitations": [
+    "No React render, DOM, desktop/mobile layout, browser input or paint was measured.",
+    "Synchronous segment durations include lookup overhead; they are not browser Long Tasks or input latency.",
+    "Fresh lookup caches are measured in one already-warmed Bun process; this is not cold-process or cold-browser timing.",
+    "The shared runner has no CPU isolation; competing work can affect these diagnostic timings.",
+    "One synthetic sync report excludes async ephemeris systems and does not establish a universal performance budget.",
+    "Yearly engine exceptions are swallowed by the existing lookup; a 16-segment scan alone does not prove every year succeeded."
+  ]
+}
