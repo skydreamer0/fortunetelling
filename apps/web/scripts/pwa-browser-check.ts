@@ -1,10 +1,11 @@
 /**
- * GitHub-hosted CI only. Execute with Bun after installing pinned Playwright.
- * Real Chromium Cache API + production worker, never an in-memory Cache mock.
+ * GitHub-hosted CI only. Execute with Bun and the runner's stock Google Chrome.
+ * Real Chrome Cache API + production worker, never an in-memory Cache mock.
  * This synthetic fixture does NOT certify the deployed UI or mobile PWA.
  */
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import { resolve } from 'node:path';
 import { chromium, type Browser } from 'playwright';
 
@@ -16,6 +17,8 @@ const output = resolve('pwa-browser-results');
 await mkdir(output, { recursive: true });
 const source = await readFile(new URL('../pwa/sw.js', import.meta.url), 'utf8');
 const sourceSha256 = new Bun.CryptoHasher('sha256').update(source).digest('hex');
+const playwrightVersion = (createRequire(import.meta.url)('playwright/package.json') as { version: string }).version;
+const browserChannel = 'chrome';
 const results: object[] = [];
 const diagnostics: object[] = [];
 const scope = '/fortunetelling/';
@@ -195,7 +198,7 @@ let timer: ReturnType<typeof setTimeout> | undefined;
 let timeoutCleanup: Promise<void> | undefined;
 let browserVersion: string | null = null;
 try {
-  browser = await chromium.launch({ timeout: 15_000, chromiumSandbox: true });
+  browser = await chromium.launch({ channel: browserChannel, timeout: 15_000, chromiumSandbox: true });
   browserVersion = browser.version();
   // Closing the browser cancels outstanding browser commands. Await the actual
   // checks below, rather than racing ahead and writing results while they run.
@@ -235,7 +238,10 @@ try {
   });
   await writeFile(resolve(output, 'results.json'), JSON.stringify({
     passed, sourceSha256, commit: process.env.GITHUB_SHA ?? null,
-    bun: Bun.version, browserVersion, timedOut, scope: 'synthetic Chromium Cache API and production worker only',
+    headCommit: process.env.PWA_HEAD_SHA ?? null,
+    bun: Bun.version, playwrightVersion, browserVersion, browserChannel, chromiumSandbox: true,
+    runner: { imageOS: process.env.ImageOS ?? null, imageVersion: process.env.ImageVersion ?? null },
+    timedOut, scope: 'synthetic stock Chrome Cache API and production worker only',
     results, diagnostics,
   }, null, 2));
 }

@@ -13,5 +13,8 @@
     "preview": "bun run --filter @fortune/web preview",
     "test": "bun test",
     "doctor": "bun run --filter @fortune/mcp doctor"
+  },
+  "devDependencies": {
+    "playwright": "1.64.0"
   }
 }
