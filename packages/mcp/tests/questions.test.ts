@@ -36,7 +36,8 @@ describe('answer_question', () => {
     const r1 = await fx.call('answer_question', args);
     expect(r1.isError).toBe(false);
     const { top, ranking } = r1.json.data;
-    expect(top.length).toBeGreaterThan(0);
+    expect(top).toEqual([]);
+    expect(r1.json.data.status).toBe('no_clear_advantage');
     expect(top.length).toBeLessThanOrEqual(3);
     for (const t of top) {
       expect(t.month).toMatch(/^2027-/);

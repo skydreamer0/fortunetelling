@@ -121,7 +121,11 @@ const LOOKUP_YEARS = { before: 5, after: 10 } as const;
  * soon as it is found; a shorter prefix scans every year first (once, then cached), because a
  * not-yet-scanned year could hold a second signal with the same prefix. Ambiguous → null, never a guess.
  */
-export type ReportSignalLookup = ((id: string) => CoreSignal | null) & { directionalEvidence(): DirectionalEvidence[] };
+export type ReportSignalLookup = ((id: string) => CoreSignal | null) & {
+  directionalEvidence(): DirectionalEvidence[];
+  /** Prepare the same lookup incrementally; a single year's calculation remains synchronous. */
+  prepare(ids: readonly string[], signal: AbortSignal, yieldTask?: () => Promise<void>): Promise<void>;
+};
 export function reportSignalLookup(report: Report): ReportSignalLookup {
   const known = new Map<string, CoreSignal>();
   const add = (signal: CoreSignal | null | undefined) => {
@@ -161,14 +165,26 @@ export function reportSignalLookup(report: Report): ReportSignalLookup {
     const found = resolveSignalId(wanted, known.keys());
     return found.status === 'exact' || found.status === 'unique' ? known.get(found.id) ?? null : null;
   };
-  return Object.assign(lookup, { directionalEvidence: () => [...proofs, ...(monthsOf?.directionalEvidence() ?? [])] });
+  const prepare: ReportSignalLookup['prepare'] = async (ids, signal, yieldTask = () => new Promise(resolve => setTimeout(resolve, 0))) => {
+    signal.throwIfAborted();
+    const wanted = ids.map(id => id.trim().toLowerCase()).filter(id => resolveSignalId(id, []).status !== 'invalid');
+    const needsScan = () => Boolean(monthsOf && scanned < last && wanted.some(id => !/^sig_[0-9a-f]{16}$/.test(id) || !known.has(id)));
+    while (needsScan()) {
+      // A task boundary lets paint/input/cancellation run between years, not during buildTimeline.
+      await yieldTask();
+      signal.throwIfAborted();
+      if (needsScan()) scanNext();
+    }
+    signal.throwIfAborted();
+  };
+  return Object.assign(lookup, { prepare, directionalEvidence: () => [...proofs, ...(monthsOf?.directionalEvidence() ?? [])] });
 }
 
 export interface LocalQuestion {
   category: string;
   categoryName: string;
   range: QuestionRange;
-  /** null when the report cannot provide month signals (old report, time unknown) or the engine failed. */
+  /** Unavailable sources are explicitly insufficient_evidence, not evaluated zero scores. */
   answer: QuestionAnswer | null;
 }
 
@@ -197,6 +213,12 @@ export function localQuestion(report: Report, text: string): LocalQuestion | nul
     } catch {
       answer = null;
     }
+  }
+  if (!answer) {
+    answer = answerQuestion({ category, range }, () => []);
+    // The source was never successfully evaluated: do not expose synthetic zero-month diagnostics.
+    answer.ranking = [];
+    answer.abstentionReasons = [{ code: 'source_unavailable', message: '這份報告缺少可重放的月份資料，或月份計算未完成；不能把未取得的資料當成已評估的零分，不提供月份排名。' }];
   }
   return { category, categoryName, range, answer };
 }

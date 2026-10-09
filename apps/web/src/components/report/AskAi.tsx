@@ -77,13 +77,17 @@ export function QuestionStatus({ text, local, ranking }: { text: string; local: 
   if (!local) {
     return <p className="ask__status">沒有對應到網站的問事類別：prompt 只附上你的問題，不附月份排名。</p>;
   }
-  const top = local.answer?.top ?? [];
+  const top = local.answer?.status === 'ranked' ? local.answer.top : [];
   return (
-    <p className="ask__status" data-category={local.category}>
+    <p className="ask__status" data-category={local.category} data-status={local.answer?.status}>
       對應問事類別「{local.categoryName}」，範圍 {local.range.start}～{local.range.end}。
       {top.length > 0
         ? <>網站計算的前 {top.length} 個月份：<strong>{top.map(window => window.window.start.slice(0, 7)).join('、')}</strong>（已附在 prompt 裡，由程式計算，不是 AI）。</>
-        : '這份報告無法計算月份排名，prompt 只附上你的問題。'}
+        : local.answer?.status === 'ranked'
+          ? '這次展示未列出月份；引擎已完成評估，不代表證據不足。'
+        : local.answer?.abstentionReasons.length
+          ? <>不提供月份排名：{local.answer.abstentionReasons.map(reason => reason.message).join('')}（已附在 prompt 裡）</>
+          : '這份報告無法計算月份排名，prompt 只附上你的問題。'}
     </p>
   );
 }
@@ -107,18 +111,18 @@ export function AskAi({ report, clipboard }: {
   const localKey = category && range ? `${category}|${range.start}|${range.end}` : '';
   // The ranking needs one timeline build per calendar year (~1 s each), so it runs after
   // paint, only when the category or range changes; the prompt is rebuilt when it lands.
-  const [ranked, setRanked] = useState<{ key: string; local: LocalQuestion } | null>(null);
+  const [ranked, setRanked] = useState<{ report: Report; key: string; local: LocalQuestion } | null>(null);
   const questionRef = useRef(deferredQuestion);
   questionRef.current = deferredQuestion;
   useEffect(() => {
-    if (!localKey || ranked?.key === localKey) return;
+    if (!localKey || (ranked?.report === report && ranked?.key === localKey)) return;
     const timer = setTimeout(() => {
       const result = localQuestion(report, questionRef.current);
-      if (result) setRanked({ key: localKey, local: result });
+      if (result) setRanked({ report, key: localKey, local: result });
     }, 30);
     return () => clearTimeout(timer);
-  }, [report, localKey, ranked?.key]);
-  const local = localKey && ranked?.key === localKey ? ranked.local : null;
+  }, [report, localKey, ranked?.key, ranked?.report]);
+  const local = localKey && ranked?.report === report && ranked?.key === localKey ? ranked.local : null;
   const ranking = Boolean(localKey) && !local;
 
   const prompt = useMemo(() => buildCopyPrompt(report as never, {

@@ -1,0 +1,15 @@
+{
+  "version": "0.6.3",
+  "decision": "D-049",
+  "reason": "Only manifest coreVersion advances; the preserved UTC export file hashes and signal count are unchanged.",
+  "changes": [
+    {
+      "path": [
+        "versions",
+        "coreVersion"
+      ],
+      "before": "0.6.2",
+      "after": "0.6.3"
+    }
+  ]
+}

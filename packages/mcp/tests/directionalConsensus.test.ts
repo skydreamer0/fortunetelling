@@ -23,7 +23,7 @@ describe('#44 MCP directional provenance', () => {
     const answer = await fx.call('answer_question', { ...base, category: 'job_change', range: { start: '2027-07', end: '2027-07' }, detail: true });
     expect(answer.isError).toBe(false);
     expect(answer.json.data.thresholds).toEqual({ theta: 0.5, tau: 0.2 });
-    const ids: string[] = answer.json.data.top[0].signalIds;
+    const ids: string[] = answer.json.data.status === 'ranked' ? answer.json.data.top[0].signalIds : answer.json.data.ranking[0].signalIds;
     expect(ids.length).toBeGreaterThan(0);
     const resolved = await fx.call('get_signal', { ...base, signalId: ids[0] });
     expect(resolved.isError).toBe(false);

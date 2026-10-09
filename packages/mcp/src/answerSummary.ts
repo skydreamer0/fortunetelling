@@ -28,7 +28,7 @@ export type Shorten = (ids: readonly string[]) => string[];
 export const COMPACT_SIGNAL_IDS = 3;
 
 const fmt1 = (x: number) => String(Math.round(x * 10) / 10);
-const month = (r: RankedWindow) => r.window.start.slice(0, 7);
+const month = (r: Pick<RankedWindow, 'window'>) => r.window.start.slice(0, 7);
 
 /**
  * 領域一行摘要，例：「財運 58.3：活躍70.2／支撐52.1／風險6／共同關注3／同向2／有矛盾」
@@ -93,10 +93,14 @@ export const RANKING_COLUMNS = ['month', 'score', 'band'] as const;
 /** 預設精簡版：前 3 名（各含一行理由）與 [月份, 分數, band] 排名表。 */
 export function compactAnswer(answer: QuestionAnswer, sh: Shorten = ids => [...ids]) {
   return {
+    status: answer.status,
+    abstentionReasons: answer.abstentionReasons,
+    rankingPolicy: answer.rankingPolicy,
+    rankingKind: answer.status === 'ranked' ? 'ranked' as const : 'diagnostic' as const,
     category: answer.category,
     thresholds: answer.thresholds,
     range: answer.range,
-    top: answer.top.map(r => compactTop(r, sh)),
+    top: (answer.status === 'ranked' ? answer.top : []).map(r => compactTop(r, sh)),
     rankingColumns: RANKING_COLUMNS,
     ranking: answer.ranking.map(r => [month(r), r.score, r.band] as const),
     catalogVersion: answer.catalogVersion,

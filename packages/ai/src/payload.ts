@@ -31,10 +31,11 @@ import type {
   Trait,
 } from '@fortune/core';
 import { canonicalJson } from './canonical';
+import { questionContextOf, type QuestionCheckContext } from './questionPolicy';
 import { scrubDeep, sensitiveStringsOf, shortIdCollisions, shortSignalId, directionalVotes, evidenceMatchesContext, validAgreementThresholds,
   HIGH_CONSENSUS_MIN_SYSTEMS, type DirectionalEvidence, type AgreementThresholds, type SensitiveStrings } from './core-pure';
 
-export const PAYLOAD_VERSION = 3;
+export const PAYLOAD_VERSION = 4;
 /** Default serialised-size budget (characters of canonical JSON). */
 export const DEFAULT_MAX_PAYLOAD_CHARS = 120_000;
 
@@ -149,7 +150,7 @@ export interface PayloadRankedWindow {
   riskSignalIds: string[];
 }
 
-export interface PayloadQuestion {
+export interface PayloadQuestion extends QuestionCheckContext {
   thresholds: AgreementThresholds | null;
   category: string;
   range: { start: string; end: string } | null;
@@ -329,12 +330,13 @@ function buildTimelineCells(cells: TimelineCell[] | undefined, sid: IdMapper, ti
 
 function buildQuestion(answer: QuestionAnswer, sid: IdMapper): PayloadQuestion {
   return {
+    ...questionContextOf(answer),
     thresholds: validAgreementThresholds(answer.thresholds) ? { ...answer.thresholds } : null,
     category: answer.category,
     range: answer.range ? { start: answer.range.start, end: answer.range.end } : null,
     unsupported: answer.unsupported === true,
     catalogVersion: answer.catalogVersion,
-    top: (answer.top ?? []).map((w: RankedWindow) => {
+    top: (questionContextOf(answer).status === 'ranked' ? answer.top ?? [] : []).map((w: RankedWindow) => {
       const proofs = (w.domainScores ?? []).flatMap(domain => evidenceMatchesContext(domain.directionalEvidence, {
         domain: domain.domain, window: w.window, thresholds: answer.thresholds, signalIds: domain.signalIds,
       }) ? [mapEvidence(domain.directionalEvidence, sid)] : []);
@@ -397,7 +399,7 @@ export function buildInterpretationPayloadFromSelection(report: ReportLike, opti
   const byId = new Map<string, Signal>();
   for (const s of report.signals ?? []) if (s && typeof s.id === 'string') byId.set(s.id, s);
   const protectedIds = new Set<string>();
-  for (const w of answer?.top ?? []) {
+  for (const w of answer && questionContextOf(answer).status === 'ranked' ? answer.top : []) {
     for (const s of [...w.supportSignals, ...w.riskSignals]) {
       if (!byId.has(s.id)) byId.set(s.id, s);
       protectedIds.add(s.id);

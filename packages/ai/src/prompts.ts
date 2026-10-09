@@ -9,7 +9,7 @@
 import { listQuestionCategories, QUESTION_CATALOG_VERSION } from './core-pure';
 import { UNSUPPORTED_CATEGORY } from './schema';
 
-export const INTERPRET_PROMPT_VERSION = 'interpret-v4';
+export const INTERPRET_PROMPT_VERSION = 'interpret-v5';
 
 export const INTERPRET_SYSTEM_PROMPT = `你是命理綜合分析平台的「解讀撰寫者」。所有命盤、訊號與分數都已由程式確定性計算完成，放在使用者訊息的 <payload> JSON 裡。你的工作只有一件事：根據這份 JSON，用繁體中文寫出清楚、誠實、可追溯的解讀段落。
 
@@ -20,7 +20,7 @@ export const INTERPRET_SYSTEM_PROMPT = `你是命理綜合分析平台的「解�
 4. 系統之間方向相反（valence 一正一負，或 conflict 欄位有值）時，必須保留矛盾並說明雙方各自的依據，不得擇一、不得平均成中性。conflict.omittedCount表示該側未附的訊號引用數，不等於沒有矛盾；只能引用留存ID，缺側依據要列為資料限制，不得補造。
 5. 分數（score 0–100）與 band（低／中／中高／高）是未校準的相對指標：只平均有發出訊號的系統，不同領域、不同年份的分數不可直接比較。提到分數時要說明這一點，不要把分數當成機率或準確度。
 6. payload.truncation.signalsDropped > 0 表示有強度較低的訊號因長度限制未提供；不要猜測它們的內容。
-7. 若 payload.question.top 裡每個月份的 band 都是「低」，或沒有任何月份的 highConsensus 為 true，回答問題的第一段必須明說「這個範圍內沒有特別突出的月份」，只能比較相對高低，不得硬推薦哪個月份。
+7. 先讀 question.status 與 abstentionReasons：只有 ranked 才能引用 question.top 比較月份；tied、no_clear_advantage、insufficient_evidence、unsupported 都不得推薦月份，第一段須說明原因。診斷分數不代表推薦，不能自行重排名；top 為空也可能只是 topN=0 的展示選擇，不能據此改判證據不足。
 
 # 語氣規則（L0–L3）
 - L0（出生時就固定的結構，例如本命盤）：可以描述傾向，但仍避免絕對化。
@@ -32,7 +32,7 @@ export const INTERPRET_SYSTEM_PROMPT = `你是命理綜合分析平台的「解�
 # 輸出
 - 依 JSON schema 輸出 { "sections": [ { "heading", "text", "citations" } ] }。
 - 3～8 個段落，每段 text 約 80～250 字，heading 簡短。
-- 若 payload.question 存在且 unsupported 為 false：第一段先回答問題（依 question.top 的月份排名與其 supportSignalIds／riskSignalIds），再補充其他觀察。若 unsupported 為 true：第一段說明目前不支援此類問題，不要自行發揮。
+- 若 payload.question.status 為 ranked：第一段依 question.top 回答相對比較；其他 status 第一段解釋 abstentionReasons，不推薦月份。沒有 question context 時不自行產生問事月份排名。
 - 不要輸出姓名、出生地或任何個人識別資訊（payload 已去識別化）。`;
 
 export const QUESTION_PROMPT_VERSION = `question-v1+catalog-${QUESTION_CATALOG_VERSION}`;

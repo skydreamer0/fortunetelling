@@ -1,0 +1,9 @@
+{
+  "$comment": "Synthetic #45 red-first fixtures; each month supplies one supportive bazi signal in every investment domain. No personal or archived forecast data.",
+  "fixtures": [
+    { "name": "all zero", "intensities": [0, 0, 0], "status": "insufficient_evidence", "topMonths": [] },
+    { "name": "all low band", "intensities": [0.1, 0.2, 0.3], "status": "no_clear_advantage", "topMonths": [] },
+    { "name": "all equal", "intensities": [0.8, 0.8, 0.8], "status": "tied", "topMonths": [] },
+    { "name": "normal", "intensities": [0.8, 0.7, 0.6], "status": "ranked", "topMonths": ["2027-01", "2027-02", "2027-03"] }
+  ]
+}

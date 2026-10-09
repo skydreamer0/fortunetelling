@@ -1,3 +1,7 @@
+import abstentionDelta from './fixtures/export.v0.7.0.delta.json';
+import dateOnlyDelta from './fixtures/export.v0.6.4.delta.json';
+import calendarValidationDelta from './fixtures/export.v0.6.3.delta.json';
+import asOfDelta from './fixtures/export.v0.6.2.delta.json';
 import evidenceDelta from './fixtures/export.v0.6.1.delta.json';
 import agreementDelta from './fixtures/export.v0.6.0.delta.json';
 import { describe, expect, test } from 'bun:test';
@@ -123,10 +127,15 @@ describe('golden', () => {
     const recorded = JSON.parse(original);
     expect(recorded.versions.coreVersion).toBe('0.5.0');
     recorded.versions.coreVersion = '0.5.3';
-    for (const change of [...agreementDelta.changes, ...evidenceDelta.changes]) {
-      const [group, key] = change.path;
-      expect(recorded[group][key]).toEqual(change.before);
-      recorded[group][key] = structuredClone(change.after);
+    for (const change of [...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes, ...calendarValidationDelta.changes, ...dateOnlyDelta.changes, ...abstentionDelta.changes]) {
+      let parent = recorded;
+      for (const key of change.path.slice(0, -1)) {
+        expect(parent[key]).toBeDefined();
+        parent = parent[key];
+      }
+      const key = change.path.at(-1)!;
+      expect(parent[key]).toEqual(change.before);
+      parent[key] = structuredClone(change.after);
     }
     expect(text).toBe(`${JSON.stringify(recorded, null, 2)}\n`);
   });

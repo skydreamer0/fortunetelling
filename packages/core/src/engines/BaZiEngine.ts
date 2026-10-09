@@ -242,8 +242,9 @@ export class BaZiEngine extends BaseEngine {
       throw new Error(`BaZiEngine requires asOf in YYYY-MM-DD format, got: ${this.asOf}`);
     }
     const asOfParts = this.asOf.split('-').map(Number) as [number, number, number];
-    const dateObj = new Date(asOfParts[0], asOfParts[1] - 1, asOfParts[2]);
-    if (dateObj.getFullYear() !== asOfParts[0] || dateObj.getMonth() !== asOfParts[1] - 1 || dateObj.getDate() !== asOfParts[2]) {
+    // Validate Gregorian fields, not whether the host timezone observed this civil day.
+    const dateObj = new Date(Date.UTC(asOfParts[0], asOfParts[1] - 1, asOfParts[2]));
+    if (dateObj.getUTCFullYear() !== asOfParts[0] || dateObj.getUTCMonth() !== asOfParts[1] - 1 || dateObj.getUTCDate() !== asOfParts[2]) {
       throw new Error(`BaZiEngine requires a valid calendar date, got: ${this.asOf}`);
     }
 

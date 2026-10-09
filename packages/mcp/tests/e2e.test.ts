@@ -53,17 +53,18 @@ describe('stdio server (what Claude Desktop actually talks to)', () => {
   test('acceptance: 2027 vehicle purchase → answer_question → cited signals exist', async () => {
     const answer = JSON.parse(textOf(await client.callTool({
       name: 'answer_question',
-      arguments: { profileId: 'sky', category: 'vehicle_purchase', range: { start: '2027-01', end: '2027-12' }, asOf: '2026-09-30' },
+      arguments: { profileId: 'sky', category: 'vehicle_purchase', range: { start: '2027-01', end: '2027-12' }, asOf: '2026-09-30', detail: true },
     })));
     expect(answer.asOf).toBe('2026-09-30');
     expect(answer.versions).toBeUndefined();
     expect(answer.versionsHash).toMatch(/^[0-9a-f]{12}$/);
     expect(answer.caveats.some((c: any) => c.code === 'scores_uncalibrated')).toBe(true);
     const top = answer.data.top ?? answer.data.answer?.top;
-    expect(top.length).toBeGreaterThan(0);
+    expect(top).toEqual([]);
+    expect(answer.data.status).toBe('no_clear_advantage');
 
     // every signal id the answer cites must be fetchable
-    const cited = [...new Set(JSON.stringify(top).match(/sig_[0-9a-f]+/g) ?? [])];
+    const cited = [...new Set(JSON.stringify(answer.data.ranking).match(/sig_[0-9a-f]+/g) ?? [])];
     // 輸出一律是短編號（sig_ + 8 位）；碰撞才會是完整編號（此範例不碰撞）
     expect(cited.length).toBeGreaterThan(0);
     for (const id of cited) expect(id).toMatch(/^sig_[0-9a-f]{8}$/);
@@ -84,8 +85,8 @@ describe('stdio server (what Claude Desktop actually talks to)', () => {
     expect(Buffer.byteLength(raw, 'utf8')).toBeLessThan(4096);
     const all = JSON.parse(raw);
     expect(all.data.experimentalIncluded).toBe(true);
-    expect(typeof all.data.experimentalSensitivity.changed).toBe('boolean');
-    if (all.data.experimentalSensitivity.changed) expect(all.caveats.some((c: any) => c.code === 'experimental_sensitive')).toBe(true);
+    expect(all.data.experimentalSensitivity).toBeNull();
+    expect(all.data.status).toBe('no_clear_advantage');
     const verified = JSON.parse(textOf(await client.callTool({ name: 'answer_question', arguments: { ...args, verifiedOnly: true } })));
     expect(verified.data.systemsUsed).toEqual(['bazi', 'ziwei', 'numerology', 'humanDesign']);
     expect(verified.data.experimentalIncluded).toBe(false);

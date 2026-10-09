@@ -1,0 +1,42 @@
+{
+  "version": "0.6.4",
+  "decision": "D-050",
+  "reason": "Core and two date-only calculator patch versions advance; chart.json hash changes only because of the two embedded calculator versions. The preserved fixture has no clock-gap day shift, so calculation values and all other file hashes remain unchanged.",
+  "changes": [
+    {
+      "path": [
+        "versions",
+        "coreVersion"
+      ],
+      "before": "0.6.3",
+      "after": "0.6.4"
+    },
+    {
+      "path": [
+        "versions",
+        "calculators",
+        "numerology"
+      ],
+      "before": "0.1.0",
+      "after": "0.1.1"
+    },
+    {
+      "path": [
+        "versions",
+        "calculators",
+        "tzolkin"
+      ],
+      "before": "0.1.0",
+      "after": "0.1.1"
+    },
+    {
+      "path": [
+        "files",
+        "chart.json",
+        "hash"
+      ],
+      "before": "8e87bd618f2add78",
+      "after": "836bc01639308290"
+    }
+  ]
+}

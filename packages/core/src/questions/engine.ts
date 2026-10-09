@@ -36,7 +36,8 @@ import { resolveAgreementThresholds } from '../signals/directionalEvidence';
 import { EXPERIMENTAL_SYSTEMS as EXPERIMENTAL_SYSTEM_IDS } from '../signals/eligibility';
 import { toBand } from '../signals/bands';
 import { SYSTEM_IDS, type Domain, type Signal, type SignalWindow, type SystemId, type Trait } from '../signals/types';
-import catalogJson from './catalog.v2.json';
+import catalogJson from './catalog.v3.json';
+import legacyCatalogJson from './catalog.v2.json';
 import type {
   AnswerOptions,
   DomainConflict,
@@ -44,6 +45,8 @@ import type {
   ExperimentalSensitivity,
   SensitivityEntry,
   QuestionAnswer,
+  QuestionAnswerV2,
+  QuestionDecision,
   QuestionCatalog,
   QuestionCategory,
   QuestionRange,
@@ -162,7 +165,7 @@ export function validateQuestionRequest(
   return { ok: true, value: { category: category.id, range: { start: r.start, end: r.end } }, unsupported: false, errors: [] };
 }
 
-function unsupportedAnswer(input: unknown, catalog: QuestionCatalog): QuestionAnswer {
+function unsupportedAnswer(input: unknown, catalog: QuestionCatalog): QuestionAnswerV2 {
   const obj = isPlainObject(input) ? input : {};
   const r = obj.range;
   const range =
@@ -285,11 +288,11 @@ function scoreWindow(
  * Answer a question deterministically. Unknown category → `{ unsupported: true }`
  * with no ranking. Any other invalid request throws (the caller must validate).
  */
-export function answerQuestion(
+function scoreQuestion(
   request: QuestionRequest | unknown,
   provider: SignalProvider,
   opts: AnswerOptions = {},
-): QuestionAnswer {
+): QuestionAnswerV2 {
   const catalog = opts.catalog ?? QUESTION_CATALOG;
   const v = validateQuestionRequest(request, catalog);
   if (!v.ok) {
@@ -317,7 +320,7 @@ export function answerQuestion(
     .sort((x, y) => y.score - x.score || cmp(x.window.start, y.window.start))
     .map((r, i) => ({ ...r, rank: i + 1 }));
 
-  const answer: QuestionAnswer = {
+  const answer: QuestionAnswerV2 = {
     category: category.id,
     range: v.value.range,
     ranking,
@@ -335,6 +338,61 @@ export function answerQuestion(
     };
   }
   return answer;
+}
+
+/** Replay exactly the PR77 catalog-v2 answer shape. Does not replay pre-v2 engines or archived forecasts. */
+export function replayQuestionAnswerV2(
+  request: QuestionRequest | unknown,
+  provider: SignalProvider,
+  opts: Omit<AnswerOptions, 'catalog'> = {},
+): QuestionAnswerV2 {
+  return scoreQuestion(request, provider, { ...opts, catalog: legacyCatalogJson as QuestionCatalog });
+}
+
+/** Single source for effective score bands and abstention threshold. */
+export function resolveQuestionRankingPolicy(opts: AnswerOptions = {}): QuestionDecision['rankingPolicy'] {
+  const catalog = opts.catalog ?? QUESTION_CATALOG;
+  const policy = catalog.rankingPolicy;
+  if (!policy || catalog.schemaVersion !== 2 || policy.minimumBand !== '中' ||
+      policy.insufficientScoreMax !== 0 || policy.tiePolicy !== 'abstain-on-top-score-tie') {
+    throw new Error('answerQuestion: catalog must supply the v3 ranking policy; use replayQuestionAnswerV2 for PR77 replay');
+  }
+  const cuts = opts.bandCuts ?? policy.bandCuts;
+  if (!Array.isArray(cuts) || cuts.length !== 3 || cuts.some(c => !Number.isFinite(c) || c < 0 || c > 100) ||
+      !(cuts[0] <= cuts[1] && cuts[1] <= cuts[2])) {
+    throw new Error('answerQuestion: bandCuts must be three finite ascending values in 0..100');
+  }
+  return { ...policy, bandCuts: [cuts[0], cuts[1], cuts[2]], minimumScore: cuts[0] };
+}
+
+/** Evidence decisions are independent of presentation choices such as topN=0. */
+export function answerQuestion(
+  request: QuestionRequest | unknown,
+  provider: SignalProvider,
+  opts: AnswerOptions = {},
+): QuestionAnswer {
+  const rankingPolicy = resolveQuestionRankingPolicy(opts);
+  const base = scoreQuestion(request, provider, { ...opts, bandCuts: rankingPolicy.bandCuts });
+  let status: QuestionDecision['status'] = 'ranked';
+  const abstentionReasons: QuestionDecision['abstentionReasons'] = [];
+  const abstain = (next: QuestionDecision['status'], code: QuestionDecision['abstentionReasons'][number]['code'], message: string) => {
+    status = next; abstentionReasons.push({ code, message });
+  };
+  if (base.unsupported) abstain('unsupported', 'unsupported_category', '問事目錄不支援這個類別，無法提供月份排名。');
+  else if (!base.ranking.some(row => row.signalIds.length > 0)) {
+    abstain('insufficient_evidence', 'no_signals', '範圍內沒有符合類別與系統篩選的訊號，無法提供月份排名。');
+  } else if (base.ranking.every(row => row.score === 0)) {
+    abstain('insufficient_evidence', 'all_zero_scores', '相關訊號已評估，但所有月份的計分均為零，沒有足夠依據提供月份排名。');
+  } else if (base.ranking[0].score < rankingPolicy.minimumScore) {
+    abstain('no_clear_advantage', 'all_low_band', `所有月份均在低帶（低於 ${rankingPolicy.minimumScore}），這個範圍內沒有特別突出的月份。`);
+  } else if (base.ranking.filter(row => row.score === base.ranking[0].score).length > 1) {
+    abstain('tied', 'top_score_tie', '最高分月份以四位小數比較後同分，沒有唯一優勢；較早月份只用於固定顯示順序，不表示更適合。');
+  }
+  return { ...base,
+    ranking: status === 'ranked' ? base.ranking : base.ranking
+      .map(row => ({ ...row, rank: null }))
+      .sort((a, b) => cmp(a.window.start, b.window.start)),
+    top: status === 'ranked' ? base.top : [], status, abstentionReasons, rankingPolicy };
 }
 
 /** 驗證並正規化系統清單：非空、皆為已知系統；回傳去重後依 SYSTEM_IDS 排序的結果。 */

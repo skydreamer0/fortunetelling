@@ -1,11 +1,12 @@
+// PR77 catalog-v2 scoring/replay regression. Live v3 decisions are tested in questionAbstention.test.ts.
 import { describe, expect, test } from 'bun:test';
+import QUESTION_CATALOG from '../src/questions/catalog.v2.json';
 import baziRuleCatalog from '../src/rules/bazi/catalog.json';
 import ziweiRuleCatalog from '../src/rules/ziwei/catalog.json';
 import jyotishRuleCatalog from '../src/calculators/jyotish/catalog.json';
 import humanDesignRuleCatalog from '../src/calculators/humanDesign/catalog.json';
 import {
-  QUESTION_CATALOG,
-  answerQuestion,
+  replayQuestionAnswerV2 as answerQuestion,
   monthWindows,
   validateQuestionRequest,
   type QuestionRequest,

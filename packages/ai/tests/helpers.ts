@@ -1,4 +1,6 @@
 import type { QuestionAnswer } from '@fortune/core';
+import { answerQuestion } from '../../core/src/questions';
+import { createSignal } from '../../core/src/signals/createSignal';
 import type { ReportLike } from '../src/payload';
 import type { CompleteFn, CompletionRequest } from '../src/client';
 
@@ -14,6 +16,15 @@ export function loadReport(): ReportLike {
 
 export function loadQuestion(): QuestionAnswer {
   return structuredClone(questionJson) as unknown as QuestionAnswer;
+}
+
+/** New synthetic live answer for projection tests that need an attested ranked result. */
+export function loadRankedQuestion(): QuestionAnswer {
+  return answerQuestion({category:'vehicle_purchase',range:{start:'2026-10',end:'2026-12'}}, window =>
+    (['wealth','contract','movement','property'] as const).map(domain => createSignal({
+      system:'bazi',ruleId:'test.projection',ruleVersion:1,domain,trait:'opportunity',
+      intensity:[.8,.7,.6][Number(window.start.slice(5,7))-10],valence:.5,window,target:domain,
+    })));
 }
 
 /** Mock `complete` that records requests and returns canned outputs in order. */

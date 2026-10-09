@@ -8,7 +8,7 @@
  * 只標示、不改寫，是否採信由讀者判斷。
  */
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { checkAnswer, type AnswerIssueCode, type CheckAnswerResult } from '@fortune/ai/mcp';
 import { reportSignalLookup } from '../../model/askAi';
 import type { Report } from '../../model/types';
@@ -18,6 +18,8 @@ const ISSUE_LABELS: Record<AnswerIssueCode, string> = {
   honesty_violation: '宿命論或保證式用語',
   experimental_as_consensus: '把實驗性系統算進高共識',
   high_consensus_unsupported: '「高共識」缺乏至少 3 套同向計算證據',
+  month_recommendation_when_abstained: '引擎未排名，回答仍推薦月份',
+  question_context_missing: '缺少原問事資料，無法核對月份推薦',
 };
 
 /** Pure result view (exported for tests). */
@@ -55,23 +57,55 @@ export function AnswerCheckView({ result }: { result: CheckAnswerResult }) {
 
 export function AnswerCheck({ report }: { report: Report }) {
   const [text, setText] = useState('');
-  const [result, setResult] = useState<CheckAnswerResult | null>(null);
+  const [result, setResult] = useState<{ report: Report; text: string; value: CheckAnswerResult } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [failure, setFailure] = useState<{ report: Report; text: string } | null>(null);
   // One lookup per report: month signals are built per year (~1 s each) and cached inside it.
   const lookupRef = useRef<{ report: Report; lookup: ReturnType<typeof reportSignalLookup> } | null>(null);
 
-  function run() {
-    if (!text.trim()) return;
+  const active = useRef<AbortController | null>(null);
+  const generation = useRef(0);
+  const currentReport = useRef(report);
+  currentReport.current = report;
+  function cancel() {
+    generation.current++;
+    active.current?.abort();
+    active.current = null;
+  }
+  useEffect(() => {
+    cancel();
+    setBusy(false);
+    setResult(null);
+    setFailure(null);
+    return cancel;
+  }, [report]);
+
+  async function run() {
+    if (!text.trim() || active.current) return;
+    const controller = new AbortController();
+    active.current = controller;
+    const request = ++generation.current;
+    const isCurrent = () => !controller.signal.aborted && request === generation.current && currentReport.current === report;
     setBusy(true);
-    // Let the "checking" state paint first: an unknown id scans every year of month signals.
-    setTimeout(() => {
+    setResult(null);
+    setFailure(null);
+    try {
       if (lookupRef.current?.report !== report) lookupRef.current = { report, lookup: reportSignalLookup(report) };
-      try {
-        setResult(checkAnswer(text, { signalLookup: lookupRef.current.lookup, directionalEvidence: () => lookupRef.current!.lookup.directionalEvidence() }));
-      } finally {
+      const lookup = lookupRef.current.lookup;
+      // Reuse the authoritative citation parser without any expensive lookup work.
+      const ids = checkAnswer(text, { signalLookup: () => null }).citedIds;
+      await lookup.prepare(ids, controller.signal);
+      if (!isCurrent()) return;
+      const value = checkAnswer(text, { signalLookup: lookup, directionalEvidence: () => lookup.directionalEvidence() });
+      if (isCurrent()) setResult({ report, text, value });
+    } catch {
+      if (isCurrent()) setFailure({ report, text });
+    } finally {
+      if (isCurrent()) {
+        active.current = null;
         setBusy(false);
       }
-    }, 30);
+    }
   }
 
   return (
@@ -80,7 +114,7 @@ export function AnswerCheck({ report }: { report: Report }) {
         <span className="field__label">Claude 的回答（選填）</span>
         <textarea className="input ask__textarea" rows={6} value={text} maxLength={20000}
           placeholder="把 Claude 桌面版的完整回答貼在這裡（引用的 sig_ 編號可以是短編號）"
-          onChange={event => { setText(event.target.value); setResult(null); }} />
+          onChange={event => { cancel(); setBusy(false); setText(event.target.value); setResult(null); setFailure(null); }} />
       </label>
       <div className="ask__actions">
         <button type="button" className="button button--quiet" onClick={run} disabled={busy || !text.trim()}>
@@ -88,7 +122,8 @@ export function AnswerCheck({ report }: { report: Report }) {
         </button>
         {busy && <span className="ask__copied" role="status" aria-busy="true">正在對照訊號編號（最久約十幾秒）…</span>}
       </div>
-      {result && !busy && <AnswerCheckView result={result} />}
+      {failure && failure.report === report && failure.text === text && !busy && <p role="alert">訊號檢查未完成，請重試</p>}
+      {result && result.report === report && result.text === text && !busy && <AnswerCheckView result={result.value} />}
     </div>
   );
 }
