@@ -1,0 +1,108 @@
+name: PWA Browser Regression
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'apps/web/pwa/**'
+      - 'apps/web/scripts/pwa-browser-check.ts'
+      - 'apps/web/tsconfig.pwa-browser.json'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/pwa-browser.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pwa-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pwa-browser:
+    name: Stock Chrome PWA regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PWA_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+          no-cache: true
+
+      - name: Install locked dependencies without lifecycle scripts
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Record stock Chrome and runner versions
+        run: |
+          bun -e '
+            import { accessSync, constants, mkdirSync, writeFileSync } from "node:fs";
+            import { createRequire } from "node:module";
+            const evidence = {
+              imageOS: process.env.ImageOS ?? null,
+              imageVersion: process.env.ImageVersion ?? null,
+              platform: process.platform,
+              arch: process.arch,
+              uid: process.getuid?.() ?? null,
+              bun: Bun.version,
+              playwright: createRequire(import.meta.url)("playwright/package.json").version,
+              chromePath: "/opt/google/chrome/chrome",
+              browserChannel: "chrome",
+              chromiumSandbox: true,
+              headCommit: process.env.PWA_HEAD_SHA ?? null,
+              githubCommit: process.env.GITHUB_SHA ?? null,
+            };
+            let failure;
+            try {
+              if (evidence.uid === 0) throw new Error("Refusing root browser execution");
+              accessSync(evidence.chromePath, constants.X_OK);
+              for (const [key, command] of [
+                ["chromeVersion", [evidence.chromePath, "--version"]],
+                ["checkoutCommit", ["git", "rev-parse", "HEAD"]],
+              ]) {
+                const result = Bun.spawnSync(command);
+                if (result.exitCode !== 0 || result.signalCode) {
+                  throw new Error(`${key} failed: ${result.stderr.toString()}`);
+                }
+                evidence[key] = result.stdout.toString().trim();
+              }
+            } catch (error) {
+              evidence.error = String(error);
+              failure = error;
+            }
+            mkdirSync("pwa-browser-results", { recursive: true });
+            writeFileSync("pwa-browser-results/runtime.json", JSON.stringify(evidence, null, 2));
+            console.log(JSON.stringify(evidence, null, 2));
+            if (failure) throw failure;
+          '
+
+      - name: Typecheck browser harness
+        run: bun run --cwd apps/web --bun tsc -p tsconfig.pwa-browser.json
+
+      - name: Run positive and negative PWA controls
+        timeout-minutes: 4
+        env:
+          PWA_BROWSER_CHECK: '1'
+          DEBUG: pw:browser
+        run: bun apps/web/scripts/pwa-browser-check.ts
+
+      - name: Print browser evidence even after failure
+        if: always()
+        run: |
+          bun -e '
+            import { existsSync, readFileSync } from "node:fs";
+            for (const name of ["runtime.json", "results.json"]) {
+              const path = `pwa-browser-results/${name}`;
+              console.log(`--- ${path} ---`);
+              if (existsSync(path)) console.log(readFileSync(path, "utf8"));
+              else console.log("MISSING: this stage did not produce evidence; do not treat it as PASS");
+            }
+          '
