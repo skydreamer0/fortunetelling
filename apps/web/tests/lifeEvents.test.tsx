@@ -74,6 +74,52 @@ describe('life event store (localStorage, per profile fingerprint)', () => {
     expect(store.list(key)).toEqual([]);
   });
 
+  test('same-name synthetic profiles with different birthdays cannot read each other’s saved events', () => {
+    const sameName = '合成測試同名者';
+    const profileA = analyze({ ...INPUT, name: sameName, year: 1990, month: 1, day: 10 });
+    const profileB = analyze({ ...INPUT, name: sameName, year: 1990, month: 1, day: 11 });
+    expect(profileA.input.name).toBe(profileB.input.name);
+    const keyA = profileKeyOf(profileA);
+    const keyB = profileKeyOf(profileB);
+    expect(keyA).not.toBe(keyB);
+    const storage = memoryStorage();
+    const eventA: LifeEvent = { id: 'shared-id', date: '2020-01', category: 'education', domains: ['learning'], description: '合成 A 事件', confidence: 'approx' };
+    const eventB: LifeEvent = { ...eventA, description: '合成 B 事件' };
+
+    const first = createLifeEventStore(storage);
+    expect(first.upsert(keyA, eventA)).toBe(true);
+    expect(first.list(keyA)).toEqual([eventA]);
+    expect(first.list(keyB)).toEqual([]); // A writes; B cannot read it, even with exactly the same name
+    const reopened = createLifeEventStore(storage);
+    expect(reopened.list(keyA)).toEqual([eventA]);
+    expect(reopened.list(keyB)).toEqual([]);
+    expect(reopened.upsert(keyB, eventB)).toBe(true); // deliberately collide on event id
+    expect(createLifeEventStore(storage).list(keyA)).toEqual([eventA]);
+    expect(createLifeEventStore(storage).list(keyB)).toEqual([eventB]);
+
+    // Verify both directions after re-opening at every stage. No invented 'other' key.
+    for (const [active, other, ownEvent, otherEvent] of [
+      [keyA, keyB, eventA, eventB], [keyB, keyA, eventB, eventA],
+    ] as const) {
+      const store = createLifeEventStore(storage);
+      expect(store.replace(keyA, [eventA])).toBe(true);
+      expect(store.replace(keyB, [eventB])).toBe(true);
+      const edited = { ...ownEvent, description: `${ownEvent.description}（修改）` };
+      expect(store.upsert(active, edited)).toBe(true);
+      expect(createLifeEventStore(storage).list(active)).toEqual([edited]);
+      expect(createLifeEventStore(storage).list(other)).toEqual([otherEvent]);
+      expect(createLifeEventStore(storage).remove(active, 'shared-id')).toBe(true);
+      expect(createLifeEventStore(storage).list(active)).toEqual([]);
+      expect(createLifeEventStore(storage).list(other)).toEqual([otherEvent]);
+      expect(store.replace(active, [ownEvent, { ...ownEvent, id: 'second-event', date: '2021-01' }])).toBe(true);
+      expect(createLifeEventStore(storage).list(active)).toHaveLength(2);
+      expect(createLifeEventStore(storage).clearProfile(active)).toBe(true);
+      expect(createLifeEventStore(storage).list(active)).toEqual([]);
+      expect(createLifeEventStore(storage).list(other)).toEqual([otherEvent]);
+      expect(storage.data.has(LIFE_EVENTS_STORE_KEY)).toBe(true);
+    }
+  });
+
   test('profile key is stable, hashed, and differs between people', () => {
     expect(profileKeyOf(report)).toBe(key);
     expect(key).toMatch(/^cf1-[0-9a-f]{16}$/);

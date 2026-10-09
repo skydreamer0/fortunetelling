@@ -162,6 +162,19 @@ function cachedLongitudes(jd: number, node: 'true' | 'mean'): Record<HdPlanet, n
   return v;
 }
 
+/**
+ * @internal Sampling seam for step-halving validation; not exported by the package.
+ * Keeps the production inclusive end-date convention and cached ephemeris calls.
+ */
+export function sampleHumanDesignTransitWindow(window: SignalWindow, node: 'true' | 'mean', stepDays: number) {
+  const startJd = dateToJd(window.start);
+  const endJd = dateToJd(window.end) + 1;
+  const jds: number[] = [];
+  for (let jd = startJd; jd < endJd; jd += stepDays) jds.push(jd);
+  jds.push(endJd);
+  return { jds, samples: jds.map((jd) => cachedLongitudes(jd, node)) };
+}
+
 const PLANET_LABEL: Record<HdPlanet, string> = {
   sun: '太陽',
   earth: '地球',
@@ -185,13 +198,13 @@ const PLANET_LABEL: Record<HdPlanet, string> = {
  * - reinforce（強化）：g 本身屬於原局已定義通道 → 對 g 所屬中心發一則訊號，強度 = 行星權重 × kindFactors.reinforce。
  * 兩者都只描述特徵權重，valence 一律 0。決定論：取樣點只由窗口日期決定；需要 `initEphemeris()`。
  */
-function transitGatesRule(scope: Grain): HdRule {
+function transitGatesRule(scope: Grain, samplingStepDays?: number): HdRule {
   const e = HUMAN_DESIGN_CATALOG.rules.find((r) => r.id === 'humanDesign.transit.gates');
   if (!e) throw new Error('humanDesign catalog: missing rule humanDesign.transit.gates');
   if (e.status !== 'active') throw new Error(`humanDesign catalog: rule ${e.id} is ${e.status}`);
   const p = e.params as unknown as TransitGatesParams;
   const weights = p.planets[scope] ?? {};
-  const stepDays = p.sampleDays[scope];
+  const stepDays = samplingStepDays ?? p.sampleDays[scope];
   if (!e.scopes?.includes(scope) || stepDays === undefined) {
     throw new Error(`humanDesign catalog: rule ${e.id} has no params for scope ${scope}`);
   }
@@ -216,12 +229,7 @@ function transitGatesRule(scope: Grain): HdRule {
         return [...g.personality.map((pl) => `hd_personality_${pl}`), ...g.design.map((pl) => `hd_design_${pl}`)];
       };
 
-      const startJd = dateToJd(window.start);
-      const endJd = dateToJd(window.end) + 1; // end date inclusive
-      const jds: number[] = [];
-      for (let jd = startJd; jd < endJd; jd += stepDays) jds.push(jd);
-      jds.push(endJd);
-      const samples = jds.map((jd) => cachedLongitudes(jd, chart.node));
+      const { samples } = sampleHumanDesignTransitWindow(window, chart.node, stepDays);
 
       const hits: HdHit[] = [];
       for (const planet of HD_PLANETS) {
@@ -273,6 +281,12 @@ function transitGatesRule(scope: Grain): HdRule {
       return hits;
     },
   };
+}
+
+/** @internal Explicit step only for sampling validation; production rules retain catalog defaults. */
+export function humanDesignTransitRuleForSampling(scope: 'year' | 'month', stepDays: number): HdRule {
+  if (!Number.isFinite(stepDays) || stepDays <= 0) throw new RangeError('sampling step must be positive and finite');
+  return transitGatesRule(scope, stepDays);
 }
 
 export const HUMAN_DESIGN_RULES: readonly HdRule[] = Object.freeze([
