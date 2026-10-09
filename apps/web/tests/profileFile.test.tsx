@@ -113,6 +113,23 @@ describe('MCP config snippet', () => {
 });
 
 describe('Claude desktop entry', () => {
+  test('explains that local MCP tool results still enter the AI conversation', () => {
+    const html = renderToStaticMarkup(<McpEntry report={report} onDownload={() => {}} />);
+    const privacy = html.match(/<p class="ask__privacy" role="note">([\s\S]*?)<\/p>/)?.[1];
+    expect(privacy).toBeDefined();
+    expect(privacy).toContain('MCP 工具回傳的資料會進入 Claude 的 AI 對話上下文');
+    expect(privacy).toContain('get_profile');
+    expect(privacy).toContain('預設不回姓名與原始出生欄位');
+    expect(privacy).toContain('其他工具仍可能回傳可識別資訊');
+    expect(privacy).toContain('get_time_context');
+    expect(privacy).toContain('日期與時間');
+    expect(privacy).toContain('檔案全文貼給 AI');
+    expect(privacy).toContain('確認內容與接收對象');
+    expect(privacy).not.toContain('只會存在你自己的電腦');
+    expect(privacy).not.toContain('本機 MCP 預設不會把姓名與出生資料交給 Claude');
+    expect(privacy).not.toContain(INPUT.name);
+  });
+
   test('lists both config paths, the Store-version warning, and the profiles directory', () => {
     const html = renderToStaticMarkup(<McpEntry report={report} onDownload={() => {}} />);
     expect(html).toContain('用 Claude 桌面版討論');
