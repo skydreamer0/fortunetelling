@@ -115,3 +115,148 @@ unchecked until their actual desktop/mobile evidence exists. If a synchronous
 year prevents usable input, choose an additional implementation change only
 after establishing the browser result; no Web Worker or scan-range change is
 introduced by this diagnostic.
+
+## Bounded stock-Chrome continuation (prepared; browser NOT RUN)
+
+Continuation baseline: master `c4c60cde612d9c756264398d11674fb2391a82b3`.
+The historical Bun receipt above stays unchanged. Public-site evidence already
+established genuine/unknown citation rendering, guarantee flags, a visible busy
+state, and warm editing. This continuation does not repeat those warm checks or
+the unrelated PWA regression. The remaining cold-input, cancellation, stale-result,
+and desktop/mobile-width observations are the purpose of the new harness.
+
+PR #88 established the stock Google Chrome route on the public GitHub-hosted
+`ubuntu-24.04` runner. `apps/web/scripts/answer-check-browser-check.ts` reuses
+Playwright 1.64.0 and Bun 1.4.2 already locked in this repository. It launches
+`channel: 'chrome'`, explicitly requires `chromiumSandbox: true`, refuses root,
+and requires the installed `/opt/google/chrome/chrome`. No browser or OS package
+is installed, no security flags or settings are changed, and no saved browser
+profile, birth profile, token, or personal data is loaded. Do not imitate runner
+environment flags locally to bypass a denied browser route.
+
+The dedicated, path-filtered PR workflow adds no manual dispatch, rerun, schedule,
+deployment, or `pull_request_target` trigger. It has only `contents: read`, does
+not persist checkout credentials, disables Setup Bun's cache, installs frozen
+dependencies without lifecycle scripts, and uploads no artifacts or caches.
+Checkout explicitly selects the PR head SHA, not the event's synthetic merge ref.
+The receipt keeps the event merge SHA separate from the actual Git HEAD, tree and
+raw parent SHA(s), requires HEAD to equal the supplied PR head, and rejects a dirty
+worktree. Compare that receipt and its source hashes with the reviewed candidate
+before interpreting a live run; this workflow does not test merge-tree integration.
+The `packages/core/src/**` filter intentionally includes all calculation/time/signal
+dependencies of this scan. It is not repository-wide CI: one bounded standard
+public-runner job runs per matching PR update, with no schedule or paid-runner
+configuration. No manual dispatch or rerun is added.
+Existing CI, PWA, Pages and Windows workflows remain unchanged. Source review and
+independent non-author review are required before publishing a candidate PR.
+
+### Real application and cases
+
+The harness serves the actual `bun run build` output under `/fortunetelling/`
+using a runner-local Bun server. It records every build-file hash, relevant source
+hashes, exact PR/check-out commits, runtime/browser versions, and runner image.
+Each of six cases uses a fresh, nonpersistent browser context and creates the
+report through the real form: QA Synthetic, male, 1995-07-16 22:00, exact, Tainan.
+The report's actual asOf is read from its DOM; it is not silently equated with the
+historical Bun fixture date. A five-year report heading and a real signal ID from
+the generated prompt are required before citation testing.
+
+At both 1280×900 and 390×844 CSS-pixel widths:
+
+1. An untouched lookup checks a genuine signal mixed with `sig_ffffffff` and
+   guarantee wording, waiting for the genuine result. Source-defined unknown-ID
+   reach remains asOf −5 through +10, all 16 years. No reduced-range substitute
+   or fake annual engine is used.
+2. A second fresh report starts the cold check. Native keyboard replacement must
+   produce a trusted input event while busy and before any result. The rendered
+   textarea must become B, busy/results must clear, and the check button must be
+   enabled. Replace B with the original A and check again; no stale result may
+   appear between the edit and retry. A new busy animation-frame observation and
+   then a correctly classified A result are required. The DOM cannot identify
+   which request produced identical A: late original-A completion after that
+   frame remains UNVERIFIED, not a stale-request acceptance PASS.
+   This retry uses a partially prepared lookup, not a second cold lookup.
+3. A third fresh report leaves via the real return button during scanning. The
+   report must actually unmount, then a newly generated report must have an empty
+   answer field, no busy state and no inherited result. Merely returning from a
+   click is never acceptance.
+
+No warm repeat is added. The recorder observes DOM mutations, trusted input/check/
+return events, one busy animation-frame opportunity per check, and native Chrome
+Long Tasks. It does not replace engines, React state, event dispatch, Date, timers
+or task scheduling. Existing deterministic lifecycle tests remain the evidence
+for forced late-success/failure ordering; real-engine A→B→A does not fabricate
+those races or claim to cover every scheduler ordering.
+The recorder cannot observe AbortController delivery or producing-request
+identity. Clearing busy/results proves the visible input effect, not termination
+of background work. Passing this job does not complete the original cancellation
+or identical-A stale-result AC.
+
+### Interpretation and boundaries
+
+- Fresh citation lookup does not mean cold engine, JIT or browser-process caches.
+  Report generation already ran real computations in that process.
+- The lookup catches annual engine exceptions. Source-defined 16-year reach and
+  a completed unknown-ID result alone do not prove 16 successful annual calls.
+- Native Long Tasks are browser measurements, distinct from the earlier Bun
+  yearly scan segments. Host keyboard-command-to-verified-DOM duration includes
+  automation overhead and is not physical keyboard-to-pixel latency.
+- Busy DOM on an animation frame is a paint opportunity, not inspected screenshot
+  pixels. No screenshot or trace ZIP is captured or claimed. Job-log JSON retains
+  event ordering and Long Task entries; it is not a full DevTools trace.
+- Service workers and external network requests (including Google Fonts) are
+  blocked only in the disposable test contexts to isolate this non-PWA task.
+  Reduced motion is requested. Computed layout coordinates therefore describe
+  fallback-font, reduced-motion Chrome at the listed CSS width; they do not prove
+  deployed typography, physical-phone touch behavior, iOS/WebKit or PWA acceptance.
+- No performance threshold is invented. A passing functional gate means the
+  requested input/return really took effect while pending and the expected result
+  ordering held. It does not mean smooth input or acceptable maximum blocking.
+  Review measured Long Tasks and actual input behavior against #19/#46 before
+  giving a UX verdict or marking any original issue AC complete.
+
+### Gates, failures and local source validation
+
+```sh
+bun run --cwd apps/web --bun tsc -p tsconfig.answer-browser.json
+bun apps/web/scripts/answer-check-browser-check.ts --self-test
+```
+
+The self-test runs only the evidence validator. Its labelled synthetic control
+records are not a browser run or mocked-engine acceptance. Negative mutations
+must be rejected for untrusted/late input, absent DOM effect, stale result,
+missing original/retry busy frame or final result, timeout, cleanup error, page error, evidence
+truncation and unsupported Long Tasks. A separate unmount control rejects a late
+result. These validate the gates; they do not claim browser execution against a
+mutated application implementation.
+
+Runtime operation timeouts are bounded orchestration limits, not responsiveness
+budgets: launch 15 seconds, Playwright operations 15 seconds, the six-case run
+180 seconds, workflow step 4 minutes and job 10 minutes. The deadline closes the
+browser and stops the server to interrupt pending commands; the actual test and
+cleanup promises settle before the final result is written. A failed case stops
+later cases, which remain NOT RUN. Timeout, missing evidence, page error or any
+cleanup rejection cannot yield PASS. The server's stop promise is memoized with
+its rejection retained. A forced runner kill may leave no JSON and is incomplete.
+
+Only the approved GitHub job may run the browser command. No local browser was
+launched in preparing this candidate. Publication, first live run, inspection of
+its logs, and independent acceptance remain outstanding; both issues stay open.
+
+Preparation checks on 2026-10-09: real dedicated TypeScript check passed; validator
+self-test passed three positive records and rejected 14 negative mutations;
+the parsed workflow passed trigger/permission/no-upload/no-cache scope checks;
+production build passed with the existing Swiss-module/large-chunk warnings.
+Calling the browser entry without the hosted opt-in exited nonzero before server
+or browser creation. Production sources, dependencies/lock and existing workflows
+are byte-unchanged. The previous full suite and Bun/React lifecycle tests were not
+repeated for this harness-only continuation. None of these preparation checks is
+a live-browser result; independent review is still required before publication.
+
+The first source-review candidate `bfb5a9727848296bfb0225d09e1ce036d50f8876`
+was BLOCKED before publication: its first-heading selector selected the consensus
+heading, and its A→B→A validator accepted a second click without new busy evidence.
+The revision selects the unique year-range heading and rejects that missing-busy
+control. Neither fix proves identical-A request provenance or background abort;
+those limitations are explicit in the JSON receipt and remain open. All negative
+controls above mutate evidence records only, not production code at runtime.

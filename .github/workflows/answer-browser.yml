@@ -1,0 +1,75 @@
+name: AnswerCheck Browser Observations
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'apps/web/scripts/answer-check-browser-check.ts'
+      - 'apps/web/tsconfig.answer-browser.json'
+      - 'apps/web/src/components/report/AnswerCheck.tsx'
+      - 'apps/web/src/model/askAi.ts'
+      - 'apps/web/src/model/reportTimeline.ts'
+      - 'packages/core/src/**'
+      - 'packages/ai/src/checkAnswer.ts'
+      - 'docs/validation/answer-check-19-46.md'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/answer-browser.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: answer-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  answer-browser:
+    name: Stock Chrome cold AnswerCheck observations
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      ANSWER_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+          no-cache: true
+
+      - name: Install locked dependencies without lifecycle scripts
+        run: bun install --frozen-lockfile --ignore-scripts
+
+      - name: Typecheck dedicated browser harness
+        run: bun run --cwd apps/web --bun tsc -p tsconfig.answer-browser.json
+
+      - name: Check evidence gates and negative mutations without a browser
+        run: bun apps/web/scripts/answer-check-browser-check.ts --self-test
+
+      - name: Build the real application
+        run: bun run build
+
+      - name: Run cold citation cases in stock sandboxed Chrome
+        timeout-minutes: 4
+        env:
+          ANSWER_BROWSER_CHECK: '1'
+          DEBUG: pw:browser
+        run: bun apps/web/scripts/answer-check-browser-check.ts
+
+      - name: Print bounded evidence even after failure
+        if: always()
+        run: |
+          bun -e '
+            import { existsSync, readFileSync } from "node:fs";
+            const path = "answer-browser-results/results.json";
+            console.log(`--- ${path} ---`);
+            if (existsSync(path)) console.log(readFileSync(path, "utf8"));
+            else console.log("MISSING: browser evidence is incomplete; never treat as PASS");
+          '
