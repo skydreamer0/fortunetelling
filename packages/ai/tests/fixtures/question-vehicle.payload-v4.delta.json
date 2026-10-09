@@ -1,0 +1,30 @@
+{
+  "decision": "D-051",
+  "reason": "Original catalog1 fixture is trimmed and lacks a ranking policy; new consumers keep the archive unchanged and suppress live recommendations until recomputed.",
+  "originalSha256": "4cf4c4c5a1c9faa5ff520b8f85e0c5a87ba92bd48185ea5b8fe28d74c939b926",
+  "before": {
+    "catalogVersion": 1,
+    "status": null,
+    "topMonths": [
+      "2026-12",
+      "2026-11",
+      "2026-08"
+    ]
+  },
+  "after": {
+    "category": "vehicle_purchase",
+    "range": {
+      "start": "2026-07",
+      "end": "2026-12"
+    },
+    "catalogVersion": 1,
+    "status": "insufficient_evidence",
+    "abstentionReasons": [
+      {
+        "code": "legacy_policy_missing",
+        "message": "這份舊問事結果沒有不排名政策與狀態；保留原始結果，重新計算前不提供月份推薦。"
+      }
+    ],
+    "topMonths": []
+  }
+}

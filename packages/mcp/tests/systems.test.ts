@@ -9,9 +9,12 @@ import { compactAnswer } from '../src/answerSummary';
 import { monthSignalProvider, slimAnswer } from '../src/tools/questions';
 import baseline from './fixtures/systemsBaseline.json';
 import agreementDelta from './fixtures/systemsBaseline.v0.6.0.delta.json';
+import abstentionDelta from './fixtures/systemsBaseline.v0.7.0.delta.json';
 function expectedHash(key: string): string {
   const delta = (agreementDelta.changes as Record<string, {before:string; after:string}>)[key];
   expect(delta.before).toBe((baseline as Record<string,string>)[key]);
+  const next = (abstentionDelta.changes as Record<string,{before:string;after:string}>)[key];
+  if(next) { expect(next.before).toBe(delta.after); return next.after; }
   return delta.after;
 }
 import { makeFixture } from './helpers';
@@ -148,31 +151,26 @@ describe('answer_question systems／verifiedOnly', () => {
 });
 
 describe('experimentalSensitivity', () => {
-  test('會翻轉（sky 購車 2027）：changed=true，caveats 有台灣繁中提醒', async () => {
-    const { json } = await aq();
-    const s = json.data.experimentalSensitivity;
-    expect(s.changed).toBe(true);
-    expect(s.top3All.map((x: any) => x.month)).not.toEqual(s.top3VerifiedOnly.map((x: any) => x.month));
-    expect(s.verifiedSystems).toEqual(['bazi', 'ziwei', 'numerology', 'humanDesign']);
-    // 含實驗性系統的前 3 名 = 本次排名前 3 名
-    expect(s.top3All).toEqual(json.data.top.map((t: any) => ({ month: t.month, score: t.score })));
-    // 僅已驗證系統的前 3 名 = verifiedOnly 的排名前 3 名
-    const verified = (await aq({ verifiedOnly: true })).json.data;
-    expect(s.top3VerifiedOnly).toEqual(verified.top.map((t: any) => ({ month: t.month, score: t.score })));
-    const warn = json.caveats.find((c: any) => c.code === 'experimental_sensitive');
-    expect(warn.message).toContain('結論取決於尚未驗證的系統');
-    expect(warn.message).toContain('吠陀占星');
-    for (const m of [...s.top3All, ...s.top3VerifiedOnly]) expect(warn.message).toContain(m.month);
-    for (const bad of ['数据', '默认', '导出', '代码']) expect(warn.message).not.toContain(bad);
-    // verifiedOnly 的回應也照樣比較（排除與否都看得到兩邊）
-    expect(verified.experimentalSensitivity).toEqual(s);
-  }, 120_000);
+  test('不排名時不經敏感度欄位洩露推薦月份', async () => {
+    const {json}=await aq();
+    expect(json.data.status).toBe('no_clear_advantage');
+    expect(json.data.top).toEqual([]);
+    expect(json.data.experimentalSensitivity).toBeNull();
+    expect(json.caveats.some((c:any)=>c.code==='experimental_sensitive')).toBe(false);
+    // A different selected system set can legitimately cross the gate; it has its own context.
+    const verified=(await aq({verifiedOnly:true})).json.data;
+    expect(verified.status).toBe('ranked');
+    expect(verified.top[0].score).toBe(36.0019);
+    expect(verified.questionContext.verifiedOnly).toBe(true);
+  },120_000);
 
   test('不翻轉（sky 置產 2026-10～2027-09；M5-04 人類圖改發行運訊號後，原用的感情範圍會翻轉，改用此範圍）：changed=false，沒有提醒', async () => {
     const { json } = await fx.call('answer_question', { profileId: 'sky', category: 'property_purchase', range: { start: '2026-10', end: '2027-09' }, asOf: ASOF });
     const s = json.data.experimentalSensitivity;
-    expect(s.changed).toBe(false);
-    expect(s.top3All.map((x: any) => x.month)).toEqual(s.top3VerifiedOnly.map((x: any) => x.month));
+    if (json.data.status === 'ranked') {
+      expect(s.changed).toBe(false);
+      expect(s.top3All.map((x:any)=>x.month)).toEqual(s.top3VerifiedOnly.map((x:any)=>x.month));
+    } else { expect(s).toBeNull(); expect(json.data.top).toEqual([]); }
     expect(json.caveats.some((c: any) => c.code === 'experimental_sensitive')).toBe(false);
   }, 120_000);
 });
@@ -186,7 +184,9 @@ describe('answer_question 精簡回傳', () => {
       expect(compact.rankingColumns).toEqual(['month', 'score', 'band']);
       expect(compact.ranking.length).toBe(12);
       expect(compact.ranking.slice(0, detail.ranking.length)).toEqual(detail.ranking.map((r: any) => [r.window.start.slice(0, 7), r.score, r.band]));
-      expect(compact.top.length).toBe(3);
+      expect(compact.status).toBe(detail.status);
+      expect(compact.top.length).toBe(compact.status==='ranked'?3:0);
+      if(compact.status!=='ranked') expect(detail.ranking.every((r:any)=>r.rank===null)).toBe(true);
       compact.top.forEach((t: any, i: number) => {
         const d = detail.top[i];
         expect([t.rank, t.month, t.score, t.band, t.highConsensus]).toEqual([d.rank, d.window.start.slice(0, 7), d.score, d.band, d.highConsensus]);

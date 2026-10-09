@@ -37,6 +37,7 @@ describe('輸出一律是短編號', () => {
       expect(isError).toBe(false);
       const ids = text.match(/sig_[0-9a-f]+/g) ?? [];
       if (name === 'get_consensus') expect(json.data.headlines.agreements).toEqual([]);
+      else if(name==='answer_question' && json.data.status!=='ranked' && !(args as any).detail) { expect(json.data.top).toEqual([]);expect(json.data.abstentionReasons.length).toBeGreaterThan(0); }
       else expect(ids.length).toBeGreaterThan(0);
       for (const id of ids) expect(id).toMatch(SHORT);
     }

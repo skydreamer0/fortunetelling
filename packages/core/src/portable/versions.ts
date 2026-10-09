@@ -21,7 +21,7 @@ import ziweiCatalog from '../rules/ziwei/catalog.json';
 import ziweiTraits from '../traits/ziwei.json';
 import ziweiModifiers from '../traits/ziweiModifiers.json';
 import numerologyCatalog from '../timeline/numerologyCatalog.json';
-import questionCatalog from '../questions/catalog.v2.json';
+import questionCatalog from '../questions/catalog.v3.json';
 import jyotishCatalog from '../calculators/jyotish/catalog.json';
 import humanDesignCatalog from '../calculators/humanDesign/catalog.json';
 import { EXPERIMENTAL_SYSTEMS } from '../signals/eligibility';

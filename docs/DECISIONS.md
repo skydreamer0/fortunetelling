@@ -787,3 +787,11 @@ CalculationSpec 依既有身份規則包含 core 與兩個 calculator 版本，�
 本片stack已驗#73 `d2794a66827881f8782fbb01133309b24de6f598`，間接#72，原分支不改。
 #26／#54仍為部分交付，不勾完整矩陣／snapshot AC。Actions、allowlist與部署設定未改，
 只用原workspace與已批准Bun/frozen依賴；LOCKED FORECAST和原預測未動。
+
+## D-051 問事引擎明確不排名（#45）
+
+新增 catalog.v3.json（schemaVersion 2／version 3），保留 v1/v2 原檔。狀態依序為 unsupported、無訊號或全零的 insufficient_evidence、全低帶 no_clear_advantage、最高四位小數分數同分的 tied、其餘 ranked。有效 bandCuts[0] 同時是低帶邊界與排名門檻；只沿用既有受驗證的覆寫方式，不新增預測規則。
+
+只有 ranked 有 top。其他狀態 top=[]，逐月診斷依月份排序、rank=null，附 abstentionReasons。topN=0 只影響展示。原計分、權重與每月 source evidence 不變，不增加多軸或敏感度算法。MCP、Web、AI payload／prompt／三個 checker 使用相同狀態；check_answer 用同 profileId/asOf 與完整原 questionContext 重算，不信任外部 status。
+
+core 0.7.0、Payload4、Interpretation2、copy-v6／interpret-v5／chat-v4。舊 PR77 catalog2 逐位元契約由顯式 replayQuestionAnswerV2 驗證；不宣稱可重算 catalog1 或 LOCKED FORECAST V1。舊快照和所有既有 delta 保留，新差異另檔。完整邊界、fixture 說明與驗證見 [question-abstention-45.md](validation/question-abstention-45.md)。

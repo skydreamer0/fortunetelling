@@ -10,6 +10,7 @@
  * Returns every reason for every dropped section, so the UI / logs can show why.
  */
 import { HonestyGuard, HIGH_CONSENSUS_MIN_SYSTEMS } from './core-pure';
+import { questionRecommendationIssue } from './questionPolicy';
 import { hasHighConsensusClaim, payloadSupportsHighConsensus } from './agreement';
 import type { InterpretationPayload } from './payload';
 import { resolveCitation } from './signalIds';
@@ -24,6 +25,8 @@ export type DropReasonCode =
   | 'unverified_term'
   | 'honesty'
   | 'fatalism'
+  | 'month_recommendation_when_abstained'
+  | 'question_context_missing'
   | 'high_consensus_unsupported';
 
 export interface DropReason {
@@ -95,6 +98,8 @@ export function validateSections(sections: unknown[], ctx: ValidationContext): V
     const text = raw.text.trim();
     const citations = [...new Set(raw.citations.map((c) => c.trim()).filter(Boolean))];
     const prose = `${heading}\n${text}`;
+    const questionIssue = questionRecommendationIssue(prose, ctx.payload.question);
+    if (questionIssue) reasons.push({ code: questionIssue.code, detail: questionIssue.detail, value: questionIssue.values.join('、') });
 
     if (text.length === 0) reasons.push({ code: 'empty', detail: 'section text is empty' });
 

@@ -11,6 +11,7 @@
  * Pure and deterministic; browser-safe (no SDK).
  */
 import { canonicalJson } from './canonical';
+import { questionRecommendationIssue, recommendationScopes } from './questionPolicy';
 import { hasHighConsensusClaim, payloadSupportsHighConsensus } from './agreement';
 import { HonestyGuard } from './core-pure';
 import { resolveCitation } from './signalIds';
@@ -18,7 +19,7 @@ import { buildInterpretationPayload, type BuiltPayload, type InterpretationPaylo
 import { AI_HONESTY_LAYER, FATALISM_PATTERNS } from './validate';
 import { buildCorpus, findVocabTerms, isInCorpus, VOCAB } from './vocab';
 
-export type PasteFlagCode = 'unknown_citation' | 'unverified_term' | 'no_citation' | 'fatalism' | 'high_consensus_unsupported';
+export type PasteFlagCode = 'unknown_citation' | 'unverified_term' | 'no_citation' | 'fatalism' | 'high_consensus_unsupported' | 'month_recommendation_when_abstained' | 'question_context_missing';
 
 export const PASTE_FLAG_LABELS: Readonly<Record<PasteFlagCode, string>> = Object.freeze({
   unknown_citation: '引用不存在',
@@ -26,6 +27,8 @@ export const PASTE_FLAG_LABELS: Readonly<Record<PasteFlagCode, string>> = Object
   no_citation: '沒有引用來源',
   fatalism: '宿命論用語',
   high_consensus_unsupported: '高共識缺乏至少三套同向證據',
+  month_recommendation_when_abstained: '引擎未排名，回答仍推薦月份',
+  question_context_missing: '缺少原問事資料，無法核對月份推薦',
 });
 
 export interface PasteFlag {
@@ -100,7 +103,9 @@ export function checkPastedAnswer(source: PasteCheckSource, answerText: string):
   const allCited = new Set<string>();
   let heading: string | null = null;
 
-  for (const [index, text] of splitParagraphs(answerText).entries()) {
+  const sourceParagraphs = splitParagraphs(answerText);
+  const questionScopes = recommendationScopes(sourceParagraphs);
+  for (const [index, text] of sourceParagraphs.entries()) {
     const lines = text.split('\n');
     const body: string[] = [];
     for (const line of lines) {
@@ -117,6 +122,8 @@ export function checkPastedAnswer(source: PasteCheckSource, answerText: string):
     if (unknown.length) flags.push({ code: 'unknown_citation', label: PASTE_FLAG_LABELS.unknown_citation, values: unknown });
 
     const prose = text.replace(CITATION_RE, ' ').replace(SYSTEM_NAME_RE, ' ');
+    const questionIssue = questionRecommendationIssue(prose, payload.question, questionScopes[index]);
+    if (questionIssue) flags.push({ code: questionIssue.code, label: PASTE_FLAG_LABELS[questionIssue.code], values: questionIssue.values });
     const terms = findVocabTerms(prose, VOCAB).filter((e) => !isInCorpus(e, corpus)).map((e) => e.term);
     if (terms.length) flags.push({ code: 'unverified_term', label: PASTE_FLAG_LABELS.unverified_term, values: uniqSorted(terms) });
 

@@ -45,8 +45,10 @@ describe('#44 web agreement wording and old reports', () => {
     report.timeline = buildTimeline(report.timeContext, { asOf: report.asOf, systems: ['bazi', 'ziwei', 'numerology'],
       systemWeights: { bazi: 0, ziwei: 0, numerology: 0 }, consensusThreshold: 0.8, conflictThreshold: 0.7 });
     const question = localQuestion(report, '2026轉職')!;
-    expect(question.answer!.top[0].score).toBe(0);
-    expect(question.answer!.top[0].highConsensus).toBe(false);
+    expect(question.answer!.status).toBe('insufficient_evidence');
+    expect(question.answer!.top).toEqual([]);
+    expect(question.answer!.ranking.every(row => row.score === 0 && row.rank === null)).toBe(true);
+    expect(question.answer!.ranking.every(row => !row.highConsensus)).toBe(true);
     expect(question.answer!.thresholds).toEqual({ theta: 0.8, tau: 0.7 });
     const lookup: any = reportSignalLookup(report);
     expect(typeof lookup.directionalEvidence).toBe('function');

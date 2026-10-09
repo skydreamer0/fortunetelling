@@ -12,6 +12,8 @@
  */
 import { HonestyGuard, SIGNAL_ID_PATTERN, supportsHighConsensusCitations, type AgreementCitation } from './core-pure';
 import { hasHighConsensusClaim } from './agreement';
+import { questionRecommendationIssue, recommendationScopes, type QuestionCheckContext } from './questionPolicy';
+export type { QuestionCheckContext } from './questionPolicy';
 import { splitParagraphs } from './pasteCheck';
 import { AI_HONESTY_LAYER, EXPERIMENTAL_SYSTEMS, FATALISM_PATTERNS, HIGH_CONSENSUS_MIN_SYSTEMS, HIGH_CONSENSUS_TERM } from './validate';
 
@@ -37,6 +39,7 @@ export interface SignalRef {
 }
 
 export interface CheckAnswerOptions {
+  questionContext?: QuestionCheckContext | null;
   /**
    * 以編號查訊號；查不到回 undefined／null。收到的是回答中寫的編號（小寫，可能是短編號或 ≥ 8 位前綴），
    * 由呼叫端負責解析前綴：唯一才回訊號，ambiguous（對到多筆）與查不到一律回 null，絕不猜。
@@ -52,6 +55,8 @@ export type AnswerIssueCode =
   | 'unknown_citation'
   | 'honesty_violation'
   | 'experimental_as_consensus'
+  | 'month_recommendation_when_abstained'
+  | 'question_context_missing'
   | 'high_consensus_unsupported';
 
 export interface AnswerIssue {
@@ -67,6 +72,8 @@ export interface AnswerIssue {
 }
 
 export interface CheckAnswerResult {
+  questionCheck: 'checked' | 'not_provided';
+  questionStatus: QuestionCheckContext['status'] | null;
   ok: boolean;
   paragraphCount: number;
   /** 回答中出現的所有 sig_ 編號（小寫、照回答寫的形式，排序、去重）。 */
@@ -145,6 +152,7 @@ export function checkAnswer(answerText: string, options: CheckAnswerOptions): Ch
   const issues: AnswerIssue[] = [];
   const allCited = new Set<string>();
   const paragraphs = splitParagraphs(answerText);
+  const questionScopes = recommendationScopes(paragraphs);
 
   for (const [paragraph, text] of paragraphs.entries()) {
     const citations = uniqSorted((text.match(CITATION_RE) ?? []).map((id) => id.toLowerCase()));
@@ -157,6 +165,8 @@ export function checkAnswer(answerText: string, options: CheckAnswerOptions): Ch
     }
 
     const prose = text.replace(CITATION_RE, ' ');
+    const questionIssue = questionRecommendationIssue(prose, options.questionContext, questionScopes[paragraph]);
+    if (questionIssue) issues.push({ ...questionIssue, paragraph, excerpt });
 
     const terms = honestyTerms(prose);
     if (terms.length) {
@@ -206,6 +216,8 @@ export function checkAnswer(answerText: string, options: CheckAnswerOptions): Ch
 
   const citedIds = uniqSorted(allCited);
   return {
+    questionCheck: options.questionContext ? 'checked' : 'not_provided',
+    questionStatus: options.questionContext?.status ?? null,
     ok: issues.length === 0,
     paragraphCount: paragraphs.length,
     citedIds,

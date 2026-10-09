@@ -6,10 +6,12 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import baseline from './fixtures/questionSystems.baseline.json';
 import agreementDelta from './fixtures/questionSystems.v0.6.0.delta.json';
+import abstentionDelta from './fixtures/questionSystems.v0.7.0.delta.json';
 import {
   EXPERIMENTAL_SYSTEM_IDS,
   QUESTION_CATALOG,
   answerQuestion,
+  replayQuestionAnswerV2,
   experimentalSensitivity,
   getQuestionCategory,
   listQuestionCategories,
@@ -70,11 +72,21 @@ describe('不指定 systems：保留舊基準並套用 D-045 字面差異', () =
     expect(entries.length).toBe(16);
     for (const [key, hash] of entries) {
       const [category, start, end] = key.split('|');
-      const a = answerQuestion({ category, range: { start, end } }, provider);
+      const a = replayQuestionAnswerV2({ category, range: { start, end } }, provider);
       expect(a.systemFilter).toBeUndefined();
       const delta = (agreementDelta.changes as Record<string, {before:string; after:string}>)[key];
       expect(delta.before).toBe(hash);
-      expect(`${key} ${sha(a)}`).toBe(`${key} ${delta.after}`);
+      expect(sha(a)).toBe(delta.after);
+      const nextDelta = abstentionDelta.changes[key as keyof typeof abstentionDelta.changes];
+      expect(nextDelta.before).toBe(delta.after);
+      const live = answerQuestion({ category, range: { start, end } }, provider);
+      expect(sha(live)).toBe(nextDelta.after);
+      expect<string>(live.status).toBe(nextDelta.status);
+      expect(live.top.map(row=>row.window.start.slice(0,7))).toEqual(nextDelta.topMonthsAfter);
+      for(const row of live.ranking) {
+        const {rank:_a,...value}=row;const {rank:_b,...before}=a.ranking.find(old=>old.window.start===row.window.start)!;
+        expect(value).toEqual(before);
+      }
     }
   });
 });
@@ -109,7 +121,7 @@ describe('指定 systems', () => {
     for (const category of listQuestionCategories().map((c) => c.id)) {
       for (const subset of [['bazi', 'ziwei'], VERIFIED] as SystemId[][]) {
         const r = { category, range: { start: '2027-01', end: '2027-12' } };
-        const engine = answerQuestion(r, provider, { systems: subset }).ranking;
+        const engine = [...answerQuestion(r, provider, { systems: subset }).ranking].sort((a,b)=>b.score-a.score||a.window.start.localeCompare(b.window.start));
         const naive = naiveRanking(r, provider, subset);
         expect(engine.map((x) => x.window.start.slice(0, 7))).toEqual(naive.map((x) => x.month));
         engine.forEach((x, i) => expect(Math.abs(x.score - naive[i].score)).toBeLessThan(1e-3));
@@ -151,7 +163,7 @@ describe('指定 systems', () => {
 });
 
 describe('experimentalSensitivity', () => {
-  const r = { category: 'vehicle_purchase', range: { start: '2027-01', end: '2027-03' } };
+  const r = { category: 'investment', range: { start: '2027-01', end: '2027-03' } }; // same synthetic comparison, above the v3 low-band gate
   const w = (ym: string) => monthWindows({ start: ym, end: ym })[0];
   const mk = (ym: string, system: SystemId, ruleId: string, intensity: number, target: string) =>
     sig(w(ym), { system, ruleId, domain: 'wealth', trait: 'opportunity', intensity, target });
@@ -196,7 +208,7 @@ describe('experimentalSensitivity', () => {
 
   test('sky 真實訊號：結果穩定可重現（記錄是否翻轉）', () => {
     const s = experimentalSensitivity({ category: 'vehicle_purchase', range: { start: '2027-01', end: '2027-12' } }, provider)!;
-    expect(s.top3All.length).toBe(3);
+    expect(s.top3All).toEqual([]); // vehicle sample is all low-band in v3
     expect(s.systemsVerifiedOnly).toEqual(['bazi', 'ziwei', 'numerology', 'tzolkin', 'mingGua', 'humanDesign']);
     expect(JSON.stringify(experimentalSensitivity({ category: 'vehicle_purchase', range: { start: '2027-01', end: '2027-12' } }, provider))).toBe(JSON.stringify(s));
     console.log('sky vehicle_purchase 2027 sensitivity:', JSON.stringify(s.top3All), JSON.stringify(s.top3VerifiedOnly), s.changed);

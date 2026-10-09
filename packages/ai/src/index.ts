@@ -24,5 +24,6 @@ export * from './validate';
 export * from './copyPrompt';
 export * from './pasteCheck';
 export * from './checkAnswer';
+export { questionContextOf } from './questionPolicy';
 export * from './instructions';
 export { canonicalJson, sha256Hex } from './canonical';

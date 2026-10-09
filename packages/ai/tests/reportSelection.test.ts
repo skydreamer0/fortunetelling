@@ -6,10 +6,13 @@ import * as publicAi from '../src/index';
 import { loadQuestion } from './helpers';
 import recorded from './fixtures/report-selection.v0.6.0.json';
 import delta from './fixtures/report-selection.payload-v3.delta.json';
+import abstentionDelta from './fixtures/report-selection.payload-v4.delta.json';
 function expected<K extends keyof typeof recorded>(key: K): (typeof recorded)[K] {
   const change = delta.changes[key];
   expect(change.before).toEqual(recorded[key]);
-  return change.after as (typeof recorded)[K];
+  const next=abstentionDelta.changes[key];
+  expect(next.before).toEqual(change.after);
+  return next.after as (typeof recorded)[K];
 }
 
 let report: Report & ReportLike;

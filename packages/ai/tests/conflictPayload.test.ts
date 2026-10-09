@@ -16,7 +16,7 @@ function fixture() {
   const agg=aggregateSignals(signals)[0];
   const timeline:any={schemaVersion:2,asOf:'2027-01-15',systems:['bazi','ziwei'],skippedSystems:[],conventions:{},bandCuts:[35,55,75],systemWeights:{bazi:1,ziwei:1},thresholds:{theta:.5,tau:.2},years:[],months:[{window,domains:[{...agg,band:'高',topSignals:signals}]}]};
   const report:any={schemaVersion:6,asOf:timeline.asOf,engines:[],signals,timeline};
-  const question:any={...loadQuestion(),thresholds:timeline.thresholds,top:[{rank:1,window,score:80,band:'高',consensus:1,activityAgreement:2,highConsensus:false,conflict:[{domain:'career',...agg.conflict!}],supportSignals:[signals[0]],riskSignals:[signals[1]],domainScores:[{...agg,signalIds:signals.map(s=>s.id)}]}]};
+  const question:any={...loadQuestion(),status:'ranked',abstentionReasons:[],thresholds:timeline.thresholds,top:[{rank:1,window,score:80,band:'高',consensus:1,activityAgreement:2,highConsensus:false,conflict:[{domain:'career',...agg.conflict!}],supportSignals:[signals[0]],riskSignals:[signals[1]],domainScores:[{...agg,signalIds:signals.map(s=>s.id)}]}]};
   return {report,question,signals};
 }
 const conflicts=(built:ReturnType<typeof buildInterpretationPayload>):any[]=>[
@@ -44,7 +44,7 @@ describe('#30 AI conflict projection: preserve disagreement and only cite attach
       expect(conflict.negative).toEqual([f.signals[1].id.slice(0,12)]);
       expect(conflict.omittedCount).toEqual({positive:0,negative:0});
     }
-    expect(PAYLOAD_VERSION).toBe(3);
+    expect(PAYLOAD_VERSION).toBe(4);
   });
 
   test('missing original evidence leaves a non-null one-sided or zero-sided conflict with exact counts',()=>{

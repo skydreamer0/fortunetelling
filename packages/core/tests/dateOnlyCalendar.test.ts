@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 // Contract: calculators/types.ts says these dates come from the user's input
 // local calendar day; ARCHITECTURE-V2 §§3.1/3.4 and the timeline use profile.date.
-const moduleRoot = new URL('../src/', import.meta.url).pathname;
+const moduleRoot = new URL('../src/', import.meta.url).href;
 const zones = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'];
 const script = `
 import { analyze } from ${JSON.stringify(moduleRoot + 'core/analyze.ts')};

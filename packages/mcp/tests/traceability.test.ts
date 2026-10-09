@@ -12,7 +12,7 @@ describe('every cited signal id is resolvable (ROADMAP M1 completion criterion)'
     ['vehicle_purchase', '2027-01', '2027-12'],
     ['job_change', '2026-10', '2028-09'],
   ])('answer_question %s %s..%s', async (category, start, end) => {
-    const { json, isError } = await fx.call('answer_question', { profileId: 'sky', category, range: { start, end }, asOf: ASOF });
+    const { json, isError } = await fx.call('answer_question', { profileId: 'sky', category, range: { start, end }, asOf: ASOF, detail: true });
     expect(isError).toBe(false);
     const cited = [...new Set(JSON.stringify(json.data).match(/sig_[0-9a-f]+/g) ?? [])];
     expect(cited.length).toBeGreaterThan(0);

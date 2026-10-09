@@ -13,6 +13,7 @@
  * tightened validator applies to old cache entries too.
  */
 import type { QuestionAnswer, QuestionRequest } from '@fortune/core';
+import type { QuestionCheckContext } from './questionPolicy';
 import { canonicalJson, sha256Hex } from './canonical';
 import { validateQuestionRequest } from './core-pure';
 import { buildInterpretationPayload, type PayloadTruncation, type ReportLike } from './payload';
@@ -90,7 +91,7 @@ export async function interpretationCacheKey(payloadJson: string, promptVersion:
 
 // ─── interpret ──────────────────────────────────────────────────────────────
 
-export const INTERPRETATION_SCHEMA_VERSION = 1;
+export const INTERPRETATION_SCHEMA_VERSION = 2;
 
 /** Standalone Interpretation object (§11: not part of the Report). */
 export interface Interpretation {
@@ -99,7 +100,7 @@ export interface Interpretation {
   model: string;
   cacheKey: string;
   report: { schemaVersion: number | null; generatedAt: string | null };
-  question: { category: string; unsupported: boolean } | null;
+  question: QuestionCheckContext & { unsupported: boolean } | null;
   sections: InterpretationSection[];
   dropped: DroppedSection[];
   truncation: PayloadTruncation;
@@ -157,7 +158,9 @@ export async function interpret(report: ReportLike, options: InterpretOptions): 
     cacheKey,
     report: { schemaVersion: report.schemaVersion ?? null, generatedAt: report.generatedAt ?? null },
     question: built.payload.question
-      ? { category: built.payload.question.category, unsupported: built.payload.question.unsupported }
+      ? { category: built.payload.question.category, range: built.payload.question.range,
+        catalogVersion: built.payload.question.catalogVersion, status: built.payload.question.status,
+        abstentionReasons: built.payload.question.abstentionReasons, unsupported: built.payload.question.unsupported }
       : null,
     sections: kept,
     dropped,
