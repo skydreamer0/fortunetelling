@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
-const moduleRoot=new URL('../src/',import.meta.url).pathname;
+const moduleRoot=new URL('../src/',import.meta.url).href;
 const zones=['UTC','Asia/Taipei','America/New_York','Pacific/Apia'];
 const script=`
 import {setSystemTime} from 'bun:test';

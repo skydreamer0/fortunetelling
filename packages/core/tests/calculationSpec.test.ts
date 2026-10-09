@@ -227,7 +227,7 @@ describe('CalculationSpec version and host independence guards', () => {
   });
   test('same identity across process host zones, including a date skipped only on one host', () => {
     const input = { ...birth, year: 2011, month: 12, day: 30 };
-    const modulePath = new URL('../src/index.ts', import.meta.url).pathname;
+    const modulePath = new URL('../src/index.ts', import.meta.url).href;
     const script = `import { createCalculationSpec } from ${JSON.stringify(modulePath)}; console.log(JSON.stringify(createCalculationSpec(${JSON.stringify(input)})));`;
     const results = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'].map(TZ => {
       const result = Bun.spawnSync([process.execPath, '--eval', script], { env: { ...process.env, TZ } });

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
-const moduleRoot = new URL('../src/', import.meta.url).pathname;
+const moduleRoot = new URL('../src/', import.meta.url).href;
 const zones = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'];
 const validDates = ['0100-01-01', '1900-02-28', '2000-02-29', '2011-12-29', '2011-12-30', '2011-12-31', '2024-02-29', '2100-02-28', '9999-12-31'];
 const invalidDates = ['0000-01-01', '0001-01-01', '0099-12-31', '1900-02-29', '2100-02-29', '2026-02-30', '2026-00-01', '2026-13-01', '2026-01-00', '2026-04-31'];
