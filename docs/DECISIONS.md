@@ -125,8 +125,10 @@ Jyotish／Human Design 在 V2 實作；在引擎存在之前，D-002 的「接�
 
 ## D-023 跨系統彙整只存在於 signals 層（補充 D-009）✅
 雷達仍是每系統一張、不合併。跨系統比較一律透過 `Signal { domain, trait, intensity, valence, window }`：
-系統內先用 noisy-OR 合併（避免規則多的系統壓過別人），再跨系統加權平均；
+系統內先用 noisy-OR 合併，再跨系統加權平均。noisy-OR 只限制分數上限，不能避免規則數量優勢：增加非零強度訊號仍會使分數單調不減；不同 id 的同源／相關訊號也不會自動去重或變成獨立證據。後續聚合模型見 [#28](https://github.com/skydreamer0/fortunetelling/issues/28)。
 ≥3 系統同向標「高共識」；方向相反標 `conflict` 並列出雙方來源，**禁止平均抵銷**。
+
+**2026-10-09 文件校正：** 早期實作僅依強度計票，未滿足本決策的「同向」要求；此差異已由 [#44](https://github.com/skydreamer0/fortunetelling/issues/44)／[PR #67](https://github.com/skydreamer0/fortunetelling/pull/67) 修正。現行強度票名為 `activityAgreement`；同向共識使用 raw 強度／方向與實際 θ／τ，排除零權重、中性及 experimental 系統，任一側至少三套才成立。完整資格、邊界與 provenance 以本檔 D-045 及 [ARCHITECTURE-V2 §6.1](ARCHITECTURE-V2.md#61-彙整演算法aggregatesignals) 為準；本次只校正文案，不更改公式、門檻或數值。
 
 ## D-024 型別策略：新程式碼用 TypeScript（取代 D-003）✅
 `packages/core` 啟用 TypeScript（`allowJs` + `checkJs` 漸進遷移）。既有 JS 檔搬遷時不強制改寫，

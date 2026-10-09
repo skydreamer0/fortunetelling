@@ -82,7 +82,7 @@
       "version": 1,
       "scopes": ["year", "month"],
       "status": "active",
-      "description": "行運行星於窗口內經過的閘門與原局比對：補滿一條原局未定義通道的另一端（補完／電磁），或落在原局已定義通道的閘門（強化）→ 該通道兩端中心／該閘門所屬中心的 domain × trait 訊號。只輸出特徵權重，valence 一律 0。",
+      "description": "行運行星於窗口內經過的閘門與原局比對：補滿一條原局未定義通道的另一端（補完／電磁），或落在原局已定義通道的閘門（強化）→ 該通道兩端中心／該閘門所屬中心的 domain × trait 訊號。只輸出特徵權重，valence 一律 0。 覆蓋限制：年格與月格均不含凱龍星（Chiron）；目前 @swisseph/browser 封裝只載入內建 Moshier、未載入小行星星曆檔，也未提供 Chiron 的天體／規則接線。若要支援，需載入涵蓋目標日期的小行星資料（例如 seas_18.se1 涵蓋 1800–2399 年），並另行加入天體與規則、完成驗證，不能只改行星清單。月格依 params.planets.month 另不含天王星、海王星、冥王星；年格包含這三顆，這是規則取樣清單的選擇，不是 Moshier 無法計算它們。小行星資料要求見 https://www.astro.com/swisseph/swisseph.htm §2.3.1。",
       "source": "Ra Uru Hu, The Definitive Book of Human Design（64 閘門與 36 條通道定義；行運閘門與原局通道的補完／電磁概念）；行星清單、取樣間隔與所有權重為本專案資料。",
       "params": {
         "sampleDays": { "year": 15, "month": 3 },

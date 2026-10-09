@@ -223,11 +223,14 @@ type Signal = {
 
 以 `(domain, window)` 為單位，分三步：
 
-1. **系統內合併**：同一系統的多條訊號用 noisy-OR 合併，`1 − Π(1 − intensityᵢ)`。這樣規則多的系統不會因為條數多就壓過其他系統。
+1. **系統內合併**：同一系統的多條訊號用 noisy-OR 合併，`1 − Π(1 − intensityᵢ)`。分數有上限，但增加非零強度訊號仍會使分數單調不減並趨近 1（例如 10 條各 0.2 得約 0.89）；它不消除規則數量優勢，也不保證訊號獨立。相同 id／相同 payload 先去重，但不同 id 的同源或相關訊號仍可能累積；去重與聚合模型的後續工作見 [#28](https://github.com/skydreamer0/fortunetelling/issues/28)。
 2. **跨系統加權**：`score = Σ wₛ · sysScoreₛ / Σ wₛ`，得出 0–100。系統權重 `wₛ` 是資料，V4 由回驗調整。
 3. **共識與矛盾**：
-   - `consensus = 強度 ≥ θ 的系統數`；≥ 3 標記為「高共識」。
-   - 同時有系統 valence > +τ 和系統 valence < −τ，就標記 `conflict`，並列出雙方 signal id。
+   - `activityAgreement` 是正權重且 raw 強度 ≥ θ 的系統數（含 experimental），表示「共同關注」，不表示方向一致。
+   - `consensus` 是符合上述條件、再排除 experimental 後，正向（raw valence > τ）或負向（raw valence < −τ）兩側中較大的系統數；任一側 ≥ 3 才標記「高共識」。中性與零權重不投同向票，計票不使用四捨五入後的顯示值。
+   - 同時有正權重系統 valence > +τ 和系統 valence < −τ，就標記 `conflict`，並列出雙方 signal id；此衝突判斷不要求強度 ≥ θ，也不排除 experimental。
+
+現行判票來源為 [directionalEvidence.ts](../packages/core/src/signals/directionalEvidence.ts) 與 [aggregate.ts](../packages/core/src/signals/aggregate.ts)，Timeline／Consensus 沿用實際 θ／τ 與 raw 證據。早期只按強度計票、與 D-023「同向」不符的差異已由 [#44](https://github.com/skydreamer0/fortunetelling/issues/44)／[PR #67](https://github.com/skydreamer0/fortunetelling/pull/67) 修正，詳見 [DECISIONS.md](DECISIONS.md) D-045。
 
 跨系統彙整**只存在於 signals 層**。v1 的雷達維持「每系統一張」（D-009 保留，D-023 補充）。
 
@@ -236,7 +239,7 @@ type Signal = {
 - 輸出 `asOf` 年起連續 N 年（預設 5 年），以及當年 12 個月的領域分數。
 - 後端保留 0–100 分數；UI 顯示四段：**低 / 中 / 中高 / 高**，切點是資料（例如 35／55／75）。
 - 每格都帶 `topSignals[]`，點開可以看到是哪些規則造成的。
-- **只有「隨時間變化」的規則進 timeline**：共識計票以「某系統該領域 noisy-OR 分數 ≥ θ」算一票，若把出生盤這類常數訊號蓋在每一格，該系統會在每個時間窗都投同一票、灌水「高共識」。因此人類圖不再蓋 natal 基線（M5-04），只用 `humanDesign.transit.gates`；某格沒有行運閘門命中時，人類圖在該領域就是「沒有發訊號」（不計 0，維持 D-033），不會投票。`timeline.conventions` 只有在人類圖參與時才換成含人類圖說明的版本（`scopes`、`humanDesign`），不含人類圖的 timeline（同步 `analyze()`）逐位元不變。
+- **只有「隨時間變化」的規則進 timeline**：早期只按強度計共識時，出生盤這類常數訊號會在每個時間窗重複投票，因此 M5-04 移除人類圖 natal 基線，只用 `humanDesign.transit.gates`。#44 後強度票改稱 `activityAgreement`，同向票另需符合 §6.1 的方向與資格；人類圖行運 valence 恆為 0，只能貢獻共同關注，不投同向票。某格沒有行運閘門命中時，人類圖在該領域就是「沒有發訊號」（不計 0，維持 D-033）。`timeline.conventions` 只有在人類圖參與時才換成含人類圖說明的版本（`scopes`、`humanDesign`），不含人類圖的 timeline（同步 `analyze()`）逐位元不變。
 
 ## 8. ⑥ Question Engine（V5）
 
