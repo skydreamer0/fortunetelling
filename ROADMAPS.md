@@ -18,11 +18,13 @@
 
 ## 維護方式
 
+完整入口見 [文件索引](docs/README.md)；已被取代的 v1 規劃見 [歷史文件 archive](docs/archive/README.md)。
+
 | 內容 | 放哪裡 |
 |---|---|
 | 進行中／待辦、優先序、相依 | GitHub Issue（Epic 加 Label） |
 | 設計決策與理由 | `docs/DECISIONS.md`（ADR） |
-| 已完成歷史 | `docs/HISTORY.md` |
+| 已完成歷史 | `docs/HISTORY.md`；舊規劃原文見 `docs/archive/README.md` |
 | 願景與原則 | 本檔 |
 
 ## 核心原則

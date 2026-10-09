@@ -5,8 +5,9 @@
 > D-002／D-003／D-013 已被取代，執行環境改以 Bun 為準（D-025）。
 
 > 本文件是**執行任何開發任務前必讀**的設計契約。修改程式前先讀完本文件與
-> [DECISIONS.md](DECISIONS.md)；任務規格在 [TASKS.md](TASKS.md)；
-> 執行規則在 [HARNESS_SPEC.md](HARNESS_SPEC.md)；測試策略在 [TEST_PLAN.md](TEST_PLAN.md)。
+> [DECISIONS.md](DECISIONS.md)；進行中任務以 [GitHub Issues](https://github.com/skydreamer0/fortunetelling/issues) 為準，
+> 開發與驗證入口見 [CONTRIBUTING.md](CONTRIBUTING.md) 與[文件索引](README.md)。
+> 舊 B/C/D 任務與執行規則已[歸檔](archive/README.md)，不再作為現行任務清單。
 >
 > 定案(2026-07-11)：① 可重用核心函式庫 ② 5 系統(紫微/靈數/命卦/Kin/八字)
 > ③ JSDoc ④ Report Schema 以版本守護形狀（v1：D-012；v2：D-019；v3：D-020；v4：D-032，見 §4.3；目前 v5：D-034，見 §4.4）。
@@ -35,7 +36,7 @@ analysis ─────► （無依賴；純函數，吃 components 吐結構�
 visualization ► （無核心依賴；吃資料吐圖/文字）
 ```
 
-違反方向 = 架構衝突，寫入 DECISIONS.md 並停止（HARNESS_SPEC 規則 6）。
+違反方向 = 架構衝突，寫入 DECISIONS.md 並停止（歷史規則出處：[HARNESS_SPEC 規則 6](archive/2026-07-v1/HARNESS_SPEC.md)）。
 
 ## 3. 目錄結構與現況
 
@@ -57,8 +58,8 @@ apps/web/                 @fortune/web — React 19 + TypeScript + Vite（D-030�
     components/          ✅ input/（表單）report/（八章報告）compat/（合盤）ui/（SVG 雷達、分頁等）
     styles/              ✅ tokens / base / intake / report / charts / print
   tests/                 ✅ selectors、儲存、SSR 渲染測試
-docs/  ARCHITECTURE.md(本文件) ARCHITECTURE-V2.md DECISIONS.md HARNESS_SPEC.md TASKS.md
-       CONTRIBUTING.md PLAN-FOR-AUDIT.md
+docs/  README.md ARCHITECTURE.md(本文件) ARCHITECTURE-V2.md DECISIONS.md CONTRIBUTING.md
+       archive/README.md（v1 規劃、B/C/D 任務與舊執行規則）
 ```
 
 ## 4. Report Schema v3
@@ -288,9 +289,11 @@ type ConsensusSummary = {
 
 ## 7. 里程碑總覽
 
+以下保留當時的狀態，B/C/D 後續完成紀錄見 [HISTORY.md](HISTORY.md) 附錄；不作為現行待辦。
+
 - **A ✅ 驗收通過(2026-07-11)**：公開 API、analyze()、Schema v1、22 tests、UI 接通。
 - **B ⏳** BaZiEngine（任務 B1–B3）
 - **C ⏳** 區塊 G 雷達（任務 C1–C3）
 - **D ⏳** 區塊 H 狀態表/演化/誠實守門（任務 D1–D5）
 
-任務規格一律以 [TASKS.md](TASKS.md) 為準。
+上述歷史任務原文見 [archive/2026-07-v1/TASKS.md](archive/2026-07-v1/TASKS.md)。現行待辦以 [GitHub Issues](https://github.com/skydreamer0/fortunetelling/issues) 為準。

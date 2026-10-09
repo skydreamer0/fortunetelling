@@ -320,4 +320,5 @@ backtest_runs         -- 規則版本、樣本數、命中率、日期
 
 上表 V1–V5 為歷史里程碑。現行規劃為 M0.5～M5（Profile 契約✅、本機 MCP server✅、匯出／匯入、整理 AI 層、網站對接、計算端驗證），見 [HISTORY.md](HISTORY.md)（D-036）。
 
-各任務細節會在每個里程碑開始時寫進 [TASKS.md](TASKS.md)，格式沿用現行的 HARNESS_SPEC。
+現行任務細節與驗收門檻以 [GitHub Issues](https://github.com/skydreamer0/fortunetelling/issues) 為準（見 [ROADMAPS.md](../ROADMAPS.md)）。
+舊 B/C/D [TASKS](archive/2026-07-v1/TASKS.md) 與 [HARNESS_SPEC](archive/2026-07-v1/HARNESS_SPEC.md) 僅保留為歷史交付依據，完整入口見[文件索引](README.md)。
