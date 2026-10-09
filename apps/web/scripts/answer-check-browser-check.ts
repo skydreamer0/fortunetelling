@@ -12,16 +12,30 @@ const MISSING = 'sig_ffffffff';
 const B = 'B：只核對目前輸入，沒有引用訊號。';
 const TEXTAREA = '.ask__entry--mcp textarea';
 const CHECK = '.ask__entry--mcp .ask__paste-block .ask__actions button';
+const RUN_DEADLINE_MS = 180_000;
 const fixture = { name: 'QA Synthetic', date: '1995-07-16', time: '22:00', gender: 'male', city: 'tainan', accuracy: 'exact' };
 type Mode = 'complete' | 'cancel-aba' | 'unmount';
 type Observation = { kind: string; at: number; value: string; busy: boolean; mounted: boolean;
   summary: string | null; flags: string[]; trusted?: boolean; eventTimestamp?: number };
 type Trace = { events: Observation[]; longTasks: { start: number; duration: number }[];
-  longTasksSupported: boolean; overflow: boolean };
+  longTasksSupported: boolean; overflow: boolean; finishedAt: number | null };
 type Evidence = { mode: Mode; answer: string; trace: Trace; errors: string[]; timedOut: boolean;
   cleanupErrors: string[]; asOf: string; knownId: string; reportYears: number;
   inputCommandToVerifiedDomMs?: number; replacementReportSeen?: boolean };
 declare global { interface Window { __answerQa: { finish(): Trace } } }
+
+function remainingRunMs(deadlineAt: number, now = performance.now()): number {
+  const remaining = deadlineAt - now;
+  assert(remaining > 0, 'Browser test deadline exceeded before result wait');
+  return Math.ceil(remaining); // Never pass zero, which would disable Playwright's timeout.
+}
+
+function tasksAfterFirstCheck(trace: Trace): Trace['longTasks'] | null {
+  const first = trace.events.find(event => event.kind === 'check');
+  // No finish observation means unknown coverage, not zero blocking.
+  if (!first || trace.finishedAt === null) return null;
+  return trace.longTasks.filter(task => task.start + task.duration > first.at && task.start < trace.finishedAt!);
+}
 
 // This is observation only: no engine, timer, report, React state or event is replaced.
 function installRecorder() {
@@ -79,7 +93,7 @@ function installRecorder() {
     observe(); collect(tasks.takeRecords()); tasks.disconnect(); mutation.disconnect();
     cancelAnimationFrame(frame);
     document.removeEventListener('input', input, true); document.removeEventListener('click', click, true);
-    return { events, longTasks, longTasksSupported, overflow };
+    return { events, longTasks, longTasksSupported, overflow, finishedAt: performance.now() };
   } };
 }
 
@@ -129,11 +143,15 @@ function validate(e: Evidence) {
 }
 
 function selfTest() {
+  assert.equal(remainingRunMs(180_000, 179_000), 1_000);
+  assert.equal(remainingRunMs(180_000, 179_999.5), 1);
+  assert.throws(() => remainingRunMs(180_000, 180_000));
+  assert.throws(() => remainingRunMs(180_000, 180_001));
   const event = (kind: string, at: number, value: string, busy = false, summary: string | null = null): Observation =>
     ({ kind, at, value, busy, summary, flags: summary ? ['unknown_citation', 'honesty_violation'] : [], mounted: true, trusted: true });
   const seed: Evidence = { mode: 'cancel-aba', answer: 'A', knownId: 'sig_12345678', asOf: '2026-09-25', reportYears: 5,
     errors: [], cleanupErrors: [], timedOut: false, inputCommandToVerifiedDomMs: 10,
-    trace: { longTasksSupported: true, overflow: false, longTasks: [], events: [
+    trace: { longTasksSupported: true, overflow: false, longTasks: [], finishedAt: 8, events: [
       event('check', 1, 'A'), event('busy-animation-frame', 2, 'A', true), event('input', 3, B, true),
       event('state', 4, B), event('check', 5, 'A'), event('busy-animation-frame', 6, 'A', true), event('state', 7, 'A', false, 'result'),
     ] } };
@@ -164,8 +182,17 @@ function selfTest() {
   complete.trace.events = [event('check', 1, 'A'), event('busy-animation-frame', 2, 'A', true), event('state', 7, 'A', false, 'result')];
   validate(complete); complete.trace.events[2].at = 1.5;
   assert.throws(() => validate(complete));
+  const timeout = structuredClone(seed); timeout.timedOut = true;
+  timeout.trace.finishedAt = 100;
+  timeout.trace.longTasks = [{ start: 20, duration: 60 }]; // After the last DOM change at 7.
+  assert.deepEqual(tasksAfterFirstCheck(timeout.trace), [{ start: 20, duration: 60 }]);
+  assert.throws(() => validate(timeout)); // Accurate statistics do not convert a timeout to PASS.
+  timeout.trace.finishedAt = null;
+  assert.equal(tasksAfterFirstCheck(timeout.trace), null, 'unknown window is never zero blocking');
   console.log(JSON.stringify({ scope: 'evidence-validator self-test only; no browser executed', positiveFixtures: 3,
-    rejectedMutations: mutations.map(([name]) => name).concat('stale result after unmount', 'result preceded busy observation'), passed: true }));
+    rejectedMutations: mutations.map(([name]) => name).concat('stale result after unmount', 'result preceded busy observation'),
+    resultDeadlineControls: 'remaining global budget; expired/zero budget rejected',
+    longTaskWindowControls: 'post-DOM-change task retained on timeout; missing finish stays unknown', passed: true }));
 }
 
 async function makeReport(page: Page) {
@@ -255,6 +282,7 @@ async function run() {
     const origin = `http://127.0.0.1:${server.port}`;
     browser = await chromium.launch({ channel: 'chrome', chromiumSandbox: true, timeout: 15_000 });
     browserVersion = browser.version();
+    const deadlineAt = performance.now() + RUN_DEADLINE_MS;
     timer = setTimeout(() => {
       timedOut = true;
       deadlineCleanup = (async () => {
@@ -262,12 +290,12 @@ async function run() {
           if (entry.status === 'rejected') diagnostics.push({ deadlineCleanup: String(entry.reason) });
         }
       })();
-    }, 180_000);
+    }, RUN_DEADLINE_MS);
     for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 }]) {
       for (const mode of ['complete', 'cancel-aba', 'unmount'] as const) {
         if (timedOut) throw new Error('Browser test deadline exceeded');
         let context: BrowserContext | undefined, page: Page | undefined;
-        const evidence: Evidence = { mode, answer: '', trace: { events: [], longTasks: [], longTasksSupported: false, overflow: false },
+        const evidence: Evidence = { mode, answer: '', trace: { events: [], longTasks: [], longTasksSupported: false, overflow: false, finishedAt: null },
           errors: [], timedOut: false, cleanupErrors: [], asOf: '', knownId: '', reportYears: 0 };
         const metadata: Record<string, unknown> = { viewport, lookupStateAtFirstCheck: 'fresh context and freshly generated report; no prior citation lookup',
           engineAndJitCold: false, serviceWorkers: 'blocked to isolate this non-PWA task', externalFonts: 'blocked; fallback-font geometry only',
@@ -318,7 +346,11 @@ async function run() {
             evidence.replacementReportSeen = true;
           }
           if (mode !== 'unmount') {
-            await page.locator('.ask__entry--mcp .ask__check').waitFor();
+            // Calculation completion uses the existing whole-run budget; normal
+            // input/navigation operations keep the 15s default. This is not a
+            // performance success threshold, and no case gets a fresh 180s.
+            metadata.resultCompletionWaitMs = remainingRunMs(deadlineAt);
+            await page.locator('.ask__entry--mcp .ask__check').waitFor({ timeout: Number(metadata.resultCompletionWaitMs) });
             const unknownCitation: Locator = page.locator('.ask__entry--mcp [data-flag="unknown_citation"]');
             assert.equal(await unknownCitation.count(), 1);
             const text = await unknownCitation.innerText();
@@ -345,9 +377,7 @@ async function run() {
         }
         let accepted = false;
         try { validate(evidence); accepted = true; } catch (error) { diagnostics.push({ viewport, mode, validation: String(error) }); }
-        const first = evidence.trace.events.find(event => event.kind === 'check');
-        const last = evidence.trace.events.at(-1);
-        const tasks = evidence.trace.longTasks.filter(task => first && task.start + task.duration > first.at && task.start < (last?.at ?? Infinity));
+        const tasks = tasksAfterFirstCheck(evidence.trace);
         const checks = evidence.trace.events.filter(event => event.kind === 'check');
         const checkWindows = checks.map((check, index) => {
           const nextCheck = checks[index + 1]?.at ?? Infinity;
@@ -358,7 +388,8 @@ async function run() {
             checkToTerminalMs: end ? end.at - check.at : null };
         });
         results.push({ functionalObservationGatePassed: accepted, metadata, evidence, checkWindows, observedLongTasksAfterFirstCheck: tasks,
-          maxObservedLongTaskMs: tasks.length ? Math.max(...tasks.map(task => task.duration)) : null,
+          longTaskObservationEndAtPageMs: evidence.trace.finishedAt,
+          maxObservedLongTaskMs: tasks?.length ? Math.max(...tasks.map(task => task.duration)) : null,
           verdict: accepted ? 'bounded DOM/input observations passed; request identity/background abort, numeric responsiveness and visual acceptance remain unverified' : 'NOT ACCEPTED; inspect errors and event ordering' });
         if (!accepted) throw new Error(`${viewport.width}px ${mode} failed; remaining cases NOT RUN`);
       }

@@ -231,8 +231,11 @@ result. These validate the gates; they do not claim browser execution against a
 mutated application implementation.
 
 Runtime operation timeouts are bounded orchestration limits, not responsiveness
-budgets: launch 15 seconds, Playwright operations 15 seconds, the six-case run
-180 seconds, workflow step 4 minutes and job 10 minutes. The deadline closes the
+budgets: launch and ordinary Playwright input/navigation operations 15 seconds,
+result completion only the remainder of the shared six-case 180-second deadline,
+workflow step 4 minutes and job 10 minutes. No case receives a new 180 seconds;
+an exhausted result budget rejects rather than passing Playwright timeout zero.
+The deadline closes the
 browser and stops the server to interrupt pending commands; the actual test and
 cleanup promises settle before the final result is written. A failed case stops
 later cases, which remain NOT RUN. Timeout, missing evidence, page error or any
@@ -316,3 +319,26 @@ Ziwei cooperative units plus full synchronous/cooperative serialization parity.
 It reproduced the original rejection before the fix. This is a bundle-interop
 regression, not a replacement browser run or evidence of responsive input. No
 browser gate, timeout, security setting or workflow is relaxed by the correction.
+
+The corrected interop candidate (`ade8da8f`, tree `af1a0255`) then genuinely stayed
+busy in native run `38004497085`, but its first cold result did not arrive inside
+the locator's 15-second operation timeout. Its raw trace contains continuing
+135–146 ms Long Tasks after the check, not completion, and five later cases stayed
+NOT RUN. Therefore the result locator now uses only the remainder of the existing
+180-second whole-run deadline. All six functional gates, ordinary input/navigation
+timeouts, errors and cleanup controls remain required. This change permits a total
+duration measurement; it does not make a slower calculation performant. Compare
+the new cold total, Long Task distribution and actual cancellation/navigation
+effects with the earlier approximately 12.7-second native baseline. Material total
+latency regression requires further optimization even if functional gates pass.
+Timer clamping from frequent yields is a hypothesis to assess, not yet an observed
+cause or a reason to alter production scheduling in this measurement-only change.
+
+That second raw trace also exposed an aggregation defect: its last changed DOM
+state preceded the continuing work, so using the last state event as the Long
+Task window end produced an empty summary/max null. The original failed receipt
+is retained; the raw recorded post-check tasks have a 146 ms maximum, not zero.
+The recorder now captures its actual finish timestamp, and summaries use that
+observation end even if the DOM never changed. Missing finish coverage stays null
+(unknown). A self-test retains a post-last-DOM-change Long Task on timeout while
+still rejecting the case. This corrects statistics, not functional/performance gates.
