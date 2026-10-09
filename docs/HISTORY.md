@@ -7,6 +7,12 @@
 > 決策依據：[docs/DECISIONS.md](DECISIONS.md) D-021 ～ D-039
 > 現行 Report 契約（v5）：[docs/ARCHITECTURE.md](ARCHITECTURE.md)；MCP 設定：[docs/MCP-SETUP.md](MCP-SETUP.md)
 
+## PWA 預快取 Vary 比對修正（2026-10-06；2026-10-09 補記）
+
+- [修正 commit f0b6bed](https://github.com/skydreamer0/fortunetelling/commit/f0b6bed0c4d3bbb427ba49c569fc75932413836d)：同源資產的 `cacheFirst` 查找加入 `ignoreVary: true`，保留 `ignoreSearch: true`；並將 service worker 原始碼納入預快取版本雜湊。當伺服器（例如當時的 Vite preview）回傳 `Vary: Origin` 時，預快取請求與動態 import 的 Origin 差異可能使 lazy chunk 在離線時找不到快取。
+- [#49 的 2026-10-07 線上查核紀錄](https://github.com/skydreamer0/fortunetelling/issues/49)：當時首頁、`sw.js`、JS 資產均回 `vary: Accept-Encoding`，未見 `Vary: Origin`；當時線上 `sw.js` 的 VERSION 為 `9d8ab251a8e3`，已包含 `ignoreVary: true`。這是該日的歷史觀察，不代表目前部署版本或標頭，也不能據此宣稱當時線上故障已證實由 `Vary: Origin` 引起。
+- 本次對照 [sw.js](../apps/web/pwa/sw.js)／[plugin.ts](../apps/web/pwa/plugin.ts) 記錄現有修正，不重跑或宣稱完成瀏覽器／iPhone 離線、安裝、更新等實機驗收；後續驗收仍見 [#18](https://github.com/skydreamer0/fortunetelling/issues/18)／[#19](https://github.com/skydreamer0/fortunetelling/issues/19)。
+
 ## 核心原則
 
 **產品形狀**：圖形介面（整理與呈現命盤資料）＋ 本機 AI 對話（下結論、討論）。
