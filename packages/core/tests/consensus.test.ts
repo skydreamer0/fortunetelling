@@ -23,7 +23,7 @@ const ASOF = '2026-09-25';
 let timeline: Timeline;
 let summary: ConsensusSummary;
 beforeAll(async () => {
-  timeline = await buildTimelineAsync(ctx, { asOf: ASOF });
+  timeline = await buildTimelineAsync(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF });
   summary = buildConsensus(timeline);
 }, 60_000);
 
@@ -253,12 +253,12 @@ describe('buildConsensus — 1995-07-16 22:00 male Tainan, asOf 2026-09-25 (asyn
 
   test('deterministic: same input → byte-identical JSON; no score changes (D-033)', () => {
     expect(JSON.stringify(buildConsensus(timeline))).toBe(JSON.stringify(summary));
-    const again = buildTimeline(ctx, { asOf: ASOF }); // ephemeris already initialised
+    const again = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF }); // ephemeris already initialised
     expect(JSON.stringify(buildConsensus(again))).toBe(JSON.stringify(summary));
   });
 
   test('sync 3-system timeline: coverage denominator is 3', () => {
-    const sync = buildConsensus(buildTimeline(ctx, { asOf: ASOF, systems: ['bazi', 'ziwei', 'numerology'] }));
+    const sync = buildConsensus(buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: ['bazi', 'ziwei', 'numerology'] }));
     expect(sync.systems).toEqual(['bazi', 'ziwei', 'numerology']);
     expect(sync.coverage.years[0].domains.every((d) => d.available === 3)).toBe(true);
     for (const a of sync.headlines.agreements) expect(a.systems).toEqual(['bazi', 'ziwei', 'numerology']);

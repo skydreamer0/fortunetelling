@@ -6,7 +6,7 @@
  *      人類圖 chart.node），一律讀 chart，不寫死；
  *   2. chart 沒帶、但 core 以固定常數／檔頭文件寫明的，照 core 原始碼寫，並在 `source` 標出檔案；
  *   3. 兩者都查不到的，寫「未明確記錄」，不猜。
- * 這些口徑是 MCP 呼叫 core 時的預設值（本 server 不傳任何覆寫設定）。
+ * 這些口徑沿用 MCP 的既有 core 預設政策；Timeline 明傳真太陽時／晚子，其他 calculator 仍用原預設。
  */
 
 import type { TimeContext } from '@fortune/core';

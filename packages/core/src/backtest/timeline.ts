@@ -56,10 +56,10 @@ export interface BacktestTimelineOptions {
   toYear?: number;
   systems?: readonly SystemId[];
   systemWeights?: TimelineOptions['systemWeights'];
-  /** Preserve the source timeline's effective clock (default true). */
-  useTrueSolarTime?: TimelineOptions['useTrueSolarTime'];
-  /** Canonical bazi convention; buildTimeline maps it explicitly for ziwei. */
-  ziHourConvention?: TimelineOptions['ziHourConvention'];
+  /** Required source timeline's effective clock; no replay default. */
+  useTrueSolarTime: TimelineOptions['useTrueSolarTime'];
+  /** Required canonical bazi convention; buildTimeline maps it explicitly for ziwei. */
+  ziHourConvention: TimelineOptions['ziHourConvention'];
 }
 
 const round2 = (x: number) => Math.round(x * 100) / 100;

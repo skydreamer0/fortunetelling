@@ -1,7 +1,7 @@
 /**
  * @fileoverview ⑤ Timeline Engine (V1-13; ARCHITECTURE-V2 §7, §6.1; D-014, D-021, D-023, D-028).
  *
- * `buildTimeline(ctx, { asOf })` → N calendar-year cells (default 5, from the
+ * `buildTimeline(ctx, { asOf, useTrueSolarTime, ziHourConvention })` → N calendar-year cells (default 5, from the
  * asOf year) plus the 12 calendar months of the asOf year. For every cell it
  * evaluates each system's rules for that window, dedupes the signals by id and
  * aggregates them with `aggregateSignals` (noisy-OR within a system, weighted
@@ -70,13 +70,13 @@ export interface SkippedSystem {
   reason: TimelineSkipReason;
 }
 
-export interface TimelineOptions extends Partial<AnalysisTimeOptions> {
-  /** Natal day/hour clock for bazi and ziwei; default true, same as analyze(). */
-  useTrueSolarTime?: boolean;
-  /** Bazi naming: late (default, sect=2) / early (sect=1).
+export interface TimelineOptions extends AnalysisTimeOptions {
+  /** Required effective natal day/hour clock for bazi and ziwei; no downstream default. */
+  useTrueSolarTime: boolean;
+  /** Required bazi naming: late (sect=2) / early (sect=1).
    * Explicitly mapped to ziwei splitMidnight / nextDayAt23; not passed through as an alias.
    */
-  ziHourConvention?: AnalysisTimeOptions['ziHourConvention'];
+  ziHourConvention: AnalysisTimeOptions['ziHourConvention'];
   /** 'YYYY-MM-DD' (required, D-014). The first year cell is asOf's calendar year unless `fromYear` is set. */
   asOf: string;
   /** Number of year cells, default 5. */
@@ -238,7 +238,7 @@ function prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: st
   const evaluators: Partial<Record<SystemId, WindowEvaluator>> = {};
   const skipped: SkippedSystem[] = [];
   const timeKnown = ctx.jd !== null && ctx.utc !== null;
-  const { name, useTrueSolarTime = true, ziHourConvention = 'late' } = opts;
+  const { name, useTrueSolarTime, ziHourConvention } = opts;
   const calcConfig = name === undefined ? { asOf } : { asOf, name };
   const asOfYear = Number(asOf.slice(0, 4));
 
@@ -441,15 +441,19 @@ export function buildTimelineEvidenceWithBaziNatalBasis(ctx: TimeContext, opts: 
   return { timeline, signals: [...evidence.values()].sort((a, b) => cmp(a.id, b.id)) };
 }
 
+function validateTimeOptions(opts: TimelineOptions): void {
+  if (typeof opts?.useTrueSolarTime !== 'boolean') {
+    throw new Error('buildTimeline: useTrueSolarTime is required and must be a boolean');
+  }
+  if (opts.ziHourConvention !== 'late' && opts.ziHourConvention !== 'early') {
+    throw new Error("buildTimeline: ziHourConvention is required and must be 'late' or 'early'");
+  }
+}
+
 function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider, evidence?: Map<string, Signal>): Timeline {
   const asOf = validateAsOf(opts?.asOf);
   const thresholds = resolveAgreementThresholds(opts);
-  if (opts.useTrueSolarTime !== undefined && typeof opts.useTrueSolarTime !== 'boolean') {
-    throw new Error('buildTimeline: useTrueSolarTime must be a boolean');
-  }
-  if (opts.ziHourConvention !== undefined && opts.ziHourConvention !== 'late' && opts.ziHourConvention !== 'early') {
-    throw new Error("buildTimeline: ziHourConvention must be 'late' or 'early'");
-  }
+  validateTimeOptions(opts);
   const years = opts.years ?? DEFAULT_TIMELINE_YEARS;
   if (!Number.isInteger(years) || years < 1 || years > 50) {
     throw new Error(`buildTimeline: years must be an integer in 1..50, got ${years}`);
@@ -590,8 +594,9 @@ export function restrictTimeline(timeline: Timeline, systems: readonly SystemId[
   };
 }
 
-/** `await initEphemeris()`, then `buildTimeline` — includes jyotish and humanDesign. */
+/** Validate effective settings before initialization, then include jyotish and humanDesign. */
 export async function buildTimelineAsync(ctx: TimeContext, opts: TimelineOptions): Promise<Timeline> {
+  validateTimeOptions(opts);
   await initEphemeris();
   return buildTimeline(ctx, opts);
 }

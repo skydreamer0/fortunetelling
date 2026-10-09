@@ -1,0 +1,15 @@
+{
+  "version": "0.8.0",
+  "decision": "D-052",
+  "reason": "The Profile v1 export explicitly retains its existing trueSolar/late policy. Only manifest core version changes.",
+  "changes": [
+    {
+      "path": [
+        "versions",
+        "coreVersion"
+      ],
+      "before": "0.7.0",
+      "after": "0.8.0"
+    }
+  ]
+}

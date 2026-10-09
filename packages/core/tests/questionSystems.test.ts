@@ -50,7 +50,7 @@ beforeAll(async () => {
     let m = cache.get(year);
     if (!m) {
       m = new Map();
-      const cells = buildTimeline(ctx, { asOf: year === 2026 ? ASOF : `${year}-01-01`, years: 1, includeMonths: true, topSignalsPerDomain: Infinity }).months;
+      const cells = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: year === 2026 ? ASOF : `${year}-01-01`, years: 1, includeMonths: true, topSignalsPerDomain: Infinity }).months;
       for (const cell of cells) {
         const byId = new Map<string, Signal>();
         for (const d of cell.domains) for (const s of d.topSignals) byId.set(s.id, s);
@@ -61,7 +61,7 @@ beforeAll(async () => {
     return m;
   };
   provider = (w: SignalWindow) => monthSignals(Number(w.start.slice(0, 4))).get(w.start.slice(0, 7)) ?? [];
-  fullTimeline = buildTimeline(ctx, { asOf: ASOF, topSignalsPerDomain: Infinity });
+  fullTimeline = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, topSignalsPerDomain: Infinity });
 }, 120_000);
 
 const sha = (x: unknown) => createHash('sha256').update(JSON.stringify(x)).digest('hex');
@@ -219,7 +219,7 @@ describe('restrictTimeline', () => {
   test('等於 buildTimeline({ systems })；不指定篩選的 timeline 不受影響', () => {
     for (const subset of [VERIFIED, ['bazi', 'jyotish']] as SystemId[][]) {
       const restricted = restrictTimeline(fullTimeline, subset);
-      const direct = buildTimeline(ctx, { asOf: ASOF, topSignalsPerDomain: Infinity, systems: subset });
+      const direct = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, topSignalsPerDomain: Infinity, systems: subset });
       expect(JSON.stringify(restricted)).toBe(JSON.stringify(direct));
     }
     const all = restrictTimeline(fullTimeline, [...SYSTEM_IDS]);
@@ -227,7 +227,7 @@ describe('restrictTimeline', () => {
   }, 60_000);
 
   test('截斷過的 topSignals 無法還原 → 丟錯；未知系統丟錯', () => {
-    const truncated = buildTimeline(ctx, { asOf: ASOF, years: 1 });
+    const truncated = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, years: 1 });
     expect(() => restrictTimeline(truncated, VERIFIED)).toThrow(/topSignalsPerDomain/);
     expect(() => restrictTimelineCell(fullTimeline.years[0], ['x' as SystemId], fullTimeline)).toThrow(/unknown system/);
   });

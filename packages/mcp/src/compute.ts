@@ -105,7 +105,10 @@ export class Analyzer {
 
   private async compute(file: ProfileFileV1, warnings: string[], asOf: string): Promise<Analysis> {
     const ctx = createTimeContext(file.profile);
-    const timeline = await buildTimelineAsync(ctx, { asOf, topSignalsPerDomain: Infinity });
+    // Profile v1 has no settings field. This is the existing MCP policy
+    // documented in MCP-SETUP, shared by this analysis and every month projection.
+    const timeOptions = { useTrueSolarTime: true, ziHourConvention: 'late' } as const;
+    const timeline = await buildTimelineAsync(ctx, { asOf, topSignalsPerDomain: Infinity, ...timeOptions });
     const byId = new Map<string, Signal>();
     for (const cell of [...timeline.years, ...timeline.months]) {
       for (const domain of cell.domains) for (const signal of domain.topSignals) byId.set(signal.id, signal);
@@ -119,6 +122,7 @@ export class Analyzer {
       let cells = cellsByYear.get(year);
       if (!cells) {
         cells = buildTimeline(ctx, {
+          ...timeOptions,
           asOf: year === asOfYear ? asOf : `${year}-01-01`,
           years: 1,
           includeMonths: true,

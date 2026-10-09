@@ -85,7 +85,11 @@ export async function buildExportBundle(file: ProfileFileV1, options: BuildExpor
 
   const ctx = createTimeContext(file.profile);
   await initEphemeris();
-  const timeline = await buildTimelineAsync(ctx, { asOf, topSignalsPerDomain: Infinity });
+  // Profile v1 carries no calculation settings. Preserve the existing export
+  // calculator policy explicitly; never infer settings from another report.
+  const timeline = await buildTimelineAsync(ctx, {
+    asOf, topSignalsPerDomain: Infinity, useTrueSolarTime: true, ziHourConvention: 'late',
+  });
   const consensus = buildConsensus(timeline);
   const signals = collectSignals(timeline);
 

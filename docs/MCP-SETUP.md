@@ -84,7 +84,7 @@ bun run --filter @fortune/mcp add-profile sky \
 排盤口徑 `conventions`：
 
 - `get_chart` 每次回報這張盤實際採用的口徑：`{ items, source, notRecorded }`。能從 core 回傳的盤面讀到的（八字子時換日／真太陽時、紫微子時與時鐘、吠陀歲差／交點／整宮制／Vimshottari 年長、人類圖交點）直接讀盤面；其餘照 core 原始碼與檔頭文件寫，`source` 列出對應檔案；查不到明確紀錄的寫「未明確記錄」並列在 `notRecorded`，不猜。
-- 口徑是本 server 呼叫 core 的預設值（不傳覆寫設定）。例如八字預設真太陽時、晚子時（子正換日）；紫微預設真太陽時、分早晚子；吠陀預設 Lahiri、平均交點、整宮制、年長 365.25 日；人類圖預設真交點、Moshier 星曆。
+- 口徑沿用本 server 呼叫 core 的既有預設政策。Timeline 明確傳入真太陽時及晚子時；其他 calculator 沿用原預設。八字為真太陽時、晚子時（子正換日）；紫微為真太陽時、分早晚子；吠陀為 Lahiri、平均交點、整宮制、年長 365.25 日；人類圖為真交點、Moshier 星曆。Profile v1 未提供覆寫這些設定的欄位。
 
 回傳瘦身：
 

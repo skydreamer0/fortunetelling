@@ -65,7 +65,7 @@ describe('buildTimeline (sync, fresh process without initEphemeris)', () => {
       import { buildTimeline } from ${JSON.stringify(resolve(import.meta.dir, '../src/timeline/index.ts'))};
       const ctx = createTimeContext(${JSON.stringify(PROFILE)});
       const t0 = performance.now();
-      const tl = buildTimeline(ctx, { asOf: ${JSON.stringify(ASOF)} });
+      const tl = buildTimeline(ctx, { asOf: ${JSON.stringify(ASOF)}, useTrueSolarTime: true, ziHourConvention: 'late' });
       const ms = performance.now() - t0;
       process.stdout.write(JSON.stringify({ ms, tl }));
     `;
@@ -90,7 +90,7 @@ describe('buildTimeline (sync, fresh process without initEphemeris)', () => {
     for (const k of ['windows', 'periodMapping', 'scopes', 'excluded']) expect(typeof tl.conventions[k]).toBe('string');
 
     // Same result in-process (explicit systems, whatever the ephemeris state is here).
-    const again = buildTimeline(ctx, { asOf: ASOF, systems: SYNC_SYSTEMS });
+    const again = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC_SYSTEMS });
     expect(JSON.stringify(again.years)).toBe(JSON.stringify(tl.years));
     expect(JSON.stringify(again.months)).toBe(JSON.stringify(tl.months));
 
@@ -112,7 +112,7 @@ describe('buildTimeline (sync, fresh process without initEphemeris)', () => {
 
 describe('buildTimelineAsync', () => {
   test('includes jyotish and humanDesign signals', async () => {
-    const tl = await buildTimelineAsync(ctx, { asOf: ASOF });
+    const tl = await buildTimelineAsync(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF });
     expect(tl.systems).toEqual(['bazi', 'ziwei', 'numerology', 'jyotish', 'humanDesign']);
     expect(tl.skippedSystems).toEqual([]);
     checkCells(tl.years, 'year', YEAR_STARTS);
@@ -144,7 +144,7 @@ describe('buildTimelineAsync — humanDesign transit contract (M5-04)', () => {
   const skyCtx = createTimeContext(SKY);
 
   test('only humanDesign.transit.gates signals; none from natal rules; per-cell scores move over time (sky sample)', async () => {
-    const tl = await buildTimelineAsync(skyCtx, { asOf: ASOF, systems: ['humanDesign'], topSignalsPerDomain: Infinity });
+    const tl = await buildTimelineAsync(skyCtx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: ['humanDesign'], topSignalsPerDomain: Infinity });
     expect(tl.systems).toEqual(['humanDesign']);
     expect(tl.years.map((c) => c.window.start)).toEqual(YEAR_STARTS);
     expect(tl.months.map((c) => c.window.start)).toEqual(MONTH_STARTS);
@@ -171,24 +171,24 @@ describe('buildTimelineAsync — humanDesign transit contract (M5-04)', () => {
   });
 
   test('deterministic; conventions describe the transit rule; a timeline without humanDesign keeps the base text', async () => {
-    const a = await buildTimelineAsync(skyCtx, { asOf: ASOF, systems: ['humanDesign'] });
-    const b = await buildTimelineAsync(skyCtx, { asOf: ASOF, systems: ['humanDesign'] });
+    const a = await buildTimelineAsync(skyCtx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: ['humanDesign'] });
+    const b = await buildTimelineAsync(skyCtx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: ['humanDesign'] });
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     expect(a.conventions.scopes).toContain('humanDesign.transit.gates');
     expect(a.conventions.scopes).not.toContain('constant, time-invariant baseline');
     expect(typeof a.conventions.humanDesign).toBe('string');
-    const noHd = await buildTimelineAsync(skyCtx, { asOf: ASOF, systems: ['bazi', 'numerology'] });
+    const noHd = await buildTimelineAsync(skyCtx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: ['bazi', 'numerology'] });
     expect(noHd.conventions).toEqual({ ...TIMELINE_CONVENTIONS });
   });
 
   test('humanDesign alone never reaches high consensus (needs ≥3 systems ≥ θ)', async () => {
-    const tl = await buildTimelineAsync(skyCtx, { asOf: ASOF, systems: ['humanDesign'] });
+    const tl = await buildTimelineAsync(skyCtx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: ['humanDesign'] });
     for (const cell of [...tl.years, ...tl.months]) for (const d of cell.domains) expect(d.highConsensus).toBe(false);
   });
 });
 
 describe('buildTimeline behaviour', () => {
-  const base = buildTimeline(ctx, { asOf: ASOF, systems: SYNC_SYSTEMS });
+  const base = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC_SYSTEMS });
 
   test('bazi 流年 differs by year: 2026 丙午 vs 2027 丁未', () => {
     const texts = (c: TimelineCell) =>
@@ -212,14 +212,14 @@ describe('buildTimeline behaviour', () => {
   });
 
   test('deterministic: same input → identical JSON', () => {
-    const a = buildTimeline(ctx, { asOf: ASOF, systems: SYNC_SYSTEMS });
-    const b = buildTimeline(createTimeContext(PROFILE), { asOf: ASOF, systems: SYNC_SYSTEMS });
+    const a = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC_SYSTEMS });
+    const b = buildTimeline(createTimeContext(PROFILE), { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC_SYSTEMS });
     expect(JSON.stringify(a)).toBe(JSON.stringify(base));
     expect(JSON.stringify(b)).toBe(JSON.stringify(base));
   });
 
   test('systems filter', () => {
-    const tl = buildTimeline(ctx, { asOf: ASOF, systems: ['numerology'] });
+    const tl = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: ['numerology'] });
     expect(tl.systems).toEqual(['numerology']);
     expect(tl.skippedSystems).toEqual([]);
     for (const c of [...tl.years, ...tl.months]) {
@@ -228,19 +228,19 @@ describe('buildTimeline behaviour', () => {
         expect(d.topSignals.every((s) => s.system === 'numerology')).toBe(true);
       }
     }
-    const tz = buildTimeline(ctx, { asOf: ASOF, systems: ['tzolkin', 'mingGua', 'numerology'], includeMonths: false });
+    const tz = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: ['tzolkin', 'mingGua', 'numerology'], includeMonths: false });
     expect(tz.systems).toEqual(['numerology']);
     expect(tz.skippedSystems).toEqual([
       { system: 'tzolkin', reason: 'no_timeline_rules' },
       { system: 'mingGua', reason: 'no_timeline_rules' },
     ]);
     expect(tz.months).toEqual([]);
-    expect(() => buildTimeline(ctx, { asOf: ASOF, systems: ['nope' as SystemId] })).toThrow();
+    expect(() => buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: ['nope' as SystemId] })).toThrow();
   });
 
   test('systemWeights change scores as Σw·s/Σw', () => {
     const weights = { bazi: 3, ziwei: 1, numerology: 0.5 };
-    const tl = buildTimeline(ctx, { asOf: ASOF, systems: SYNC_SYSTEMS, systemWeights: weights });
+    const tl = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC_SYSTEMS, systemWeights: weights });
     expect(tl.systemWeights).toEqual(weights);
     let changed = 0;
     for (const [ci, cell] of [...tl.years, ...tl.months].entries()) {
@@ -261,29 +261,29 @@ describe('buildTimeline behaviour', () => {
     }
     expect(changed).toBeGreaterThan(0);
     // Only bazi counts → score = bazi noisy-OR × 100 wherever bazi has signals.
-    const onlyBazi = buildTimeline(ctx, { asOf: ASOF, systems: SYNC_SYSTEMS, systemWeights: { ziwei: 0, numerology: 0 } });
+    const onlyBazi = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC_SYSTEMS, systemWeights: { ziwei: 0, numerology: 0 } });
     for (const d of onlyBazi.years[0].domains) {
       if (d.perSystem.bazi) expect(Math.abs(d.score - 100 * d.perSystem.bazi.score)).toBeLessThanOrEqual(0.06);
       else expect(d.score).toBe(0);
     }
-    expect(() => buildTimeline(ctx, { asOf: ASOF, systemWeights: { bazi: -1 } })).toThrow();
+    expect(() => buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systemWeights: { bazi: -1 } })).toThrow();
   });
 
   test('bandCuts override', () => {
     const cuts = [10, 20, 30] as const;
-    const tl = buildTimeline(ctx, { asOf: ASOF, systems: SYNC_SYSTEMS, bandCuts: cuts });
+    const tl = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC_SYSTEMS, bandCuts: cuts });
     expect(tl.bandCuts).toEqual([10, 20, 30]);
     checkCells(tl.years, 'year', YEAR_STARTS, cuts);
     checkCells(tl.months, 'month', MONTH_STARTS, cuts);
     const bands = (t: Timeline) => t.years.flatMap((c) => c.domains.map((d) => d.band)).join();
     expect(bands(tl)).not.toBe(bands(base));
-    expect(() => buildTimeline(ctx, { asOf: ASOF, bandCuts: [50, 40, 60] })).toThrow();
+    expect(() => buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, bandCuts: [50, 40, 60] })).toThrow();
   });
 
   test('unknown birth time: only numerology remains', async () => {
-    await buildTimelineAsync(ctx, { asOf: ASOF, years: 1, includeMonths: false }); // ephemeris ready
+    await buildTimelineAsync(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, years: 1, includeMonths: false }); // ephemeris ready
     const unknown = createTimeContext({ ...PROFILE, time: null, timeAccuracy: 'unknown' });
-    const tl = buildTimeline(unknown, { asOf: ASOF });
+    const tl = buildTimeline(unknown, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF });
     expect(tl.systems).toEqual(['numerology']);
     expect(tl.skippedSystems).toEqual([
       { system: 'bazi', reason: 'time_unknown' },
@@ -297,21 +297,21 @@ describe('buildTimeline behaviour', () => {
   });
 
   test('input validation', () => {
-    expect(() => buildTimeline(ctx, { asOf: '2026-02-30' })).toThrow();
-    expect(() => buildTimeline(ctx, { asOf: '2026/09/25' })).toThrow();
-    expect(() => buildTimeline(ctx, { asOf: ASOF, years: 0 })).toThrow();
+    expect(() => buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: '2026-02-30' })).toThrow();
+    expect(() => buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: '2026/09/25' })).toThrow();
+    expect(() => buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, years: 0 })).toThrow();
   });
 
   test('years option and performance', () => {
     const t0 = performance.now();
-    const tl = buildTimeline(ctx, { asOf: ASOF, systems: SYNC_SYSTEMS, years: 12 });
+    const tl = buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC_SYSTEMS, years: 12 });
     const ms = performance.now() - t0;
     console.log(`sync buildTimeline, 12 years + 12 months (warm): ${ms.toFixed(0)} ms`);
     expect(tl.years).toHaveLength(12);
     expect(tl.years[11].window.start).toBe('2037-01-01');
     expect(JSON.stringify(tl.years.slice(0, 5))).toBe(JSON.stringify(base.years));
     const t1 = performance.now();
-    buildTimeline(ctx, { asOf: ASOF, systems: SYNC_SYSTEMS });
+    buildTimeline(ctx, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: ASOF, systems: SYNC_SYSTEMS });
     const ms5 = performance.now() - t1;
     console.log(`sync buildTimeline, default (warm): ${ms5.toFixed(0)} ms`);
     expect(ms5).toBeLessThan(3000);

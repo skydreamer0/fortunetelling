@@ -42,7 +42,7 @@ describe('#44 web agreement wording and old reports', () => {
 
   test('real report Question replay preserves zero weights and custom theta/tau', () => {
     const report: any = analyze({ year: 1995, month: 7, day: 16, hour: 22, minute: 0, gender: 'male', cityId: 'tainan' }, { asOf: '2026-09-25' });
-    report.timeline = buildTimeline(report.timeContext, { asOf: report.asOf, systems: ['bazi', 'ziwei', 'numerology'],
+    report.timeline = buildTimeline(report.timeContext, { useTrueSolarTime: true, ziHourConvention: 'late', asOf: report.asOf, systems: ['bazi', 'ziwei', 'numerology'],
       systemWeights: { bazi: 0, ziwei: 0, numerology: 0 }, consensusThreshold: 0.8, conflictThreshold: 0.7 });
     const question = localQuestion(report, '2026轉職')!;
     expect(question.answer!.status).toBe('insufficient_evidence');

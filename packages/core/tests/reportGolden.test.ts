@@ -1,3 +1,4 @@
+import requiredOptionsDelta from './fixtures/reportGolden.v0.8.0.delta.json';
 import abstentionDelta from './fixtures/reportGolden.v0.7.0.delta.json';
 import dateOnlyDelta from './fixtures/reportGolden.v0.6.4.delta.json';
 import calendarValidationDelta from './fixtures/reportGolden.v0.6.3.delta.json';
@@ -18,7 +19,7 @@ test('analyze()/analyzeCompatibility() JSON matches the preserved golden plus ex
   assert.equal(new Bun.CryptoHasher('sha256').update(original).digest('hex'),
     '07ca1cd3b22f6699115c14d0dfb0a6c78742b445dac6efb4dba6c8ae2ca3b29f', 'Preserve the original v0.5.0 report fixture');
   const recorded = JSON.parse(original) as Record<string, unknown>;
-  for (const change of [...delta.changes, ...replayDelta.changes, ...specDelta.changes, ...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes, ...calendarValidationDelta.changes, ...dateOnlyDelta.changes, ...abstentionDelta.changes]) {
+  for (const change of [...delta.changes, ...replayDelta.changes, ...specDelta.changes, ...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes, ...calendarValidationDelta.changes, ...dateOnlyDelta.changes, ...abstentionDelta.changes, ...requiredOptionsDelta.changes]) {
     let parent = recorded;
     for (const key of change.path.slice(0, -1)) {
       const child = parent[key];

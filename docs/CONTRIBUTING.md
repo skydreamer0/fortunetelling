@@ -46,6 +46,22 @@ specHash 使用非密碼學 FNV-1a 64-bit；未來快取須同時比較完整 ca
 依賴升級時更新 `core/calculationDependencies.json`，完整版本及 integrity 必須符合 bun.lock；
 測試會檢查同步計算 dependency closure，不能手寫猜測值。詳細邊界見 D-042。
 
+## Timeline 有效設定（core 0.8.0）
+
+`buildTimeline`、`buildTimelineAsync` 及 `buildBacktestTimeline` 必須明確帶入
+`useTrueSolarTime: boolean` 和 canonical `ziHourConvention: 'late' | 'early'`。
+TypeScript 缺值不通過；JavaScript 缺值／undefined 會拋錯，即使 systems 為空也不例外。
+async 入口在初始化星曆前先檢查這兩個欄位。八字命名到紫微命名的映射仍由 core 明確處理。
+
+`analyze` 仍於既有入口展開使用者未選的設定，再傳有效值到 Timeline；Web 問事與回驗
+沿用報告記錄並維持缺漏 metadata 不重算。不要在重播歷史報告時自行補 true/late。
+Profile v1 的 MCP／export 入口沒有設定欄位，本版只明傳它們既有的 trueSolar/late 政策，
+沒有新增可切換設定或跨入口快照。ChartSnapshot／snapshotId、姓名 identity 與 Report 下一版
+相容策略仍屬 #51 後續契約；本切片不提供舊快照重播保證。
+
+這是 0.x 公開 API 的必填參數收緊，故 core 0.7.0 → 0.8.0；Report7／Timeline2／
+BacktestTimeline1／Profile1 的輸出形狀不變。完整有效輸入的計算結果不應因此變動。
+
 ## 新增一個命理系統（引擎外掛契約）
 
 新增系統**不改動核心**，五步：

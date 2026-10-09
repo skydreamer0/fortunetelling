@@ -12,6 +12,16 @@ const ctx = createTimeContext(profile);
 const asOf = '2026-07-11';
 
 describe('Issue #51: timeline settings are explicit at every entry', () => {
+  test('TypeScript requires both effective settings on timeline and backtest options', () => {
+    const optional: [
+      {} extends Pick<TimelineOptions, 'useTrueSolarTime'> ? true : false,
+      {} extends Pick<TimelineOptions, 'ziHourConvention'> ? true : false,
+      {} extends Pick<BacktestTimelineOptions, 'useTrueSolarTime'> ? true : false,
+      {} extends Pick<BacktestTimelineOptions, 'ziHourConvention'> ? true : false,
+    ] = [false, false, false, false];
+    expect(optional).toEqual([false, false, false, false]);
+  });
+
   for (const [label, incomplete, missing] of [
     ['both omitted', {}, 'useTrueSolarTime'],
     ['clock omitted', { ziHourConvention: 'late' }, 'useTrueSolarTime'],
@@ -20,12 +30,12 @@ describe('Issue #51: timeline settings are explicit at every entry', () => {
     ['zi convention undefined', { useTrueSolarTime: false, ziHourConvention: undefined }, 'ziHourConvention'],
   ] as const) {
     test(`sync rejects ${label}, including an empty systems request`, () => {
-      expect(() => buildTimeline(ctx, { asOf, systems: [], ...incomplete } as TimelineOptions)).toThrow(missing);
+      expect(() => buildTimeline(ctx, { asOf, systems: [], ...incomplete } as unknown as TimelineOptions)).toThrow(missing);
     });
     test(`backtest rejects ${label} instead of forwarding a hidden default`, () => {
       expect(() => buildBacktestTimeline(ctx, {
         asOf, fromYear: 2026, toYear: 2026, systems: [], ...incomplete,
-      } as BacktestTimelineOptions)).toThrow(missing);
+      } as unknown as BacktestTimelineOptions)).toThrow(missing);
     });
   }
 
