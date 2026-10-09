@@ -277,7 +277,7 @@ describe('run-local immutable bazi natal basis', () => {
 
   test('serialized pure natal basis is identical across host timezones', async () => {
     await factory();
-    const base = new URL('../src/', import.meta.url).pathname;
+    const base = new URL('../src/', import.meta.url).href;
     const script = `import { resolveCalculationSpec } from ${JSON.stringify(base + 'core/calculationSpec.ts')};
       import { createTimeContext } from ${JSON.stringify(base + 'time/createTimeContext.ts')};
       import { createBaziNatalBasisProvider } from ${JSON.stringify(base + 'calculators/bazi/natalBasis.ts')};
