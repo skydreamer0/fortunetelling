@@ -1,0 +1,233 @@
+name: Windows calendar acceptance
+
+# Bounded #54 acceptance run. Broader DST/leap-month/configuration fixtures remain open.
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - '.github/workflows/windows-calendar.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  windows-calendar:
+    name: Native Windows focused regression
+    runs-on: windows-2022
+    timeout-minutes: 10
+    env:
+      EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+      EVENT_SHA: ${{ github.sha }}
+      NO_COLOR: '1'
+    steps:
+      - name: Checkout exact PR head in an encoded path
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: 'checkout 空間 # %'
+          persist-credentials: false
+
+      - name: Setup pinned Bun without cache
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.2'
+          no-cache: true
+
+      - name: Verify controls and all six unchanged suites
+        shell: pwsh
+        working-directory: 'checkout 空間 # %'
+        run: |
+          $script = Join-Path $env:RUNNER_TEMP 'fortune-windows-calendar.ts'
+          @'
+          import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+          import { release, version } from 'node:os';
+          import { basename, join } from 'node:path';
+          import { fileURLToPath, pathToFileURL } from 'node:url';
+
+          const statePath = join(process.env.RUNNER_TEMP!, 'fortune-windows-calendar.json');
+          const suites = [
+            ['baziNatalBasis', 14, 'e7dbdaad058a7b5ba892b9cb5a6aefc25ecde620'],
+            ['calculationSpec', 19, '583416e5e15107ba578b47f7ac3f1478cdbef9e4'],
+            ['calendarHostTimezone', 7, '6419299a62e7b6892b3f22ccc1036cdcfa0b6de0'],
+            ['dateOnlyCalendar', 8, '986d1b59d0cb25d659b6386fd0085848a1ed2fc7'],
+            ['ziweiAsOfTimezone', 5, '6a3672c3867666f44d809af15edb30104ed12741'],
+            ['subprocessModuleUrl', 2, 'da2012b3e465321c6ccf59ce63cae164e839f11c'],
+          ] as const;
+          const zones = [['UTC', 0], ['Asia/Taipei', -480], ['America/New_York', 300], ['Pacific/Apia', -780]] as const;
+          const state: { evidence: Record<string, unknown>; stages: Record<string, any> } = {
+            evidence: {
+              imageOS: process.env.ImageOS, imageVersion: process.env.ImageVersion,
+              runnerOS: process.env.RUNNER_OS, osRelease: release(), osVersion: version(),
+              platform: process.platform, arch: process.arch, bunVersion: Bun.version,
+              bunRevision: Bun.revision, executable: process.execPath, cwd: process.cwd(),
+              expectedHead: process.env.EXPECTED_HEAD, eventSHA: process.env.EVENT_SHA,
+            },
+            stages: {},
+          };
+          const save = () => writeFileSync(statePath, JSON.stringify(state, null, 2) + '\n');
+          const require = (condition: unknown, message: string) => { if (!condition) throw new Error(message); };
+          const sha256 = (path: string) => new Bun.CryptoHasher('sha256').update(readFileSync(path)).digest('hex');
+          function command(cmd: string[], env = process.env, timeout = 120000) {
+            const started = performance.now();
+            const child = Bun.spawnSync(cmd, { cwd: process.cwd(), env, stdin: 'ignore', stdout: 'pipe', stderr: 'pipe', timeout, maxBuffer: 8 * 1024 * 1024 });
+            const result = {
+              cmd, exitCode: child.exitCode, signal: child.signalCode,
+              timedOut: child.exitedDueToTimeout ?? false, maxBufferExceeded: child.exitedDueToMaxBuffer ?? false,
+              durationMs: Math.round(performance.now() - started),
+              stdout: child.stdout.toString(), stderr: child.stderr.toString(),
+            };
+            console.log(JSON.stringify(result));
+            return result;
+          }
+          function normalExit(result: ReturnType<typeof command>, expected = 0) {
+            require(result.exitCode === expected && !result.signal && !result.timedOut && !result.maxBufferExceeded,
+              `Expected normal exit ${expected}, got ${JSON.stringify(result)}`);
+          }
+          function git(...args: string[]) {
+            const result = command(['git', ...args]); normalExit(result); return result.stdout.trim();
+          }
+          function stage(name: string, work: (record: Record<string, any>) => void, blocked = false) {
+            const started = performance.now();
+            const record: Record<string, any> = { status: 'RUNNING' };
+            state.stages[name] = record; save();
+            try { work(record); record.status = 'PASS'; }
+            catch (error) {
+              record.status = blocked ? 'BLOCKED' : 'FAIL';
+              record.error = error instanceof Error ? error.message : String(error);
+            }
+            record.durationMs = Math.round(performance.now() - started);
+            save(); console.log(name, JSON.stringify(record));
+            return record.status === 'PASS';
+          }
+          save();
+          console.log('Runtime evidence', JSON.stringify(state.evidence));
+          const native = stage('native-runtime', () => {
+            require(process.platform === 'win32' && process.arch === 'x64', 'Native win32/x64 required');
+            require(Bun.version === '1.4.2', 'Bun 1.4.2 required');
+            require(/^[A-Za-z]:\\/.test(process.cwd()), 'Actual Windows drive-letter working directory required');
+            require(basename(process.cwd()) === 'checkout 空間 # %', 'Encoded checkout path required');
+          }, true);
+          let lockBefore = '';
+          const provenance = native && stage('source-provenance', record => {
+            record.head = git('rev-parse', 'HEAD');
+            record.tree = git('rev-parse', 'HEAD^{tree}');
+            require(/^[0-9a-f]{40}$/.test(process.env.EXPECTED_HEAD ?? '') && record.head === process.env.EXPECTED_HEAD,
+              'Checkout must match the exact PR head, not the merge/event SHA');
+            lockBefore = sha256('bun.lock'); record.lockSHA256 = lockBefore;
+            record.testBlobs = suites.map(([name, , expectedBlob]) => {
+              const path = `packages/core/tests/${name}.test.ts`;
+              const blob = git('rev-parse', `HEAD:${path}`);
+              const workingBlob = git('hash-object', '--path', path, path);
+              require(blob === expectedBlob && workingBlob === expectedBlob, `Unchanged test blob required: ${path}`);
+              return { path, blob, workingBlob };
+            });
+            require(git('status', '--porcelain', '--untracked-files=no') === '', 'Tracked source must be clean');
+          }, true);
+          const installed = provenance && stage('frozen-install', record => {
+            record.result = command([process.execPath, 'install', '--frozen-lockfile', '--ignore-scripts']);
+            normalExit(record.result);
+            require(sha256('bun.lock') === lockBefore, 'Frozen install changed the lockfile');
+          }, true);
+          if (native) {
+            for (const [TZ, offset] of zones) stage(`tz:${TZ}`, record => {
+              const probe = `console.log(JSON.stringify({ zone: process.env.TZ, offset: new Date('2026-01-15T00:00:00Z').getTimezoneOffset() }));`;
+              record.expectedOffset = offset;
+              record.result = command([process.execPath, '--eval', probe], { ...process.env, TZ }, 15000);
+              normalExit(record.result);
+              const observed = JSON.parse(record.result.stdout.trim()); record.observed = observed;
+              require(observed.zone === TZ && observed.offset === offset,
+                `TZ not operative: ${TZ} expected offset ${offset}; calendar equality is not acceptance evidence`);
+            }, true);
+            stage('path-controls', record => {
+              const root = mkdtempSync(join(process.env.RUNNER_TEMP!, 'fortune-path-'));
+              try {
+                const directory = join(root, 'checkout 空間 # %'); mkdirSync(directory);
+                const modulePath = join(directory, 'fixture.ts');
+                const marker = 'fortune-windows-portable-import';
+                writeFileSync(modulePath, `export const marker = ${JSON.stringify(marker)};\n`);
+                const url = pathToFileURL(modulePath);
+                record.modulePath = modulePath; record.href = url.href; record.pathname = url.pathname;
+                require(fileURLToPath(url) === modulePath, 'file URL must round-trip to the actual Windows path');
+                record.controls = [];
+                for (const [kind, specifier] of [['href', url.href], ['fileURLToPath', fileURLToPath(url)], ['pathname', url.pathname]]) {
+                  const script = `import { marker } from ${JSON.stringify(specifier)}; console.log(marker);`;
+                  const result = command([process.execPath, '--eval', script], process.env, 15000);
+                  record.controls.push({ kind, specifier, ...result });
+                }
+                for (const positive of record.controls.slice(0, 2)) {
+                  normalExit(positive); require(positive.stdout.trim() === marker, `${positive.kind} marker mismatch`);
+                }
+                const negative = record.controls[2];
+                require(Number.isInteger(negative.exitCode) && negative.exitCode > 0 && !negative.signal && !negative.timedOut && !negative.maxBufferExceeded,
+                  'pathname control must fail normally, not time out or fail to spawn');
+                require(negative.stderr.includes('Cannot find module') && negative.stderr.includes(url.pathname),
+                  'pathname control must report Cannot find module naming the malformed pathname');
+                require(!negative.stdout.includes(marker), 'Malformed pathname unexpectedly imported the module');
+              } finally { rmSync(root, { recursive: true, force: true }); }
+            });
+          }
+          if (installed) {
+            for (const [name, expectedPass] of suites) stage(`suite:${name}`, record => {
+              record.expectedPass = expectedPass;
+              record.result = command([process.execPath, 'test', `packages/core/tests/${name}.test.ts`]);
+              const output = (record.result.stdout + '\n' + record.result.stderr).replace(/\x1b\[[0-9;]*m/g, '');
+              const count = (label: string, required = true) => {
+                const matches = [...output.matchAll(new RegExp(`^\\s*(\\d+) ${label}\\s*$`, 'gm'))];
+                require(matches.length === 1 || (!required && matches.length === 0), `Missing or ambiguous ${label} summary`);
+                return matches.length ? Number(matches[0][1]) : 0;
+              };
+              record.counts = { pass: count('pass'), fail: count('fail'), skip: count('skip', false), todo: count('todo', false) };
+              normalExit(record.result);
+              require(record.counts.pass === expectedPass && record.counts.fail === 0 && record.counts.skip === 0 && record.counts.todo === 0,
+                `Expected ${expectedPass} pass, zero fail/skip/todo; got ${JSON.stringify(record.counts)}`);
+            });
+            stage('source-unchanged', record => {
+              record.lockSHA256 = sha256('bun.lock');
+              require(record.lockSHA256 === lockBefore, 'Lockfile changed during acceptance');
+              require(git('status', '--porcelain', '--untracked-files=no') === '', 'Tracked source changed during acceptance');
+            });
+          }
+          const requiredStages = ['native-runtime', 'source-provenance', 'frozen-install', ...zones.map(([zone]) => `tz:${zone}`),
+            'path-controls', ...suites.map(([name]) => `suite:${name}`), 'source-unchanged'];
+          const accepted = stage('aggregate', record => {
+            record.missing = requiredStages.filter(name => !state.stages[name]);
+            record.notPassed = requiredStages.filter(name => state.stages[name]?.status !== 'PASS');
+            record.pass = suites.reduce((total, [name]) => total + (state.stages[`suite:${name}`]?.counts?.pass ?? 0), 0);
+            require(record.missing.length === 0 && record.notPassed.length === 0 && record.pass === 55,
+              `Windows focused acceptance incomplete: ${JSON.stringify(record)}`);
+          });
+          console.log(accepted ? 'Windows focused regression: 55 pass, zero fail/skip/todo. #54 remains open.'
+            : 'Windows focused regression NOT accepted. See FAIL/BLOCKED/NOT RUN stages; #54 remains open.');
+          process.exitCode = accepted ? 0 : 1;
+          '@ | Set-Content -LiteralPath $script -Encoding utf8
+          & bun $script
+          exit $LASTEXITCODE
+
+      - name: Always print acceptance evidence and unrun stages
+        if: ${{ always() }}
+        shell: pwsh
+        run: |
+          $path = Join-Path $env:RUNNER_TEMP 'fortune-windows-calendar.json'
+          $stages = @(
+            'native-runtime', 'source-provenance', 'frozen-install',
+            'tz:UTC', 'tz:Asia/Taipei', 'tz:America/New_York', 'tz:Pacific/Apia', 'path-controls',
+            'suite:baziNatalBasis', 'suite:calculationSpec', 'suite:calendarHostTimezone',
+            'suite:dateOnlyCalendar', 'suite:ziweiAsOfTimezone', 'suite:subprocessModuleUrl',
+            'source-unchanged', 'aggregate'
+          )
+          $evidence = $null
+          if (Test-Path -LiteralPath $path) {
+            try {
+              $raw = Get-Content -LiteralPath $path -Raw
+              Write-Output $raw
+              $evidence = $raw | ConvertFrom-Json -AsHashtable -ErrorAction Stop
+            } catch {
+              Write-Output 'Evidence file is incomplete or unreadable; unproven stages are NOT RUN.'
+            }
+          }
+          foreach ($name in $stages) {
+            $status = if ($null -ne $evidence -and $evidence.stages.ContainsKey($name)) { $evidence.stages[$name].status } else { 'NOT RUN' }
+            if ($status -eq 'RUNNING') { $status = 'INCOMPLETE' }
+            Write-Output "${name}: ${status}"
+          }
+          Write-Output 'Focused Windows evidence only. Full repository Windows test/build and broader #54 fixtures are not established.'
