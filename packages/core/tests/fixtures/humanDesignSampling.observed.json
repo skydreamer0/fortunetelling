@@ -1,0 +1,2917 @@
+{
+  "description": "Observed step-halving diagnostics at bf14d736; generated from real Swiss Ephemeris 2.10.03 Moshier. This fixture records current error and is NOT an astronomical truth oracle or a precision acceptance threshold. Crossing estimates use shortest-arc linear interpolation.",
+  "profile": {
+    "date": "1990-01-01",
+    "time": "12:00",
+    "timeAccuracy": "exact",
+    "gender": "female",
+    "birthplace": {
+      "label": "Synthetic Taipei",
+      "lat": 25.033,
+      "lng": 121.5654,
+      "timezone": "Asia/Taipei"
+    }
+  },
+  "cases": [
+    {
+      "window": {
+        "grain": "year",
+        "start": "2024-01-01",
+        "end": "2024-12-31"
+      },
+      "node": "true",
+      "stepDays": [15,7.5],
+      "sampleCounts": [26,50],
+      "signalCount": 25,
+      "planets": [
+        {
+          "planet": "northNode",
+          "coarseGates": [17,21,25,42,51],
+          "fineGates": [17,21,25,42,51],
+          "coarseCrossingSequence": ["42>51","51>21","21>17","17>25"],
+          "fineCrossingSequence": ["42>51","51>21","21>17","17>25"],
+          "crossingShiftHours": [102.5378536619246,98.5380031876266,39.17739914730191,45.55813459306955]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [18,32,46,48,57],
+          "fineGates": [18,32,46,48,57],
+          "coarseCrossingSequence": ["32>57","57>48","48>18","18>46"],
+          "fineCrossingSequence": ["32>57","57>48","48>18","18>46"],
+          "crossingShiftHours": [102.5378536619246,98.5380031876266,39.17739914730191,45.55813459306955]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [2,8,16,20,23,24,27,35,45],
+          "fineGates": [2,8,16,20,23,24,27,35,45],
+          "coarseCrossingSequence": ["27>24","24>2","2>23","23>8","8>20","20>16","16>35","35>45","45>35"],
+          "fineCrossingSequence": ["27>24","24>2","2>23","23>8","8>20","20>16","16>35","35>45","45>35"],
+          "crossingShiftHours": [7.906894952058792,3.474930826574564,2.4049908444285393,0.19230404868721962,0.13263661041855812,1.5914733074605465,1.3234051018953323,5.293212912976742,1.8178016357123852]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [22,37,55,63],
+          "fineGates": [22,37,55,63],
+          "coarseCrossingSequence": ["55>37","37>63","63>22","22>63"],
+          "fineCrossingSequence": ["55>37","37>63","63>22","22>63"],
+          "crossingShiftHours": [2.9784752167761326,0.35657744854688644,7.190056521445513,1.6158322915434837]
+        },
+        {
+          "planet": "uranus",
+          "coarseGates": [8,23],
+          "fineGates": [8,23],
+          "coarseCrossingSequence": ["23>8","8>23"],
+          "fineCrossingSequence": ["23>8","8>23"],
+          "crossingShiftHours": [3.0503106638789177,3.8712556958198547]
+        },
+        {
+          "planet": "neptune",
+          "coarseGates": [25,36],
+          "fineGates": [25,36],
+          "coarseCrossingSequence": ["36>25","25>36"],
+          "fineCrossingSequence": ["36>25","25>36"],
+          "crossingShiftHours": [1.9509039223194122,1.862614419311285]
+        },
+        {
+          "planet": "pluto",
+          "coarseGates": [41,60],
+          "fineGates": [41,60],
+          "coarseCrossingSequence": ["60>41","41>60"],
+          "fineCrossingSequence": ["60>41","41>60"],
+          "crossingShiftHours": [9.952294930815697,25.982828456908464]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "year",
+        "start": "2025-01-01",
+        "end": "2025-12-31"
+      },
+      "node": "true",
+      "stepDays": [15,7.5],
+      "sampleCounts": [26,50],
+      "signalCount": 14,
+      "planets": [
+        {
+          "planet": "northNode",
+          "coarseGates": [22,25,36,37,63],
+          "fineGates": [22,25,36,37,63],
+          "coarseCrossingSequence": ["25>36","36>22","22>63","63>37"],
+          "fineCrossingSequence": ["25>36","36>22","22>63","63>37"],
+          "crossingShiftHours": [4.895942721515894,19.003276884555817,45.72699376568198,2.708774261176586]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [6,40,46,47,64],
+          "fineGates": [6,40,46,47,64],
+          "coarseCrossingSequence": ["46>6","6>47","47>64","64>40"],
+          "fineCrossingSequence": ["46>6","6>47","47>64","64>40"],
+          "crossingShiftHours": [4.895942721515894,19.003276884555817,45.72699376568198,2.708774261176586]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [12,15,16,35,39,45,52,53,62],
+          "fineGates": [12,15,16,35,39,45,52,53,62],
+          "coarseCrossingSequence": ["35>16","16>35","35>45","45>12","12>15","15>52","52>39","39>53","53>62"],
+          "fineCrossingSequence": ["35>16","16>35","35>45","45>12","12>15","15>52","52>39","39>53","53>62"],
+          "crossingShiftHours": [16.851965568959713,117.50846817344427,5.767969843000174,2.446505796164274,0.24479634314775467,0.026228751987218857,1.561546090990305,2.030282210558653,7.015309430658817]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [22,25,36,63],
+          "fineGates": [22,25,36,63],
+          "coarseCrossingSequence": ["63>22","22>36","36>25","25>36"],
+          "fineCrossingSequence": ["63>22","22>36","36>25","25>36"],
+          "crossingShiftHours": [2.5290748067200184,0.009428456425666809,3.9432864524424076,0.15692007914185524]
+        },
+        {
+          "planet": "uranus",
+          "coarseGates": [8,20,23],
+          "fineGates": [8,20,23],
+          "coarseCrossingSequence": ["23>8","8>20","20>8"],
+          "fineCrossingSequence": ["23>8","8>20","20>8"],
+          "crossingShiftHours": [7.603924915194511,5.004335347563028,4.8739325031638145]
+        },
+        {
+          "planet": "neptune",
+          "coarseGates": [25,36],
+          "fineGates": [25,36],
+          "coarseCrossingSequence": ["36>25"],
+          "fineCrossingSequence": ["36>25"],
+          "crossingShiftHours": [4.673096872866154]
+        },
+        {
+          "planet": "pluto",
+          "coarseGates": [41,60],
+          "fineGates": [41,60],
+          "coarseCrossingSequence": ["60>41","41>60","60>41"],
+          "fineCrossingSequence": ["60>41","41>60","60>41"],
+          "crossingShiftHours": [0.014101412147283554,6.198125392198563,9.335225008428097]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "year",
+        "start": "2026-01-01",
+        "end": "2026-12-31"
+      },
+      "node": "true",
+      "stepDays": [15,7.5],
+      "sampleCounts": [26,50],
+      "signalCount": 14,
+      "planets": [
+        {
+          "planet": "northNode",
+          "coarseGates": [30,37,49,55],
+          "fineGates": [30,37,49,55],
+          "coarseCrossingSequence": ["37>55","55>30","30>49"],
+          "fineCrossingSequence": ["37>55","55>30","30>49"],
+          "crossingShiftHours": [64.23963027074933,126.01654139533639,32.58955790475011]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [4,29,40,59],
+          "fineGates": [4,29,40,59],
+          "coarseCrossingSequence": ["40>59","59>29","29>4"],
+          "fineCrossingSequence": ["40>59","59>29","29>4"],
+          "crossingShiftHours": [64.23963027074933,126.01654139533639,32.58955790475011]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [4,7,29,31,33,53,56,62],
+          "fineGates": [4,7,29,31,33,39,53,56,62],
+          "coarseCrossingSequence": ["62>53","53>62","62>56","56>31","31>33","33>7","7>4","4>29"],
+          "fineCrossingSequence": ["62>53","53>39","39>53","53>62","62>56","56>31","31>33","33>7","7>4","4>29"],
+          "crossingShiftHours": null
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17,21,25,36],
+          "fineGates": [17,21,25,36],
+          "coarseCrossingSequence": ["36>25","25>17","17>21","21>17"],
+          "fineCrossingSequence": ["36>25","25>17","17>21","21>17"],
+          "crossingShiftHours": [3.7244158387184143,0.014900397509336472,2.09939406439662,1.3632688745856285]
+        },
+        {
+          "planet": "uranus",
+          "coarseGates": [8,20],
+          "fineGates": [8,20],
+          "coarseCrossingSequence": ["8>20"],
+          "fineCrossingSequence": ["8>20"],
+          "crossingShiftHours": [1.4678664095699787]
+        },
+        {
+          "planet": "neptune",
+          "coarseGates": [17,25],
+          "fineGates": [17,25],
+          "coarseCrossingSequence": ["25>17","17>25"],
+          "fineCrossingSequence": ["25>17","17>25"],
+          "crossingShiftHours": [12.706854410469532,8.845937602221966]
+        },
+        {
+          "planet": "pluto",
+          "coarseGates": [41],
+          "fineGates": [41],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "year",
+        "start": "2027-01-01",
+        "end": "2027-12-31"
+      },
+      "node": "true",
+      "stepDays": [15,7.5],
+      "sampleCounts": [26,50],
+      "signalCount": 12,
+      "planets": [
+        {
+          "planet": "northNode",
+          "coarseGates": [13,19,41,49],
+          "fineGates": [13,19,41,49],
+          "coarseCrossingSequence": ["49>13","13>19","19>41"],
+          "fineCrossingSequence": ["49>13","13>19","19>41"],
+          "crossingShiftHours": [11.742604795843363,73.39495168626308,51.03900235891342]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [4,7,31,33],
+          "fineGates": [4,7,31,33],
+          "coarseCrossingSequence": ["4>7","7>33","33>31"],
+          "fineCrossingSequence": ["4>7","7>33","33>31"],
+          "crossingShiftHours": [11.742604795843363,73.39495168626308,51.03900235891342]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [4,6,7,29,40,47,59,64],
+          "fineGates": [4,6,7,29,40,47,59,64],
+          "coarseCrossingSequence": ["29>4","4>7","7>4","4>29","29>59","59>40","40>64","64>47","47>6"],
+          "fineCrossingSequence": ["29>4","4>7","7>4","4>29","29>59","59>40","40>64","64>47","47>6"],
+          "crossingShiftHours": [8.738102171570063,14.27014372497797,4.728473503142595,2.032400518655777,1.1327821165323257,0.5664977766573429,0.7187683582305908,0.77806481346488,3.9085493981838226]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [3,17,21,42,51],
+          "fineGates": [3,17,21,42,51],
+          "coarseCrossingSequence": ["17>21","21>51","51>42","42>3","3>42"],
+          "fineCrossingSequence": ["17>21","21>51","51>42","42>3","3>42"],
+          "crossingShiftHours": [10.409282114356756,0.2665596529841423,0.6397323869168758,2.3883582428097725,9.72380018234253]
+        },
+        {
+          "planet": "uranus",
+          "coarseGates": [16,20],
+          "fineGates": [16,20],
+          "coarseCrossingSequence": ["20>16"],
+          "fineCrossingSequence": ["20>16"],
+          "crossingShiftHours": [0.2565150707960129]
+        },
+        {
+          "planet": "neptune",
+          "coarseGates": [17,25],
+          "fineGates": [17,25],
+          "coarseCrossingSequence": ["25>17","17>25","25>17"],
+          "fineCrossingSequence": ["25>17","17>25","25>17"],
+          "crossingShiftHours": [0.04681119695305824,37.37717715650797,78.85070085525513]
+        },
+        {
+          "planet": "pluto",
+          "coarseGates": [41],
+          "fineGates": [41],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "year",
+        "start": "2028-01-01",
+        "end": "2028-12-31"
+      },
+      "node": "true",
+      "stepDays": [15,7.5],
+      "sampleCounts": [26,50],
+      "signalCount": 16,
+      "planets": [
+        {
+          "planet": "northNode",
+          "coarseGates": [38,41,54,60,61],
+          "fineGates": [38,41,54,60,61],
+          "coarseCrossingSequence": ["41>60","60>61","61>54","54>38"],
+          "fineCrossingSequence": ["41>60","60>61","61>54","54>38"],
+          "crossingShiftHours": [146.36082650721073,10.923219881951809,16.37472539395094,116.63679576292634]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [31,39,53,56,62],
+          "fineGates": [31,39,53,56,62],
+          "coarseCrossingSequence": ["31>56","56>62","62>53","53>39"],
+          "fineCrossingSequence": ["31>56","56>62","62>53","53>39"],
+          "crossingShiftHours": [146.36082650721073,10.923219881951809,16.37472539395094,116.63679576292634]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [6,18,32,46,47,48,57],
+          "fineGates": [6,18,32,46,47,48,57],
+          "coarseCrossingSequence": ["6>47","47>6","6>46","46>18","18>48","48>57","57>32"],
+          "fineCrossingSequence": ["6>47","47>6","6>46","46>18","18>48","48>57","57>32"],
+          "crossingShiftHours": [0.9966263696551323,0.14366556331515312,0.9101164229214191,0.03038214147090912,0.09490940719842911,2.359568450599909,5.695391044020653]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [3,24,27,42],
+          "fineGates": [3,24,27,42],
+          "coarseCrossingSequence": ["42>3","3>27","27>24","24>27"],
+          "fineCrossingSequence": ["42>3","3>27","27>24","24>27"],
+          "crossingShiftHours": [1.0088812708854675,0.02272983267903328,2.281566873192787,1.2143615372478962]
+        },
+        {
+          "planet": "uranus",
+          "coarseGates": [16,35],
+          "fineGates": [16,35],
+          "coarseCrossingSequence": ["16>35","35>16"],
+          "fineCrossingSequence": ["16>35","35>16"],
+          "crossingShiftHours": [2.1728766225278378,1.03124113753438]
+        },
+        {
+          "planet": "neptune",
+          "coarseGates": [17],
+          "fineGates": [17],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "pluto",
+          "coarseGates": [19,41],
+          "fineGates": [19,41],
+          "coarseCrossingSequence": ["41>19","19>41"],
+          "fineCrossingSequence": ["41>19","19>41"],
+          "crossingShiftHours": [3.5788986794650555,0.12428406625986099]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-01-01",
+        "end": "2026-01-31"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 8,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [19,38,41,54,60,61],
+          "fineGates": [19,38,41,54,60,61],
+          "coarseCrossingSequence": ["38>54","54>61","61>60","60>41","41>19"],
+          "fineCrossingSequence": ["38>54","54>61","61>60","60>41","41>19"],
+          "crossingShiftHours": [0.00009780004620552063,0.000040411949157714844,0.001171644777059555,0.0001817755401134491,0.0023137852549552917]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [31,33,39,53,56,62],
+          "fineGates": [31,33,39,53,56,62],
+          "coarseCrossingSequence": ["39>53","53>62","62>56","56>31","31>33"],
+          "fineCrossingSequence": ["39>53","53>62","62>56","56>31","31>33"],
+          "crossingShiftHours": [0.00009780004620552063,0.000040411949157714844,0.001171644777059555,0.0001817755401134491,0.0023137852549552917]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [37],
+          "fineGates": [37],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [40],
+          "fineGates": [40],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [10,13,19,38,41,49,54,58,60,61],
+          "fineGates": [10,13,19,38,41,49,54,58,60,61],
+          "coarseCrossingSequence": ["10>58","58>38","38>54","54>61","61>60","60>41","41>19","19>13","13>49"],
+          "fineCrossingSequence": ["10>58","58>38","38>54","54>61","61>60","60>41","41>19","19>13","13>49"],
+          "crossingShiftHours": [0.02879445254802704,0.07826327160000801,0.11970659717917442,0.08421014249324799,0.04730985313653946,0.011315211653709412,0.018945816904306412,0.034806445240974426,0]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [13,19,38,41,54,58,60,61],
+          "fineGates": [13,19,38,41,54,58,60,61],
+          "coarseCrossingSequence": ["58>38","38>54","54>61","61>60","60>41","41>19","19>13"],
+          "fineCrossingSequence": ["58>38","38>54","54>61","61>60","60>41","41>19","19>13"],
+          "crossingShiftHours": [0.00018430128693580627,0.0008264444768428802,0.00008931756019592285,0.0011852346360683441,0.00027140602469444275,0.003710668534040451,0.00023379921913146973]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [38,41,54,60,61],
+          "fineGates": [38,41,54,60,61],
+          "coarseCrossingSequence": ["38>54","54>61","61>60","60>41"],
+          "fineCrossingSequence": ["38>54","54>61","61>60","60>41"],
+          "crossingShiftHours": [0.002604614943265915,0.02165944129228592,0.003290422260761261,0.008851345628499985]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [53,62],
+          "fineGates": [53,62],
+          "coarseCrossingSequence": ["62>53"],
+          "fineCrossingSequence": ["62>53"],
+          "crossingShiftHours": [0.09645695239305496]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [25,36],
+          "fineGates": [25,36],
+          "coarseCrossingSequence": ["36>25"],
+          "fineCrossingSequence": ["36>25"],
+          "crossingShiftHours": [0.011711105704307556]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-02-01",
+        "end": "2026-02-28"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,20],
+      "signalCount": 15,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [13,19,30,37,49,55],
+          "fineGates": [13,19,30,37,49,55],
+          "coarseCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "fineCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "crossingShiftHours": [0.005989518016576767,0.00310613214969635,0.0013896524906158447,0.0016501955687999725,0.005943585187196732]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [4,7,29,33,40,59],
+          "fineGates": [4,7,29,33,40,59],
+          "coarseCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "fineCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "crossingShiftHours": [0.005989518016576767,0.00310613214969635,0.0013896524906158447,0.0016501955687999725,0.005943585187196732]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [37],
+          "fineGates": [37],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [40],
+          "fineGates": [40],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [22,30,37,49,55,63],
+          "fineGates": [22,30,37,49,55,63],
+          "coarseCrossingSequence": ["49>30","30>55","55>37","37>63","63>22"],
+          "fineCrossingSequence": ["49>30","30>55","55>37","37>63","63>22"],
+          "crossingShiftHours": [0.003575596958398819,0.004187911748886108,0.11917198821902275,0.6044377684593201,1.747802171856165]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [13,22,30,36,37,49,55,63],
+          "fineGates": [13,22,30,36,37,49,55,63],
+          "coarseCrossingSequence": ["13>49","49>30","30>55","55>37","37>63","63>22","22>36"],
+          "fineCrossingSequence": ["13>49","49>30","30>55","55>37","37>63","63>22","22>36"],
+          "crossingShiftHours": [0.001795157790184021,0.0027432963252067566,0.0016869083046913147,0.0037398599088191986,0.0025798268616199493,0.005373381078243256,0]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [13,19,30,41,49],
+          "fineGates": [13,19,30,41,49],
+          "coarseCrossingSequence": ["41>19","19>13","13>49","49>30"],
+          "fineCrossingSequence": ["41>19","19>13","13>49","49>30"],
+          "crossingShiftHours": [0.008758652955293655,0.004896987229585648,0.0015188232064247131,0.001959756016731262]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [53],
+          "fineGates": [53],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [25],
+          "fineGates": [25],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-03-01",
+        "end": "2026-03-31"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 7,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [17,21,22,25,36,37,63],
+          "fineGates": [17,21,22,25,36,37,63],
+          "coarseCrossingSequence": ["37>63","63>22","22>36","36>25","25>17","17>21"],
+          "fineCrossingSequence": ["37>63","63>22","22>36","36>25","25>17","17>21"],
+          "crossingShiftHours": [0.009140510112047195,0.004681907594203949,0.001858580857515335,0.0013895854353904724,0.005444727838039398,0.00925593450665474]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [6,18,40,46,47,48,64],
+          "fineGates": [6,18,40,46,47,48,64],
+          "coarseCrossingSequence": ["40>64","64>47","47>6","6>46","46>18","18>48"],
+          "fineCrossingSequence": ["40>64","64>47","47>6","6>46","46>18","18>48"],
+          "crossingShiftHours": [0.009140510112047195,0.004681907594203949,0.001858580857515335,0.0013895854353904724,0.005444727838039398,0.00925593450665474]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [37],
+          "fineGates": [37],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [40],
+          "fineGates": [40],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [22,37,63],
+          "fineGates": [22,37,63],
+          "coarseCrossingSequence": ["22>63","63>37","37>63"],
+          "fineCrossingSequence": ["22>63","63>37","37>63"],
+          "crossingShiftHours": [0.03546475991606712,0.9637669622898102,1.4614413790404797]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [3,17,21,25,36,42,51],
+          "fineGates": [3,17,21,25,36,42,51],
+          "coarseCrossingSequence": ["36>25","25>17","17>21","21>51","51>42","42>3"],
+          "fineCrossingSequence": ["36>25","25>17","17>21","21>51","51>42","42>3"],
+          "crossingShiftHours": [0.00618400052189827,0.0025407783687114716,0.007149092853069305,0.002607397735118866,0.009599681943655014,0.0024736784398555756]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [22,30,36,37,55,63],
+          "fineGates": [22,30,36,37,55,63],
+          "coarseCrossingSequence": ["30>55","55>37","37>63","63>22","22>36"],
+          "fineCrossingSequence": ["30>55","55>37","37>63","63>22","22>36"],
+          "crossingShiftHours": [0.0006016641855239868,0.00009963288903236389,0.004825059324502945,0.005440559238195419,0]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [39,53],
+          "fineGates": [39,53],
+          "coarseCrossingSequence": ["53>39","39>53"],
+          "fineCrossingSequence": ["53>39","39>53"],
+          "crossingShiftHours": [1.8830443806946278,0.28184903785586357]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17,25],
+          "fineGates": [17,25],
+          "coarseCrossingSequence": ["25>17"],
+          "fineCrossingSequence": ["25>17"],
+          "crossingShiftHours": [0.008543495088815689]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-04-01",
+        "end": "2026-04-30"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,21],
+      "signalCount": 18,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [3,21,24,27,42,51],
+          "fineGates": [3,21,24,27,42,51],
+          "coarseCrossingSequence": ["21>51","51>42","42>3","3>27","27>24"],
+          "fineCrossingSequence": ["21>51","51>42","42>3","3>27","27>24"],
+          "crossingShiftHours": [0.008395392447710037,0.005643658339977264,0.0034995228052139282,0.0013470947742462158,0.001177869737148285]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [28,32,44,48,50,57],
+          "fineGates": [28,32,44,48,50,57],
+          "coarseCrossingSequence": ["48>57","57>32","32>50","50>28","28>44"],
+          "fineCrossingSequence": ["48>57","57>32","32>50","50>28","28>44"],
+          "crossingShiftHours": [0.008395392447710037,0.005643658339977264,0.0034995228052139282,0.0013470947742462158,0.001177869737148285]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [37],
+          "fineGates": [37],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [40],
+          "fineGates": [40],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [17,21,22,25,36,42,51,63],
+          "fineGates": [17,21,22,25,36,42,51,63],
+          "coarseCrossingSequence": ["63>22","22>36","36>25","25>17","17>21","21>51","51>42"],
+          "fineCrossingSequence": ["63>22","22>36","36>25","25>17","17>21","21>51","51>42"],
+          "crossingShiftHours": [0.37950534000992775,0.26993124559521675,0.3530464991927147,0.42688771337270737,0.1762014962732792,0.03201034292578697,0.039052270352840424]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [2,3,8,16,20,23,24,27],
+          "fineGates": [2,3,8,16,20,23,24,27],
+          "coarseCrossingSequence": ["3>27","27>24","24>2","2>23","23>8","8>20","20>16"],
+          "fineCrossingSequence": ["3>27","27>24","24>2","2>23","23>8","8>20","20>16"],
+          "crossingShiftHours": [0.0025932490825653076,0.009921960532665253,0.00410829484462738,0.008882928639650345,0.00692322850227356,0.008551966398954391,0.010887980461120605]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [17,21,25,36,51],
+          "fineGates": [17,21,25,36,51],
+          "coarseCrossingSequence": ["36>25","25>17","17>21","21>51"],
+          "fineCrossingSequence": ["36>25","25>17","17>21","21>51"],
+          "crossingShiftHours": [0.0056077055633068085,0.014401718974113464,0.0010026879608631134,0.021480359137058258]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [53],
+          "fineGates": [53],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17],
+          "fineGates": [17],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-05-01",
+        "end": "2026-05-31"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 40,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [2,8,16,20,23,24],
+          "fineGates": [2,8,16,20,23,24],
+          "coarseCrossingSequence": ["24>2","2>23","23>8","8>20","20>16"],
+          "fineCrossingSequence": ["24>2","2>23","23>8","8>20","20>16"],
+          "crossingShiftHours": [0.002686377614736557,0.003659069538116455,0.004503719508647919,0.007302716374397278,0.007263466715812683]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [1,9,14,34,43,44],
+          "fineGates": [1,9,14,34,43,44],
+          "coarseCrossingSequence": ["44>1","1>43","43>14","14>34","34>9"],
+          "fineCrossingSequence": ["44>1","1>43","43>14","14>34","34>9"],
+          "crossingShiftHours": [0.002686377614736557,0.003659069538116455,0.004503719508647919,0.007302716374397278,0.007263466715812683]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [37,55],
+          "fineGates": [37,55],
+          "coarseCrossingSequence": ["37>55"],
+          "fineCrossingSequence": ["37>55"],
+          "crossingShiftHours": [6.464790433645248]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [40,59],
+          "fineGates": [40,59],
+          "coarseCrossingSequence": ["40>59"],
+          "fineCrossingSequence": ["40>59"],
+          "crossingShiftHours": [6.464790433645248]
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [2,3,8,12,15,16,20,23,24,27,35,42,45],
+          "fineGates": [2,3,8,12,15,16,20,23,24,27,35,42,45],
+          "coarseCrossingSequence": ["42>3","3>27","27>24","24>2","2>23","23>8","8>20","20>16","16>35","35>45","45>12","12>15"],
+          "fineCrossingSequence": ["42>3","3>27","27>24","24>2","2>23","23>8","8>20","20>16","16>35","35>45","45>12","12>15"],
+          "crossingShiftHours": [0.05830477550625801,0.03790523484349251,0.007921144366264343,0.06734441220760345,0.10212396830320358,0.06911662593483925,0.07006144523620605,0.17895815894007683,0.20138544961810112,0.17641031742095947,0.1664631888270378,0]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [12,15,16,35,39,45,52,53],
+          "fineGates": [12,15,16,35,39,45,52,53],
+          "coarseCrossingSequence": ["16>35","35>45","45>12","12>15","15>52","52>39","39>53"],
+          "fineCrossingSequence": ["16>35","35>45","45>12","12>15","15>52","52>39","39>53"],
+          "crossingShiftHours": [0.0053803324699401855,0.015045125037431717,0.0013785548508167267,0.019439533352851868,0.004841342568397522,0.01683001220226288,0]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [3,24,27,42,51],
+          "fineGates": [3,24,27,42,51],
+          "coarseCrossingSequence": ["51>42","42>3","3>27","27>24"],
+          "fineCrossingSequence": ["51>42","42>3","3>27","27>24"],
+          "crossingShiftHours": [0.004474896937608719,0.021030396223068237,0.008725393563508987,0.024176325649023056]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [53,62],
+          "fineGates": [53,62],
+          "coarseCrossingSequence": ["53>62"],
+          "fineCrossingSequence": ["53>62"],
+          "crossingShiftHours": [0.029490597546100616]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17,21],
+          "fineGates": [17,21],
+          "coarseCrossingSequence": ["17>21"],
+          "fineCrossingSequence": ["17>21"],
+          "crossingShiftHours": [0.019790858030319214]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-06-01",
+        "end": "2026-06-30"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,21],
+      "signalCount": 27,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [12,15,16,35,45,52],
+          "fineGates": [12,15,16,35,45,52],
+          "coarseCrossingSequence": ["16>35","35>45","45>12","12>15","15>52"],
+          "fineCrossingSequence": ["16>35","35>45","45>12","12>15","15>52"],
+          "crossingShiftHours": [0.004185330122709274,0.002223171293735504,0.001879870891571045,0.002133607864379883,0.0008840225636959076]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [5,9,10,11,26,58],
+          "fineGates": [5,9,10,11,26,58],
+          "coarseCrossingSequence": ["9>5","5>26","26>11","11>10","10>58"],
+          "fineCrossingSequence": ["9>5","5>26","26>11","11>10","10>58"],
+          "crossingShiftHours": [0.004185330122709274,0.002223171293735504,0.001879870891571045,0.002133607864379883,0.0008840225636959076]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [55],
+          "fineGates": [55],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [59],
+          "fineGates": [59],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [15,39,52,53,62],
+          "fineGates": [15,39,52,53,62],
+          "coarseCrossingSequence": ["15>52","52>39","39>53","53>62"],
+          "fineCrossingSequence": ["15>52","52>39","39>53","53>62"],
+          "crossingShiftHours": [0.07099384814500809,0.42880627512931824,0.7831344678997993,1.8957233503460884]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [4,7,31,33,53,56,62],
+          "fineGates": [4,7,31,33,53,56,62],
+          "coarseCrossingSequence": ["53>62","62>56","56>31","31>33","33>7","7>4"],
+          "fineCrossingSequence": ["53>62","62>56","56>31","31>33","33>7","7>4"],
+          "crossingShiftHours": [0.028170984238386154,0.007001124322414398,0.018312882632017136,0.027440104633569717,0.0025702491402626038,0.03800805285573006]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [2,8,20,23,24],
+          "fineGates": [2,8,20,23,24],
+          "coarseCrossingSequence": ["24>2","2>23","23>8","8>20"],
+          "fineCrossingSequence": ["24>2","2>23","23>8","8>20"],
+          "crossingShiftHours": [0.028725843876600266,0.009768102318048477,0.02278662845492363,0.026181310415267944]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [56,62],
+          "fineGates": [56,62],
+          "coarseCrossingSequence": ["62>56"],
+          "fineCrossingSequence": ["62>56"],
+          "crossingShiftHours": [0.01577005907893181]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [21],
+          "fineGates": [21],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-07-01",
+        "end": "2026-07-31"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 21,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [31,33,39,52,53,56,62],
+          "fineGates": [31,33,39,52,53,56,62],
+          "coarseCrossingSequence": ["52>39","39>53","53>62","62>56","56>31","31>33"],
+          "fineCrossingSequence": ["52>39","39>53","53>62","62>56","56>31","31>33"],
+          "crossingShiftHours": [0.000015914440155029297,0.0005011707544326782,0.00012970715761184692,0.0000042691826820373535,0.0002034008502960205,0.0008102618157863617]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [19,38,41,54,58,60,61],
+          "fineGates": [19,38,41,54,58,60,61],
+          "coarseCrossingSequence": ["58>38","38>54","54>61","61>60","60>41","41>19"],
+          "fineCrossingSequence": ["58>38","38>54","54>61","61>60","60>41","41>19"],
+          "crossingShiftHours": [0.000015914440155029297,0.0005011707544326782,0.00012970715761184692,0.0000042691826820373535,0.0002034008502960205,0.0008102618157863617]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [30,55],
+          "fineGates": [30,55],
+          "coarseCrossingSequence": ["55>30"],
+          "fineCrossingSequence": ["55>30"],
+          "crossingShiftHours": [0.0736515261232853]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [29,59],
+          "fineGates": [29,59],
+          "coarseCrossingSequence": ["59>29"],
+          "fineCrossingSequence": ["59>29"],
+          "crossingShiftHours": [0.0736515261232853]
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [53,62],
+          "fineGates": [53,62],
+          "coarseCrossingSequence": ["62>53"],
+          "fineCrossingSequence": ["62>53"],
+          "crossingShiftHours": [0.00400124117732048]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [4,6,29,40,47,59,64],
+          "fineGates": [4,6,29,40,47,59,64],
+          "coarseCrossingSequence": ["4>29","29>59","59>40","40>64","64>47","47>6"],
+          "fineCrossingSequence": ["4>29","29>59","59>40","40>64","64>47","47>6"],
+          "crossingShiftHours": [0.029763903468847275,0.006294898688793182,0.049377378076314926,0.05902426689863205,0.01966995745897293,0.027705665677785873]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [12,16,20,35,45],
+          "fineGates": [12,16,20,35,45],
+          "coarseCrossingSequence": ["20>16","16>35","35>45","45>12"],
+          "fineCrossingSequence": ["20>16","16>35","35>45","45>12"],
+          "crossingShiftHours": [0.0021590106189250946,0.032065194100141525,0.03384195640683174,0]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [31,56],
+          "fineGates": [31,56],
+          "coarseCrossingSequence": ["56>31"],
+          "fineCrossingSequence": ["56>31"],
+          "crossingShiftHours": [0.01702013611793518]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [21],
+          "fineGates": [21],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-08-01",
+        "end": "2026-08-31"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 29,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [4,7,29,33,40,59],
+          "fineGates": [4,7,29,33,40,59],
+          "coarseCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "fineCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "crossingShiftHours": [0.009236197918653488,0.008886806666851044,0.007787659764289856,0.007729511708021164,0.008952945470809937]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [13,19,30,37,49,55],
+          "fineGates": [13,19,30,37,49,55],
+          "coarseCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "fineCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "crossingShiftHours": [0.009236197918653488,0.008886806666851044,0.007787659764289856,0.007729511708021164,0.008952945470809937]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [30],
+          "fineGates": [30],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [29],
+          "fineGates": [29],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [4,7,29,31,33,40,53,56,59,62,64],
+          "fineGates": [4,7,29,31,33,40,53,56,59,62,64],
+          "coarseCrossingSequence": ["53>62","62>56","56>31","31>33","33>7","7>4","4>29","29>59","59>40","40>64"],
+          "fineCrossingSequence": ["53>62","62>56","56>31","31>33","33>7","7>4","4>29","29>59","59>40","40>64"],
+          "crossingShiftHours": [2.578404899686575,0.217301856726408,0.6115242429077625,0.47969214990735054,0.24278749153017998,0.05967935174703598,0.0357399545609951,0.06525744125247002,0.06337765976786613,0]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [6,18,32,46,48,57],
+          "fineGates": [6,18,32,46,48,57],
+          "coarseCrossingSequence": ["6>46","46>18","18>48","48>57","57>32"],
+          "fineCrossingSequence": ["6>46","46>18","18>48","48>57","57>32"],
+          "crossingShiftHours": [0.09679294377565384,0.07612940669059753,0.06971120461821556,0.1061411127448082,0.2628353387117386]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [12,15,39,52],
+          "fineGates": [12,15,39,52],
+          "coarseCrossingSequence": ["12>15","15>52","52>39"],
+          "fineCrossingSequence": ["12>15","15>52","52>39"],
+          "crossingShiftHours": [0.043267227709293365,0.04648049175739288,0.03576572611927986]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [7,31,33],
+          "fineGates": [7,31,33],
+          "coarseCrossingSequence": ["31>33","33>7"],
+          "fineCrossingSequence": ["31>33","33>7"],
+          "crossingShiftHours": [0.000013869255781173706,0.0601712241768837]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [21],
+          "fineGates": [21],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,21],
+      "signalCount": 17,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [6,18,40,46,47,64],
+          "fineGates": [6,18,40,46,47,64],
+          "coarseCrossingSequence": ["40>64","64>47","47>6","6>46","46>18"],
+          "fineCrossingSequence": ["40>64","64>47","47>6","6>46","46>18"],
+          "crossingShiftHours": [0.001297295093536377,0.003172941505908966,0.004834089428186417,0.006662473082542419,0.010471589863300323]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [17,22,25,36,37,63],
+          "fineGates": [17,22,25,36,37,63],
+          "coarseCrossingSequence": ["37>63","63>22","22>36","36>25","25>17"],
+          "fineCrossingSequence": ["37>63","63>22","22>36","36>25","25>17"],
+          "crossingShiftHours": [0.001297295093536377,0.003172941505908966,0.004834089428186417,0.006662473082542419,0.010471589863300323]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [30],
+          "fineGates": [30],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [29],
+          "fineGates": [29],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [6,18,32,46,47,48,50,57,64],
+          "fineGates": [6,18,32,46,47,48,50,57,64],
+          "coarseCrossingSequence": ["64>47","47>6","6>46","46>18","18>48","48>57","57>32","32>50"],
+          "fineCrossingSequence": ["64>47","47>6","6>46","46>18","18>48","48>57","57>32","32>50"],
+          "crossingShiftHours": [0.13368090614676476,0.11535843461751938,0.07005716487765312,0.000308990478515625,0.09675919264554977,0.22504305839538574,0.2403378076851368,0.039775874465703964]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [28,32,44,50],
+          "fineGates": [28,32,44,50],
+          "coarseCrossingSequence": ["32>50","50>28","28>44"],
+          "fineCrossingSequence": ["32>50","50>28","28>44"],
+          "crossingShiftHours": [0.42649612203240395,0.36600184813141823,3.5957962162792683]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [39,53,56,62],
+          "fineGates": [39,53,56,62],
+          "coarseCrossingSequence": ["39>53","53>62","62>56"],
+          "fineCrossingSequence": ["39>53","53>62","62>56"],
+          "crossingShiftHours": [0.010733049362897873,0.011536695063114166,0.000857960432767868]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [4,7],
+          "fineGates": [4,7],
+          "coarseCrossingSequence": ["7>4"],
+          "fineCrossingSequence": ["7>4"],
+          "crossingShiftHours": [0.11698761954903603]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [21],
+          "fineGates": [21],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-10-01",
+        "end": "2026-10-31"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 21,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [18,28,32,44,48,50,57],
+          "fineGates": [18,28,32,44,48,50,57],
+          "coarseCrossingSequence": ["18>48","48>57","57>32","32>50","50>28","28>44"],
+          "fineCrossingSequence": ["18>48","48>57","57>32","32>50","50>28","28>44"],
+          "crossingShiftHours": [0.01553613692522049,0.015221759676933289,0.010241199284791946,0.0064655207097530365,0.004197757691144943,0]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [3,17,21,24,27,42,51],
+          "fineGates": [3,17,21,24,27,42,51],
+          "coarseCrossingSequence": ["17>21","21>51","51>42","42>3","3>27","27>24"],
+          "fineCrossingSequence": ["17>21","21>51","51>42","42>3","3>27","27>24"],
+          "crossingShiftHours": [0.01553613692522049,0.015221759676933289,0.010241199284791946,0.0064655207097530365,0.004197757691144943,0]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [30],
+          "fineGates": [30],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [29],
+          "fineGates": [29],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [1,28,43,44,50],
+          "fineGates": [1,28,43,44,50],
+          "coarseCrossingSequence": ["50>28","28>44","44>1","1>43","43>1"],
+          "fineCrossingSequence": ["50>28","28>44","44>1","1>43","43>1"],
+          "crossingShiftHours": [0.3132881708443165,0.19133498892188072,1.0556227304041386,1.4507197625935078,4.649776451289654]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [28,32,44,50],
+          "fineGates": [28,32,44,50],
+          "coarseCrossingSequence": ["44>28","28>50","50>32"],
+          "fineCrossingSequence": ["44>28","28>50","50>32"],
+          "crossingShiftHours": [0.2735723555088043,0.011241093277931213,0]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [7,31,33,56],
+          "fineGates": [7,31,33,56],
+          "coarseCrossingSequence": ["56>31","31>33","33>7"],
+          "fineCrossingSequence": ["56>31","31>33","33>7"],
+          "crossingShiftHours": [0.03369976580142975,0.10539751499891281,0.03099101409316063]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [4],
+          "fineGates": [4],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17,21],
+          "fineGates": [17,21],
+          "coarseCrossingSequence": ["21>17"],
+          "fineCrossingSequence": ["21>17"],
+          "crossingShiftHours": [0.1941167525947094]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-11-01",
+        "end": "2026-11-30"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,21],
+      "signalCount": 20,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [1,9,14,34,43,44],
+          "fineGates": [1,9,14,34,43,44],
+          "coarseCrossingSequence": ["44>1","1>43","43>14","14>34","34>9"],
+          "fineCrossingSequence": ["44>1","1>43","43>14","14>34","34>9"],
+          "crossingShiftHours": [0.01344810426235199,0.010171975940465927,0.0053536780178546906,0.0030090026557445526,0.00002800673246383667]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [2,8,16,20,23,24],
+          "fineGates": [2,8,16,20,23,24],
+          "coarseCrossingSequence": ["24>2","2>23","23>8","8>20","20>16"],
+          "fineCrossingSequence": ["24>2","2>23","23>8","8>20","20>16"],
+          "crossingShiftHours": [0.01344810426235199,0.010171975940465927,0.0053536780178546906,0.0030090026557445526,0.00002800673246383667]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [30,49],
+          "fineGates": [30,49],
+          "coarseCrossingSequence": ["30>49"],
+          "fineCrossingSequence": ["30>49"],
+          "crossingShiftHours": [0.8981176614761353]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [4,29],
+          "fineGates": [4,29],
+          "coarseCrossingSequence": ["29>4"],
+          "fineCrossingSequence": ["29>4"],
+          "crossingShiftHours": [0.8981176614761353]
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [1,28,43,44],
+          "fineGates": [1,28,43,44],
+          "coarseCrossingSequence": ["1>44","44>28","28>44","44>1","1>43"],
+          "fineCrossingSequence": ["1>44","44>28","28>44","44>1","1>43"],
+          "crossingShiftHours": [0.2197430469095707,4.225690238177776,0.4991106614470482,0.4078674428164959,0.22319311648607254]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [32,50],
+          "fineGates": [32,50],
+          "coarseCrossingSequence": ["32>50"],
+          "fineCrossingSequence": ["32>50"],
+          "crossingShiftHours": [0.16014688834547997]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [4,7,29,59],
+          "fineGates": [4,7,29,59],
+          "coarseCrossingSequence": ["7>4","4>29","29>59"],
+          "fineCrossingSequence": ["7>4","4>29","29>59"],
+          "crossingShiftHours": [0.06135280430316925,0.03296724334359169,0.3123369365930557]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [4,29],
+          "fineGates": [4,29],
+          "coarseCrossingSequence": ["4>29"],
+          "fineCrossingSequence": ["4>29"],
+          "crossingShiftHours": [0.5365445874631405]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17],
+          "fineGates": [17],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-12-01",
+        "end": "2026-12-31"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 15,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [5,9,10,11,26,38,58],
+          "fineGates": [5,9,10,11,26,38,58],
+          "coarseCrossingSequence": ["9>5","5>26","26>11","11>10","10>58","58>38"],
+          "fineCrossingSequence": ["9>5","5>26","26>11","11>10","10>58","58>38"],
+          "crossingShiftHours": [0.0032229647040367126,0.004581134766340256,0.003361612558364868,0.002132769674062729,0.0014553666114807129,0]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [12,15,16,35,39,45,52],
+          "fineGates": [12,15,16,35,39,45,52],
+          "coarseCrossingSequence": ["16>35","35>45","45>12","12>15","15>52","52>39"],
+          "fineCrossingSequence": ["16>35","35>45","45>12","12>15","15>52","52>39"],
+          "crossingShiftHours": [0.0032229647040367126,0.004581134766340256,0.003361612558364868,0.002132769674062729,0.0014553666114807129,0]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [49],
+          "fineGates": [49],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [4],
+          "fineGates": [4],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [5,9,10,11,14,26,34,38,43,58],
+          "fineGates": [5,9,10,11,14,26,34,38,43,58],
+          "coarseCrossingSequence": ["43>14","14>34","34>9","9>5","5>26","26>11","11>10","10>58","58>38"],
+          "fineCrossingSequence": ["43>14","14>34","34>9","9>5","5>26","26>11","11>10","10>58","58>38"],
+          "crossingShiftHours": [0.21883631497621536,0.05379136651754379,0.004989422857761383,0.02268339693546295,0.03975179046392441,0.029853176325559616,0.013292446732521057,0.01192735880613327,0]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [1,28,43,44,50],
+          "fineGates": [1,28,43,44,50],
+          "coarseCrossingSequence": ["50>28","28>44","44>1","1>43"],
+          "fineCrossingSequence": ["50>28","28>44","44>1","1>43"],
+          "crossingShiftHours": [0.15210489928722382,0.40085887536406517,0.17144980654120445,0.12303787842392921]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [40,59],
+          "fineGates": [40,59],
+          "coarseCrossingSequence": ["59>40"],
+          "fineCrossingSequence": ["59>40"],
+          "crossingShiftHours": [0.26076462864875793]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [29],
+          "fineGates": [29],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17],
+          "fineGates": [17],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2024-02-01",
+        "end": "2024-02-29"
+      },
+      "node": "true",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,21],
+      "signalCount": 17,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [13,19,30,37,49,55],
+          "fineGates": [13,19,30,37,49,55],
+          "coarseCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "fineCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "crossingShiftHours": [0.004981979727745056,0.006848674267530441,0.0059541575610637665,0.0026573538780212402,0.0009898468852043152]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [4,7,29,33,40,59],
+          "fineGates": [4,7,29,33,40,59],
+          "coarseCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "fineCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "crossingShiftHours": [0.004981979727745056,0.006848674267530441,0.0059541575610637665,0.0026573538780212402,0.0009898468852043152]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [51],
+          "fineGates": [51],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [57],
+          "fineGates": [57],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [13,19,30,37,41,49,55,60,61,63],
+          "fineGates": [13,19,30,37,41,49,55,60,61,63],
+          "coarseCrossingSequence": ["61>60","60>41","41>19","19>13","13>49","49>30","30>55","55>37","37>63"],
+          "fineCrossingSequence": ["61>60","60>41","41>19","19>13","13>49","49>30","30>55","55>37","37>63"],
+          "crossingShiftHours": [0.18293017521500587,0.07361984252929688,0.012307774275541306,0.08413498476147652,0.14426911622285843,0.1903771050274372,0.21831641346216202,0.22243502363562584,0.06700657680630684]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [13,19,38,41,54,60,61],
+          "fineGates": [13,19,38,41,54,60,61],
+          "coarseCrossingSequence": ["38>54","54>61","61>60","60>41","41>19","19>13"],
+          "fineCrossingSequence": ["38>54","54>61","61>60","60>41","41>19","19>13"],
+          "crossingShiftHours": [0.0025415942072868347,0.002079695463180542,0.001043412834405899,0.0008513331413269043,0.000831015408039093,0.0007098577916622162]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [19,41,54,60,61],
+          "fineGates": [19,41,54,60,61],
+          "coarseCrossingSequence": ["54>61","61>60","60>41","41>19"],
+          "fineCrossingSequence": ["54>61","61>60","60>41","41>19"],
+          "crossingShiftHours": [0.0023029111325740814,0.01666705682873726,0.0014209896326065063,0.009644933044910431]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [24,27],
+          "fineGates": [24,27],
+          "coarseCrossingSequence": ["27>24"],
+          "fineCrossingSequence": ["27>24"],
+          "crossingShiftHours": [0.08697917684912682]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [37],
+          "fineGates": [37],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "year",
+        "start": "2024-01-01",
+        "end": "2024-12-31"
+      },
+      "node": "mean",
+      "stepDays": [15,7.5],
+      "sampleCounts": [26,50],
+      "signalCount": 25,
+      "planets": [
+        {
+          "planet": "northNode",
+          "coarseGates": [17,21,25,42,51],
+          "fineGates": [17,21,25,42,51],
+          "coarseCrossingSequence": ["42>51","51>21","21>17","17>25"],
+          "fineCrossingSequence": ["42>51","51>21","21>17","17>25"],
+          "crossingShiftHours": [0.015241619199514389,0.021140355616807938,0.04735922813415527,0.00042032450437545776]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [18,32,46,48,57],
+          "fineGates": [18,32,46,48,57],
+          "coarseCrossingSequence": ["32>57","57>48","48>18","18>46"],
+          "fineCrossingSequence": ["32>57","57>48","48>18","18>46"],
+          "crossingShiftHours": [0.015241619199514389,0.021140355616807938,0.04735922813415527,0.00042032450437545776]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [2,8,16,20,23,24,27,35,45],
+          "fineGates": [2,8,16,20,23,24,27,35,45],
+          "coarseCrossingSequence": ["27>24","24>2","2>23","23>8","8>20","20>16","16>35","35>45","45>35"],
+          "fineCrossingSequence": ["27>24","24>2","2>23","23>8","8>20","20>16","16>35","35>45","45>35"],
+          "crossingShiftHours": [7.906894952058792,3.474930826574564,2.4049908444285393,0.19230404868721962,0.13263661041855812,1.5914733074605465,1.3234051018953323,5.293212912976742,1.8178016357123852]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [22,37,55,63],
+          "fineGates": [22,37,55,63],
+          "coarseCrossingSequence": ["55>37","37>63","63>22","22>63"],
+          "fineCrossingSequence": ["55>37","37>63","63>22","22>63"],
+          "crossingShiftHours": [2.9784752167761326,0.35657744854688644,7.190056521445513,1.6158322915434837]
+        },
+        {
+          "planet": "uranus",
+          "coarseGates": [8,23],
+          "fineGates": [8,23],
+          "coarseCrossingSequence": ["23>8","8>23"],
+          "fineCrossingSequence": ["23>8","8>23"],
+          "crossingShiftHours": [3.0503106638789177,3.8712556958198547]
+        },
+        {
+          "planet": "neptune",
+          "coarseGates": [25,36],
+          "fineGates": [25,36],
+          "coarseCrossingSequence": ["36>25","25>36"],
+          "fineCrossingSequence": ["36>25","25>36"],
+          "crossingShiftHours": [1.9509039223194122,1.862614419311285]
+        },
+        {
+          "planet": "pluto",
+          "coarseGates": [41,60],
+          "fineGates": [41,60],
+          "coarseCrossingSequence": ["60>41","41>60"],
+          "fineCrossingSequence": ["60>41","41>60"],
+          "crossingShiftHours": [9.952294930815697,25.982828456908464]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "year",
+        "start": "2025-01-01",
+        "end": "2025-12-31"
+      },
+      "node": "mean",
+      "stepDays": [15,7.5],
+      "sampleCounts": [26,50],
+      "signalCount": 16,
+      "planets": [
+        {
+          "planet": "northNode",
+          "coarseGates": [22,25,36,63],
+          "fineGates": [22,25,36,63],
+          "coarseCrossingSequence": ["25>36","36>22","22>63"],
+          "fineCrossingSequence": ["25>36","36>22","22>63"],
+          "crossingShiftHours": [0.009828440845012665,0.02189788967370987,0.00034996122121810913]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [6,46,47,64],
+          "fineGates": [6,46,47,64],
+          "coarseCrossingSequence": ["46>6","6>47","47>64"],
+          "fineCrossingSequence": ["46>6","6>47","47>64"],
+          "crossingShiftHours": [0.009828440845012665,0.02189788967370987,0.00034996122121810913]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [12,15,16,35,39,45,52,53,62],
+          "fineGates": [12,15,16,35,39,45,52,53,62],
+          "coarseCrossingSequence": ["35>16","16>35","35>45","45>12","12>15","15>52","52>39","39>53","53>62"],
+          "fineCrossingSequence": ["35>16","16>35","35>45","45>12","12>15","15>52","52>39","39>53","53>62"],
+          "crossingShiftHours": [16.851965568959713,117.50846817344427,5.767969843000174,2.446505796164274,0.24479634314775467,0.026228751987218857,1.561546090990305,2.030282210558653,7.015309430658817]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [22,25,36,63],
+          "fineGates": [22,25,36,63],
+          "coarseCrossingSequence": ["63>22","22>36","36>25","25>36"],
+          "fineCrossingSequence": ["63>22","22>36","36>25","25>36"],
+          "crossingShiftHours": [2.5290748067200184,0.009428456425666809,3.9432864524424076,0.15692007914185524]
+        },
+        {
+          "planet": "uranus",
+          "coarseGates": [8,20,23],
+          "fineGates": [8,20,23],
+          "coarseCrossingSequence": ["23>8","8>20","20>8"],
+          "fineCrossingSequence": ["23>8","8>20","20>8"],
+          "crossingShiftHours": [7.603924915194511,5.004335347563028,4.8739325031638145]
+        },
+        {
+          "planet": "neptune",
+          "coarseGates": [25,36],
+          "fineGates": [25,36],
+          "coarseCrossingSequence": ["36>25"],
+          "fineCrossingSequence": ["36>25"],
+          "crossingShiftHours": [4.673096872866154]
+        },
+        {
+          "planet": "pluto",
+          "coarseGates": [41,60],
+          "fineGates": [41,60],
+          "coarseCrossingSequence": ["60>41","41>60","60>41"],
+          "fineCrossingSequence": ["60>41","41>60","60>41"],
+          "crossingShiftHours": [0.014101412147283554,6.198125392198563,9.335225008428097]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "year",
+        "start": "2026-01-01",
+        "end": "2026-12-31"
+      },
+      "node": "mean",
+      "stepDays": [15,7.5],
+      "sampleCounts": [26,50],
+      "signalCount": 16,
+      "planets": [
+        {
+          "planet": "northNode",
+          "coarseGates": [30,37,49,55,63],
+          "fineGates": [30,37,49,55,63],
+          "coarseCrossingSequence": ["63>37","37>55","55>30","30>49"],
+          "fineCrossingSequence": ["63>37","37>55","55>30","30>49"],
+          "crossingShiftHours": [0.00005364418029785156,0.007862348109483719,0.008539281785488129,0.01632651686668396]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [4,29,40,59,64],
+          "fineGates": [4,29,40,59,64],
+          "coarseCrossingSequence": ["64>40","40>59","59>29","29>4"],
+          "fineCrossingSequence": ["64>40","40>59","59>29","29>4"],
+          "crossingShiftHours": [0.00005364418029785156,0.007862348109483719,0.008539281785488129,0.01632651686668396]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [4,7,29,31,33,53,56,62],
+          "fineGates": [4,7,29,31,33,39,53,56,62],
+          "coarseCrossingSequence": ["62>53","53>62","62>56","56>31","31>33","33>7","7>4","4>29"],
+          "fineCrossingSequence": ["62>53","53>39","39>53","53>62","62>56","56>31","31>33","33>7","7>4","4>29"],
+          "crossingShiftHours": null
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17,21,25,36],
+          "fineGates": [17,21,25,36],
+          "coarseCrossingSequence": ["36>25","25>17","17>21","21>17"],
+          "fineCrossingSequence": ["36>25","25>17","17>21","21>17"],
+          "crossingShiftHours": [3.7244158387184143,0.014900397509336472,2.09939406439662,1.3632688745856285]
+        },
+        {
+          "planet": "uranus",
+          "coarseGates": [8,20],
+          "fineGates": [8,20],
+          "coarseCrossingSequence": ["8>20"],
+          "fineCrossingSequence": ["8>20"],
+          "crossingShiftHours": [1.4678664095699787]
+        },
+        {
+          "planet": "neptune",
+          "coarseGates": [17,25],
+          "fineGates": [17,25],
+          "coarseCrossingSequence": ["25>17","17>25"],
+          "fineCrossingSequence": ["25>17","17>25"],
+          "crossingShiftHours": [12.706854410469532,8.845937602221966]
+        },
+        {
+          "planet": "pluto",
+          "coarseGates": [41],
+          "fineGates": [41],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "year",
+        "start": "2027-01-01",
+        "end": "2027-12-31"
+      },
+      "node": "mean",
+      "stepDays": [15,7.5],
+      "sampleCounts": [26,50],
+      "signalCount": 14,
+      "planets": [
+        {
+          "planet": "northNode",
+          "coarseGates": [13,19,41,49],
+          "fineGates": [13,19,41,49],
+          "coarseCrossingSequence": ["49>13","13>19","19>41"],
+          "fineCrossingSequence": ["49>13","13>19","19>41"],
+          "crossingShiftHours": [0.00012561678886413574,0.009989909827709198,0.0011920630931854248]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [4,7,31,33],
+          "fineGates": [4,7,31,33],
+          "coarseCrossingSequence": ["4>7","7>33","33>31"],
+          "fineCrossingSequence": ["4>7","7>33","33>31"],
+          "crossingShiftHours": [0.00012561678886413574,0.009989909827709198,0.0011920630931854248]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [4,6,7,29,40,47,59,64],
+          "fineGates": [4,6,7,29,40,47,59,64],
+          "coarseCrossingSequence": ["29>4","4>7","7>4","4>29","29>59","59>40","40>64","64>47","47>6"],
+          "fineCrossingSequence": ["29>4","4>7","7>4","4>29","29>59","59>40","40>64","64>47","47>6"],
+          "crossingShiftHours": [8.738102171570063,14.27014372497797,4.728473503142595,2.032400518655777,1.1327821165323257,0.5664977766573429,0.7187683582305908,0.77806481346488,3.9085493981838226]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [3,17,21,42,51],
+          "fineGates": [3,17,21,42,51],
+          "coarseCrossingSequence": ["17>21","21>51","51>42","42>3","3>42"],
+          "fineCrossingSequence": ["17>21","21>51","51>42","42>3","3>42"],
+          "crossingShiftHours": [10.409282114356756,0.2665596529841423,0.6397323869168758,2.3883582428097725,9.72380018234253]
+        },
+        {
+          "planet": "uranus",
+          "coarseGates": [16,20],
+          "fineGates": [16,20],
+          "coarseCrossingSequence": ["20>16"],
+          "fineCrossingSequence": ["20>16"],
+          "crossingShiftHours": [0.2565150707960129]
+        },
+        {
+          "planet": "neptune",
+          "coarseGates": [17,25],
+          "fineGates": [17,25],
+          "coarseCrossingSequence": ["25>17","17>25","25>17"],
+          "fineCrossingSequence": ["25>17","17>25","25>17"],
+          "crossingShiftHours": [0.04681119695305824,37.37717715650797,78.85070085525513]
+        },
+        {
+          "planet": "pluto",
+          "coarseGates": [41],
+          "fineGates": [41],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "year",
+        "start": "2028-01-01",
+        "end": "2028-12-31"
+      },
+      "node": "mean",
+      "stepDays": [15,7.5],
+      "sampleCounts": [26,50],
+      "signalCount": 16,
+      "planets": [
+        {
+          "planet": "northNode",
+          "coarseGates": [38,41,54,60,61],
+          "fineGates": [38,41,54,60,61],
+          "coarseCrossingSequence": ["41>60","60>61","61>54","54>38"],
+          "fineCrossingSequence": ["41>60","60>61","61>54","54>38"],
+          "crossingShiftHours": [0.001951955258846283,0.0009112805128097534,0.0029566213488578796,0.017752010375261307]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [31,39,53,56,62],
+          "fineGates": [31,39,53,56,62],
+          "coarseCrossingSequence": ["31>56","56>62","62>53","53>39"],
+          "fineCrossingSequence": ["31>56","56>62","62>53","53>39"],
+          "crossingShiftHours": [0.001951955258846283,0.0009112805128097534,0.0029566213488578796,0.017752010375261307]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [6,18,32,46,47,48,57],
+          "fineGates": [6,18,32,46,47,48,57],
+          "coarseCrossingSequence": ["6>47","47>6","6>46","46>18","18>48","48>57","57>32"],
+          "fineCrossingSequence": ["6>47","47>6","6>46","46>18","18>48","48>57","57>32"],
+          "crossingShiftHours": [0.9966263696551323,0.14366556331515312,0.9101164229214191,0.03038214147090912,0.09490940719842911,2.359568450599909,5.695391044020653]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [3,24,27,42],
+          "fineGates": [3,24,27,42],
+          "coarseCrossingSequence": ["42>3","3>27","27>24","24>27"],
+          "fineCrossingSequence": ["42>3","3>27","27>24","24>27"],
+          "crossingShiftHours": [1.0088812708854675,0.02272983267903328,2.281566873192787,1.2143615372478962]
+        },
+        {
+          "planet": "uranus",
+          "coarseGates": [16,35],
+          "fineGates": [16,35],
+          "coarseCrossingSequence": ["16>35","35>16"],
+          "fineCrossingSequence": ["16>35","35>16"],
+          "crossingShiftHours": [2.1728766225278378,1.03124113753438]
+        },
+        {
+          "planet": "neptune",
+          "coarseGates": [17],
+          "fineGates": [17],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "pluto",
+          "coarseGates": [19,41],
+          "fineGates": [19,41],
+          "coarseCrossingSequence": ["41>19","19>41"],
+          "fineCrossingSequence": ["41>19","19>41"],
+          "crossingShiftHours": [3.5788986794650555,0.12428406625986099]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-01-01",
+        "end": "2026-01-31"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 16,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [19,38,41,54,60,61],
+          "fineGates": [19,38,41,54,60,61],
+          "coarseCrossingSequence": ["38>54","54>61","61>60","60>41","41>19"],
+          "fineCrossingSequence": ["38>54","54>61","61>60","60>41","41>19"],
+          "crossingShiftHours": [0.00009780004620552063,0.000040411949157714844,0.001171644777059555,0.0001817755401134491,0.0023137852549552917]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [31,33,39,53,56,62],
+          "fineGates": [31,33,39,53,56,62],
+          "coarseCrossingSequence": ["39>53","53>62","62>56","56>31","31>33"],
+          "fineCrossingSequence": ["39>53","53>62","62>56","56>31","31>33"],
+          "crossingShiftHours": [0.00009780004620552063,0.000040411949157714844,0.001171644777059555,0.0001817755401134491,0.0023137852549552917]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [37,63],
+          "fineGates": [37,63],
+          "coarseCrossingSequence": ["63>37"],
+          "fineCrossingSequence": ["63>37"],
+          "crossingShiftHours": [0.000052906572818756104]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [40,64],
+          "fineGates": [40,64],
+          "coarseCrossingSequence": ["64>40"],
+          "fineCrossingSequence": ["64>40"],
+          "crossingShiftHours": [0.000052906572818756104]
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [10,13,19,38,41,49,54,58,60,61],
+          "fineGates": [10,13,19,38,41,49,54,58,60,61],
+          "coarseCrossingSequence": ["10>58","58>38","38>54","54>61","61>60","60>41","41>19","19>13","13>49"],
+          "fineCrossingSequence": ["10>58","58>38","38>54","54>61","61>60","60>41","41>19","19>13","13>49"],
+          "crossingShiftHours": [0.02879445254802704,0.07826327160000801,0.11970659717917442,0.08421014249324799,0.04730985313653946,0.011315211653709412,0.018945816904306412,0.034806445240974426,0]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [13,19,38,41,54,58,60,61],
+          "fineGates": [13,19,38,41,54,58,60,61],
+          "coarseCrossingSequence": ["58>38","38>54","54>61","61>60","60>41","41>19","19>13"],
+          "fineCrossingSequence": ["58>38","38>54","54>61","61>60","60>41","41>19","19>13"],
+          "crossingShiftHours": [0.00018430128693580627,0.0008264444768428802,0.00008931756019592285,0.0011852346360683441,0.00027140602469444275,0.003710668534040451,0.00023379921913146973]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [38,41,54,60,61],
+          "fineGates": [38,41,54,60,61],
+          "coarseCrossingSequence": ["38>54","54>61","61>60","60>41"],
+          "fineCrossingSequence": ["38>54","54>61","61>60","60>41"],
+          "crossingShiftHours": [0.002604614943265915,0.02165944129228592,0.003290422260761261,0.008851345628499985]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [53,62],
+          "fineGates": [53,62],
+          "coarseCrossingSequence": ["62>53"],
+          "fineCrossingSequence": ["62>53"],
+          "crossingShiftHours": [0.09645695239305496]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [25,36],
+          "fineGates": [25,36],
+          "coarseCrossingSequence": ["36>25"],
+          "fineCrossingSequence": ["36>25"],
+          "crossingShiftHours": [0.011711105704307556]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-02-01",
+        "end": "2026-02-28"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,20],
+      "signalCount": 23,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [13,19,30,37,49,55],
+          "fineGates": [13,19,30,37,49,55],
+          "coarseCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "fineCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "crossingShiftHours": [0.005989518016576767,0.00310613214969635,0.0013896524906158447,0.0016501955687999725,0.005943585187196732]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [4,7,29,33,40,59],
+          "fineGates": [4,7,29,33,40,59],
+          "coarseCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "fineCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "crossingShiftHours": [0.005989518016576767,0.00310613214969635,0.0013896524906158447,0.0016501955687999725,0.005943585187196732]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [37],
+          "fineGates": [37],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [40],
+          "fineGates": [40],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [22,30,37,49,55,63],
+          "fineGates": [22,30,37,49,55,63],
+          "coarseCrossingSequence": ["49>30","30>55","55>37","37>63","63>22"],
+          "fineCrossingSequence": ["49>30","30>55","55>37","37>63","63>22"],
+          "crossingShiftHours": [0.003575596958398819,0.004187911748886108,0.11917198821902275,0.6044377684593201,1.747802171856165]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [13,22,30,36,37,49,55,63],
+          "fineGates": [13,22,30,36,37,49,55,63],
+          "coarseCrossingSequence": ["13>49","49>30","30>55","55>37","37>63","63>22","22>36"],
+          "fineCrossingSequence": ["13>49","49>30","30>55","55>37","37>63","63>22","22>36"],
+          "crossingShiftHours": [0.001795157790184021,0.0027432963252067566,0.0016869083046913147,0.0037398599088191986,0.0025798268616199493,0.005373381078243256,0]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [13,19,30,41,49],
+          "fineGates": [13,19,30,41,49],
+          "coarseCrossingSequence": ["41>19","19>13","13>49","49>30"],
+          "fineCrossingSequence": ["41>19","19>13","13>49","49>30"],
+          "crossingShiftHours": [0.008758652955293655,0.004896987229585648,0.0015188232064247131,0.001959756016731262]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [53],
+          "fineGates": [53],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [25],
+          "fineGates": [25],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-03-01",
+        "end": "2026-03-31"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 11,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [17,21,22,25,36,37,63],
+          "fineGates": [17,21,22,25,36,37,63],
+          "coarseCrossingSequence": ["37>63","63>22","22>36","36>25","25>17","17>21"],
+          "fineCrossingSequence": ["37>63","63>22","22>36","36>25","25>17","17>21"],
+          "crossingShiftHours": [0.009140510112047195,0.004681907594203949,0.001858580857515335,0.0013895854353904724,0.005444727838039398,0.00925593450665474]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [6,18,40,46,47,48,64],
+          "fineGates": [6,18,40,46,47,48,64],
+          "coarseCrossingSequence": ["40>64","64>47","47>6","6>46","46>18","18>48"],
+          "fineCrossingSequence": ["40>64","64>47","47>6","6>46","46>18","18>48"],
+          "crossingShiftHours": [0.009140510112047195,0.004681907594203949,0.001858580857515335,0.0013895854353904724,0.005444727838039398,0.00925593450665474]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [37],
+          "fineGates": [37],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [40],
+          "fineGates": [40],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [22,37,63],
+          "fineGates": [22,37,63],
+          "coarseCrossingSequence": ["22>63","63>37","37>63"],
+          "fineCrossingSequence": ["22>63","63>37","37>63"],
+          "crossingShiftHours": [0.03546475991606712,0.9637669622898102,1.4614413790404797]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [3,17,21,25,36,42,51],
+          "fineGates": [3,17,21,25,36,42,51],
+          "coarseCrossingSequence": ["36>25","25>17","17>21","21>51","51>42","42>3"],
+          "fineCrossingSequence": ["36>25","25>17","17>21","21>51","51>42","42>3"],
+          "crossingShiftHours": [0.00618400052189827,0.0025407783687114716,0.007149092853069305,0.002607397735118866,0.009599681943655014,0.0024736784398555756]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [22,30,36,37,55,63],
+          "fineGates": [22,30,36,37,55,63],
+          "coarseCrossingSequence": ["30>55","55>37","37>63","63>22","22>36"],
+          "fineCrossingSequence": ["30>55","55>37","37>63","63>22","22>36"],
+          "crossingShiftHours": [0.0006016641855239868,0.00009963288903236389,0.004825059324502945,0.005440559238195419,0]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [39,53],
+          "fineGates": [39,53],
+          "coarseCrossingSequence": ["53>39","39>53"],
+          "fineCrossingSequence": ["53>39","39>53"],
+          "crossingShiftHours": [1.8830443806946278,0.28184903785586357]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17,25],
+          "fineGates": [17,25],
+          "coarseCrossingSequence": ["25>17"],
+          "fineCrossingSequence": ["25>17"],
+          "crossingShiftHours": [0.008543495088815689]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-04-01",
+        "end": "2026-04-30"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,21],
+      "signalCount": 20,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [3,21,24,27,42,51],
+          "fineGates": [3,21,24,27,42,51],
+          "coarseCrossingSequence": ["21>51","51>42","42>3","3>27","27>24"],
+          "fineCrossingSequence": ["21>51","51>42","42>3","3>27","27>24"],
+          "crossingShiftHours": [0.008395392447710037,0.005643658339977264,0.0034995228052139282,0.0013470947742462158,0.001177869737148285]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [28,32,44,48,50,57],
+          "fineGates": [28,32,44,48,50,57],
+          "coarseCrossingSequence": ["48>57","57>32","32>50","50>28","28>44"],
+          "fineCrossingSequence": ["48>57","57>32","32>50","50>28","28>44"],
+          "crossingShiftHours": [0.008395392447710037,0.005643658339977264,0.0034995228052139282,0.0013470947742462158,0.001177869737148285]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [37],
+          "fineGates": [37],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [40],
+          "fineGates": [40],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [17,21,22,25,36,42,51,63],
+          "fineGates": [17,21,22,25,36,42,51,63],
+          "coarseCrossingSequence": ["63>22","22>36","36>25","25>17","17>21","21>51","51>42"],
+          "fineCrossingSequence": ["63>22","22>36","36>25","25>17","17>21","21>51","51>42"],
+          "crossingShiftHours": [0.37950534000992775,0.26993124559521675,0.3530464991927147,0.42688771337270737,0.1762014962732792,0.03201034292578697,0.039052270352840424]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [2,3,8,16,20,23,24,27],
+          "fineGates": [2,3,8,16,20,23,24,27],
+          "coarseCrossingSequence": ["3>27","27>24","24>2","2>23","23>8","8>20","20>16"],
+          "fineCrossingSequence": ["3>27","27>24","24>2","2>23","23>8","8>20","20>16"],
+          "crossingShiftHours": [0.0025932490825653076,0.009921960532665253,0.00410829484462738,0.008882928639650345,0.00692322850227356,0.008551966398954391,0.010887980461120605]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [17,21,25,36,51],
+          "fineGates": [17,21,25,36,51],
+          "coarseCrossingSequence": ["36>25","25>17","17>21","21>51"],
+          "fineCrossingSequence": ["36>25","25>17","17>21","21>51"],
+          "crossingShiftHours": [0.0056077055633068085,0.014401718974113464,0.0010026879608631134,0.021480359137058258]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [53],
+          "fineGates": [53],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17],
+          "fineGates": [17],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-05-01",
+        "end": "2026-05-31"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 40,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [2,8,16,20,23,24],
+          "fineGates": [2,8,16,20,23,24],
+          "coarseCrossingSequence": ["24>2","2>23","23>8","8>20","20>16"],
+          "fineCrossingSequence": ["24>2","2>23","23>8","8>20","20>16"],
+          "crossingShiftHours": [0.002686377614736557,0.003659069538116455,0.004503719508647919,0.007302716374397278,0.007263466715812683]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [1,9,14,34,43,44],
+          "fineGates": [1,9,14,34,43,44],
+          "coarseCrossingSequence": ["44>1","1>43","43>14","14>34","34>9"],
+          "fineCrossingSequence": ["44>1","1>43","43>14","14>34","34>9"],
+          "crossingShiftHours": [0.002686377614736557,0.003659069538116455,0.004503719508647919,0.007302716374397278,0.007263466715812683]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [37,55],
+          "fineGates": [37,55],
+          "coarseCrossingSequence": ["37>55"],
+          "fineCrossingSequence": ["37>55"],
+          "crossingShiftHours": [0.004820052534341812]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [40,59],
+          "fineGates": [40,59],
+          "coarseCrossingSequence": ["40>59"],
+          "fineCrossingSequence": ["40>59"],
+          "crossingShiftHours": [0.004820052534341812]
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [2,3,8,12,15,16,20,23,24,27,35,42,45],
+          "fineGates": [2,3,8,12,15,16,20,23,24,27,35,42,45],
+          "coarseCrossingSequence": ["42>3","3>27","27>24","24>2","2>23","23>8","8>20","20>16","16>35","35>45","45>12","12>15"],
+          "fineCrossingSequence": ["42>3","3>27","27>24","24>2","2>23","23>8","8>20","20>16","16>35","35>45","45>12","12>15"],
+          "crossingShiftHours": [0.05830477550625801,0.03790523484349251,0.007921144366264343,0.06734441220760345,0.10212396830320358,0.06911662593483925,0.07006144523620605,0.17895815894007683,0.20138544961810112,0.17641031742095947,0.1664631888270378,0]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [12,15,16,35,39,45,52,53],
+          "fineGates": [12,15,16,35,39,45,52,53],
+          "coarseCrossingSequence": ["16>35","35>45","45>12","12>15","15>52","52>39","39>53"],
+          "fineCrossingSequence": ["16>35","35>45","45>12","12>15","15>52","52>39","39>53"],
+          "crossingShiftHours": [0.0053803324699401855,0.015045125037431717,0.0013785548508167267,0.019439533352851868,0.004841342568397522,0.01683001220226288,0]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [3,24,27,42,51],
+          "fineGates": [3,24,27,42,51],
+          "coarseCrossingSequence": ["51>42","42>3","3>27","27>24"],
+          "fineCrossingSequence": ["51>42","42>3","3>27","27>24"],
+          "crossingShiftHours": [0.004474896937608719,0.021030396223068237,0.008725393563508987,0.024176325649023056]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [53,62],
+          "fineGates": [53,62],
+          "coarseCrossingSequence": ["53>62"],
+          "fineCrossingSequence": ["53>62"],
+          "crossingShiftHours": [0.029490597546100616]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17,21],
+          "fineGates": [17,21],
+          "coarseCrossingSequence": ["17>21"],
+          "fineCrossingSequence": ["17>21"],
+          "crossingShiftHours": [0.019790858030319214]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-06-01",
+        "end": "2026-06-30"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,21],
+      "signalCount": 27,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [12,15,16,35,45,52],
+          "fineGates": [12,15,16,35,45,52],
+          "coarseCrossingSequence": ["16>35","35>45","45>12","12>15","15>52"],
+          "fineCrossingSequence": ["16>35","35>45","45>12","12>15","15>52"],
+          "crossingShiftHours": [0.004185330122709274,0.002223171293735504,0.001879870891571045,0.002133607864379883,0.0008840225636959076]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [5,9,10,11,26,58],
+          "fineGates": [5,9,10,11,26,58],
+          "coarseCrossingSequence": ["9>5","5>26","26>11","11>10","10>58"],
+          "fineCrossingSequence": ["9>5","5>26","26>11","11>10","10>58"],
+          "crossingShiftHours": [0.004185330122709274,0.002223171293735504,0.001879870891571045,0.002133607864379883,0.0008840225636959076]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [55],
+          "fineGates": [55],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [59],
+          "fineGates": [59],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [15,39,52,53,62],
+          "fineGates": [15,39,52,53,62],
+          "coarseCrossingSequence": ["15>52","52>39","39>53","53>62"],
+          "fineCrossingSequence": ["15>52","52>39","39>53","53>62"],
+          "crossingShiftHours": [0.07099384814500809,0.42880627512931824,0.7831344678997993,1.8957233503460884]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [4,7,31,33,53,56,62],
+          "fineGates": [4,7,31,33,53,56,62],
+          "coarseCrossingSequence": ["53>62","62>56","56>31","31>33","33>7","7>4"],
+          "fineCrossingSequence": ["53>62","62>56","56>31","31>33","33>7","7>4"],
+          "crossingShiftHours": [0.028170984238386154,0.007001124322414398,0.018312882632017136,0.027440104633569717,0.0025702491402626038,0.03800805285573006]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [2,8,20,23,24],
+          "fineGates": [2,8,20,23,24],
+          "coarseCrossingSequence": ["24>2","2>23","23>8","8>20"],
+          "fineCrossingSequence": ["24>2","2>23","23>8","8>20"],
+          "crossingShiftHours": [0.028725843876600266,0.009768102318048477,0.02278662845492363,0.026181310415267944]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [56,62],
+          "fineGates": [56,62],
+          "coarseCrossingSequence": ["62>56"],
+          "fineCrossingSequence": ["62>56"],
+          "crossingShiftHours": [0.01577005907893181]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [21],
+          "fineGates": [21],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-07-01",
+        "end": "2026-07-31"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 22,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [31,33,39,52,53,56,62],
+          "fineGates": [31,33,39,52,53,56,62],
+          "coarseCrossingSequence": ["52>39","39>53","53>62","62>56","56>31","31>33"],
+          "fineCrossingSequence": ["52>39","39>53","53>62","62>56","56>31","31>33"],
+          "crossingShiftHours": [0.000015914440155029297,0.0005011707544326782,0.00012970715761184692,0.0000042691826820373535,0.0002034008502960205,0.0008102618157863617]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [19,38,41,54,58,60,61],
+          "fineGates": [19,38,41,54,58,60,61],
+          "coarseCrossingSequence": ["58>38","38>54","54>61","61>60","60>41","41>19"],
+          "fineCrossingSequence": ["58>38","38>54","54>61","61>60","60>41","41>19"],
+          "crossingShiftHours": [0.000015914440155029297,0.0005011707544326782,0.00012970715761184692,0.0000042691826820373535,0.0002034008502960205,0.0008102618157863617]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [55],
+          "fineGates": [55],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [59],
+          "fineGates": [59],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [53,62],
+          "fineGates": [53,62],
+          "coarseCrossingSequence": ["62>53"],
+          "fineCrossingSequence": ["62>53"],
+          "crossingShiftHours": [0.00400124117732048]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [4,6,29,40,47,59,64],
+          "fineGates": [4,6,29,40,47,59,64],
+          "coarseCrossingSequence": ["4>29","29>59","59>40","40>64","64>47","47>6"],
+          "fineCrossingSequence": ["4>29","29>59","59>40","40>64","64>47","47>6"],
+          "crossingShiftHours": [0.029763903468847275,0.006294898688793182,0.049377378076314926,0.05902426689863205,0.01966995745897293,0.027705665677785873]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [12,16,20,35,45],
+          "fineGates": [12,16,20,35,45],
+          "coarseCrossingSequence": ["20>16","16>35","35>45","45>12"],
+          "fineCrossingSequence": ["20>16","16>35","35>45","45>12"],
+          "crossingShiftHours": [0.0021590106189250946,0.032065194100141525,0.03384195640683174,0]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [31,56],
+          "fineGates": [31,56],
+          "coarseCrossingSequence": ["56>31"],
+          "fineCrossingSequence": ["56>31"],
+          "crossingShiftHours": [0.01702013611793518]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [21],
+          "fineGates": [21],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-08-01",
+        "end": "2026-08-31"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 33,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [4,7,29,33,40,59],
+          "fineGates": [4,7,29,33,40,59],
+          "coarseCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "fineCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "crossingShiftHours": [0.009236197918653488,0.008886806666851044,0.007787659764289856,0.007729511708021164,0.008952945470809937]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [13,19,30,37,49,55],
+          "fineGates": [13,19,30,37,49,55],
+          "coarseCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "fineCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "crossingShiftHours": [0.009236197918653488,0.008886806666851044,0.007787659764289856,0.007729511708021164,0.008952945470809937]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [30,55],
+          "fineGates": [30,55],
+          "coarseCrossingSequence": ["55>30"],
+          "fineCrossingSequence": ["55>30"],
+          "crossingShiftHours": [0.001712065190076828]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [29,59],
+          "fineGates": [29,59],
+          "coarseCrossingSequence": ["59>29"],
+          "fineCrossingSequence": ["59>29"],
+          "crossingShiftHours": [0.001712065190076828]
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [4,7,29,31,33,40,53,56,59,62,64],
+          "fineGates": [4,7,29,31,33,40,53,56,59,62,64],
+          "coarseCrossingSequence": ["53>62","62>56","56>31","31>33","33>7","7>4","4>29","29>59","59>40","40>64"],
+          "fineCrossingSequence": ["53>62","62>56","56>31","31>33","33>7","7>4","4>29","29>59","59>40","40>64"],
+          "crossingShiftHours": [2.578404899686575,0.217301856726408,0.6115242429077625,0.47969214990735054,0.24278749153017998,0.05967935174703598,0.0357399545609951,0.06525744125247002,0.06337765976786613,0]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [6,18,32,46,48,57],
+          "fineGates": [6,18,32,46,48,57],
+          "coarseCrossingSequence": ["6>46","46>18","18>48","48>57","57>32"],
+          "fineCrossingSequence": ["6>46","46>18","18>48","48>57","57>32"],
+          "crossingShiftHours": [0.09679294377565384,0.07612940669059753,0.06971120461821556,0.1061411127448082,0.2628353387117386]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [12,15,39,52],
+          "fineGates": [12,15,39,52],
+          "coarseCrossingSequence": ["12>15","15>52","52>39"],
+          "fineCrossingSequence": ["12>15","15>52","52>39"],
+          "crossingShiftHours": [0.043267227709293365,0.04648049175739288,0.03576572611927986]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [7,31,33],
+          "fineGates": [7,31,33],
+          "coarseCrossingSequence": ["31>33","33>7"],
+          "fineCrossingSequence": ["31>33","33>7"],
+          "crossingShiftHours": [0.000013869255781173706,0.0601712241768837]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [21],
+          "fineGates": [21],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-09-01",
+        "end": "2026-09-30"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,21],
+      "signalCount": 15,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [6,18,40,46,47,64],
+          "fineGates": [6,18,40,46,47,64],
+          "coarseCrossingSequence": ["40>64","64>47","47>6","6>46","46>18"],
+          "fineCrossingSequence": ["40>64","64>47","47>6","6>46","46>18"],
+          "crossingShiftHours": [0.001297295093536377,0.003172941505908966,0.004834089428186417,0.006662473082542419,0.010471589863300323]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [17,22,25,36,37,63],
+          "fineGates": [17,22,25,36,37,63],
+          "coarseCrossingSequence": ["37>63","63>22","22>36","36>25","25>17"],
+          "fineCrossingSequence": ["37>63","63>22","22>36","36>25","25>17"],
+          "crossingShiftHours": [0.001297295093536377,0.003172941505908966,0.004834089428186417,0.006662473082542419,0.010471589863300323]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [30],
+          "fineGates": [30],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [29],
+          "fineGates": [29],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [6,18,32,46,47,48,50,57,64],
+          "fineGates": [6,18,32,46,47,48,50,57,64],
+          "coarseCrossingSequence": ["64>47","47>6","6>46","46>18","18>48","48>57","57>32","32>50"],
+          "fineCrossingSequence": ["64>47","47>6","6>46","46>18","18>48","48>57","57>32","32>50"],
+          "crossingShiftHours": [0.13368090614676476,0.11535843461751938,0.07005716487765312,0.000308990478515625,0.09675919264554977,0.22504305839538574,0.2403378076851368,0.039775874465703964]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [28,32,44,50],
+          "fineGates": [28,32,44,50],
+          "coarseCrossingSequence": ["32>50","50>28","28>44"],
+          "fineCrossingSequence": ["32>50","50>28","28>44"],
+          "crossingShiftHours": [0.42649612203240395,0.36600184813141823,3.5957962162792683]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [39,53,56,62],
+          "fineGates": [39,53,56,62],
+          "coarseCrossingSequence": ["39>53","53>62","62>56"],
+          "fineCrossingSequence": ["39>53","53>62","62>56"],
+          "crossingShiftHours": [0.010733049362897873,0.011536695063114166,0.000857960432767868]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [4,7],
+          "fineGates": [4,7],
+          "coarseCrossingSequence": ["7>4"],
+          "fineCrossingSequence": ["7>4"],
+          "crossingShiftHours": [0.11698761954903603]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [21],
+          "fineGates": [21],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-10-01",
+        "end": "2026-10-31"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 21,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [18,28,32,44,48,50,57],
+          "fineGates": [18,28,32,44,48,50,57],
+          "coarseCrossingSequence": ["18>48","48>57","57>32","32>50","50>28","28>44"],
+          "fineCrossingSequence": ["18>48","48>57","57>32","32>50","50>28","28>44"],
+          "crossingShiftHours": [0.01553613692522049,0.015221759676933289,0.010241199284791946,0.0064655207097530365,0.004197757691144943,0]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [3,17,21,24,27,42,51],
+          "fineGates": [3,17,21,24,27,42,51],
+          "coarseCrossingSequence": ["17>21","21>51","51>42","42>3","3>27","27>24"],
+          "fineCrossingSequence": ["17>21","21>51","51>42","42>3","3>27","27>24"],
+          "crossingShiftHours": [0.01553613692522049,0.015221759676933289,0.010241199284791946,0.0064655207097530365,0.004197757691144943,0]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [30],
+          "fineGates": [30],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [29],
+          "fineGates": [29],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [1,28,43,44,50],
+          "fineGates": [1,28,43,44,50],
+          "coarseCrossingSequence": ["50>28","28>44","44>1","1>43","43>1"],
+          "fineCrossingSequence": ["50>28","28>44","44>1","1>43","43>1"],
+          "crossingShiftHours": [0.3132881708443165,0.19133498892188072,1.0556227304041386,1.4507197625935078,4.649776451289654]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [28,32,44,50],
+          "fineGates": [28,32,44,50],
+          "coarseCrossingSequence": ["44>28","28>50","50>32"],
+          "fineCrossingSequence": ["44>28","28>50","50>32"],
+          "crossingShiftHours": [0.2735723555088043,0.011241093277931213,0]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [7,31,33,56],
+          "fineGates": [7,31,33,56],
+          "coarseCrossingSequence": ["56>31","31>33","33>7"],
+          "fineCrossingSequence": ["56>31","31>33","33>7"],
+          "crossingShiftHours": [0.03369976580142975,0.10539751499891281,0.03099101409316063]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [4],
+          "fineGates": [4],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17,21],
+          "fineGates": [17,21],
+          "coarseCrossingSequence": ["21>17"],
+          "fineCrossingSequence": ["21>17"],
+          "crossingShiftHours": [0.1941167525947094]
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-11-01",
+        "end": "2026-11-30"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,21],
+      "signalCount": 20,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [1,9,14,34,43,44],
+          "fineGates": [1,9,14,34,43,44],
+          "coarseCrossingSequence": ["44>1","1>43","43>14","14>34","34>9"],
+          "fineCrossingSequence": ["44>1","1>43","43>14","14>34","34>9"],
+          "crossingShiftHours": [0.01344810426235199,0.010171975940465927,0.0053536780178546906,0.0030090026557445526,0.00002800673246383667]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [2,8,16,20,23,24],
+          "fineGates": [2,8,16,20,23,24],
+          "coarseCrossingSequence": ["24>2","2>23","23>8","8>20","20>16"],
+          "fineCrossingSequence": ["24>2","2>23","23>8","8>20","20>16"],
+          "crossingShiftHours": [0.01344810426235199,0.010171975940465927,0.0053536780178546906,0.0030090026557445526,0.00002800673246383667]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [30,49],
+          "fineGates": [30,49],
+          "coarseCrossingSequence": ["30>49"],
+          "fineCrossingSequence": ["30>49"],
+          "crossingShiftHours": [0.0017995834350585938]
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [4,29],
+          "fineGates": [4,29],
+          "coarseCrossingSequence": ["29>4"],
+          "fineCrossingSequence": ["29>4"],
+          "crossingShiftHours": [0.0017995834350585938]
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [1,28,43,44],
+          "fineGates": [1,28,43,44],
+          "coarseCrossingSequence": ["1>44","44>28","28>44","44>1","1>43"],
+          "fineCrossingSequence": ["1>44","44>28","28>44","44>1","1>43"],
+          "crossingShiftHours": [0.2197430469095707,4.225690238177776,0.4991106614470482,0.4078674428164959,0.22319311648607254]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [32,50],
+          "fineGates": [32,50],
+          "coarseCrossingSequence": ["32>50"],
+          "fineCrossingSequence": ["32>50"],
+          "crossingShiftHours": [0.16014688834547997]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [4,7,29,59],
+          "fineGates": [4,7,29,59],
+          "coarseCrossingSequence": ["7>4","4>29","29>59"],
+          "fineCrossingSequence": ["7>4","4>29","29>59"],
+          "crossingShiftHours": [0.06135280430316925,0.03296724334359169,0.3123369365930557]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [4,29],
+          "fineGates": [4,29],
+          "coarseCrossingSequence": ["4>29"],
+          "fineCrossingSequence": ["4>29"],
+          "crossingShiftHours": [0.5365445874631405]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17],
+          "fineGates": [17],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2026-12-01",
+        "end": "2026-12-31"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [12,22],
+      "signalCount": 15,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [5,9,10,11,26,38,58],
+          "fineGates": [5,9,10,11,26,38,58],
+          "coarseCrossingSequence": ["9>5","5>26","26>11","11>10","10>58","58>38"],
+          "fineCrossingSequence": ["9>5","5>26","26>11","11>10","10>58","58>38"],
+          "crossingShiftHours": [0.0032229647040367126,0.004581134766340256,0.003361612558364868,0.002132769674062729,0.0014553666114807129,0]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [12,15,16,35,39,45,52],
+          "fineGates": [12,15,16,35,39,45,52],
+          "coarseCrossingSequence": ["16>35","35>45","45>12","12>15","15>52","52>39"],
+          "fineCrossingSequence": ["16>35","35>45","45>12","12>15","15>52","52>39"],
+          "crossingShiftHours": [0.0032229647040367126,0.004581134766340256,0.003361612558364868,0.002132769674062729,0.0014553666114807129,0]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [49],
+          "fineGates": [49],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [4],
+          "fineGates": [4],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [5,9,10,11,14,26,34,38,43,58],
+          "fineGates": [5,9,10,11,14,26,34,38,43,58],
+          "coarseCrossingSequence": ["43>14","14>34","34>9","9>5","5>26","26>11","11>10","10>58","58>38"],
+          "fineCrossingSequence": ["43>14","14>34","34>9","9>5","5>26","26>11","11>10","10>58","58>38"],
+          "crossingShiftHours": [0.21883631497621536,0.05379136651754379,0.004989422857761383,0.02268339693546295,0.03975179046392441,0.029853176325559616,0.013292446732521057,0.01192735880613327,0]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [1,28,43,44,50],
+          "fineGates": [1,28,43,44,50],
+          "coarseCrossingSequence": ["50>28","28>44","44>1","1>43"],
+          "fineCrossingSequence": ["50>28","28>44","44>1","1>43"],
+          "crossingShiftHours": [0.15210489928722382,0.40085887536406517,0.17144980654120445,0.12303787842392921]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [40,59],
+          "fineGates": [40,59],
+          "coarseCrossingSequence": ["59>40"],
+          "fineCrossingSequence": ["59>40"],
+          "crossingShiftHours": [0.26076462864875793]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [29],
+          "fineGates": [29],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [17],
+          "fineGates": [17],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    },
+    {
+      "window": {
+        "grain": "month",
+        "start": "2024-02-01",
+        "end": "2024-02-29"
+      },
+      "node": "mean",
+      "stepDays": [3,1.5],
+      "sampleCounts": [11,21],
+      "signalCount": 27,
+      "planets": [
+        {
+          "planet": "sun",
+          "coarseGates": [13,19,30,37,49,55],
+          "fineGates": [13,19,30,37,49,55],
+          "coarseCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "fineCrossingSequence": ["19>13","13>49","49>30","30>55","55>37"],
+          "crossingShiftHours": [0.004981979727745056,0.006848674267530441,0.0059541575610637665,0.0026573538780212402,0.0009898468852043152]
+        },
+        {
+          "planet": "earth",
+          "coarseGates": [4,7,29,33,40,59],
+          "fineGates": [4,7,29,33,40,59],
+          "coarseCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "fineCrossingSequence": ["33>7","7>4","4>29","29>59","59>40"],
+          "crossingShiftHours": [0.004981979727745056,0.006848674267530441,0.0059541575610637665,0.0026573538780212402,0.0009898468852043152]
+        },
+        {
+          "planet": "northNode",
+          "coarseGates": [51],
+          "fineGates": [51],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "southNode",
+          "coarseGates": [57],
+          "fineGates": [57],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        },
+        {
+          "planet": "mercury",
+          "coarseGates": [13,19,30,37,41,49,55,60,61,63],
+          "fineGates": [13,19,30,37,41,49,55,60,61,63],
+          "coarseCrossingSequence": ["61>60","60>41","41>19","19>13","13>49","49>30","30>55","55>37","37>63"],
+          "fineCrossingSequence": ["61>60","60>41","41>19","19>13","13>49","49>30","30>55","55>37","37>63"],
+          "crossingShiftHours": [0.18293017521500587,0.07361984252929688,0.012307774275541306,0.08413498476147652,0.14426911622285843,0.1903771050274372,0.21831641346216202,0.22243502363562584,0.06700657680630684]
+        },
+        {
+          "planet": "venus",
+          "coarseGates": [13,19,38,41,54,60,61],
+          "fineGates": [13,19,38,41,54,60,61],
+          "coarseCrossingSequence": ["38>54","54>61","61>60","60>41","41>19","19>13"],
+          "fineCrossingSequence": ["38>54","54>61","61>60","60>41","41>19","19>13"],
+          "crossingShiftHours": [0.0025415942072868347,0.002079695463180542,0.001043412834405899,0.0008513331413269043,0.000831015408039093,0.0007098577916622162]
+        },
+        {
+          "planet": "mars",
+          "coarseGates": [19,41,54,60,61],
+          "fineGates": [19,41,54,60,61],
+          "coarseCrossingSequence": ["54>61","61>60","60>41","41>19"],
+          "fineCrossingSequence": ["54>61","61>60","60>41","41>19"],
+          "crossingShiftHours": [0.0023029111325740814,0.01666705682873726,0.0014209896326065063,0.009644933044910431]
+        },
+        {
+          "planet": "jupiter",
+          "coarseGates": [24,27],
+          "fineGates": [24,27],
+          "coarseCrossingSequence": ["27>24"],
+          "fineCrossingSequence": ["27>24"],
+          "crossingShiftHours": [0.08697917684912682]
+        },
+        {
+          "planet": "saturn",
+          "coarseGates": [37],
+          "fineGates": [37],
+          "coarseCrossingSequence": [],
+          "fineCrossingSequence": [],
+          "crossingShiftHours": []
+        }
+      ]
+    }
+  ]
+}
