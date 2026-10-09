@@ -1,5 +1,5 @@
 import { astro } from 'iztro';
-import i18next from 'iztro/lib/i18n';
+import iztroI18n from 'iztro/lib/i18n';
 import type { CalculationSteps } from '../core/calculationSteps';
 
 /** A failed environment check must never become an empty, successfully scanned year. */
@@ -10,6 +10,19 @@ export class TimelineEnvironmentChangedError extends Error {
   }
 }
 
+/** Internal CommonJS interop only; never cache language values or change them. */
+export function readIztroLanguageState(module: unknown): { language: string; resolvedLanguage: string } {
+  // Bun supplies the instance; Vite's browser bundle supplies the CJS namespace
+  // with that same instance in .default. Unknown shapes must still fail closed.
+  const object = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object';
+  if (!object(module)) throw new TimelineEnvironmentChangedError();
+  const state = typeof module.language === 'string' ? module : module.default;
+  if (!object(state) || typeof state.language !== 'string' || typeof state.resolvedLanguage !== 'string') {
+    throw new TimelineEnvironmentChangedError();
+  }
+  return { language: state.language, resolvedLanguage: state.resolvedLanguage };
+}
+
 const DEFAULT_CONFIG = {
   mutagens: {}, brightness: {}, yearDivide: 'normal', ageDivide: 'normal',
   dayDivide: 'forward', horoscopeDivide: 'normal', algorithm: 'default',
@@ -17,8 +30,7 @@ const DEFAULT_CONFIG = {
 
 function settings() {
   // Own snapshots: getConfig returns mutable nested maps, not an immutable snapshot.
-  return JSON.stringify({ language: i18next.language, resolvedLanguage: i18next.resolvedLanguage,
-    config: astro.getConfig() });
+  return JSON.stringify({ ...readIztroLanguageState(iztroI18n), config: astro.getConfig() });
 }
 
 /** Read-only boundary guard, not cross-global-configuration isolation or a mutation audit. */

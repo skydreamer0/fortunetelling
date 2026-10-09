@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { astro } from 'iztro';
 import i18next from 'iztro/lib/i18n';
-import { finishCooperatively, supportedTimelineEnvironment, TimelineEnvironmentChangedError } from '../src/timeline/cooperative';
+import { finishCooperatively, readIztroLanguageState, supportedTimelineEnvironment, TimelineEnvironmentChangedError } from '../src/timeline/cooperative';
 import { ZiweiEngine } from '../src/engines/ZiweiEngine';
 import { BirthData } from '../src/core/models/BirthData';
 import { finishCalculation } from '../src/core/calculationSteps';
@@ -9,6 +9,38 @@ import { finishCalculation } from '../src/core/calculationSteps';
 const birth = new BirthData({ name: 'Synthetic guard QA', year: 1995, month: 7, day: 16,
   hour: 22, minute: 0, gender: 'male' });
 const restoreLanguage = (language: string) => { i18next.changeLanguage(language); };
+
+test('language reader handles only the two known module shapes and reads live values', () => {
+  const state = { language: 'zh-TW', resolvedLanguage: 'zh-TW' };
+  const wrapped = { default: state };
+  expect(readIztroLanguageState(state)).toEqual(state);
+  expect(readIztroLanguageState(wrapped)).toEqual(state);
+  state.language = 'zh-CN'; // Read current values, never substitute supported values.
+  expect(readIztroLanguageState(wrapped)).toEqual({ language: 'zh-CN', resolvedLanguage: 'zh-TW' });
+  state.resolvedLanguage = 'zh-CN';
+  expect(readIztroLanguageState(state)).toEqual({ language: 'zh-CN', resolvedLanguage: 'zh-CN' });
+  for (const invalid of [null, undefined, 0, 'zh-TW', {}, { default: {} }, { default: { default: state } },
+    { language: 'zh-TW' }, { language: 'zh-TW', resolvedLanguage: null }]) {
+    expect(() => readIztroLanguageState(invalid)).toThrow(TimelineEnvironmentChangedError);
+  }
+});
+
+test('supported guard rejects either mismatched language field without rewriting it', () => {
+  const original = { language: i18next.language, resolvedLanguage: i18next.resolvedLanguage };
+  try {
+    new ZiweiEngine({ asOf: '2026-09-25' }).run(birth);
+    for (const field of ['language', 'resolvedLanguage'] as const) {
+      const before = i18next[field];
+      i18next[field] = 'zh-CN';
+      expect(() => supportedTimelineEnvironment()).toThrow(TimelineEnvironmentChangedError);
+      expect(i18next[field]).toBe('zh-CN');
+      i18next[field] = before!; // The preceding supported engine establishes both fields.
+    }
+  } finally {
+    i18next.language = original.language;
+    i18next.resolvedLanguage = original.resolvedLanguage;
+  }
+});
 
 test('read-only guard detects supported public engine language interference', () => {
   const original = i18next.language;

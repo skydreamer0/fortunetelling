@@ -303,3 +303,16 @@ Compare native Long Tasks/trusted-input/actual cancellation effects under the sa
 documented conditions; do not invent a performance success threshold. No new
 browser/screenshot/physical-input claim is established by this preparation text.
 Issue #19/#46 acceptance remains open pending that evidence and its UX review.
+
+The first active candidate (`cee4bf01`, tree `99b2f947`) passed Bun/source gates
+but failed its first native run `38003587664`: the check became busy then failed
+immediately, so the harness timed out waiting for visible busy and left five cases
+NOT RUN. The production Vite bundle exposed iztro's CommonJS default through an
+extra namespace wrapper; reading that wrapper's language falsely rejected the
+supported environment. A minimal read-only unwrap retains every guard condition.
+The new production-bundle regression builds the real Vite app into a temporary
+directory, imports its unchanged bridge bytes under Bun, and requires genuine
+Ziwei cooperative units plus full synchronous/cooperative serialization parity.
+It reproduced the original rejection before the fix. This is a bundle-interop
+regression, not a replacement browser run or evidence of responsive input. No
+browser gate, timeout, security setting or workflow is relaxed by the correction.
