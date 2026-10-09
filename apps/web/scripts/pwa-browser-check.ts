@@ -112,13 +112,12 @@ async function check(browser: Browser, mode: 'production' | 'without-ignore-vary
         if (!registration) throw new Error('registration missing');
         await registration.update();
       });
-      await page.waitForFunction(async () => {
-        const keys = await caches.keys();
-        const active = (await navigator.serviceWorker.getRegistration())?.active;
+      // Playwright 1.64 polls the immediate return value, so a Promise is truthy
+      // even when it resolves false. The boolean annotation rejects async here.
+      await page.waitForFunction((): boolean => {
         const controller = navigator.serviceWorker.controller;
         const old = (window as unknown as { pwaOldController: ServiceWorker | null }).pwaOldController;
-        return keys.includes('fortune-precache-v2') && !keys.includes('fortune-precache-v1')
-          && controller !== null && controller !== old && controller === active && active.state === 'activated';
+        return controller !== null && controller !== old && controller.state === 'activated';
       });
       update = await page.evaluate(async () => ({
         controllerReplaced: navigator.serviceWorker.controller !== (window as unknown as { pwaOldController: ServiceWorker | null }).pwaOldController,
