@@ -117,6 +117,18 @@ export class NumerologyEngine extends BaseEngine {
     return result;
   }
 
+  /** Internal snapshot projection: natal only, no asOf or system-clock access. */
+  natal(birth: BirthData): SystemResult {
+    birth.validate();
+    const result = this.result();
+    this.#addLifePath(result, birth);
+    this.#addNameNumbers(result, birth);
+    this.#addDigitFrequency(result, birth);
+    this.#addBirthdayAndAttitude(result, birth);
+    this.#addPinnaclesAndChallenges(result, birth);
+    return result;
+  }
+
   // ─── L0: Life path (生命靈數) ────────────────────────────────────────────
 
   /**
