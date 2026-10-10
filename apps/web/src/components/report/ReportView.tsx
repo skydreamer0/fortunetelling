@@ -30,16 +30,42 @@ export const CHAPTERS = [
   { id: 'ch-method', index: '附', label: '方法' },
 ] as const;
 
-/** Track which chapter currently crosses the reading line (upper third of the viewport). */
+/** A short final chapter cannot always reach the upper-third reading line. */
+export function chapterAtReadingPosition(readingChapter: string, viewportBottom: number, documentBottom: number): string {
+  return viewportBottom >= documentBottom - 1 ? CHAPTERS[CHAPTERS.length - 1].id : readingChapter;
+}
+
+export function chapterAtReadingLine(chapters: readonly { id: string; top: number }[], readingLine: number): string {
+  let current: string = CHAPTERS[0].id;
+  for (const chapter of chapters) if (chapter.top <= readingLine) current = chapter.id;
+  return current;
+}
+
+/** Track the reading line, with an explicit page-end boundary for short final chapters. */
 function useActiveChapter(): string {
   const [active, setActive] = useState<string>(CHAPTERS[0].id);
   useEffect(() => {
-    const observer = new IntersectionObserver(entries => {
-      const visible = entries.filter(entry => entry.isIntersecting);
-      if (visible.length) setActive(visible[visible.length - 1].target.id);
-    }, { rootMargin: '-30% 0px -65% 0px' });
-    document.querySelectorAll('[data-chapter]').forEach(node => observer.observe(node));
-    return () => observer.disconnect();
+    let frame: number | undefined;
+    const update = () => {
+      frame = undefined;
+      // Read current geometry rather than retaining an earlier observer entry:
+      // leaving the final chapter must restore the chapter at the reading line.
+      const chapters = Array.from(document.querySelectorAll<HTMLElement>('[data-chapter]'),
+        node => ({ id: node.id, top: node.getBoundingClientRect().top }));
+      setActive(chapterAtReadingPosition(
+        chapterAtReadingLine(chapters, window.innerHeight * 0.3),
+        window.scrollY + window.innerHeight, document.documentElement.scrollHeight,
+      ));
+    };
+    const schedule = () => { frame ??= window.requestAnimationFrame(update); };
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    schedule();
+    return () => {
+      if (frame !== undefined) window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+    };
   }, []);
   return active;
 }
