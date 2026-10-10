@@ -74,6 +74,17 @@ jobs:
             else console.log("MISSING: browser evidence is incomplete; never treat as PASS");
           '
 
+      # System fallback is prepared only AFTER the original timed observations.
+      # Existing Ubuntu repositories only; no production CSS/font route changes.
+      - name: Prepare official Ubuntu CJK fallback for separate visual pass
+        timeout-minutes: 2
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y fonts-noto-cjk
+          dpkg-query -W -f='${Package} ${Version} ${Status}\n' fonts-noto-cjk
+          fc-match 'sans-serif:lang=zh-tw'
+          fc-list :lang=zh-tw family | grep -F 'Noto Sans CJK'
+
       - name: Capture separate synthetic visual states after timed cases
         id: visual
         timeout-minutes: 4

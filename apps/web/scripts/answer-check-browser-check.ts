@@ -711,9 +711,13 @@ type VisualSnapshot = {
   scroll: { x: number; y: number }; target: { left: number; top: number; right: number; bottom: number; width: number; height: number };
   controls: { tag: string; left: number; right: number; width: number; scrollWidth: number; clientWidth: number }[];
 };
+type VisualFont = { selector: string; text: string; computedFamily: string; fonts: { familyName: string; isCustomFont: boolean; glyphCount: number }[] };
+type VisualAttempt = { file: string; phase: VisualPhase; viewport: { width: number; height: number };
+  stage: 'attempted' | 'captured' | 'validated'; error?: string; framing?: { viewportHeight: number; targetTop: number; targetHeight: number; requestedScrollY: number };
+  before?: VisualSnapshot; after?: VisualSnapshot; png?: VisualShot['png']; font?: VisualFont };
 type VisualShot = { file: string; phase: VisualPhase; viewport: { width: number; height: number };
   png: { width: number; height: number; bytes: number; sha256: string };
-  before: VisualSnapshot; after: VisualSnapshot };
+  before: VisualSnapshot; after: VisualSnapshot; font: VisualFont };
 type VisualCase = { viewport: { width: number; height: number }; asOf: string; knownId: string; reportYears: number;
   answer: string; events: Observation[]; errors: string[]; cleanupErrors: string[]; recorderFinished: boolean };
 
@@ -725,7 +729,35 @@ function pngIdentity(bytes: Buffer) {
     sha256: new Bun.CryptoHasher('sha256').update(bytes).digest('hex') };
 }
 
+function visualFontTarget(phase: VisualPhase) {
+  if (phase === 'result') return { selector: '.ask__entry--mcp .ask__paste-block .ask__summary',
+    text: '共 2 段，引用了 2 個訊號；2 個地方需要留意：' };
+  if (phase === 'busy') return { selector: '.ask__entry--mcp .ask__paste-block [role="status"][aria-busy="true"]',
+    text: '正在對照訊號編號（最久約十幾秒）…' };
+  return { selector: CHECK, text: '檢查引用的訊號' };
+}
+
+function visualCounts(attempts: VisualAttempt[]) {
+  assert(attempts.length <= 8); assert.equal(new Set(attempts.map(a => a.file)).size, attempts.length);
+  for (const attempt of attempts) {
+    assert([1280, 390].includes(attempt.viewport.width) && VISUAL_PHASES.includes(attempt.phase));
+    assert.equal(attempt.file, `${attempt.viewport.width}-${attempt.phase}.png`);
+    assert(['attempted', 'captured', 'validated'].includes(attempt.stage));
+    if (attempt.stage !== 'attempted') assert(attempt.png, 'captured bytes require PNG identity');
+    if (attempt.stage === 'validated') assert(!Object.hasOwn(attempt, 'error') && attempt.before && attempt.after && attempt.font);
+  }
+  return { plannedScreenshots: 8, attemptedScreenshots: attempts.length,
+    capturedScreenshots: attempts.filter(a => a.stage !== 'attempted').length,
+    validatedScreenshots: attempts.filter(a => a.stage === 'validated').length,
+    failedAttempts: attempts.filter(a => Object.hasOwn(a, 'error')).length, notRunScreenshots: 8 - attempts.length };
+}
+
 function validateVisualShot(shot: VisualShot, entry: VisualCase) {
+  const expectedFont = visualFontTarget(shot.phase);
+  assert.equal(shot.font.selector, expectedFont.selector, 'font probe selector must match this phase');
+  assert.equal(shot.font.text, expectedFont.text, 'font probe must use this phase’s actual CJK label');
+  assert(shot.font.fonts.some(font => font.familyName.startsWith('Noto Sans CJK') && !font.isCustomFont && font.glyphCount > 0),
+    'actual Chrome text rendering lacks installed CJK fallback glyphs');
   assert.equal(shot.file, `${entry.viewport.width}-${shot.phase}.png`);
   assert(VISUAL_PHASES.includes(shot.phase));
   assert.deepEqual(shot.viewport, entry.viewport);
@@ -820,16 +852,26 @@ function visualSelfTest() {
       viewport: entry.viewport, scroll: { x: 0, y: 0 }, target: { left: 1, right: 101, top: 1, bottom: 101, width: 100, height: 100 },
       controls: [{ tag: 'TEXTAREA', left: 1, right: 101, width: 100, scrollWidth: 100, clientWidth: 100 }] };
     return { file: `${entry.viewport.width}-${phase}.png`, phase, viewport: entry.viewport,
-      png: { ...entry.viewport, bytes: 100, sha256: 'a'.repeat(64) }, before: state, after: { ...structuredClone(state), at: at + 0.5 } };
+      png: { ...entry.viewport, bytes: 100, sha256: 'a'.repeat(64) },
+      font: { ...visualFontTarget(phase), computedFamily: 'sans-serif',
+        fonts: [{ familyName: 'Noto Sans CJK TC', isCustomFont: false, glyphCount: 7 }] }, before: state, after: { ...structuredClone(state), at: at + 0.5 } };
   }));
   validateVisualCases(cases, shots);
   const mutations: [string, (c: VisualCase[], s: VisualShot[]) => void][] = [
+    ['wrong phase font selector', (_, s) => { s[1].font.selector = CHECK; }],
+    ['unrelated CJK label', (_, s) => { s[0].font.text = '無關文字'; }],
+    ['unrelated font element and label', (_, s) => { s[0].font.selector = 'footer'; s[0].font.text = '無關文字'; }],
+    ['no CJK rendered glyphs', (_, s) => { s[0].font.fonts[0].glyphCount = 0; }],
+    ['non-CJK fallback', (_, s) => { s[0].font.fonts[0].familyName = 'Arial'; }],
+    ['external custom font', (_, s) => { s[0].font.fonts[0].isCustomFont = true; }],
+    ['font probe without CJK text', (_, s) => { s[0].font.text = 'ASCII'; }],
     ['missing screenshot', (_, s) => { s.pop(); }], ['wrong viewport pixels', (_, s) => { s[0].png.width = 1; }],
     ['ready after check', (_, s) => { s[0].before.at = 2; s[0].after.at = 2.5; }],
     ['ready after all phases', (_, s) => { s[0].before.at = 10; s[0].after.at = 10.5; }],
     ['busy ended during screenshot', (_, s) => { s[1].after.busy = false; }],
     ['missing flags', (_, s) => { s[2].after.flags = []; }], ['old result after edit', (_, s) => { s[3].after.summary = 'stale'; }],
     ['offscreen screenshot target', (_, s) => { s[0].before.target.top = -1; }],
+    ['centered oversized target', (_, s) => { s[0].before.target.top = -50; s[0].before.target.bottom = 950; s[0].before.target.height = 1000; }],
     ['horizontal text overflow', (_, s) => { s[2].after.controls[0].scrollWidth = 200; }],
     ['non-whitelisted PNG', (_, s) => { s[0].file = '../private.png'; }],
     ['oversized PNG', (_, s) => { s[0].png.bytes = 4 * 1024 * 1024 + 1; }],
@@ -841,8 +883,17 @@ function visualSelfTest() {
   ];
   for (const [name, mutate] of mutations) { const c = structuredClone(cases), s = structuredClone(shots); mutate(c, s); assert.throws(() => validateVisualCases(c, s), Error, name); }
   assert.throws(() => pngIdentity(Buffer.alloc(32)), Error, 'invalid PNG signature');
+  const failedCapture: VisualAttempt = { ...shots[0], stage: 'captured', error: 'clipped' };
+  assert.deepEqual(visualCounts([failedCapture]), { plannedScreenshots: 8, attemptedScreenshots: 1, capturedScreenshots: 1,
+    validatedScreenshots: 0, failedAttempts: 1, notRunScreenshots: 7 });
+  assert.equal(visualCounts([{ ...failedCapture, stage: 'attempted', png: undefined }]).capturedScreenshots, 0);
+  assert.throws(() => visualCounts([{ ...failedCapture, stage: 'validated' }]), Error, 'failed capture cannot be validated');
+  assert.throws(() => visualCounts([{ ...failedCapture, png: undefined }]), Error, 'captured without retained PNG identity');
+  assert.throws(() => visualCounts([failedCapture, failedCapture]), Error, 'duplicate attempted filename');
+  assert.equal(visualCounts([{ ...failedCapture, error: '' }]).failedAttempts, 1, 'empty thrown reason still failed');
+  assert.throws(() => visualCounts([{ ...failedCapture, error: '', stage: 'validated' }]), Error, 'empty error cannot be validated');
   console.log(JSON.stringify({ scope: 'visual evidence validation only; no screenshot or browser execution',
-    rejectedMutations: mutations.map(([name]) => name).concat('invalid PNG signature'), passed: true }));
+    rejectedMutations: mutations.map(([name]) => name).concat('invalid PNG signature', 'failed capture marked validated', 'captured without PNG identity', 'duplicate attempt', 'empty error marked validated'), passed: true }));
 }
 
 async function runVisual() {
@@ -850,6 +901,7 @@ async function runVisual() {
     throw new Error('Visual execution uses only the approved stock-Chrome GitHub job; do not spoof runner flags locally.');
   await mkdir(VISUAL_OUTPUT, { recursive: true });
   assert.deepEqual(await readdir(VISUAL_OUTPUT), [], 'stale visual output must never be reused');
+  const attempts: VisualAttempt[] = [];
   const cases: VisualCase[] = [], screenshots: VisualShot[] = [], errors: string[] = [], cleanupErrors: string[] = [];
   const runtime: Record<string, unknown> = { bun: Bun.version, platform: process.platform, arch: process.arch,
     imageOS: process.env.ImageOS, imageVersion: process.env.ImageVersion, cpuModel: cpus()[0]?.model, logicalCpus: cpus().length,
@@ -862,6 +914,15 @@ async function runVisual() {
   const outstanding: Promise<unknown>[] = [];
   try {
     assert.notEqual(process.getuid?.(), 0); await access('/opt/google/chrome/chrome', constants.X_OK);
+    const command = (...args: string[]) => { const r = Bun.spawnSync(args); assert.equal(r.exitCode, 0); return r.stdout.toString().trim(); };
+    const fontPackage = command('dpkg-query', '-W', '-f=${Package} ${Version} ${Status}', 'fonts-noto-cjk');
+    assert(fontPackage.endsWith('install ok installed'));
+    const [fontFamily, fontFile] = command('fc-match', '--format', '%{family}\n%{file}\n', 'sans-serif:lang=zh-tw').split('\n');
+    assert(fontFamily?.includes('Noto Sans CJK') && fontFile?.startsWith('/usr/share/fonts/opentype/noto/'));
+    await access(fontFile, constants.R_OK);
+    runtime.cjkFallback = { package: fontPackage, family: fontFamily, file: fontFile,
+      sha256: new Bun.CryptoHasher('sha256').update(await readFile(fontFile)).digest('hex'),
+      scope: 'Official Ubuntu system fallback prepared after timed cases; not production Google Fonts validation' };
     const git = (...args: string[]) => { const r = Bun.spawnSync(['git', ...args]); assert.equal(r.exitCode, 0); return r.stdout.toString().trim(); };
     runtime.actualCheckoutCommit = git('rev-parse', 'HEAD'); runtime.actualCheckoutTree = git('rev-parse', 'HEAD^{tree}');
     runtime.actualCheckoutParents = [...git('cat-file', '-p', 'HEAD').matchAll(/^parent ([0-9a-f]{40})$/gm)].map(m => m[1]);
@@ -923,22 +984,46 @@ async function runVisual() {
         await context.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
         await context.addInitScript(installRecorder); page = await context.newPage();
         page.on('pageerror', error => entry.errors.push(String(error)));
-        await page.goto(`${origin}/fortunetelling/`); Object.assign(entry, await makeReport(page));
+        await page.goto(`${origin}/fortunetelling/`); await page.evaluate(() => document.fonts.ready.then(() => undefined));
+        Object.assign(entry, await makeReport(page));
         entry.answer = `A：這段時期傾向有支撐〔${entry.knownId}〕。\n\n你一定會成功〔${MISSING}〕。`;
         await page.locator(TEXTAREA).fill(entry.answer);
+        const cdp = await context.newCDPSession(page);
+        await cdp.send('DOM.enable'); await cdp.send('CSS.enable');
         const capture = async (phase: VisualPhase) => {
-          remainingRunMs(deadlineAt);
-          const target = page!.locator(phase === 'result' ? '.ask__entry--mcp .ask__check' : '.ask__entry--mcp .ask__paste-block');
-          await target.scrollIntoViewIfNeeded(); await settleFrames(page!);
-          const before = await visualSnapshot(page!, phase);
           const file = `${viewport.width}-${phase}.png`;
-          const bytes = await page!.screenshot({ type: 'png', fullPage: false, scale: 'css', animations: 'allow', caret: 'initial', timeout: 15_000 });
-          const after = await visualSnapshot(page!, phase);
-          const shot: VisualShot = { file, phase, viewport, png: pngIdentity(bytes), before, after };
-          validateVisualShot(shot, entry); // Never write a state-mismatched image under a successful phase name.
-          await writeFile(resolve(VISUAL_OUTPUT, file), bytes);
-          assert.deepEqual(await readFile(resolve(VISUAL_OUTPUT, file)), bytes);
-          screenshots.push(shot);
+          const attempt: VisualAttempt = { file, phase, viewport, stage: 'attempted' }; attempts.push(attempt);
+          try {
+            remainingRunMs(deadlineAt);
+            const selector = phase === 'result' ? '.ask__entry--mcp .ask__check' : '.ask__entry--mcp .ask__paste-block';
+            // This separate visual pass frames real geometry only. No resize, CSS
+            // change, clipping exemption, or claim of native wheel responsiveness.
+            attempt.framing = await page!.locator(selector).evaluate(target => {
+              const r = target.getBoundingClientRect();
+              const requestedScrollY = scrollY + r.top + (r.height - innerHeight) / 2;
+              const receipt = { viewportHeight: innerHeight, targetTop: r.top, targetHeight: r.height, requestedScrollY };
+              scrollTo({ top: requestedScrollY, left: scrollX, behavior: 'instant' }); return receipt;
+            });
+            await settleFrames(page!);
+            const before = attempt.before = await visualSnapshot(page!, phase);
+            const bytes = await page!.screenshot({ type: 'png', fullPage: false, scale: 'css', animations: 'allow', caret: 'initial', timeout: 15_000 });
+            const png = pngIdentity(bytes);
+            // Retain genuine failed pixels and pre-capture geometry before any
+            // state/clip/font gate. A filename names the attempt, never a PASS.
+            await writeFile(resolve(VISUAL_OUTPUT, file), bytes);
+            assert.deepEqual(await readFile(resolve(VISUAL_OUTPUT, file)), bytes);
+            attempt.png = png; attempt.stage = 'captured';
+            const after = attempt.after = await visualSnapshot(page!, phase);
+            const fontSelector = visualFontTarget(phase).selector;
+            const { root } = await cdp.send('DOM.getDocument');
+            const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: fontSelector });
+            assert(nodeId, 'actual font probe target absent');
+            const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
+            const font: VisualFont = attempt.font = { selector: fontSelector, fonts,
+              ...await page!.locator(fontSelector).evaluate(node => ({ text: node.textContent ?? '', computedFamily: getComputedStyle(node).fontFamily })) };
+            const shot: VisualShot = { file, phase, viewport, png, before, after, font }; screenshots.push(shot);
+            validateVisualShot(shot, entry); attempt.stage = 'validated';
+          } catch (error) { attempt.error = String(error); throw error; }
         };
         await capture('ready');
         const [point] = await stablePoints(page, [CHECK]);
@@ -972,26 +1057,30 @@ async function runVisual() {
       }
       if (entry.errors.length || entry.cleanupErrors.length) throw new Error(`${viewport.width}px visual capture failed; remaining phases NOT RUN`);
     }
-    validateVisualCases(cases, screenshots); captureGatePassed = true;
+    validateVisualCases(cases, screenshots);
+    assert.equal(visualCounts(attempts).validatedScreenshots, 8); captureGatePassed = true;
   } catch (error) { errors.push(String(error)); process.exitCode = 1; }
   finally {
     if (timer) clearTimeout(timer); await deadlineCleanup;
     for (const action of [() => server?.stop(true), () => browser?.close()]) try { await action(); } catch (error) { cleanupErrors.push(String(error)); }
     await Promise.allSettled(outstanding);
     if (timedOut || cleanupErrors.length) { captureGatePassed = false; process.exitCode = 1; }
-    const manifest = { schema: 1, captureGatePassed, pixelReview: 'NOT_REVIEWED: actual downloaded PNG inspection by author and independent reviewer is required',
-      timedOut, runtime, fixture, plannedScreenshots: 8, capturedScreenshots: screenshots.length, notRunScreenshots: 8 - screenshots.length,
-      screenshots, cases, errors, cleanupErrors,
+    const counts = visualCounts(attempts);
+    const manifest = { schema: 2, captureGatePassed, pixelReview: 'NOT_REVIEWED: actual downloaded PNG inspection by author and independent reviewer is required',
+      timedOut, runtime, fixture, ...counts,
+      attempts, screenshots, cases, errors, cleanupErrors,
       scope: 'Separate synthetic visual capture after the original timed run, same production build; desktop Chrome viewports only',
       limits: ['No screenshots or added work in the original six timed cases or scheduler profile.',
         'Screenshots may disturb this separate run; its event times are not benchmark or input-latency measurements.',
         'Same-origin built assets only; external fonts blocked, so fallback-font rendering only. Service workers blocked.',
-        'Viewport framing uses scrollIntoViewIfNeeded; no claim that this visual framing tests native wheel responsiveness.',
+        'Viewport framing centers measured target geometry; full clipping/overflow gates remain, including oversized targets.',
+        'Framing is not native wheel responsiveness. Captured failed PNGs retain their attempted names; only validatedScreenshots passed capture gates.',
+        'CJK font probe verifies rendered glyphs for the selected real label; actual review of every PNG is still required.',
         'No physical phone, iOS/WebKit, deployed public-site HTTP/UI, complete issue acceptance or background-abort proof.',
         'Only eight explicitly named PNGs and this synthetic manifest may be uploaded, with one-day retention.'] };
     const serialized = JSON.stringify(manifest, null, 2); assert(Buffer.byteLength(serialized) <= 512 * 1024, 'visual manifest exceeds bound');
     await writeFile(resolve(VISUAL_OUTPUT, 'manifest.json'), serialized);
-    console.log(JSON.stringify({ captureGatePassed, capturedScreenshots: screenshots.length, pixelReview: manifest.pixelReview, errors, cleanupErrors }));
+    console.log(JSON.stringify({ captureGatePassed, ...counts, pixelReview: manifest.pixelReview, errors, cleanupErrors }));
   }
 }
 
