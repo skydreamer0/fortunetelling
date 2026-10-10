@@ -7,7 +7,7 @@ describe('conservative changes', () => {
     expect(classify([{ status: 'M', path: 'ROADMAPS.md' }], 'pull_request')).toBe('docs');
   });
   test('icons keep scoped PWA, docs, tooling, typecheck, doctor and build', () => {
-    expect(classify([{ status: 'M', path: 'apps/web/public/icons/icon-192.png' }], 'pull_request')).toBe('assets');
+    expect(classify([{ status: 'M', path: 'apps/web/public/icons/fortune-app-v1-192.png' }], 'pull_request')).toBe('assets');
   });
   test.each(['docs/MCP-SETUP.md', 'docs/validation/answer-check-19-46.md', 'docs/new.md', 'packages/core/src/index.ts', 'packages/core/tests/fixtures/reportGolden.json', 'bun.lock', 'package.json', '.github/workflows/ci.yml', 'bunfig.toml', 'apps/web/public/manifest.webmanifest', 'unknown'])('unknown or coupled %s runs full', path => {
     expect(classify([{ status: 'M', path }], 'pull_request')).toBe('full');

@@ -104,7 +104,23 @@ code { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-siz
   border: 0;
 }
 
-.masthead__seal,
+/* 品牌標誌（BrandMark SVG）；圓角跟 SVG 的 rx 一致，讓載入動畫的光暈不露出方角。 */
+.masthead__seal {
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  border-radius: 20%;
+}
+
+.install-hint__mark {
+  display: block;
+  width: 1.9rem;
+  height: 1.9rem;
+  flex: none;
+  border-radius: 20%;
+}
+
 .seal-mark {
   display: inline-grid;
   place-items: center;
@@ -332,16 +348,10 @@ code { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-siz
   animation: fade-in 0.2s var(--ease);
 }
 .loading__seal {
-  display: grid;
-  place-items: center;
+  display: block;
   width: 4.5rem;
   height: 4.5rem;
-  background: var(--zhu);
-  color: var(--zhu-ink);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 2.25rem;
-  border-radius: 3px;
+  border-radius: 20%;
   animation: stamp 0.9s var(--ease) infinite alternate;
 }
 .loading__text { font-family: var(--font-display); letter-spacing: 0.4em; color: var(--ink-2); }

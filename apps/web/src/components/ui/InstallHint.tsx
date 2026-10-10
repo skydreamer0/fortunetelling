@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { INSTALL_HINT_KEY, shouldShowIosInstallHint } from '../../lib/pwa';
 import { safeLocalStorage } from '../../lib/store';
+import { BrandMark } from './BrandMark';
 
 function dismissedBefore() {
   try {
@@ -27,7 +28,7 @@ export function InstallHint() {
 
   return (
     <aside className="install-hint" aria-label="加入主畫面">
-      <span className="seal-mark" aria-hidden="true">命</span>
+      <BrandMark className="install-hint__mark" />
       <p className="install-hint__text">
         <strong>加入主畫面</strong>
         點瀏覽器的「分享」<ShareGlyph />，再選「加入主畫面」，就能像 App 一樣全螢幕、離線開啟。
