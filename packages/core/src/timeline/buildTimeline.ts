@@ -35,7 +35,8 @@ import { humanDesignCalculator } from '../calculators/humanDesign/calculator';
 import { evaluateHumanDesignRules } from '../calculators/humanDesign/rules';
 import { buildJyotishChart } from '../calculators/jyotish/calculator';
 import { evaluateJyotishRules } from '../calculators/jyotish/rules';
-import { createAstrolabe, monthlySequenceSteps, yearlySequenceSteps } from '../calculators/ziwei/astrolabe';
+import { monthlySequenceSteps, yearlySequenceSteps } from '../calculators/ziwei/astrolabe';
+import { createZiweiNatalBasisProvider, type ZiweiNatalBasisProvider } from '../calculators/ziwei/natalBasis';
 import { calculateZiweiSteps } from '../calculators/ziwei/calculator';
 import { finishCalculation, type CalculationSteps } from '../core/calculationSteps';
 import { toZiweiRuleChart } from '../calculators/ziwei/ruleChart';
@@ -236,7 +237,7 @@ interface Prepared {
   skipped: SkippedSystem[];
 }
 
-function* prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: string, firstYear: number, years: number, opts: TimelineOptions, baziNatalBasis?: BaziNatalBasisProvider): CalculationSteps<Prepared> {
+function* prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: string, firstYear: number, years: number, opts: TimelineOptions, baziNatalBasis?: BaziNatalBasisProvider, ziweiNatalBasis?: ZiweiNatalBasisProvider): CalculationSteps<Prepared> {
   const evaluators: Partial<Record<SystemId, WindowEvaluator>> = {};
   const skipped: SkippedSystem[] = [];
   const timeKnown = ctx.jd !== null && ctx.utc !== null;
@@ -279,15 +280,17 @@ function* prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: s
         break;
       }
       case 'ziwei': {
-        const res = yield* calculateZiweiSteps(ctx, {
+        const config = {
           ...calcConfig, useTrueSolarTime, ziHourConvention: toZiweiZiConvention(ziHourConvention),
-        });
+        };
+        const provider = ziweiNatalBasis ?? createZiweiNatalBasisProvider(ctx, config);
+        const res = yield* calculateZiweiSteps(ctx, config, provider);
         const time = res.chart.time;
         if (!timeKnown || !time) {
           skipped.push({ system, reason: 'time_unknown' });
           break;
         }
-        const astrolabe = createAstrolabe(time.date, time.timeIndex, ctx.profile.gender);
+        const astrolabe = provider(ctx, config).astrolabeFor(time);
         yield;
         const yearly = yield* yearlySequenceSteps(astrolabe, firstYear - 1, years + 1);
         const previousMonths = yield* monthlySequenceSteps(astrolabe, asOfYear - 1);
@@ -437,14 +440,14 @@ export function buildTimeline(ctx: TimeContext, opts: TimelineOptions): Timeline
 }
 
 /** Internal sync-analyze path. No caller-supplied natal object is added to TimelineOptions. */
-export function buildTimelineWithBaziNatalBasis(ctx: TimeContext, opts: TimelineOptions, natalBasis: BaziNatalBasisProvider): Timeline {
-  return buildTimelineInternal(ctx, opts, natalBasis);
+export function buildTimelineWithBaziNatalBasis(ctx: TimeContext, opts: TimelineOptions, natalBasis: BaziNatalBasisProvider, ziweiNatalBasis?: ZiweiNatalBasisProvider): Timeline {
+  return buildTimelineInternal(ctx, opts, natalBasis, undefined, ziweiNatalBasis);
 }
 
 /** Internal report assembly: the public timeline API still returns only Timeline. */
-export function buildTimelineEvidenceWithBaziNatalBasis(ctx: TimeContext, opts: TimelineOptions, natalBasis: BaziNatalBasisProvider): { timeline: Timeline; signals: Signal[] } {
+export function buildTimelineEvidenceWithBaziNatalBasis(ctx: TimeContext, opts: TimelineOptions, natalBasis: BaziNatalBasisProvider, ziweiNatalBasis?: ZiweiNatalBasisProvider): { timeline: Timeline; signals: Signal[] } {
   const evidence = new Map<string, Signal>();
-  const timeline = buildTimelineInternal(ctx, opts, natalBasis, evidence);
+  const timeline = buildTimelineInternal(ctx, opts, natalBasis, evidence, ziweiNatalBasis);
   return { timeline, signals: [...evidence.values()].sort((a, b) => cmp(a.id, b.id)) };
 }
 
@@ -457,8 +460,8 @@ function validateTimeOptions(opts: TimelineOptions): void {
   }
 }
 
-function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider, evidence?: Map<string, Signal>): Timeline {
-  return finishCalculation(buildTimelineSteps(ctx, opts, natalBasis, evidence));
+function buildTimelineInternal(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider, evidence?: Map<string, Signal>, ziweiNatalBasis?: ZiweiNatalBasisProvider): Timeline {
+  return finishCalculation(buildTimelineSteps(ctx, opts, natalBasis, evidence, ziweiNatalBasis));
 }
 
 export interface TimelineCooperativeControl {
@@ -488,7 +491,7 @@ export async function buildTimelineCooperatively(ctx: TimeContext, opts: Timelin
   return finishCooperatively(buildTimelineSteps(context, options), signal, yieldTask, verify);
 }
 
-function* buildTimelineSteps(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider, evidence?: Map<string, Signal>): CalculationSteps<Timeline> {
+function* buildTimelineSteps(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider, evidence?: Map<string, Signal>, ziweiNatalBasis?: ZiweiNatalBasisProvider): CalculationSteps<Timeline> {
   const asOf = validateAsOf(opts?.asOf);
   const thresholds = resolveAgreementThresholds(opts);
   validateTimeOptions(opts);
@@ -514,7 +517,7 @@ function* buildTimelineSteps(ctx: TimeContext, opts: TimelineOptions, natalBasis
   if (topN !== undefined && !(topN === Infinity || (Number.isInteger(topN) && topN >= 0))) {
     throw new Error(`buildTimeline: topSignalsPerDomain must be an integer ≥ 0 or Infinity, got ${topN}`);
   }
-  const { evaluators, skipped } = yield* prepareSystems(ctx, requested, asOf, firstYear, years, opts, natalBasis);
+  const { evaluators, skipped } = yield* prepareSystems(ctx, requested, asOf, firstYear, years, opts, natalBasis, ziweiNatalBasis);
   const weightOf = (s: SystemId) => opts.systemWeights?.[s] ?? 1;
   const systems = SYSTEM_IDS.filter((s) => evaluators[s] !== undefined);
   const systemWeights: Partial<Record<SystemId, number>> = {};

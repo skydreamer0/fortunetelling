@@ -50,7 +50,8 @@
 
 import { BirthData } from './models/BirthData';
 import { BaZiEngine, TAIPEI_CONVENTION, ELEMENTS_LIMITATION, buildBaziNatalComponents } from '../engines/BaZiEngine';
-import { ZiweiEngine } from '../engines/ZiweiEngine';
+import { ZiweiNatalBasisEngine } from '../calculators/ziwei/natalBasisEngine';
+import type { ZiweiNatalBasisProvider } from '../calculators/ziwei/natalBasis';
 import { computePillars, luckCycles, solarYearOfAsOf, yearGanZhi, type ZiHourConvention, type BaziPillarsResult, type LuckCycles } from '../calculators/bazi/pillars';
 import type { BaziNatalBasisProvider } from '../calculators/bazi/natalBasis';
 import { ResolvedBirthData } from '../calculators/ziwei/calculator';
@@ -173,17 +174,22 @@ export class TimeContextBaZiEngine extends BaZiEngine {
   }
 }
 
-export class TimeContextZiweiEngine extends ZiweiEngine {
+export class TimeContextZiweiEngine extends ZiweiNatalBasisEngine {
   #opts: TcOptions;
+  #natalBasis?: ZiweiNatalBasisProvider;
 
-  constructor({ asOf, ...opts }: TcOptions & { asOf: Date }) {
-    super({ asOf });
+  constructor({ asOf, natalBasis, ...opts }: TcOptions & { asOf: Date; natalBasis?: ZiweiNatalBasisProvider }) {
+    super({ asOf, natalBasis: natalBasis ? () => natalBasis(opts.ctx, {
+      useTrueSolarTime: opts.useTrueSolarTime, ziHourConvention: toZiweiZiConvention(opts.ziHourConvention),
+    }) : undefined });
     this.#opts = opts;
+    this.#natalBasis = natalBasis;
   }
 
   _compute(birth: BirthData) {
     const { ctx, useTrueSolarTime, ziHourConvention } = this.#opts;
-    const time = timeIndexFrom(ctx, { useTrueSolarTime, ziHourConvention: toZiweiZiConvention(ziHourConvention) });
+    const config = { useTrueSolarTime, ziHourConvention: toZiweiZiConvention(ziHourConvention) };
+    const time = this.#natalBasis ? structuredClone(this.#natalBasis(ctx, config).time) : timeIndexFrom(ctx, config);
     if (time === null || birth.timeKnown === false) return super._compute(birth);
     const { alternatives, ...primary } = time;
     const result = super._compute(new ResolvedBirthData(birth, primary));

@@ -109,13 +109,7 @@ export class ZiweiEngine extends BaseEngine {
       };
       return unavailable;
     }
-    const astrolabe = astro.bySolar(
-      birth.solarDateStr,
-      birth.timeIndex,
-      birth.genderZh,
-      true, // fixLeap: correct leap month around lunar 15th
-      this.language,
-    );
+    const astrolabe = this._createAstrolabe(birth);
 
     const result = this.result();
 
@@ -135,6 +129,13 @@ export class ZiweiEngine extends BaseEngine {
     };
 
     return result;
+  }
+
+  /** Internal subclass seam; standalone engine options and calculation stay unchanged. */
+  protected _createAstrolabe(birth: BirthData): Astrolabe {
+    return astro.bySolar(birth.solarDateStr, birth.timeIndex, birth.genderZh,
+      true, // fixLeap: correct leap month around lunar 15th
+      this.language);
   }
 
   // ─── L0: Natal summary ──────────────────────────────────────────────────
