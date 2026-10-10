@@ -35,6 +35,8 @@ export {
   liChunUtcMs,
   solarYearOfAsOf,
 } from './bazi/pillars';
+export { baziAnnualNativePeriod, baziMonthlyNativePeriod, baziLuckCycleNativePeriod } from './bazi/nativePeriods';
+export type { BaziNativePeriodOptions, BaziLuckCycleNativePeriodOptions } from './bazi/nativePeriods';
 export { ziweiCalculator, extractZiweiChart, ZIWEI_CALCULATOR_VERSION } from './ziwei/calculator';
 export * from './ziwei/index';
 export { numerologyCalculator, extractNumerologyChart, NUMEROLOGY_CALCULATOR_VERSION } from './numerology/calculator';
