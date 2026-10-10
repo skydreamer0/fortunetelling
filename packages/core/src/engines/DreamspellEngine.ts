@@ -36,6 +36,7 @@ import { BaseEngine } from '../core/BaseEngine';
 import { wavespellOf, castleOf, oracleOf } from '../calculators/tzolkin/tzolkin';
 import type { BirthData } from '../core/models/BirthData';
 import type { SystemResult } from '../core/models/SystemResult';
+import type { DreamspellComponent, DreamspellMetadata, DreamspellOracleKinValue } from './dreamspellTypes';
 
 // ─── Dreamspell name tables (zh-TW) ─────────────────────────────────────────
 
@@ -107,7 +108,7 @@ export class DreamspellEngine extends BaseEngine {
       name: 'Kin 印記',
       category: 'kin',
       value: { kin, signature, color: sealColor },
-    });
+    } satisfies DreamspellComponent);
 
     // ─── L0: 銀河音階 (galactic tone) ─────────────────────────────────────
     result.add({
@@ -115,7 +116,7 @@ export class DreamspellEngine extends BaseEngine {
       name: '銀河音階',
       category: 'tone',
       value: { number: toneNumber, name: toneName },
-    });
+    } satisfies DreamspellComponent);
 
     // ─── L0: 圖騰 (solar seal) ────────────────────────────────────────────
     result.add({
@@ -123,7 +124,7 @@ export class DreamspellEngine extends BaseEngine {
       name: '圖騰',
       category: 'seal',
       value: { number: sealNumber, name: sealName, color: sealColor },
-    });
+    } satisfies DreamspellComponent);
 
     // ─── L0: 波符 (wavespell, V1-07) ─────────────────────────────────────
     const wavespell = wavespellOf(kin);
@@ -132,7 +133,7 @@ export class DreamspellEngine extends BaseEngine {
       name: '波符',
       category: 'wavespell',
       value: { ...wavespell, name: `${SEAL_NAMES[wavespell.seal]}波符` },
-    });
+    } satisfies DreamspellComponent);
 
     // ─── L0: 城堡 (castle, V1-07) ─────────────────────────────────────────
     const castle = castleOf(kin);
@@ -141,10 +142,10 @@ export class DreamspellEngine extends BaseEngine {
       name: '城堡',
       category: 'castle',
       value: castle,
-    });
+    } satisfies DreamspellComponent);
 
     // ─── L0: 第五力神諭 (oracle, V1-07) ──────────────────────────────────
-    const describe = (r: { kin: number; seal: number; tone: number }) => ({
+    const describe = (r: { kin: number; seal: number; tone: number }): DreamspellOracleKinValue => ({
       ...r,
       name: `${SEAL_COLORS[r.seal % 4]}${TONE_NAMES[r.tone]}${SEAL_NAMES[r.seal].slice(1)}`,
     });
@@ -160,13 +161,13 @@ export class DreamspellEngine extends BaseEngine {
         antipode: describe(oracle.antipode),
         occult: describe(oracle.occult),
       },
-    });
+    } satisfies DreamspellComponent);
 
     result.meta = {
       kin,
       fullSignature: `${sealColor}${signature}`, // e.g. 白電力巫師
       epoch: `${EPOCH.year}-${EPOCH.month}-${EPOCH.day} = Kin ${EPOCH.kin}`,
-    };
+    } satisfies DreamspellMetadata;
 
     return result;
   }
