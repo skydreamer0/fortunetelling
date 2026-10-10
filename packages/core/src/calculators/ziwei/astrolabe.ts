@@ -18,6 +18,7 @@
  */
 
 import { astro } from 'iztro';
+import { finishCalculation, type CalculationSteps } from '../../core/calculationSteps';
 import { Lunar, LunarYear, Solar } from 'lunar-javascript';
 import { brightnessScore } from '../../engines/ZiweiEngine';
 import type { TimeBasis, TimeContext } from '../../time/types';
@@ -255,11 +256,17 @@ export function natalChart(astrolabe: ZiweiAstrolabe): ZiweiNatalChart {
  * @param birthLunarYear lunar birth year (default: from the astrolabe).
  */
 export function decadeSequence(astrolabe: ZiweiAstrolabe, birthLunarYear = birthLunarYearOf(astrolabe)): ZiweiDecadePeriod[] {
-  return astrolabe.palaces
+  return finishCalculation(decadeSequenceSteps(astrolabe, birthLunarYear));
+}
+
+/** Internal run-local sequence; public synchronous entry drains these same steps. */
+export function* decadeSequenceSteps(astrolabe: ZiweiAstrolabe, birthLunarYear = birthLunarYearOf(astrolabe)): CalculationSteps<ZiweiDecadePeriod[]> {
+  const out: ZiweiDecadePeriod[] = [];
+  const palaces = astrolabe.palaces
     .filter((p) => Array.isArray(p.decadal?.range) && p.decadal.range.length === 2)
     .slice()
-    .sort((a, b) => a.decadal.range[0] - b.decadal.range[0])
-    .map((p, i) => {
+    .sort((a, b) => a.decadal.range[0] - b.decadal.range[0]);
+  for (const [i, p] of palaces.entries()) {
       const [s, e] = p.decadal.range;
       const start = lunarNewYear(birthLunarYear + s - 1);
       const end = addDays(lunarNewYear(birthLunarYear + e), -1);
@@ -267,7 +274,7 @@ export function decadeSequence(astrolabe: ZiweiAstrolabe, birthLunarYear = birth
       if (decadal.index !== p.index) {
         throw new Error(`ziwei: decade probe mismatch at ${start} (expected palace ${p.index}, got ${decadal.index})`);
       }
-      return {
+      out.push({
         id: `daXian_${i + 1}`,
         index: i + 1,
         palaceIndex: p.index,
@@ -278,8 +285,10 @@ export function decadeSequence(astrolabe: ZiweiAstrolabe, birthLunarYear = birth
         mutagen: [...decadal.mutagen],
         start,
         end,
-      };
-    });
+      });
+      yield;
+  }
+  return out;
 }
 
 /**
@@ -287,6 +296,11 @@ export function decadeSequence(astrolabe: ZiweiAstrolabe, birthLunarYear = birth
  * 春節 → day before the next 春節, so consecutive entries are contiguous.
  */
 export function yearlySequence(astrolabe: ZiweiAstrolabe, fromYear: number, count: number): ZiweiYearlyPeriod[] {
+  return finishCalculation(yearlySequenceSteps(astrolabe, fromYear, count));
+}
+
+/** Internal: one existing horoscope/period per bounded unit. */
+export function* yearlySequenceSteps(astrolabe: ZiweiAstrolabe, fromYear: number, count: number): CalculationSteps<ZiweiYearlyPeriod[]> {
   const out: ZiweiYearlyPeriod[] = [];
   for (let y = fromYear; y < fromYear + count; y++) {
     const start = lunarNewYear(y);
@@ -304,6 +318,7 @@ export function yearlySequence(astrolabe: ZiweiAstrolabe, fromYear: number, coun
       start,
       end,
     });
+    yield;
   }
   return out;
 }
@@ -316,6 +331,11 @@ export function yearlySequence(astrolabe: ZiweiAstrolabe, fromYear: number, coun
  * `horoscope(start)`.
  */
 export function monthlySequence(astrolabe: ZiweiAstrolabe, year: number): ZiweiMonthlyPeriod[] {
+  return finishCalculation(monthlySequenceSteps(astrolabe, year));
+}
+
+/** Internal: calendar setup followed by one existing lunar month per unit. */
+export function* monthlySequenceSteps(astrolabe: ZiweiAstrolabe, year: number): CalculationSteps<ZiweiMonthlyPeriod[]> {
   const months = (LunarYear.fromYear(year).getMonths() as any[]).filter((m) => m.getYear() === year);
   // Start date of each regular month 1..12 (index 0..11).
   const starts: string[] = [];
@@ -331,6 +351,7 @@ export function monthlySequence(astrolabe: ZiweiAstrolabe, year: number): ZiweiM
     }
   }
   const nextNewYear = lunarNewYear(year + 1);
+  yield;
   const out: ZiweiMonthlyPeriod[] = [];
   for (let i = 0; i < 12; i++) {
     const start = starts[i];
@@ -348,6 +369,7 @@ export function monthlySequence(astrolabe: ZiweiAstrolabe, year: number): ZiweiM
       start,
       end,
     });
+    yield;
   }
   return out;
 }

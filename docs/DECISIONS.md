@@ -836,3 +836,51 @@ reportGolden/export的12項基準，再新增 reportGolden.v0.8.0.delta.json 的
 後續型別斷言另保護四個必填欄位。最終測試、完整checks與獨立驗收以PR紀錄為準。
 
 不改Actions、權限、正式DB、安全設定、LOCKED FORECAST或部署流程；本輪只保存Draft候選。
+
+## D-053 #46：同一計算步驟的 cooperative 排程與逐年原子提交
+
+既有 native diagnostic 已顯示冷 citation lookup 的年度工作會形成約 0.8 秒 Long Task；
+Bun setup/cell profiling 則顯示約 95% 在 setup，約 89% 在 Ziwei。這些是各自條件下的
+量測，不是跨裝置速度保證。只在 12 個月 cell 間 yield 不能處理主要 setup 阻塞。
+
+**修法範圍：** Ziwei 原本的 decade/year/month sequence 改成 run-local generator，
+原同步 API 以同一份 steps 同步 drain。calculator、timeline setup 和各 cell 共用相同
+順序／公式／資料／ID；不刪掉原有 sequence，也不另建 Worker 或依賴。
+新增公開 `buildTimelineCooperatively(ctx, opts, { signal, yieldTask? })` 僅支援明傳
+bazi/ziwei/numerology 子集，即現行 Web sync report 的範圍。它不初始化星曆，
+不改寫 `buildTimelineAsync` 的既有意義；sync API 支援範圍與 defaults 保持原樣。
+新入口在第一個 yield 前複製 ctx/options，只回傳完整 Timeline。
+
+**取消與提交：** 每個 step 前、scheduler 前後、step 完成後（含 final return）檢查
+actual AbortSignal 與環境。已 abort 時保留 exact reason，不以 Error.name 猜測。
+Web 先 stage 完整年度 months/proofs，最後在不 yield 的區塊一起 commit cache、known
+signals、proofs、scanned cursor；取消／scheduler／環境失敗不提交該年。已完成年仍快取。
+新 prepare 與會前進 cursor 的同步 lookup 取消舊 owner；舊 continuation 不得倒退 cursor
+或移除新 A/B 的資料。真正的年度引擎失敗維持既有「該年不貢獻」政策，與取消分開。
+
+**Iztro 界線：** 新 cooperative known-time Ziwei path 要求既有 zh-TW/default
+環境已建立；read-only boundary guard 快照兩個 language 欄位和 getConfig JSON，
+不更改／恢復其他 caller 設定。public ZiweiEngine(language) 完全不收窄。
+foreign zh-CN 或可觀察設定變動須整年失敗且不 commit。這不是通用全域隔離：
+away-and-back 完全發生於兩次檢查間、plugin、translation resources、monkey patch
+不在 guard 觀察範圍。只支援 repo 現有固定設定，未聲稱任意外部全球設定安全。
+單一 next() 不可中斷；未 settle 的外部 scheduler promise 不能被此 runner 強制中止。
+generator cleanup 必須同步且不可 yield；不得在 cleanup 發布計算結果。
+
+**0.9.0 provenance：** 新 entry 是公開可觀察 API，core/package/lock 對齊 0.9.0。
+新 Report/compatibility version、CalculationSpec versions.core/specHash、MCP
+versionsHash 和 export manifest coreVersion 隨 release 改變。逐 call-site 相容性審查
+未找到以這些 hash 拒收／改寫舊紀錄的 production consumer；這是既有修復的正常版本
+識別，不新增使用者選項、資料格式或 migration。cf1/sig 演算法、Report7、Timeline2
+與既有 defaults 不變。沒有 locked-forecast loader，不能宣稱程式提供封存鎖或舊引擎
+重播；外部封存與舊 golden/delta 一律不讀取或覆寫。explicit export CLI 的既有指定
+目錄覆寫行為也不是 release 自動 migration。
+
+**驗收：** 先保留未改 0.8.0 的 23 組完整 Timeline/Calculator 輸出，包含 16 年、
+clock/zi 邊界、unknown/empty/weights，再做 full object 與逐 byte JSON 比對。
+新增 hash fixture 只摘要整份 serialized bytes，沒有排除 identity 或排序。
+Report/export 使用新增 literal 0.9.0 delta，不重錄舊 fixture、不隱藏跨版本差異。
+partial-year abort/retry、interleaved reports、A→B→A、同步搶先、global negative
+controls 和真 16 年 scan 都需通過；最後仍需 exact candidate 非作者 review 與
+既有 native production-browser harness。Bun/source PASS 不能取代 UI responsiveness
+驗收；診斷 PR91 的 inert native run 也不是修復後實測。

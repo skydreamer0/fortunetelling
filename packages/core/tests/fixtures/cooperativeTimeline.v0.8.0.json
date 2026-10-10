@@ -1,0 +1,747 @@
+{
+  "coreVersion": "0.8.0",
+  "sourceHead": "154343112d5985d4c0e40940a586eb0eaecdf6b6",
+  "sourceTree": "57577ac4cca7fb7cc0fc556ed17395f2b749ad6e",
+  "productionReference": "07585e5e0f64786b7f11ecc3ddc3e8acee11adde",
+  "records": [
+    {
+      "id": "lookup-2021",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2021-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "ec20ebe3b99b865ba10ddae241d0a92b37fb5716497f305064fa67e3c3143e9e",
+      "timelineBytes": 413895,
+      "calculatorSha256": "3e56fb152a113f303a3c9649bc634ef6f4790c27dbeb0cac14250cd33448b3c3",
+      "calculatorBytes": 36606
+    },
+    {
+      "id": "lookup-2022",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2022-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "b6be34385173feb848433dc1a6843917d5c996681b65eb1154d5ac69488a7db1",
+      "timelineBytes": 417744,
+      "calculatorSha256": "8581ae0cd15f78330ee55b2d7daf7c75853a11d1c3895b1145aa4f0c6b19af37",
+      "calculatorBytes": 36606
+    },
+    {
+      "id": "lookup-2023",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2023-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "13f3a6ab46b138ab984771cda750fe4674f875fc0e1b47e33ac4e48fd7a4ced5",
+      "timelineBytes": 410664,
+      "calculatorSha256": "3dc0d74247f2de5db9fc9aabe601054d1618f5e29ec1bb1288d302e319c11f9b",
+      "calculatorBytes": 36603
+    },
+    {
+      "id": "lookup-2024",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2024-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "ef31d660fa0616631fb18b75500542bca4bd02a58a16c5d6f7d0b95a7ff590ee",
+      "timelineBytes": 404321,
+      "calculatorSha256": "33009d4dcdd244cea10b1ee7ae80d52867bdcf3d8ff8fb771db2a291b6a74b08",
+      "calculatorBytes": 36603
+    },
+    {
+      "id": "lookup-2025",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2025-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "023fb46b640885ecb45852b4e3a147b488466bad68b10a5009f0db75c245421b",
+      "timelineBytes": 420411,
+      "calculatorSha256": "04802d00f5837b22d52a1de1f0267abafc00c4bd4e72ed554adf5ae140bfc2b5",
+      "calculatorBytes": 36604
+    },
+    {
+      "id": "lookup-2026",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2026-09-25",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "ac7e94e7099f8333db191dd27df1681771bfce0cca58f5fd7f96463a9fd2a52e",
+      "timelineBytes": 412081,
+      "calculatorSha256": "63ad82a55fc167491f2c60e5223833fe7c81b4d6447146959e9e5da11df3bfd9",
+      "calculatorBytes": 36604
+    },
+    {
+      "id": "lookup-2027",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2027-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "e4a82abf372846a4a3d2d0e221856deac3677a59f375018dc6308dec960ca44f",
+      "timelineBytes": 403824,
+      "calculatorSha256": "fb4b9c0214992f97c3717179c58c61439ae5b0d8f03f285ddcc2d9dca03c568d",
+      "calculatorBytes": 36604
+    },
+    {
+      "id": "lookup-2028",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2028-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "91cd9b0b529663eed1adcfe60220f6b0e3e31085ae9309df95ab363b99b5e90b",
+      "timelineBytes": 409536,
+      "calculatorSha256": "833fd315fb11f2b7b809f1ecf567256150f1f5cd64f919be33fc91f3952e68c5",
+      "calculatorBytes": 36604
+    },
+    {
+      "id": "lookup-2029",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2029-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "0dce0f9f9a88c2a812ea0974190ce61907cdeb303ff2d3838776b52e47970161",
+      "timelineBytes": 416279,
+      "calculatorSha256": "36a83ef4018114c4d7d22c958157105457fb651dcb4d9973846e13f9f7216f7b",
+      "calculatorBytes": 36604
+    },
+    {
+      "id": "lookup-2030",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2030-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "6ccdcd9c2542e5ffdd694b0d072f32d179f950449a7e524d2943a896c1760dca",
+      "timelineBytes": 417152,
+      "calculatorSha256": "709b0470f327407689d5d6b31a0fcfe3517213810caac7dfd5aed0ba8a0ae5b6",
+      "calculatorBytes": 36604
+    },
+    {
+      "id": "lookup-2031",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2031-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "14c35ed7609a2d31161d59911d24910ee97f9cecbe6a74e81f23839126d49a2d",
+      "timelineBytes": 419779,
+      "calculatorSha256": "7480970f4f6c1a4a81d51a0a311501dc2975fef492eeec8a1d0ecf7c0930b791",
+      "calculatorBytes": 36605
+    },
+    {
+      "id": "lookup-2032",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2032-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "b892a365fc8beff2f5fce9876580a5d16d33ff84c04ba75b47b4e1c5271a34f9",
+      "timelineBytes": 410381,
+      "calculatorSha256": "5947afc01796a9211e35e2611fdab08c70b41024c291a501a52feb0e8256a10d",
+      "calculatorBytes": 36605
+    },
+    {
+      "id": "lookup-2033",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2033-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "13a99bb304e7e8c4d42a3b9ebfe87977b204f58fd3b4737aac311c872c8b4e20",
+      "timelineBytes": 407076,
+      "calculatorSha256": "81a1e1a7c5933bbeaa185c495fa4e12d391d525304a82887cc77a1fe19d9e015",
+      "calculatorBytes": 36606
+    },
+    {
+      "id": "lookup-2034",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2034-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "d42bda51011f2f2e86c15645d776b27f27cc9b42708ba7c1b341e26ec21f410a",
+      "timelineBytes": 418123,
+      "calculatorSha256": "e8606a0191d9e56ed5db1dabb9a161b104628f993459a7aae544d51d4380b28d",
+      "calculatorBytes": 36606
+    },
+    {
+      "id": "lookup-2035",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2035-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "8deb4c596bcb3be10e6d82ba44805266290aceac05a57a0d5409e31445c3732d",
+      "timelineBytes": 422332,
+      "calculatorSha256": "be2f3a245e925a0b04b9e1b005d0a1c362f802e9bb4b7f5c5a062281a06f10f5",
+      "calculatorBytes": 36603
+    },
+    {
+      "id": "lookup-2036",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2036-01-01",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "9199640ae931c8f2551afb8cb33ff116fec17bff734a8fe96cfcf617e709b955",
+      "timelineBytes": 406457,
+      "calculatorSha256": "5e52d3415df8b3fd692b2586347721d1bb0b1bf88776c34b0957562f94ff4270",
+      "calculatorBytes": 36603
+    },
+    {
+      "id": "boundary-false-late",
+      "profile": {
+        "date": "1990-01-26",
+        "time": "23:30",
+        "timeAccuracy": "exact",
+        "gender": "female",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2026-09-25",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": false,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "3175d9d296b11f1fdc8170b709ab758fe392e793df284ab0a426ec5a9111fe06",
+      "timelineBytes": 424620,
+      "calculatorSha256": "ed2bfd06b5504df338af316fcf586b324774e8e7d4610c337084fb25b048f547",
+      "calculatorBytes": 45215
+    },
+    {
+      "id": "boundary-false-early",
+      "profile": {
+        "date": "1990-01-26",
+        "time": "23:30",
+        "timeAccuracy": "exact",
+        "gender": "female",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2026-09-25",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": false,
+        "ziHourConvention": "early"
+      },
+      "timelineSha256": "8668eead553437a900eeafe292cbf1aceb312aa11cb8b5c353d6e210557a1540",
+      "timelineBytes": 427039,
+      "calculatorSha256": "62bc5b886b930a546f2270a816b338aa13c756a603bebf3d7fc8c8a5131991ce",
+      "calculatorBytes": 45108
+    },
+    {
+      "id": "boundary-true-late",
+      "profile": {
+        "date": "1990-01-26",
+        "time": "23:30",
+        "timeAccuracy": "exact",
+        "gender": "female",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2026-09-25",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "3175d9d296b11f1fdc8170b709ab758fe392e793df284ab0a426ec5a9111fe06",
+      "timelineBytes": 424620,
+      "calculatorSha256": "cee7d2d4ac2346dd1df60c6f0a7e6861bdf448e7653d37cc7981399e9d0dc98e",
+      "calculatorBytes": 45223
+    },
+    {
+      "id": "boundary-true-early",
+      "profile": {
+        "date": "1990-01-26",
+        "time": "23:30",
+        "timeAccuracy": "exact",
+        "gender": "female",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2026-09-25",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "early"
+      },
+      "timelineSha256": "8668eead553437a900eeafe292cbf1aceb312aa11cb8b5c353d6e210557a1540",
+      "timelineBytes": 427039,
+      "calculatorSha256": "5d5116a6de08748495c1e6dc3a2b8de764ce0f1f0f932df7942858c226344baf",
+      "calculatorBytes": 45116
+    },
+    {
+      "id": "unknown-time",
+      "profile": {
+        "date": "1995-07-16",
+        "time": null,
+        "timeAccuracy": "unknown",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2026-09-25",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "a0f4f3e715f24f4473e9d5be1fe524843f09130425cbb2b578aad445a8ea7c9c",
+      "timelineBytes": 58556,
+      "calculatorSha256": "04d12db30a648c8c7f2aa7eeb929b2dcc91313422b46e82b700b8aadf3e8ab89",
+      "calculatorBytes": 386
+    },
+    {
+      "id": "empty-scope",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2026-09-25",
+        "years": 1,
+        "includeMonths": true,
+        "topSignalsPerDomain": "Infinity",
+        "systems": [],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late"
+      },
+      "timelineSha256": "3aa46a7f5edc12764d930add848d940e347f49b52330ea0e730a3b814cfa2304",
+      "timelineBytes": 26625,
+      "calculatorSha256": "63ad82a55fc167491f2c60e5223833fe7c81b4d6447146959e9e5da11df3bfd9",
+      "calculatorBytes": 36604
+    },
+    {
+      "id": "weighted-five-year",
+      "profile": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        }
+      },
+      "options": {
+        "asOf": "2026-09-25",
+        "years": 5,
+        "includeMonths": true,
+        "topSignalsPerDomain": 5,
+        "systems": [
+          "bazi",
+          "ziwei",
+          "numerology"
+        ],
+        "useTrueSolarTime": true,
+        "ziHourConvention": "late",
+        "systemWeights": {
+          "bazi": 0.25,
+          "ziwei": 2,
+          "numerology": 0
+        },
+        "consensusThreshold": 0.6,
+        "conflictThreshold": 0.2
+      },
+      "timelineSha256": "db81c943c88436fc9128cb468f542d6540afc57714f647f3342cd10a65601fe0",
+      "timelineBytes": 389878,
+      "calculatorSha256": "63ad82a55fc167491f2c60e5223833fe7c81b4d6447146959e9e5da11df3bfd9",
+      "calculatorBytes": 36604
+    }
+  ]
+}

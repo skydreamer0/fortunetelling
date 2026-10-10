@@ -231,8 +231,11 @@ result. These validate the gates; they do not claim browser execution against a
 mutated application implementation.
 
 Runtime operation timeouts are bounded orchestration limits, not responsiveness
-budgets: launch 15 seconds, Playwright operations 15 seconds, the six-case run
-180 seconds, workflow step 4 minutes and job 10 minutes. The deadline closes the
+budgets: launch and ordinary Playwright input/navigation operations 15 seconds,
+result completion only the remainder of the shared six-case 180-second deadline,
+workflow step 4 minutes and job 10 minutes. No case receives a new 180 seconds;
+an exhausted result budget rejects rather than passing Playwright timeout zero.
+The deadline closes the
 browser and stops the server to interrupt pending commands; the actual test and
 cleanup promises settle before the final result is written. A failed case stops
 later cases, which remain NOT RUN. Timeout, missing evidence, page error or any
@@ -260,3 +263,192 @@ The revision selects the unique year-range heading and rejects that missing-busy
 control. Neither fix proves identical-A request provenance or background abort;
 those limitations are explicit in the JSON receipt and remain open. All negative
 controls above mutate evidence records only, not production code at runtime.
+
+## #46 cooperative runtime candidate (native repair acceptance pending)
+
+The delivered PR90 diagnostic measured maximum cold citation Long Tasks of
+814/827 ms on its desktop/mobile-width stock-Chrome runner. Follow-on synthetic
+Bun profiling separated annual setup from cells: setup accounted for about 95%
+and nested Ziwei for about 89% of the recorded instrumented total. These are
+different runtimes/conditions, not a cross-device guarantee or a speedup claim.
+
+The minimal runtime candidate shares canonical generator steps between existing
+synchronous Ziwei sequence/calculator/timeline calls and a new cooperative bridge.
+It retains all sequences, formulas, period scope, ordering and IDs. It introduces
+no Worker/dependency and does not repurpose buildTimelineAsync. New cooperative
+calls require the existing Web bazi/ziwei/numerology scope and known-time Ziwei's
+already-established zh-TW/default iztro environment; existing synchronous public
+APIs, including ZiweiEngine's language option, remain unchanged.
+
+The guard only observes its documented language/getConfig snapshots. It cannot
+audit plugins/resources or a change away and back between checks. It does not
+restore globals. Each indivisible step is checked before/after; a suspended
+scheduler itself must settle. Scheduler failure, actual signal cancellation and
+environment rejection do not count as an empty successful year. Web preparation
+keeps month signals/proofs local until a complete current-owned year can commit
+together with the scanned cursor. A cancelled partial year is retried from its
+beginning; completed-year caching and the full asOf−5…+10 reach are retained.
+
+Local synthetic gates cover 23 baseline Timeline/Calculator outputs, all fields
+and exact serialization, the explicit 0.8→0.9 release-only metadata/hash delta,
+partial-year custom abort/rollback/retry, scheduler failure, foreign public zh-CN
+engine interference, supported clock/zi report interleaving, old A after B/new A,
+synchronous scan ownership and a real 16-year lookup against every expected
+monthly signal. Microtask schedulers in these tests provide deterministic ordering,
+not browser responsiveness evidence. Original golden and historical deltas remain
+unchanged; see D-053 for provenance and persistence-compatibility boundaries.
+
+The PR91 initial three-file NOT WIRED checkpoint and its first automatic run test
+the unchanged production application. They are not post-repair measurements.
+Before accepting this runtime candidate, inspect its exact source/tree, complete
+checks, non-author review and the existing native harness's fresh automatic run.
+Compare native Long Tasks/trusted-input/actual cancellation effects under the same
+documented conditions; do not invent a performance success threshold. No new
+browser/screenshot/physical-input claim is established by this preparation text.
+Issue #19/#46 acceptance remains open pending that evidence and its UX review.
+
+The first active candidate (`cee4bf01`, tree `99b2f947`) passed Bun/source gates
+but failed its first native run `38003587664`: the check became busy then failed
+immediately, so the harness timed out waiting for visible busy and left five cases
+NOT RUN. The production Vite bundle exposed iztro's CommonJS default through an
+extra namespace wrapper; reading that wrapper's language falsely rejected the
+supported environment. A minimal read-only unwrap retains every guard condition.
+The new production-bundle regression builds the real Vite app into a temporary
+directory, imports its unchanged bridge bytes under Bun, and requires genuine
+Ziwei cooperative units plus full synchronous/cooperative serialization parity.
+It reproduced the original rejection before the fix. This is a bundle-interop
+regression, not a replacement browser run or evidence of responsive input. No
+browser gate, timeout, security setting or workflow is relaxed by the correction.
+
+The corrected interop candidate (`ade8da8f`, tree `af1a0255`) then genuinely stayed
+busy in native run `38004497085`, but its first cold result did not arrive inside
+the locator's 15-second operation timeout. Its raw trace contains continuing
+135–146 ms Long Tasks after the check, not completion, and five later cases stayed
+NOT RUN. Therefore the result locator now uses only the remainder of the existing
+180-second whole-run deadline. All six functional gates, ordinary input/navigation
+timeouts, errors and cleanup controls remain required. This change permits a total
+duration measurement; it does not make a slower calculation performant. Compare
+the new cold total, Long Task distribution and actual cancellation/navigation
+effects with the earlier approximately 12.7-second native baseline. Material total
+latency regression requires further optimization even if functional gates pass.
+Timer clamping from frequent yields is a hypothesis to assess, not yet an observed
+cause or a reason to alter production scheduling in this measurement-only change.
+
+That second raw trace also exposed an aggregation defect: its last changed DOM
+state preceded the continuing work, so using the last state event as the Long
+Task window end produced an empty summary/max null. The original failed receipt
+is retained; the raw recorded post-check tasks have a 146 ms maximum, not zero.
+The recorder now captures its actual finish timestamp, and summaries use that
+observation end even if the DOM never changed. Missing finish coverage stays null
+(unknown). A self-test retains a post-last-DOM-change Long Task on timeout while
+still rejecting the case. This corrects statistics, not functional/performance gates.
+
+Native run `38006393120` (`6d3d627f`, tree `d62b79d2`) completed all six functional
+observations. Cold desktop/mobile-width totals were 18.6005/18.4987 s, compared
+with 12.7418/12.7986 s before the repair: +45.98%/+44.54%. Cold maximum Long Tasks
+fell from 814/827 ms to 147/140 ms. Improved interaction does not make that total
+latency regression acceptable; keep the repair Draft pending scheduler diagnosis.
+The observed 1050/1040 ms unmount-case tasks were replacement-report generation,
+after the old view was removed, not the old citation scan's cancellation delay.
+
+The next bounded diagnostic leaves production scheduling untouched. After all six
+UI cases, a fresh context imports the actual built bridge and profiles a synthetic
+2021 annual Timeline: synchronous full-JSON reference, then timer/native
+`scheduler.yield`/native/timer counter-order runs. Each records every await wait
+and intervening work segment, complete-JSON equality, output size/hash and unit
+count. Missing native API is explicitly UNSUPPORTED, with timer-only evidence.
+Work and await intervals must sum to the complete elapsed interval, allowing only
+1e-6 ms of floating-point addition noise. Inconsistent zero totals or zero
+partitions are rejected; this is evidence integrity, not a performance threshold.
+The unbounded top-signal option is recorded as the explicit string `"Infinity"`,
+not JSON's lossy null. Diagnostic page errors, evaluation failures and context
+cleanup errors are retained separately and prevent overall PASS, including errors
+that occur outside the evaluated Promise. Counterexamples cover both boundaries.
+No global scheduler/engine is patched. Context closure and the same 180-second
+whole-run watchdog apply; errors cannot yield overall PASS. Earlier six UI cases
+are not warmed by this later probe, and retain the existing default scheduler.
+
+This isolates observable scheduling waits rather than subtracting Long Tasks from
+wall time (which would wrongly classify unrecorded short work as waiting). Report
+generation/reference warm the engine; counter-order does not remove all JIT/shared
+runner variance. Direct-Timeline work includes guards/bookkeeping, not Web commit
+cost. The [HTML timer algorithm](https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#timers)
+specifies a 4 ms minimum after deeply nested timers; [Chrome's scheduler guidance](https://developer.chrome.com/blog/use-scheduler-yield)
+describes a task-yield alternative and feature-detected fallback. These sources
+motivate the comparison but do not prove a measured cause or production speedup.
+
+Native diagnostic run `38007976427` at `0efe18f4` completed all six functional
+cases and the four ordered annual probes. Each probe had 84 yields and the same
+413895-byte complete JSON (SHA-256
+`ec20ebe3b99b865ba10ddae241d0a92b37fb5716497f305064fa67e3c3143e9e`).
+Timer waits totalled 324.1/320.1 ms (median 4.1 ms), native waits 2.8/2.4 ms;
+work totals were 649.5/636.0 versus 648.8/632.4 ms. This supports avoiding timer
+waiting overhead, not attributing every awaited millisecond exclusively to the
+HTML clamp. The timer-default UI cold totals were 15.8540/15.7782 s, maximum Long
+Tasks 118/139 ms. Production was unchanged: natural asOf 2026-10-10 and another
+shared runner prevent calling that difference from the 2026-10-09 18.6-second
+receipt a diagnostic-induced improvement.
+
+The next minimal repair changes only the Web default scheduler to feature-detect
+`scheduler.yield`, call it on its native receiver, and retain the original
+zero-delay timer when unavailable. A supported native API's synchronous throw or
+rejection follows the existing fatal scheduler/actual-signal path, without a
+silent fallback. Unit counts, before/after guards, year atomicity, and the core
+public bridge/default remain unchanged. Dedicated regressions exercise the real
+Web default, all 84 synthetic annual units, exact proofs/signals, cached zero work,
+partial-year cancellation and clean retry, plus throw/reject/custom-abort
+precedence. These controlled callbacks are not native performance evidence.
+Keep performance acceptance pending the new production SHA's first automatic
+browser run, comparing cold total, Long Tasks and trusted input/back effects.
+
+That first production run (`38008661200`, head `9fa11dd3`) failed: 1 case passed,
+2 attempted, 4 NOT RUN. Desktop cold was 12.9093 s/max Long Task 145 ms. In the
+second case the recorder saw busy/frame at 2650.5/2652.8 ms and a result at
+15334.2 ms, but the busy locator timed out; recorder finish was 30347.4 ms. No B
+input was sent, so cancellation was neither accepted nor shown to fail. The
+approximately result-plus-15-second finish and Playwright's post-click injected
+hit-target cleanup support a driver-wait hypothesis. Without host command marks
+in that run, the precise blocked stage remains unproved. Keep the failure.
+
+The next harness-only correction prepares stable visible hit-tested control
+geometry before calculation. Its read-only recorder sends one console notice per
+busy animation frame (and the requested back-scroll frame); host listeners are
+armed before the real mouse click. Native Playwright mouse/keyboard actions avoid
+the locator's post-input injected evaluation. Host dispatch start, actual promise
+return, wait end and notice receipt are retained separately from page timestamps.
+No input value, application handler, engine or scheduler is replaced. All commands
+and notices retain the 15-second limit, plus the same shared 180-second watchdog;
+pending promises settle after context cleanup and errors cannot pass.
+
+Textarea pointer targets must actually receive trusted input during busy work.
+For Back, a real wheel action returns to the prepared scroll position, observed
+on a busy frame before a hit-tested native click. Trusted check/back/pointer
+coordinates and viewport must match the stable geometry. The original fourteen
+functional negative controls remain unchanged; eight additional target/scroll
+counterexamples reject missing, stale, wrong or untrusted hits. A result before
+the B/back event or an input delayed until not-busy still fails. If genuine input
+is also starved, revisit production scheduling rather than relax these gates.
+
+Run `38009649438` at `b736cc22` then passed desktop cold and genuine A→B→A
+observations but failed Back: 2 passed, 3 attempted, 3 NOT RUN. Cold total was
+12.8215 s/max Long Task 138 ms. The trusted textarea pointer and B input arrived
+while busy; B capture→cleared DOM was 1.1 ms. Back's real `mouse.wheel` command
+remained pending for 12671.84 ms; the busy viewport-target notice timed out at
+15 seconds, so Back was never clicked. Installed Playwright's Chromium wheel
+path directly awaits `Input.dispatchMouseEvent` after its normal instrumentation
+hook; it has no locator hit-target cleanup/evaluation. No tracing/screencast/debug
+pause was enabled. The raw trace lacks wheel/scroll arrival events, so host wait
+is not a measured physical-wheel latency or proof of a particular Chrome queue.
+
+The next production candidate keeps this harness and its failure gates unchanged.
+Each Web `prepare` owns a new scheduler closure: at most seven native continuations
+followed by one original zero-delay timer, or a timer every time if the native API
+is absent. All 84 annual unit boundaries, guards and year atomicity remain. This
+bounds consecutive prioritized continuations, not elapsed milliseconds; 8 is an
+engineering candidate, not a proven optimal value or UX pass threshold. Native
+throw/reject still propagates, and a cancelled/new owner cannot inherit a prior
+counter. Tests distinguish two interleaved 84-unit preparations (148 native + 20
+timers) from an incorrect shared counter (147 + 21), exercise real timer task
+boundaries, and require cancellation rollback/reset/retry including a fairness
+timer abort. Only the next exact native run can assess genuine wheel/Back, input,
+cold total and Long Tasks together. No additional harness relaxation is made.

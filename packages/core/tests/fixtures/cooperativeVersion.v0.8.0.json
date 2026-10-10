@@ -1,0 +1,178 @@
+{
+  "sourceCoreVersion": "0.8.0",
+  "sourceTree": "57577ac4cca7fb7cc0fc556ed17395f2b749ad6e",
+  "input": {
+    "name": "Synthetic version QA",
+    "year": 1995,
+    "month": 7,
+    "day": 16,
+    "hour": 22,
+    "minute": 0,
+    "gender": "male",
+    "birthplace": {
+      "label": "Synthetic Tainan QA",
+      "lat": 22.9922,
+      "lng": 120.1848,
+      "timezone": "Asia/Taipei"
+    }
+  },
+  "spec": {
+    "schemaVersion": 1,
+    "source": {
+      "kind": "AnalyzeInput",
+      "input": {
+        "birthplace": {
+          "label": "Synthetic Tainan QA",
+          "lat": 22.9922,
+          "lng": 120.1848,
+          "timezone": "Asia/Taipei"
+        },
+        "day": 16,
+        "gender": "male",
+        "hour": 22,
+        "minute": 0,
+        "month": 7,
+        "name": "Synthetic version QA",
+        "year": 1995
+      },
+      "birthplaceSource": "birthplace"
+    },
+    "identity": {
+      "schemaVersion": 1,
+      "scope": "analyze-sync-natal-intent",
+      "input": {
+        "date": "1995-07-16",
+        "time": "22:00",
+        "timeAccuracy": "exact",
+        "gender": "male",
+        "name": "Synthetic version QA",
+        "lat": 22.9922,
+        "lng": 120.1848,
+        "timezone": "Asia/Taipei"
+      },
+      "settings": {
+        "time": {
+          "dstOverlap": "earlier",
+          "dstGap": "shift-forward-by-gap"
+        },
+        "bazi": {
+          "clock": "trueSolar",
+          "ziHourConvention": "late",
+          "dayBoundarySect": 2,
+          "yearMonthBasis": "jie-instant"
+        },
+        "ziwei": {
+          "clock": "trueSolar",
+          "ziHourConvention": "splitMidnight",
+          "fixLeap": true,
+          "language": "zh-TW"
+        },
+        "numerology": {
+          "dateBasis": "civil-local-date",
+          "nameBasis": "latin-letters"
+        },
+        "dreamspell": {
+          "dateBasis": "civil-local-date"
+        },
+        "minggua": {
+          "clock": "civil-local-time-read-as-utc+8",
+          "unknownTime": "local-noon"
+        },
+        "ephemeris": {
+          "mode": "excluded",
+          "systems": [
+            "jyotish",
+            "humanDesign"
+          ]
+        }
+      },
+      "versions": {
+        "contract": 1,
+        "core": "0.8.0",
+        "calculators": {
+          "bazi": "1.0.0",
+          "ziwei": "1.0.0",
+          "numerology": "0.1.1",
+          "tzolkin": "0.1.1",
+          "mingGua": "0.1.0"
+        },
+        "dependencies": {
+          "@babel/runtime": {
+            "version": "7.29.7",
+            "integrity": "sha512-Nq8OhGWiZIZGV6hLHoyAKLLcJihP/xFeBMGJoUrxTX2psI8dCifzLhZISFb+VWS3wFMRDmCGw5R+dOySCqPLhw=="
+          },
+          "dayjs": {
+            "version": "1.11.21",
+            "integrity": "sha512-98IT+HOahAisibz/yjKbzuOBwYcjJ7BCLPzARyHiyEBmRz4fatF+KPJszEHXsGYjUG234aH/cOjW1wwTbKUZlA=="
+          },
+          "i18next": {
+            "version": "23.16.8",
+            "integrity": "sha512-06r/TitrM88Mg5FdUXAKL96dJMzgqLE5dv3ryBAra4KCwD9mJ4ndOTS95ZuymIGoE+2hzfdaMak2X11/es7ZWg=="
+          },
+          "iztro": {
+            "version": "2.5.8",
+            "integrity": "sha512-kgyyvxdSEvgJxi6zvHpvzGbXZLGXCdhTHYK2Pe/sRdBIQ7RfCArvupmg2ChUMQCSQGomW7XCI0gWwUuKJwPENg=="
+          },
+          "lunar-javascript": {
+            "version": "1.7.7",
+            "integrity": "sha512-u/KYiwPIBo/0bT+WWfU7qO1d+aqeB90Tuy4ErXenr2Gam0QcWeezUvtiOIyXR7HbVnW2I1DKfU0NBvzMZhbVQw=="
+          },
+          "lunar-lite": {
+            "version": "0.2.8",
+            "integrity": "sha512-Y4tba4RaIFI0ikImJhgoEsyqtDE64lJIM3yFwRX01dbmagCDq7rNmpDQFrSFFy4WXeuywdRVFpIBoT1GGCEizw=="
+          },
+          "lunar-typescript": {
+            "version": "1.8.6",
+            "integrity": "sha512-5Eo4T/cnuXfrgO4k5LCpOGHIUOuz5hCF/IfNv0T29WY2shR36Hiz+ecN9WjnUuxUKhql9gbOkPaQoqLFKtPRNA=="
+          }
+        },
+        "data": {
+          "tzdb": "2026e"
+        },
+        "rules": {
+          "bazi": "fnv1a64-9d48f653d7cbda73",
+          "baziTenGod": "fnv1a64-f66bf465e12f11bb",
+          "ziwei": "fnv1a64-4038336cce2d234b",
+          "ziweiTraits": "fnv1a64-a2cdf0981ee7375d",
+          "ziweiModifiers": "fnv1a64-108f9b72926d66cc",
+          "numerology": "fnv1a64-135ed21530592b4e"
+        }
+      }
+    },
+    "specHash": "cs1-5cab236c4665a0a4"
+  },
+  "versions": {
+    "asOf": "2026-09-25",
+    "coreVersion": "0.8.0",
+    "profileSchemaVersion": 1,
+    "reportSchemaVersion": 7,
+    "timelineSchemaVersion": 2,
+    "consensusSchemaVersion": 2,
+    "calculators": {
+      "bazi": "1.0.0",
+      "ziwei": "1.0.0",
+      "numerology": "0.1.1",
+      "tzolkin": "0.1.1",
+      "mingGua": "0.1.0",
+      "jyotish": "1.0.0",
+      "humanDesign": "1.0.0"
+    },
+    "catalogs": {
+      "bazi": 1,
+      "baziTenGod": 1,
+      "ziwei": 1,
+      "ziweiTraits": 1,
+      "ziweiModifiers": 1,
+      "numerology": 1,
+      "questions": 3,
+      "jyotish": 1,
+      "humanDesign": 2
+    },
+    "ephemeris": "not_initialized",
+    "experimentalSystems": [
+      "jyotish"
+    ]
+  },
+  "versionsHash": "ec020921f3dc",
+  "profileFingerprint": "cf1-061ce102bc04390b"
+}

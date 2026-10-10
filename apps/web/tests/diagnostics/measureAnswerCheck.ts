@@ -24,6 +24,7 @@ const nextTask = () => new Promise<void>(resolve => setTimeout(resolve, 0));
 
 /** Each segment is prepare's synchronous work between actual timer yields.
  * It includes lookup bookkeeping; it is not an isolated buildTimeline timer.
+ * Since core0.9, a segment is a bounded setup/period/cell unit, not a whole year.
  */
 async function measurePrepare(lookup: ReportSignalLookup, ids: readonly string[], cancelAfterSegments?: number) {
   const controller = new AbortController();
@@ -49,7 +50,8 @@ async function measurePrepare(lookup: ReportSignalLookup, ids: readonly string[]
       if (!controller.signal.aborted) segmentStarted = performance.now();
     });
   } catch (error) {
-    if (!(error instanceof Error) || error.name !== 'AbortError') throw error;
+    if (!controller.signal.aborted) throw error;
+    assert.equal(error, controller.signal.reason, 'Preserve the actual abort reason');
     aborted = true;
   } finally {
     finishSegment();
@@ -82,8 +84,8 @@ assert.equal(knownLookup(knownId!)?.id, knownId);
 const lookup = reportSignalLookup(report);
 const fullScan = await measurePrepare(lookup, ids);
 assert.equal(fullScan.aborted, false);
-assert.equal(fullScan.synchronousSegmentsMs.length, 16, 'The lookup must prepare every asOf -5…+10 year');
-assert.equal(fullScan.timerTurns, 16);
+assert(fullScan.synchronousSegmentsMs.length > 16, 'Expected bounded units within the source-defined 16-year scan');
+assert.equal(fullScan.timerTurns, fullScan.synchronousSegmentsMs.length);
 const checked = checkAnswer(answer, { signalLookup: lookup, directionalEvidence: () => lookup.directionalEvidence() });
 assert.deepEqual(checked.unknownCitations, [MISSING_ID]);
 assert(checked.issues.some(issue => issue.code === 'honesty_violation'));
@@ -92,8 +94,8 @@ const cachedRepeat = await measurePrepare(lookup, ids);
 assert.equal(cachedRepeat.yieldBoundaries, 0);
 assert.deepEqual(checkAnswer(answer, { signalLookup: lookup }).unknownCitations, [MISSING_ID]);
 
-// Cancel at the first timer opportunity after one real year, then reuse the
-// same lookup. Completed years stay cached; the aborted task cannot finish.
+// Cancel at the first timer opportunity after one bounded unit, within the first
+// year. That partial year must not be cached; retry repeats the complete scan.
 const resumable = reportSignalLookup(report);
 const cancelled = await measurePrepare(resumable, ids, 1);
 assert.equal(cancelled.aborted, true);
@@ -101,7 +103,7 @@ assert.equal(cancelled.synchronousSegmentsMs.length, 1);
 assert.equal(cancelled.timerTurns, 2);
 const resumed = await measurePrepare(resumable, ids);
 assert.equal(resumed.aborted, false);
-assert.equal(resumed.synchronousSegmentsMs.length, 15);
+assert.equal(resumed.synchronousSegmentsMs.length, fullScan.synchronousSegmentsMs.length);
 assert.deepEqual(checkAnswer(answer, { signalLookup: resumable }).unknownCitations, [MISSING_ID]);
 
 const head = Bun.spawnSync(['git', 'rev-parse', 'HEAD']);
@@ -110,7 +112,7 @@ assert.equal(head.exitCode, 0, 'Run this diagnostic inside the repository');
 assert.equal(worktree.exitCode, 0);
 const diagnosticSha256 = new Bun.CryptoHasher('sha256').update(await Bun.file(import.meta.path).arrayBuffer()).digest('hex');
 console.log(JSON.stringify({
-  schemaVersion: 1, generatedAt,
+  schemaVersion: 2, generatedAt,
   scope: 'Bun real-engine diagnostics only; browser acceptance remains unverified',
   source: { head: head.stdout.toString().trim(), worktree: worktree.stdout.toString().trim(), diagnosticSha256 },
   runtime: { bun: Bun.version, os: platform(), release: release(), arch: arch(), cpu: cpus()[0]?.model,
@@ -118,6 +120,9 @@ console.log(JSON.stringify({
   fixture: { input: INPUT, asOf: AS_OF, coreVersion: VERSION, reportSchemaVersion: report.schemaVersion,
     systems: report.timeline?.systems, knownId, missingId: MISSING_ID, answer },
   reportGenerationMs,
+  segmentMeaning: 'bounded setup/period/cell work plus lookup overhead; not annual calculation counts',
+  sourceDefinedYearRange: { first: Number(AS_OF.slice(0, 4)) - 5, last: Number(AS_OF.slice(0, 4)) + 10, count: 16 },
+  successfulAnnualCalculationsDirectlyObserved: false,
   scenarios: { knownFullId, fullScan, cachedRepeat, cancelled, resumed },
   answerResult: { paragraphCount: checked.paragraphCount, citedIds: checked.citedIds,
     unknownCitations: checked.unknownCitations, issueCodes: checked.issues.map(issue => issue.code) },
@@ -128,6 +133,6 @@ console.log(JSON.stringify({
     'Fresh lookup caches are measured in one already-warmed Bun process; this is not cold-process or cold-browser timing.',
     'The shared runner has no CPU isolation; competing work can affect these diagnostic timings.',
     'One synthetic sync report excludes async ephemeris systems and does not establish a universal performance budget.',
-    'Yearly engine exceptions are swallowed by the existing lookup; a 16-segment scan alone does not prove every year succeeded.',
+    'Genuine annual engine exceptions retain the existing skip policy; unit counts and source-defined reach do not prove every year succeeded.',
   ],
 }, null, 2));
