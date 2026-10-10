@@ -10,6 +10,7 @@
  */
 
 import { MingGuaEngine } from '../../engines/MingGuaEngine';
+import type { MingGuaValue } from '../../engines/mingGuaTypes';
 import type { TimeContext } from '../../time/types';
 import { componentValue, timeContextToBirthData } from '../birthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';
@@ -48,7 +49,7 @@ export interface MingGuaChart {
 
 export const MINGGUA_CALCULATOR_VERSION = '0.1.0';
 
-type EngineGua = Omit<MingGuaInfo, 'number'> & { guaNumber: number; bestDirection: string };
+type EngineGua = MingGuaValue;
 
 /** Typed view of the engine components. */
 export function extractMingGuaChart(components: readonly Component[]): MingGuaChart {

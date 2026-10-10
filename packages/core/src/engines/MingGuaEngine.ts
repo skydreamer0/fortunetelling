@@ -30,6 +30,7 @@ import {
 } from '../calculators/mingGua/mingGua';
 import type { BirthData } from '../core/models/BirthData';
 import type { SystemResult } from '../core/models/SystemResult';
+import type { MingGuaComponent, MingGuaMetadata } from './mingGuaTypes';
 
 // ─── Reference tables ───────────────────────────────────────────────────────
 
@@ -191,7 +192,7 @@ export class MingGuaEngine extends BaseEngine {
         yearBoundary: MING_GUA_YEAR_BOUNDARY,
         liChunUtc,
       },
-    });
+    } satisfies MingGuaComponent);
 
     // ─── L0: 八宅吉凶方位 ───────────────────────────────────────────────────
     result.add({
@@ -202,7 +203,7 @@ export class MingGuaEngine extends BaseEngine {
         auspicious: this.#labelDirections(dirs.auspicious),
         inauspicious: this.#labelDirections(dirs.inauspicious),
       },
-    });
+    } satisfies MingGuaComponent);
 
     result.meta = {
       yearForGua,
@@ -213,7 +214,7 @@ export class MingGuaEngine extends BaseEngine {
       timeConvention: TIME_CONVENTION,
       liChunUtc,
       boundaryAmbiguous,
-    };
+    } satisfies MingGuaMetadata;
 
     if (boundaryAmbiguous) {
       result.warn(
