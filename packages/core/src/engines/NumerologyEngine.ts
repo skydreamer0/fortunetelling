@@ -31,6 +31,7 @@
 import { BaseEngine } from '../core/BaseEngine';
 import type { BirthData } from '../core/models/BirthData';
 import type { SystemResult } from '../core/models/SystemResult';
+import type { NumerologyComponent, NumerologyDigitFrequencyValue, NumerologyMetadata } from './numerologyTypes';
 import { registerNumerologyNatal } from '../calculators/numerology/natalAccess';
 import {
   calculateAttitude,
@@ -114,7 +115,7 @@ export class NumerologyEngine extends BaseEngine {
 
     result.meta = {
       name: birth.name,
-    };
+    } satisfies NumerologyMetadata;
 
     return result;
   }
@@ -146,7 +147,7 @@ export class NumerologyEngine extends BaseEngine {
       name: '生命靈數',
       category: 'lifePath',
       value: { number, isMaster: this.#isMaster(number) },
-    });
+    } satisfies NumerologyComponent);
   }
 
   // ─── L0: Name-derived numbers (表達數/靈魂數/人格數) ──────────────────────
@@ -182,19 +183,19 @@ export class NumerologyEngine extends BaseEngine {
       name: '表達數',
       category: 'expression',
       value: { number: expression, isMaster: this.#isMaster(expression) },
-    });
+    } satisfies NumerologyComponent);
     result.add({
       id: 'soul_urge',
       name: '靈魂數',
       category: 'soulUrge',
       value: { number: soulUrge, isMaster: this.#isMaster(soulUrge) },
-    });
+    } satisfies NumerologyComponent);
     result.add({
       id: 'personality',
       name: '人格數',
       category: 'personality',
       value: { number: personality, isMaster: this.#isMaster(personality) },
-    });
+    } satisfies NumerologyComponent);
   }
 
   // ─── L0: Digit frequency (九宮格頻次) ────────────────────────────────────
@@ -205,7 +206,7 @@ export class NumerologyEngine extends BaseEngine {
    * in the output (with zero counts).
    */
   #addDigitFrequency(result: SystemResult, birth: BirthData): void {
-    const counts: Record<string, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
+    const counts: NumerologyDigitFrequencyValue = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
     const digits = `${birth.year}${birth.month}${birth.day}`;
     for (const ch of digits) {
       if (ch >= '1' && ch <= '9') counts[ch]! += 1;
@@ -215,7 +216,7 @@ export class NumerologyEngine extends BaseEngine {
       name: '生命靈數九宮格頻次',
       category: 'digitFrequency',
       value: counts,
-    });
+    } satisfies NumerologyComponent);
   }
 
   // ─── L2: Personal year / month (個人流年/流月數) ─────────────────────────
@@ -239,7 +240,7 @@ export class NumerologyEngine extends BaseEngine {
       name: '個人流年數',
       category: 'personalYear',
       value: { number: personalYear, year: currentYear },
-    });
+    } satisfies NumerologyComponent);
 
     const personalMonth = reduceNumber(personalYear + currentMonth);
     result.add({
@@ -247,7 +248,7 @@ export class NumerologyEngine extends BaseEngine {
       name: '個人流月數',
       category: 'personalMonth',
       value: { number: personalMonth, year: currentYear, month: currentMonth },
-    });
+    } satisfies NumerologyComponent);
   }
 
   // ─── L0: Birthday / attitude (生日數/態度數) ─────────────────────────────
@@ -260,14 +261,14 @@ export class NumerologyEngine extends BaseEngine {
       name: '生日數',
       category: 'birthdayNumber',
       value: { number: birthday, isMaster: this.#isMaster(birthday) },
-    });
+    } satisfies NumerologyComponent);
     const attitude = calculateAttitude(date);
     result.add({
       id: 'attitude',
       name: '態度數',
       category: 'attitude',
       value: { number: attitude, isMaster: this.#isMaster(attitude) },
-    });
+    } satisfies NumerologyComponent);
   }
 
   // ─── L1: Pinnacles / challenges (巔峰數/挑戰數) ───────────────────────────
@@ -284,7 +285,7 @@ export class NumerologyEngine extends BaseEngine {
         name: `第${p.index}巔峰數`,
         category: 'pinnacles',
         value: { ...p, isMaster: this.#isMaster(p.number) },
-      });
+      } satisfies NumerologyComponent);
     }
     for (const c of calculateChallenges(date)) {
       result.add({
@@ -292,7 +293,7 @@ export class NumerologyEngine extends BaseEngine {
         name: `第${c.index}挑戰數`,
         category: 'challenges',
         value: { ...c },
-      });
+      } satisfies NumerologyComponent);
     }
   }
 
@@ -314,7 +315,7 @@ export class NumerologyEngine extends BaseEngine {
         count: PERSONAL_YEARS_SPAN,
         years: calculatePersonalYears(date, fromYear, PERSONAL_YEARS_SPAN),
       },
-    });
+    } satisfies NumerologyComponent);
   }
 
   // ─── Helpers ────────────────────────────────────────────────────────────
