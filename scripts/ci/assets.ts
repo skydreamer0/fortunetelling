@@ -37,7 +37,7 @@ export function validateBuiltAssets(publicDir = 'apps/web/public', distDir = 'ap
     if (icon.type === 'image/png') assert.equal(pngDimensions(bytes).join('x'), icon.sizes, 'Manifest PNG dimensions differ');
     else assert(icon.type === 'image/svg+xml' && /<svg\b/.test(bytes.toString()), 'Invalid SVG icon');
   }
-  assert.deepEqual(pngDimensions(readFileSync(join(distDir, 'icons/apple-touch-icon.png'))), [180, 180]);
+  assert.deepEqual(pngDimensions(readFileSync(join(distDir, 'icons/fortune-apple-touch-v1-180.png'))), [180, 180]);
   assert(/<svg\b/.test(readFileSync(join(distDir, 'favicon.svg'), 'utf8')), 'Invalid favicon');
   for (const path of ['index.html', 'manifest.webmanifest']) assert(paths.includes(path), `Missing app shell: ${path}`);
   console.log('Built public bytes, icon dimensions, manifest references and PWA precache passed (not visual/mobile acceptance).');
