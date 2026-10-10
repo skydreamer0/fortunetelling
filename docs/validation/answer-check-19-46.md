@@ -400,3 +400,31 @@ partial-year cancellation and clean retry, plus throw/reject/custom-abort
 precedence. These controlled callbacks are not native performance evidence.
 Keep performance acceptance pending the new production SHA's first automatic
 browser run, comparing cold total, Long Tasks and trusted input/back effects.
+
+That first production run (`38008661200`, head `9fa11dd3`) failed: 1 case passed,
+2 attempted, 4 NOT RUN. Desktop cold was 12.9093 s/max Long Task 145 ms. In the
+second case the recorder saw busy/frame at 2650.5/2652.8 ms and a result at
+15334.2 ms, but the busy locator timed out; recorder finish was 30347.4 ms. No B
+input was sent, so cancellation was neither accepted nor shown to fail. The
+approximately result-plus-15-second finish and Playwright's post-click injected
+hit-target cleanup support a driver-wait hypothesis. Without host command marks
+in that run, the precise blocked stage remains unproved. Keep the failure.
+
+The next harness-only correction prepares stable visible hit-tested control
+geometry before calculation. Its read-only recorder sends one console notice per
+busy animation frame (and the requested back-scroll frame); host listeners are
+armed before the real mouse click. Native Playwright mouse/keyboard actions avoid
+the locator's post-input injected evaluation. Host dispatch start, actual promise
+return, wait end and notice receipt are retained separately from page timestamps.
+No input value, application handler, engine or scheduler is replaced. All commands
+and notices retain the 15-second limit, plus the same shared 180-second watchdog;
+pending promises settle after context cleanup and errors cannot pass.
+
+Textarea pointer targets must actually receive trusted input during busy work.
+For Back, a real wheel action returns to the prepared scroll position, observed
+on a busy frame before a hit-tested native click. Trusted check/back/pointer
+coordinates and viewport must match the stable geometry. The original fourteen
+functional negative controls remain unchanged; eight additional target/scroll
+counterexamples reject missing, stale, wrong or untrusted hits. A result before
+the B/back event or an input delayed until not-busy still fails. If genuine input
+is also starved, revisit production scheduling rather than relax these gates.

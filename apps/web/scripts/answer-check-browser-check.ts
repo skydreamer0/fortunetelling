@@ -13,17 +13,21 @@ const MISSING = 'sig_ffffffff';
 const B = 'B：只核對目前輸入，沒有引用訊號。';
 const TEXTAREA = '.ask__entry--mcp textarea';
 const CHECK = '.ask__entry--mcp .ask__paste-block .ask__actions button';
+const NOTICE = '__FORTUNE_ANSWER_QA__';
 const RUN_DEADLINE_MS = 180_000;
 const fixture = { name: 'QA Synthetic', date: '1995-07-16', time: '22:00', gender: 'male', city: 'tainan', accuracy: 'exact' };
 type Mode = 'complete' | 'cancel-aba' | 'unmount';
 type Observation = { kind: string; at: number; value: string; busy: boolean; mounted: boolean;
-  summary: string | null; flags: string[]; trusted?: boolean; eventTimestamp?: number };
+  summary: string | null; flags: string[]; trusted?: boolean; eventTimestamp?: number;
+  clientX?: number; clientY?: number; scrollX?: number; scrollY?: number };
+type Point = { x: number; y: number; scrollX: number; scrollY: number };
 type Trace = { events: Observation[]; longTasks: { start: number; duration: number }[];
   longTasksSupported: boolean; overflow: boolean; finishedAt: number | null };
 type Evidence = { mode: Mode; answer: string; trace: Trace; errors: string[]; timedOut: boolean;
   cleanupErrors: string[]; asOf: string; knownId: string; reportYears: number;
-  inputCommandToVerifiedDomMs?: number; replacementReportSeen?: boolean };
-declare global { interface Window { __answerQa: { finish(): Trace } } }
+  inputCommandToVerifiedDomMs?: number; replacementReportSeen?: boolean;
+  pointerTargets?: { check: Point; text: Point; back?: Point } };
+declare global { interface Window { __answerQa: { finish(): Trace; armViewport(y: number): void } } }
 
 function remainingRunMs(deadlineAt: number, now = performance.now()): number {
   const remaining = deadlineAt - now;
@@ -67,6 +71,7 @@ function installRecorder() {
   const events: Observation[] = [];
   const longTasks: Trace['longTasks'] = [];
   let overflow = false, previous = '', frame = 0, checkNumber = 0, framedCheck = -1;
+  let viewportTarget: number | null = null;
   const snapshot = (kind: string): Observation => {
     const root = document.querySelector('.ask__entry--mcp');
     const text = root?.querySelector('textarea') as HTMLTextAreaElement | null;
@@ -92,16 +97,32 @@ function installRecorder() {
     if (!button) return;
     if (button.matches('.ask__entry--mcp .ask__paste-block .ask__actions button')) {
       checkNumber++;
-      append({ ...snapshot('check'), trusted: event.isTrusted, eventTimestamp: event.timeStamp });
+      append({ ...snapshot('check'), trusted: event.isTrusted, eventTimestamp: event.timeStamp,
+        clientX: (event as MouseEvent).clientX, clientY: (event as MouseEvent).clientY, scrollX, scrollY });
     } else if (button.textContent?.includes('重新輸入')) {
-      append({ ...snapshot('back'), trusted: event.isTrusted, eventTimestamp: event.timeStamp });
+      append({ ...snapshot('back'), trusted: event.isTrusted, eventTimestamp: event.timeStamp,
+        clientX: (event as MouseEvent).clientX, clientY: (event as MouseEvent).clientY, scrollX, scrollY });
+    }
+  };
+  const pointer = (event: PointerEvent) => {
+    if (event.target instanceof HTMLTextAreaElement && event.target.matches('.ask__entry--mcp textarea')) {
+      append({ ...snapshot('textarea-pointer'), trusted: event.isTrusted, eventTimestamp: event.timeStamp,
+        clientX: event.clientX, clientY: event.clientY, scrollX, scrollY });
     }
   };
   document.addEventListener('input', input, true);
   document.addEventListener('click', click, true);
+  document.addEventListener('pointerdown', pointer, true);
+  // A read-only DevTools console event reaches the host without requiring a new
+  // injected evaluation behind the production scheduler's continuation queue.
+  const notify = (event: Observation) => console.debug('__FORTUNE_ANSWER_QA__' + JSON.stringify(event));
   const tick = () => {
     const current = snapshot('busy-animation-frame');
-    if (current.busy && framedCheck !== checkNumber) { framedCheck = checkNumber; append(current); }
+    if (current.busy && framedCheck !== checkNumber) { framedCheck = checkNumber; append(current); notify(current); }
+    if (current.busy && viewportTarget !== null && scrollY === viewportTarget) {
+      const event = { ...snapshot('viewport-target-frame'), scrollX, scrollY };
+      viewportTarget = null; append(event); notify(event);
+    }
     frame = requestAnimationFrame(tick);
   };
   frame = requestAnimationFrame(tick);
@@ -114,12 +135,38 @@ function installRecorder() {
   };
   const tasks = new PerformanceObserver(list => collect(list.getEntries()));
   if (longTasksSupported) tasks.observe({ type: 'longtask', buffered: true });
-  window.__answerQa = { finish() {
+  window.__answerQa = { armViewport(y) { viewportTarget = y; }, finish() {
     observe(); collect(tasks.takeRecords()); tasks.disconnect(); mutation.disconnect();
     cancelAnimationFrame(frame);
     document.removeEventListener('input', input, true); document.removeEventListener('click', click, true);
+    document.removeEventListener('pointerdown', pointer, true);
     return { events, longTasks, longTasksSupported, overflow, finishedAt: performance.now() };
   } };
+}
+
+/** Supplementary hit-target gate; original functional validator stays unchanged. */
+function validatePointerTargets(e: Evidence) {
+  const targets = e.pointerTargets;
+  assert(targets, 'precalculation geometry missing');
+  const hit = (event: Observation | undefined, point: Point | undefined) => {
+    assert(event?.trusted && point, 'trusted hit-target receipt missing');
+    assert.deepEqual([event.clientX, event.clientY, event.scrollX, event.scrollY],
+      [point.x, point.y, point.scrollX, point.scrollY], 'actual pointer target/viewport differs from prepared geometry');
+  };
+  for (const check of e.trace.events.filter(event => event.kind === 'check')) hit(check, targets.check);
+  if (e.mode === 'cancel-aba') {
+    const busy = e.trace.events.find(event => event.kind === 'busy-animation-frame');
+    const edit = e.trace.events.find(event => event.kind === 'input' && event.value === B);
+    const pointer = e.trace.events.find(event => event.kind === 'textarea-pointer' && event.at > (busy?.at ?? Infinity));
+    assert(pointer?.busy && edit && pointer.at < edit.at, 'textarea must actually receive the pointer during calculation');
+    hit(pointer, targets.text);
+  } else if (e.mode === 'unmount') {
+    const back = e.trace.events.find(event => event.kind === 'back');
+    const viewport = e.trace.events.find(event => event.kind === 'viewport-target-frame');
+    assert(viewport?.busy && back && viewport.at < back.at, 'native scroll target was not observed during calculation');
+    assert.deepEqual([viewport.scrollX, viewport.scrollY], [targets.back?.scrollX, targets.back?.scrollY]);
+    hit(back, targets.back);
+  }
 }
 
 /** Functional evidence gates, deliberately separate from any performance budget. */
@@ -247,10 +294,40 @@ function selfTest() {
   unsupported.order = ['timer']; unsupported.samples = [unsupported.samples[0]];
   validateSchedulerProfile(unsupported);
   assert.throws(() => validateSchedulerProfile(profile, ['synthetic diagnostic page error']));
+  const pointerFixture = structuredClone(seed);
+  pointerFixture.pointerTargets = { check: { x: 10, y: 20, scrollX: 0, scrollY: 40 }, text: { x: 15, y: 10, scrollX: 0, scrollY: 40 } };
+  const coordinates = (point: Point) => ({ clientX: point.x, clientY: point.y, scrollX: point.scrollX, scrollY: point.scrollY });
+  for (const item of pointerFixture.trace.events.filter(item => item.kind === 'check')) Object.assign(item, coordinates(pointerFixture.pointerTargets.check));
+  pointerFixture.trace.events.push({ ...event('textarea-pointer', 2.5, 'A', true), ...coordinates(pointerFixture.pointerTargets.text) });
+  validate(pointerFixture); validatePointerTargets(pointerFixture);
+  const pointerMutations: [string, (value: Evidence) => void][] = [
+    ['missing prepared geometry', value => { delete value.pointerTargets; }],
+    ['wrong check coordinates', value => { value.trace.events[0].clientX = 99; }],
+    ['wrong actual viewport', value => { value.trace.events[0].scrollY = 0; }],
+    ['no actual textarea pointer', value => { value.trace.events.pop(); }],
+    ['pointer after computation', value => { value.trace.events.at(-1)!.busy = false; }],
+    ['untrusted pointer', value => { value.trace.events.at(-1)!.trusted = false; }],
+  ];
+  for (const [name, mutate] of pointerMutations) {
+    const value = structuredClone(pointerFixture); mutate(value); assert.throws(() => validatePointerTargets(value), Error, name);
+  }
+  const backFixture = structuredClone(pointerFixture); backFixture.mode = 'unmount'; backFixture.replacementReportSeen = true;
+  backFixture.pointerTargets!.back = { x: 10, y: 15, scrollX: 0, scrollY: 0 };
+  backFixture.trace.events = [backFixture.trace.events[0], event('busy-animation-frame', 2, 'A', true),
+    { ...event('viewport-target-frame', 2.5, 'A', true), scrollX: 0, scrollY: 0 },
+    { ...event('back', 3, 'A', true), ...coordinates(backFixture.pointerTargets!.back) },
+    { ...event('state', 4, ''), mounted: false }];
+  validate(backFixture); validatePointerTargets(backFixture);
+  backFixture.trace.events[2].scrollY = 99;
+  assert.throws(() => validatePointerTargets(backFixture), Error, 'wrong observed scroll target');
+  backFixture.trace.events[2].scrollY = 0;
+  backFixture.trace.events.splice(2, 1);
+  assert.throws(() => validatePointerTargets(backFixture), Error, 'back without observed scroll frame');
   console.log(JSON.stringify({ scope: 'evidence-validator self-test only; no browser executed', positiveFixtures: 3,
     rejectedMutations: mutations.map(([name]) => name).concat('stale result after unmount', 'result preceded busy observation'),
     resultDeadlineControls: 'remaining global budget; expired/zero budget rejected',
     longTaskWindowControls: 'post-DOM-change task retained on timeout; missing finish stays unknown',
+    pointerTargetRejectedMutations: pointerMutations.map(([name]) => name).concat('wrong observed scroll target', 'back without observed scroll frame'),
     schedulerProfileRejectedMutations: profileMutations.map(([name]) => name).concat('diagnostic page error'), passed: true }));
 }
 
@@ -281,6 +358,22 @@ async function makeReport(page: Page) {
 
 async function settleFrames(page: Page) {
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+}
+
+async function stablePoints(page: Page, selectors: string[]): Promise<Point[]> {
+  const read = () => page.evaluate(selectors => selectors.map(selector => {
+    const node = document.querySelector(selector) as HTMLElement | null;
+    if (!node) throw new Error('Geometry target missing');
+    const rect = node.getBoundingClientRect(), x = Math.floor(rect.left + rect.width / 2), y = Math.floor(rect.top + rect.height / 2);
+    const top = document.elementFromPoint(x, y);
+    if (!rect.width || !rect.height || x < 0 || y < 0 || x >= innerWidth || y >= innerHeight ||
+      !top || (top !== node && !node.contains(top)) || (node as HTMLButtonElement).disabled) throw new Error('Geometry target not interactable');
+    return { x, y, scrollX, scrollY, rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height } };
+  }), selectors);
+  await settleFrames(page); const first = await read();
+  await settleFrames(page); const second = await read();
+  assert.deepEqual(second, first, 'precalculation target geometry must be stable');
+  return second;
 }
 
 /** Separate, post-UI diagnostic. Uses the public yield hook, never patches globals or the app. */
@@ -414,6 +507,38 @@ async function run() {
           engineAndJitCold: false, serviceWorkers: 'blocked to isolate this non-PWA task', externalFonts: 'blocked; fallback-font geometry only',
           producingRequestIdentityObserved: false, backgroundAbortEffectiveness: 'UNVERIFIED',
           identicalAStaleRequestExclusion: 'UNVERIFIED; matching DOM text does not identify the producing request' };
+        const hostActions: { name: string; startedAt: number; returnedAt?: number; waitEndedAt?: number; error?: string; pageEvent?: Observation }[] = [];
+        metadata.hostActions = hostActions; // Host clock, never subtracted directly from page timestamps.
+        const outstanding: Promise<unknown>[] = [];
+        const command = async (name: string, action: () => Promise<unknown>) => {
+          const entry: (typeof hostActions)[number] = { name, startedAt: performance.now() }; hostActions.push(entry);
+          let timeout: ReturnType<typeof setTimeout> | undefined;
+          const operation = Promise.resolve().then(action).then(value => {
+            entry.returnedAt = performance.now(); return value;
+          }, error => { entry.returnedAt = performance.now(); entry.error = String(error); throw error; });
+          outstanding.push(operation.catch(() => {}));
+          try {
+            await Promise.race([operation, new Promise<never>((_, reject) => {
+              timeout = setTimeout(() => reject(new Error(`${name}: existing 15s interaction limit exceeded`)), 15_000);
+            })]);
+          } catch (error) { entry.error = String(error); throw error; }
+          finally { if (timeout) clearTimeout(timeout); entry.waitEndedAt = performance.now(); }
+        };
+        const arm = (kind: string) => {
+          const entry: (typeof hostActions)[number] = { name: `arm:${kind}`, startedAt: performance.now() }; hostActions.push(entry);
+          // Install before dispatch. Console events use the existing recorder's
+          // actual RAF snapshot, not polling or an artificial delay/value change.
+          const observed = page!.waitForEvent('console', { timeout: 15_000, predicate: message => {
+            if (!message.text().startsWith(NOTICE)) return false;
+            const event = JSON.parse(message.text().slice(NOTICE.length)) as Observation;
+            return event.kind === kind && event.busy && event.value === evidence.answer;
+          } }).then(message => {
+            entry.returnedAt = performance.now(); entry.pageEvent = JSON.parse(message.text().slice(NOTICE.length));
+            return { event: entry.pageEvent };
+          }, error => { entry.returnedAt = performance.now(); entry.error = String(error); return { error }; });
+          outstanding.push(observed);
+          return async () => { const result = await observed; if ('error' in result) throw result.error; return result.event; };
+        };
         try {
           context = await browser.newContext({ viewport, serviceWorkers: 'block', reducedMotion: 'reduce' });
           context.setDefaultTimeout(15_000);
@@ -427,15 +552,26 @@ async function run() {
           metadata.expectedLookupYears = { first: Number(evidence.asOf.slice(0, 4)) - 5, last: Number(evidence.asOf.slice(0, 4)) + 10, count: 16 };
           metadata.successfulAnnualCalculationsDirectlyObserved = false;
           await page.locator(TEXTAREA).fill(evidence.answer);
-          await page.locator(CHECK).click();
-          await page.locator('.ask__entry--mcp [role="status"][aria-busy="true"]').waitFor();
-          await settleFrames(page);
+          let back: Point | undefined;
+          if (mode === 'unmount') {
+            const selector = '.report__actions button:first-child';
+            await page.locator(selector).scrollIntoViewIfNeeded();
+            [back] = await stablePoints(page, [selector]);
+          }
+          await page.locator(CHECK).scrollIntoViewIfNeeded();
+          const [check, text] = await stablePoints(page, [CHECK, TEXTAREA]);
+          evidence.pointerTargets = { check, text, back };
+          if (back) await page.evaluate(y => window.__answerQa.armViewport(y), back.scrollY);
+          const busyReceipt = arm('busy-animation-frame');
+          const viewportReceipt = back ? arm('viewport-target-frame') : null;
+          await command('check-mouse', () => page!.mouse.click(check.x, check.y));
+          await busyReceipt();
           if (mode === 'cancel-aba') {
             const started = performance.now();
             // Browser keyboard input, not a scripted value assignment or dispatchEvent.
-            await page.locator(TEXTAREA).focus();
-            await page.keyboard.press('ControlOrMeta+A');
-            await page.keyboard.insertText(B);
+            await command('textarea-mouse', () => page!.mouse.click(text.x, text.y));
+            await command('select-A', () => page!.keyboard.press('ControlOrMeta+A'));
+            await command('insert-B', () => page!.keyboard.insertText(B));
             await page.waitForFunction(({ selector, value }): boolean => {
               const text = document.querySelector(selector) as HTMLTextAreaElement | null;
               const root = document.querySelector('.ask__entry--mcp');
@@ -444,12 +580,17 @@ async function run() {
             }, { selector: TEXTAREA, value: B });
             evidence.inputCommandToVerifiedDomMs = performance.now() - started;
             await settleFrames(page);
-            await page.keyboard.press('ControlOrMeta+A');
-            await page.keyboard.insertText(evidence.answer);
-            await page.locator(CHECK).click();
+            await command('select-B', () => page!.keyboard.press('ControlOrMeta+A'));
+            await command('insert-A', () => page!.keyboard.insertText(evidence.answer));
+            const retryBusy = arm('busy-animation-frame');
+            await command('retry-check-mouse', () => page!.mouse.click(check.x, check.y));
+            await retryBusy();
             metadata.retryLookupState = 'same lookup after cancelled partial scan; not a second cold scan';
           } else if (mode === 'unmount') {
-            await page.getByRole('button', { name: '← 重新輸入', exact: true }).click();
+            assert(back);
+            await command('back-wheel', () => page!.mouse.wheel(0, back!.scrollY - check.scrollY));
+            await viewportReceipt!();
+            await command('back-mouse', () => page!.mouse.click(back!.x, back!.y));
             await page.locator('#f-name').waitFor();
             const replacement = await makeReport(page);
             metadata.replacementReport = replacement;
@@ -487,9 +628,10 @@ async function run() {
             catch (error) { evidence.errors.push(`evidence collection: ${String(error)}`); }
           }
           try { await context?.close(); } catch (error) { evidence.cleanupErrors.push(String(error)); }
+          await Promise.allSettled(outstanding); // Context closure also settles pending input/notice operations.
         }
         let accepted = false;
-        try { validate(evidence); accepted = true; } catch (error) { diagnostics.push({ viewport, mode, validation: String(error) }); }
+        try { validate(evidence); validatePointerTargets(evidence); accepted = true; } catch (error) { diagnostics.push({ viewport, mode, validation: String(error) }); }
         const tasks = tasksAfterFirstCheck(evidence.trace);
         const checks = evidence.trace.events.filter(event => event.kind === 'check');
         const checkWindows = checks.map((check, index) => {
