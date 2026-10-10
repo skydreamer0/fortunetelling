@@ -14,6 +14,7 @@ import {
 } from '../lib/core';
 import type { Report } from './types';
 import { reportTimelineOptions } from './reportTimeline';
+import { yieldToBrowser } from './yieldToBrowser';
 
 /** Keyword → category. First category with a hit wins only if no other category also hits. */
 export const QUESTION_KEYWORDS: ReadonlyArray<{ category: string; keywords: readonly string[] }> = [
@@ -192,7 +193,7 @@ export function reportSignalLookup(report: Report): ReportSignalLookup {
     const found = resolveSignalId(wanted, known.keys());
     return found.status === 'exact' || found.status === 'unique' ? known.get(found.id) ?? null : null;
   };
-  const prepare: ReportSignalLookup['prepare'] = async (ids, signal, yieldTask = () => new Promise(resolve => setTimeout(resolve, 0))) => {
+  const prepare: ReportSignalLookup['prepare'] = async (ids, signal, yieldTask = yieldToBrowser) => {
     signal.throwIfAborted();
     supersede();
     const controller = new AbortController();

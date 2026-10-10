@@ -23,6 +23,80 @@ const deferred = () => {
   return { promise, resolve };
 };
 
+async function withNativeScheduler(yieldTask: () => Promise<void>, run: () => Promise<void>) {
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'scheduler');
+  const scheduler = { yield() { expect(this).toBe(scheduler); return yieldTask(); } };
+  Object.defineProperty(globalThis, 'scheduler', { configurable: true, value: scheduler });
+  try { await run(); }
+  finally {
+    if (previous) Object.defineProperty(globalThis, 'scheduler', previous);
+    else Reflect.deleteProperty(globalThis, 'scheduler');
+  }
+}
+
+test('browser scheduler default preserves all 84 units, complete year proofs and the warm zero-work path', async () => {
+  const reference = reportSignalLookup(report); let referenceUnits = 0;
+  await reference.prepare([target.id], new AbortController().signal, async () => { referenceUnits++; });
+  expect(referenceUnits).toBe(84); // Existing synthetic annual sequence, not a timing target.
+  let calls = 0;
+  await withNativeScheduler(async () => { calls++; }, async () => {
+    const lookup = reportSignalLookup(report);
+    await lookup.prepare([target.id], new AbortController().signal); // Actual default, no injected callback.
+    expect(calls).toBe(referenceUnits);
+    expect(JSON.stringify(lookup.directionalEvidence())).toBe(JSON.stringify(reference.directionalEvidence()));
+    for (const signal of signals(first)) expect(lookup(signal.id)).toEqual(signal);
+    await lookup.prepare([target.id], new AbortController().signal);
+    expect(calls).toBe(referenceUnits);
+  });
+}, 15_000);
+
+test('browser scheduler pending continuation respects custom cancellation with whole-year rollback and fresh retry', async () => {
+  const lookup = reportSignalLookup(report), controller = new AbortController();
+  const paused = deferred(), release = deferred(), reason = { stop: 'native pending continuation' };
+  const before = JSON.stringify(lookup.directionalEvidence()); let calls = 0;
+  await withNativeScheduler(async () => {
+    if (++calls === 12) { paused.resolve(); await release.promise; }
+  }, async () => {
+    const pending = lookup.prepare([target.id], controller.signal);
+    const caught = pending.then(() => null, error => error);
+    try {
+      await Promise.race([paused.promise, caught.then(() => { throw new Error('Default scheduler ended before pause'); })]);
+      controller.abort(reason); release.resolve();
+      expect(await caught).toBe(reason);
+      expect(calls).toBe(12);
+      expect(JSON.stringify(lookup.directionalEvidence())).toBe(before);
+      calls = 0;
+      await lookup.prepare([target.id], new AbortController().signal);
+      expect(calls).toBe(84);
+      expect(lookup(target.id)).toEqual(target);
+    } finally { release.resolve(); await caught; }
+  });
+}, 15_000);
+
+test('browser scheduler throw/rejection stays fatal and actual abort reason wins without poisoning the year', async () => {
+  for (const abort of [false, true]) for (const throws of [false, true]) {
+    const lookup = reportSignalLookup(report), controller = new AbortController();
+    const reason = { stop: 'custom native abort', throws }, failure = { scheduler: 'native failure', throws };
+    const before = JSON.stringify(lookup.directionalEvidence()); let calls = 0, fail = true;
+    await withNativeScheduler(() => {
+      if (++calls === 12 && fail) {
+        if (abort) controller.abort(reason);
+        if (throws) throw failure;
+        return Promise.reject(failure);
+      }
+      return Promise.resolve();
+    }, async () => {
+      await expect(lookup.prepare([target.id], controller.signal)).rejects.toBe(abort ? reason : failure);
+      expect(calls).toBe(12);
+      expect(JSON.stringify(lookup.directionalEvidence())).toBe(before);
+      calls = 0; fail = false;
+      await lookup.prepare([target.id], new AbortController().signal);
+      expect(calls).toBe(84);
+      expect(lookup(target.id)).toEqual(target);
+    });
+  }
+}, 20_000);
+
 test('partial-year abort leaves no proofs/cursor/cache; exact fresh retry and cached zero-work path', async () => {
   const fresh = reportSignalLookup(report); let expectedUnits = 0;
   await fresh.prepare([target.id], new AbortController().signal, async () => { expectedUnits++; });

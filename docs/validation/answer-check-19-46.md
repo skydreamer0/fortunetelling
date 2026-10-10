@@ -376,3 +376,27 @@ cost. The [HTML timer algorithm](https://html.spec.whatwg.org/multipage/timers-a
 specifies a 4 ms minimum after deeply nested timers; [Chrome's scheduler guidance](https://developer.chrome.com/blog/use-scheduler-yield)
 describes a task-yield alternative and feature-detected fallback. These sources
 motivate the comparison but do not prove a measured cause or production speedup.
+
+Native diagnostic run `38007976427` at `0efe18f4` completed all six functional
+cases and the four ordered annual probes. Each probe had 84 yields and the same
+413895-byte complete JSON (SHA-256
+`ec20ebe3b99b865ba10ddae241d0a92b37fb5716497f305064fa67e3c3143e9e`).
+Timer waits totalled 324.1/320.1 ms (median 4.1 ms), native waits 2.8/2.4 ms;
+work totals were 649.5/636.0 versus 648.8/632.4 ms. This supports avoiding timer
+waiting overhead, not attributing every awaited millisecond exclusively to the
+HTML clamp. The timer-default UI cold totals were 15.8540/15.7782 s, maximum Long
+Tasks 118/139 ms. Production was unchanged: natural asOf 2026-10-10 and another
+shared runner prevent calling that difference from the 2026-10-09 18.6-second
+receipt a diagnostic-induced improvement.
+
+The next minimal repair changes only the Web default scheduler to feature-detect
+`scheduler.yield`, call it on its native receiver, and retain the original
+zero-delay timer when unavailable. A supported native API's synchronous throw or
+rejection follows the existing fatal scheduler/actual-signal path, without a
+silent fallback. Unit counts, before/after guards, year atomicity, and the core
+public bridge/default remain unchanged. Dedicated regressions exercise the real
+Web default, all 84 synthetic annual units, exact proofs/signals, cached zero work,
+partial-year cancellation and clean retry, plus throw/reject/custom-abort
+precedence. These controlled callbacks are not native performance evidence.
+Keep performance acceptance pending the new production SHA's first automatic
+browser run, comparing cold total, Long Tasks and trusted input/back effects.
