@@ -116,3 +116,21 @@ describe('Pages exact-source acceptance gate', () => {
     }
   });
 });
+
+test('deploy-only rerun CLI reports the verified earlier build artifact', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'fortune-pages-rerun-'));
+  const output = join(directory, 'output');
+  const sha = 'a'.repeat(40), artifact = `github-pages-${sha}-123-1`;
+  try {
+    const child = Bun.spawnSync([process.execPath, fileURLToPath(new URL('./pages-gate.ts', import.meta.url))], {
+      env: { ...process.env,
+        GITHUB_REPOSITORY: 'skydreamer0/fortunetelling', GITHUB_EVENT_NAME: 'push', GITHUB_REF: 'refs/heads/master',
+        GITHUB_SHA: sha, PAGES_ACCEPTED_SHA: sha, PAGES_ACCEPTANCE_RESULT: 'success',
+        PAGES_CHECKOUT_SHA: sha, PAGES_CURRENT_MASTER_SHA: sha, GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '2',
+        PAGES_ARTIFACT_NAME: artifact, PAGES_BUILD_ATTEMPT: '1', GITHUB_OUTPUT: output },
+    });
+    expect(child.exitCode).toBe(0);
+    expect(child.stdout.toString()).toContain(`Authorized exact-source Pages artifact: ${artifact}`);
+    expect(readFileSync(output, 'utf8')).toBe(`artifact_name=${artifact}\n`);
+  } finally { rmSync(directory, { recursive: true, force: true }); }
+});

@@ -53,9 +53,10 @@ if (import.meta.main) {
     runId: process.env.GITHUB_RUN_ID,
     runAttempt: process.env.GITHUB_RUN_ATTEMPT,
   };
-  const artifact = authorizePages(context);
+  let artifact = authorizePages(context);
   if ('PAGES_ARTIFACT_NAME' in process.env || 'PAGES_BUILD_ATTEMPT' in process.env) {
     authorizePagesArtifact(context, process.env.PAGES_ARTIFACT_NAME, process.env.PAGES_BUILD_ATTEMPT);
+    artifact = process.env.PAGES_ARTIFACT_NAME!;
   }
   console.log(`Authorized exact-source Pages artifact: ${artifact}`);
   if (process.env.GITHUB_OUTPUT) {
