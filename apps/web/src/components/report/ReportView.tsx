@@ -30,16 +30,33 @@ export const CHAPTERS = [
   { id: 'ch-method', index: '附', label: '方法' },
 ] as const;
 
-/** Track which chapter currently crosses the reading line (upper third of the viewport). */
+/** A short final chapter cannot always reach the upper-third reading line. */
+export function chapterAtReadingPosition(readingChapter: string, viewportBottom: number, documentBottom: number): string {
+  return viewportBottom >= documentBottom - 1 ? CHAPTERS[CHAPTERS.length - 1].id : readingChapter;
+}
+
+/** Track the reading line, with an explicit page-end boundary for short final chapters. */
 function useActiveChapter(): string {
   const [active, setActive] = useState<string>(CHAPTERS[0].id);
   useEffect(() => {
+    let readingChapter: string = CHAPTERS[0].id;
+    const update = () => setActive(chapterAtReadingPosition(
+      readingChapter, window.scrollY + window.innerHeight, document.documentElement.scrollHeight,
+    ));
     const observer = new IntersectionObserver(entries => {
       const visible = entries.filter(entry => entry.isIntersecting);
-      if (visible.length) setActive(visible[visible.length - 1].target.id);
+      if (visible.length) readingChapter = visible[visible.length - 1].target.id;
+      update();
     }, { rootMargin: '-30% 0px -65% 0px' });
     document.querySelectorAll('[data-chapter]').forEach(node => observer.observe(node));
-    return () => observer.disconnect();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+    };
   }, []);
   return active;
 }

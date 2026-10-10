@@ -88,6 +88,14 @@ async function runCase(browser: Browser, origin: string, width: number, cases: o
     await page.locator('.chapters a[href="#ch-method"]').click();
     assert.equal(await page.evaluate(() => history.length), before.length + 11);
     await page.screenshot({ path: `${OUTPUT}/${width}-chapters.png` });
+    // Page-end selection must release when the reader scrolls back up. Resize
+    // then follow the native link again, so viewport changes cannot pin the tab.
+    await page.mouse.wheel(0, -240);
+    await page.waitForFunction(() => document.querySelector('.chapters a[aria-current="location"]')?.getAttribute('href') === '#ch-guidance');
+    await page.setViewportSize({ width, height: 844 });
+    await page.locator('.chapters a[href="#ch-method"]').click();
+    await page.waitForFunction(() => document.querySelector('.chapters a[href="#ch-method"]')?.getAttribute('aria-current') === 'location');
+    assert(await original.evaluate(node => node === document.querySelector('.report')));
 
     // The native links keep keyboard semantics, including Tab followed by Enter.
     await page.locator('.chapters a[href="#ch-overview"]').focus();
@@ -129,7 +137,7 @@ async function runCase(browser: Browser, origin: string, width: number, cases: o
     assert.equal(await page.locator('#f-name').inputValue(), fixture.name);
     assert.deepEqual(errors, []);
     Object.assign(record, { passed: true, nativeEvents: native.events,
-      checks: ['11 chapters', 'same DOM report', 'no extra history entries', 'same stored input', 'keyboard Tab/Enter', 'chapter Back/Forward', 'app re-input', 'home', 'cached report Forward', 'browser Back to input'] });
+      checks: ['11 chapters', 'same DOM report', 'no extra history entries', 'same stored input', 'keyboard Tab/Enter', 'chapter Back/Forward', 'app re-input', 'home', 'cached report Forward', 'browser Back to input', 'scroll away from page end', 'resize then chapter navigation'] });
   } catch (error) {
     record.error = String(error);
     record.lastState = await page.evaluate(() => ({ hash: location.hash, events: window.__navigationQa.events,
@@ -152,7 +160,7 @@ async function main() {
   assert.equal(status.exitCode, 0); assert.equal(status.stdout.toString().trim(), '', 'Tracked sources changed after checkout');
   await access('/opt/google/chrome/chrome', constants.X_OK);
   const sources: Record<string, string> = {};
-  for (const file of ['apps/web/src/App.tsx', 'apps/web/src/lib/viewHistory.ts', 'apps/web/scripts/report-navigation-browser-check.ts']) sources[file] = new Bun.CryptoHasher('sha256').update(await readFile(file)).digest('hex');
+  for (const file of ['apps/web/src/App.tsx', 'apps/web/src/lib/viewHistory.ts', 'apps/web/src/components/report/ReportView.tsx', 'apps/web/scripts/report-navigation-browser-check.ts']) sources[file] = new Bun.CryptoHasher('sha256').update(await readFile(file)).digest('hex');
   await mkdir(OUTPUT, { recursive: true });
   const server = Bun.serve({ hostname: '127.0.0.1', port: 0, async fetch(request) {
     const pathname = decodeURIComponent(new URL(request.url).pathname);
