@@ -2,6 +2,7 @@
  * Internal #51 sync session. All projections own one validated immutable natal
  * DTO and its private run-time providers. No Report 8 or legacy replay changes.
  */
+import { describeNatalFactLinks } from "../facts/natalFactLinks";
 import { createNatalFactStore } from '../facts/natalFactStore';
 import { describeNatalRuleMetadata } from '../facts/natalRuleMetadata';
 import type { CalculationSpec } from './calculationSpec';
@@ -47,6 +48,13 @@ export function createChartSnapshotSession(spec: CalculationSpec, persisted?: un
   };
   return Object.freeze({
     snapshot,
+    natalFactLinks() {
+      if (arguments.length) throw new TypeError("No fact link context overrides allowed");
+      runtime.verifyEnvironment();
+      const result = describeNatalFactLinks(describeNatalRuleMetadata(snapshot, createNatalFactStore(snapshot)));
+      runtime.verifyEnvironment();
+      return result;
+    },
     natalRuleMetadata() {
       if (arguments.length) throw new TypeError('No metadata context overrides allowed');
       runtime.verifyEnvironment();
