@@ -7,6 +7,8 @@ import { fnv1a64Hex } from '../signals/signalId';
 import { createSchoolPackRegistry, DEFAULT_SCHOOL_PACKS, schoolPackKey, compareSchoolAssessments } from './registry';
 import type { SchoolPack, SchoolPackRef, SchoolContext, SchoolEvaluator, SchoolAssessment, SchoolComparison } from './types';
 import { SYNTHETIC_PACKS, syntheticConclusion } from './syntheticInterpretationCatalog';
+import { resolveFactReferences } from '../facts/natalFactStore';
+import type { NatalFact, NatalFactStore } from '../facts/types';
 
 const syncSystems = ['bazi', 'ziwei', 'numerology', 'tzolkin', 'mingGua'] as const;
 type Unavailable = { ref: SchoolPackRef; reason: 'time_unknown' };
@@ -24,6 +26,25 @@ export type BoundAnalysis = DeepReadonly<{
   unavailable: readonly Unavailable[];
   comparisons: readonly SchoolComparison[];
 }>;
+/** Separate internal contract: legacy ia1/opaque references are not upgraded. */
+export type FactSchoolContext = SchoolContext & { readonly facts: readonly NatalFact[] };
+export type FactBoundAnalysisIdentity = DeepReadonly<{
+  schemaVersion: 1;
+  scope: 'fact-backed-sync-natal' | 'synthetic-fact-backed-sync-natal';
+  snapshot: ChartSnapshot;
+  interpretation: InterpretationSpec;
+  factStore: NatalFactStore;
+  context: FactSchoolContext;
+}>;
+export type FactBoundAnalysis = DeepReadonly<{
+  analysisId: string;
+  identity: FactBoundAnalysisIdentity;
+  assessments: readonly (SchoolAssessment & {
+    conclusions: readonly (SchoolAssessment['conclusions'][number] & { facts: readonly NatalFact[] })[];
+  })[];
+  unavailable: readonly Unavailable[];
+  comparisons: readonly SchoolComparison[];
+}>;
 const reference = (p: SchoolPack): SchoolPackRef => ({ system: p.system, packId: p.packId, packVersion: p.packVersion });
 
 /** Private constructor: callers cannot register or replace executable code. */
@@ -37,6 +58,7 @@ function createRegistry(synthetic: boolean) {
   }
   const specs = new WeakSet<object>();
   const results = new WeakSet<object>();
+  const factResults = new WeakSet<object>();
   function createSpec(requested: readonly SchoolPackRef[]): InterpretationSpec {
     if (arguments.length !== 1) throw new TypeError('Interpretation selection takes exact references only');
     const copied = interpretationData(requested);
@@ -106,7 +128,63 @@ function createRegistry(synthetic: boolean) {
     if (interpretationBytes(candidate) !== interpretationBytes(expected)) throw new TypeError('Bound analysis full content mismatch');
     return expected;
   }
-  return Object.freeze({ createSpec, validateSpec, bind, validate });
+  /** Internal consumer seam. Every input and conclusion is resolved against
+   * the same owned store and complete snapshot, before any result is returned.
+   * Production packs remain placeholders; this does not create real rules.
+   */
+  function bindFacts(snapshot: ChartSnapshot, interpretation: InterpretationSpec, factStore: NatalFactStore, requestedContext: SchoolContext) {
+    if (arguments.length !== 4) throw new TypeError('Fact binding requires snapshot, interpretation, owned store and context');
+    if (!specs.has(interpretation)) throw new TypeError('Expected owned InterpretationSpec from this catalog');
+    const requested = canonicalSchoolContext(requestedContext);
+    const facts = resolveFactReferences(factStore, snapshot, requested.factIds);
+    const context: FactSchoolContext = Object.freeze({ ...requested, facts });
+    const identity: FactBoundAnalysisIdentity = Object.freeze({ schemaVersion: 1,
+      scope: synthetic ? 'synthetic-fact-backed-sync-natal' : 'fact-backed-sync-natal',
+      snapshot, interpretation, factStore, context });
+    const analysisId = `ifa1-${fnv1a64Hex(interpretationBytes(identity))}`;
+    function run(): FactBoundAnalysis {
+      if (arguments.length) throw new TypeError('No evaluator or context overrides allowed');
+      resolveFactReferences(factStore, snapshot, context.factIds);
+      const assessments: SchoolAssessment[] = [], unavailable: Unavailable[] = [];
+      for (const selected of interpretation.packs) {
+        const natal = snapshot.natal[selected.system as typeof syncSystems[number]];
+        if (natal.status === 'skipped') {
+          unavailable.push({ ref: selected, reason: natal.reason });
+          continue;
+        }
+        const evaluate = implementations.get(schoolPackKey(selected));
+        if (!evaluate) throw new TypeError('Missing exact retained SchoolPack implementation');
+        // These finite adapters are system-local. Never let a Bazi fixture cite
+        // a Ziwei fact merely because its diagnostic ID sorts first.
+        const systemFacts = Object.freeze(facts.filter(f => f.system === selected.system));
+        const evaluatorContext: FactSchoolContext = Object.freeze({
+          availableConditions: context.availableConditions,
+          factIds: Object.freeze(systemFacts.map(f => f.factId)), facts: systemFacts,
+        });
+        assessments.push(descriptors.assess(selected, requested, () => systemFacts.length ? evaluate(evaluatorContext) : []));
+      }
+      const comparisons = compareSchoolAssessments(assessments);
+      const resolvedAssessments = assessments.map(assessment => ({ ...assessment,
+        conclusions: assessment.conclusions.map(conclusion => ({ ...conclusion,
+          facts: resolveFactReferences(factStore, snapshot, conclusion.factIds),
+        })),
+      }));
+      // Recheck even when all selected systems were unavailable or abstained.
+      resolveFactReferences(factStore, snapshot, context.factIds);
+      const output: FactBoundAnalysis = Object.freeze({ analysisId, identity,
+        assessments: interpretationData(resolvedAssessments), unavailable: interpretationData(unavailable), comparisons });
+      factResults.add(output);
+      return output;
+    }
+    return Object.freeze({ analysisId, identity, run });
+  }
+  function validateFacts(candidate: unknown, expected: FactBoundAnalysis): FactBoundAnalysis {
+    if (arguments.length !== 2 || !factResults.has(expected)) throw new TypeError('Expected owned fact-backed analysis');
+    resolveFactReferences(expected.identity.factStore, expected.identity.snapshot, expected.identity.context.factIds);
+    if (interpretationBytes(candidate) !== interpretationBytes(expected)) throw new TypeError('Fact-backed analysis full content mismatch');
+    return expected;
+  }
+  return Object.freeze({ createSpec, validateSpec, bind, validate, bindFacts, validateFacts });
 }
 
 /** Production catalog remains placeholders only; no caller-owned registration. */
