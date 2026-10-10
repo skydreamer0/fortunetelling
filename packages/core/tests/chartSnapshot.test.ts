@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { createCalculationSpec } from '../src/core/calculationSpec';
 import { canonicalStringify } from '../src/portable/canonical';
+import { NumerologyEngine } from '../src/engines/NumerologyEngine';
 
 // The red checkpoint executes every assertion even before the module exists.
 const api: any = await import('../src/core/chartSnapshot').catch(() => ({}));
@@ -17,6 +18,10 @@ function frozen(value: unknown) {
 }
 
 describe('sync ChartSnapshot foundation, not a Report 8 migration', () => {
+  test('keeps natal access off the publicly exported engine class surface', () => {
+    expect(Reflect.ownKeys(NumerologyEngine.prototype)).toEqual(['constructor', '_compute']);
+    expect(new NumerologyEngine()).not.toHaveProperty('natal');
+  });
   test('owns a deeply frozen, JSON-roundtrippable five-system natal DTO', () => {
     const snapshot = create();
     expect(snapshot.schemaVersion).toBe(1);
@@ -100,6 +105,7 @@ describe('sync ChartSnapshot foundation, not a Report 8 migration', () => {
       (c: any) => { c.natal.numerology.warnings.length = 2; },
       (c: any) => { Object.defineProperty(c, 'hidden', { value: 1 }); },
       (c: any) => { c[Symbol('extra')] = 1; },
+      (c: any) => { Object.defineProperty(c, 'identity', { enumerable: true, get() { throw new Error('must not execute'); } }); },
       (c: any) => { Object.defineProperty(c.natal, 'getter', { enumerable: true, get() { throw new Error('must not execute'); } }); },
     ]) {
       const candidate = structuredClone(expected);

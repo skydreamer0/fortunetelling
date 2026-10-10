@@ -481,6 +481,13 @@ export interface TimelineCooperativeControl {
  */
 export async function buildTimelineCooperatively(ctx: TimeContext, opts: TimelineOptions,
   { signal, yieldTask = () => new Promise(resolve => setTimeout(resolve, 0)) }: TimelineCooperativeControl): Promise<Timeline> {
+  return buildTimelineCooperativelyWithNatalBasis(ctx, opts, { signal, yieldTask });
+}
+
+/** Internal immutable-snapshot session path; the public API retains its old shape. */
+export async function buildTimelineCooperativelyWithNatalBasis(ctx: TimeContext, opts: TimelineOptions,
+  { signal, yieldTask = () => new Promise(resolve => setTimeout(resolve, 0)) }: TimelineCooperativeControl,
+  baziNatalBasis?: BaziNatalBasisProvider, ziweiNatalBasis?: ZiweiNatalBasisProvider): Promise<Timeline> {
   signal.throwIfAborted();
   if (!Array.isArray(opts?.systems) || opts.systems.some(system => !['bazi', 'ziwei', 'numerology'].includes(system))) {
     throw new TimelineEnvironmentChangedError('Cooperative timeline requires an explicit bazi/ziwei/numerology report scope');
@@ -488,7 +495,7 @@ export async function buildTimelineCooperatively(ctx: TimeContext, opts: Timelin
   const context = structuredClone(ctx), options = structuredClone(opts);
   const verify = options.systems!.includes('ziwei') && context.jd !== null && context.utc !== null
     ? supportedTimelineEnvironment() : () => {};
-  return finishCooperatively(buildTimelineSteps(context, options), signal, yieldTask, verify);
+  return finishCooperatively(buildTimelineSteps(context, options, baziNatalBasis, undefined, ziweiNatalBasis), signal, yieldTask, verify);
 }
 
 function* buildTimelineSteps(ctx: TimeContext, opts: TimelineOptions, natalBasis?: BaziNatalBasisProvider, evidence?: Map<string, Signal>, ziweiNatalBasis?: ZiweiNatalBasisProvider): CalculationSteps<Timeline> {

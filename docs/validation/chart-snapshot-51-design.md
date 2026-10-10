@@ -137,3 +137,41 @@ claim that copying snapshotId alone implements sharing. Report 8 must retain a
 validated DTO; missing/corrupt new data must fail closed, while Reports <=7 keep
 the existing conservative replay path without invented IDs. Profile 2 (#52)
 and async ephemeris identity (#53) remain separate unresolved dependencies.
+
+### Next internal checkpoint: real sync projection session
+
+`chartSnapshotSession.ts` now retains the freshly computed snapshot's private
+Bazi/Ziwei runtime in a per-object WeakMap. This supersedes only the preceding
+checkpoint's statement that no runtime is retained. There is still no global
+hash-keyed cache, Report migration, or public package export.
+
+- A session owns its canonical TimeContext and derives time settings solely from
+  snapshot identity. Display labels normalize to `CalculationSpec`; callers do
+  not pass a second context/name or override birth settings. New API options
+  explicitly reject such overrides and non-sync timeline systems.
+- Timeline and Backtest (>50-year chunks included) now have internal provider
+  seams. Existing entry points use their previous paths and serialization.
+  The session's wrapper returns `calculation` plus the unchanged timeline result.
+  This demonstrates genuine provider sharing; it is not yet Web AskAI wiring.
+- Retained Ziwei uses the existing default-config/zh-TW guard at every projection
+  and every cooperative boundary. Unsupported environment changes fail closed
+  and are not reset by the session. Private live library objects never enter
+  the serializable immutable DTO.
+- A supplied serialized snapshot is validated once against one freshly computed
+  current snapshot, then that reconstruction supplies all projections. Reloading
+  does reconstruct natal once; it does not promise cross-process zero work or
+  historical-version replay. Complete identity/content checks precede use.
+- Cancelled cooperative projections publish no partial timeline. The session may
+  retain its immutable successful natal basis; retry recalculates periods and
+  must equal an independent complete projection.
+
+Report 8, main report attachment, AskAI and export wiring remain pending. No
+Report 7 receives invented fields; #51's all-entry acceptance remains open.
+
+Independent API-surface correction: the early DTO Draft's named
+`NumerologyEngine.natal()` was reachable through the existing exported class,
+so its initial 'unchanged public API' wording was too broad. The follow-up makes
+that method JavaScript-private and uses an internal per-instance WeakMap friend
+capability. The public class prototype remains exactly constructor/_compute;
+no natal method or registration helper is added to the public package surface.
+The map registers implementation access, not profiles, identities, or results.
