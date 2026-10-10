@@ -4,3 +4,5 @@ export type * from './calculator';
 export { addDays, lunarNewYear, lunarYearOf, resolveZiweiWallTime, timeIndexFrom, createAstrolabe, buildAstrolabe, birthLunarYearOf, sanFangOf, natalChart, decadeSequence, yearlySequence, monthlySequence } from './astrolabe';
 export type { ZiweiAstrolabe } from './astrolabe';
 export * from './ruleChart';
+export { ziweiDecadeNativePeriod, ziweiYearlyNativePeriod, ziweiMonthlyNativePeriod } from './nativePeriods';
+export type { ZiweiNativePeriodOptions } from './nativePeriods';
