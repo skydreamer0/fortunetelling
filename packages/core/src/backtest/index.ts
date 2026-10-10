@@ -4,7 +4,8 @@
  * @module backtest
  */
 export * from './lifeEvents';
-export * from './timeline';
+export { BACKTEST_TIMELINE_SCHEMA_VERSION, DEFAULT_BACKTEST_START_AGE, buildBacktestTimeline } from './timeline';
+export type { BacktestDomainScores, BacktestYearCell, BacktestTimeline, BacktestTimelineOptions } from './timeline';
 export * from './runBacktest';
 export * from './proposeWeights';
 export { hashString, mulberry32, seededShuffle } from './prng';

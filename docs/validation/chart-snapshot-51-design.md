@@ -101,3 +101,77 @@ than authorizing a golden rewrite.
 The remaining design must be reviewed before persistence/schema work. Until
 these dependencies and the old-report/collision/cross-entry tests are addressed,
 Issue 51 stays open and no all-entry snapshot guarantee should be published.
+
+## 2026-10-10 internal DTO checkpoint (not Report 8 or Issue closure)
+
+`core/chartSnapshot.ts` now implements a candidate sync-five-system immutable
+natal DTO. It is deliberately not exported from the public package index or
+attached to Report 7. No existing report/Timeline/backtest output, version,
+fixture, export or locked forecast is changed at this checkpoint.
+
+- `sn1` hashes the complete canonical schema/scope, CalculationSpec identity,
+  specHash, and natal content. Name remains part of the existing Numerology spec
+  identity; snapshot IDs are private non-cryptographic diagnostics and are not
+  fact IDs, privacy protection, or authentication. No factId algorithm changes.
+- Only the exact current sync CalculationSpec identity is accepted. Historical
+  versions, additional settings, async ephemeris scope and forged specHash are
+  rejected. Original labels and spelling remain source metadata, outside DTO.
+- Natal data is built directly, with no arbitrary period/asOf: Bazi pillars and
+  natal luck basis; Ziwei resolved natal and alternatives; Numerology's existing
+  natal routines; existing Tzolkin and MingGua charts. Missing birth time skips
+  Bazi/Ziwei explicitly. Mutable iztro objects and engine timing are excluded.
+- The new Numerology natal method calls existing private natal routines; the
+  existing full engine order and outputs remain unchanged.
+- Candidate readback is compared with a freshly calculated trusted snapshot by
+  complete identity and complete content, including all fields. Same IDs do not
+  bypass either comparison. The returned value is owned and deeply frozen.
+  This is not a hash cache, persistence store, or historical replay engine.
+- Default iztro configuration is checked before/after synchronous calculation;
+  existing `createAstrolabe` explicitly selects zh-TW. A future retained runtime
+  must also enforce environment guards on every period use and cooperative
+  boundary. This checkpoint retains no long-lived live library object.
+
+Next gate: independent contract review, then genuine same-snapshot runtime use
+by existing sync Timeline/Question/Backtest and Report 8 compatibility. Do not
+claim that copying snapshotId alone implements sharing. Report 8 must retain a
+validated DTO; missing/corrupt new data must fail closed, while Reports <=7 keep
+the existing conservative replay path without invented IDs. Profile 2 (#52)
+and async ephemeris identity (#53) remain separate unresolved dependencies.
+
+### Next internal checkpoint: real sync projection session
+
+`chartSnapshotSession.ts` now retains the freshly computed snapshot's private
+Bazi/Ziwei runtime in a per-object WeakMap. This supersedes only the preceding
+checkpoint's statement that no runtime is retained. There is still no global
+hash-keyed cache, Report migration, or public package export.
+
+- A session owns its canonical TimeContext and derives time settings solely from
+  snapshot identity. Display labels normalize to `CalculationSpec`; callers do
+  not pass a second context/name or override birth settings. New API options
+  explicitly reject such overrides and non-sync timeline systems.
+- Timeline and Backtest (>50-year chunks included) now have internal provider
+  seams. Existing entry points use their previous paths and serialization.
+  The session's wrapper returns `calculation` plus the unchanged timeline result.
+  This demonstrates genuine provider sharing; it is not yet Web AskAI wiring.
+- Retained Ziwei uses the existing default-config/zh-TW guard at every projection
+  and every cooperative boundary. Unsupported environment changes fail closed
+  and are not reset by the session. Private live library objects never enter
+  the serializable immutable DTO.
+- A supplied serialized snapshot is validated once against one freshly computed
+  current snapshot, then that reconstruction supplies all projections. Reloading
+  does reconstruct natal once; it does not promise cross-process zero work or
+  historical-version replay. Complete identity/content checks precede use.
+- Cancelled cooperative projections publish no partial timeline. The session may
+  retain its immutable successful natal basis; retry recalculates periods and
+  must equal an independent complete projection.
+
+Report 8, main report attachment, AskAI and export wiring remain pending. No
+Report 7 receives invented fields; #51's all-entry acceptance remains open.
+
+Independent API-surface correction: the early DTO Draft's named
+`NumerologyEngine.natal()` was reachable through the existing exported class,
+so its initial 'unchanged public API' wording was too broad. The follow-up makes
+that method JavaScript-private and uses an internal per-instance WeakMap friend
+capability. The public class prototype remains exactly constructor/_compute;
+no natal method or registration helper is added to the public package surface.
+The map registers implementation access, not profiles, identities, or results.

@@ -31,6 +31,7 @@
 import { BaseEngine } from '../core/BaseEngine';
 import type { BirthData } from '../core/models/BirthData';
 import type { SystemResult } from '../core/models/SystemResult';
+import { registerNumerologyNatal } from '../calculators/numerology/natalAccess';
 import {
   calculateAttitude,
   calculateBirthdayNumber,
@@ -97,6 +98,7 @@ export class NumerologyEngine extends BaseEngine {
   constructor({ asOf = null }: { asOf?: Date | string | null } = {}) {
     super();
     this.asOf = asOf;
+    registerNumerologyNatal(this, birth => this.#natal(birth));
   }
 
   _compute(birth: BirthData): SystemResult {
@@ -114,6 +116,18 @@ export class NumerologyEngine extends BaseEngine {
       name: birth.name,
     };
 
+    return result;
+  }
+
+  /** Internal snapshot projection: natal only, no asOf or system-clock access. */
+  #natal(birth: BirthData): SystemResult {
+    birth.validate();
+    const result = this.result();
+    this.#addLifePath(result, birth);
+    this.#addNameNumbers(result, birth);
+    this.#addDigitFrequency(result, birth);
+    this.#addBirthdayAndAttitude(result, birth);
+    this.#addPinnaclesAndChallenges(result, birth);
     return result;
   }
 

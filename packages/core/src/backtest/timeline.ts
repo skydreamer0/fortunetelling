@@ -69,6 +69,12 @@ const round2 = (x: number) => Math.round(x * 100) / 100;
  * jyotish / humanDesign are included only if the ephemeris is initialised.
  */
 export function buildBacktestTimeline(ctx: TimeContext, opts: BacktestTimelineOptions): BacktestTimeline {
+  return buildBacktestTimelineUsing(ctx, opts, buildTimeline);
+}
+
+/** Internal projection seam; the public backtest contract remains unchanged. */
+export function buildBacktestTimelineUsing(ctx: TimeContext, opts: BacktestTimelineOptions,
+  project: typeof buildTimeline): BacktestTimeline {
   const asOf = opts?.asOf;
   if (typeof asOf !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(asOf)) {
     throw new Error(`buildBacktestTimeline: asOf must be 'YYYY-MM-DD', got ${JSON.stringify(asOf)}`);
@@ -87,7 +93,7 @@ export function buildBacktestTimeline(ctx: TimeContext, opts: BacktestTimelineOp
 
   for (let start = fromYear; start <= toYear; start += CHUNK_YEARS) {
     const years = Math.min(CHUNK_YEARS, toYear - start + 1);
-    const tl = buildTimeline(ctx, {
+    const tl = project(ctx, {
       asOf,
       fromYear: start,
       years,
