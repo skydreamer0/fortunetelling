@@ -342,3 +342,37 @@ The recorder now captures its actual finish timestamp, and summaries use that
 observation end even if the DOM never changed. Missing finish coverage stays null
 (unknown). A self-test retains a post-last-DOM-change Long Task on timeout while
 still rejecting the case. This corrects statistics, not functional/performance gates.
+
+Native run `38006393120` (`6d3d627f`, tree `d62b79d2`) completed all six functional
+observations. Cold desktop/mobile-width totals were 18.6005/18.4987 s, compared
+with 12.7418/12.7986 s before the repair: +45.98%/+44.54%. Cold maximum Long Tasks
+fell from 814/827 ms to 147/140 ms. Improved interaction does not make that total
+latency regression acceptable; keep the repair Draft pending scheduler diagnosis.
+The observed 1050/1040 ms unmount-case tasks were replacement-report generation,
+after the old view was removed, not the old citation scan's cancellation delay.
+
+The next bounded diagnostic leaves production scheduling untouched. After all six
+UI cases, a fresh context imports the actual built bridge and profiles a synthetic
+2021 annual Timeline: synchronous full-JSON reference, then timer/native
+`scheduler.yield`/native/timer counter-order runs. Each records every await wait
+and intervening work segment, complete-JSON equality, output size/hash and unit
+count. Missing native API is explicitly UNSUPPORTED, with timer-only evidence.
+Work and await intervals must sum to the complete elapsed interval, allowing only
+1e-6 ms of floating-point addition noise. Inconsistent zero totals or zero
+partitions are rejected; this is evidence integrity, not a performance threshold.
+The unbounded top-signal option is recorded as the explicit string `"Infinity"`,
+not JSON's lossy null. Diagnostic page errors, evaluation failures and context
+cleanup errors are retained separately and prevent overall PASS, including errors
+that occur outside the evaluated Promise. Counterexamples cover both boundaries.
+No global scheduler/engine is patched. Context closure and the same 180-second
+whole-run watchdog apply; errors cannot yield overall PASS. Earlier six UI cases
+are not warmed by this later probe, and retain the existing default scheduler.
+
+This isolates observable scheduling waits rather than subtracting Long Tasks from
+wall time (which would wrongly classify unrecorded short work as waiting). Report
+generation/reference warm the engine; counter-order does not remove all JIT/shared
+runner variance. Direct-Timeline work includes guards/bookkeeping, not Web commit
+cost. The [HTML timer algorithm](https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#timers)
+specifies a 4 ms minimum after deeply nested timers; [Chrome's scheduler guidance](https://developer.chrome.com/blog/use-scheduler-yield)
+describes a task-yield alternative and feature-detected fallback. These sources
+motivate the comparison but do not prove a measured cause or production speedup.

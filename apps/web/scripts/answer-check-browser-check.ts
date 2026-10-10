@@ -4,6 +4,7 @@ import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import { createRequire } from 'node:module';
 import { resolve, sep } from 'node:path';
+import { cpus } from 'node:os';
 import { chromium, type Browser, type BrowserContext, type Locator, type Page } from 'playwright';
 
 const ROOT = resolve('apps/web/dist');
@@ -35,6 +36,30 @@ function tasksAfterFirstCheck(trace: Trace): Trace['longTasks'] | null {
   // No finish observation means unknown coverage, not zero blocking.
   if (!first || trace.finishedAt === null) return null;
   return trace.longTasks.filter(task => task.start + task.duration > first.at && task.start < trace.finishedAt!);
+}
+
+function validateSchedulerProfile(profile: Awaited<ReturnType<typeof measureSchedulerProfile>>, errors: readonly string[] = []) {
+  assert.deepEqual(errors, [], 'scheduler diagnostic page/evaluation/cleanup errors cannot pass');
+  const order = profile.apiSupported ? ['timer', 'scheduler-yield', 'scheduler-yield', 'timer'] : ['timer'];
+  assert.deepEqual(profile.order, order);
+  assert.equal(profile.samples.length, order.length);
+  assert.match(profile.referenceSha256, /^[0-9a-f]{64}$/);
+  assert(profile.referenceBytes > 0);
+  assert.equal(profile.options.topSignalsPerDomain, 'Infinity', 'unbounded selection must survive JSON serialization');
+  for (const [index, sample] of profile.samples.entries()) {
+    assert.equal(sample.kind, order[index]);
+    assert.equal(sample.exactFullJsonMatches, true);
+    assert.equal(sample.outputSha256, profile.referenceSha256);
+    assert.equal(sample.outputBytes, profile.referenceBytes);
+    assert(sample.awaitWaitMs.length > 60);
+    assert.equal(sample.awaitWaitMs.length, profile.samples[0].awaitWaitMs.length);
+    assert.equal(sample.workSegmentsMs.length, sample.awaitWaitMs.length + 1);
+    assert([...sample.awaitWaitMs, ...sample.workSegmentsMs, sample.elapsedMs].every(value => Number.isFinite(value) && value >= 0));
+    const partitionMs = [...sample.workSegmentsMs, ...sample.awaitWaitMs].reduce((sum, value) => sum + value, 0);
+    // These intervals partition one clock timeline. Tolerance is floating-point
+    // summation noise only (one nanosecond), never a performance acceptance limit.
+    assert(Math.abs(partitionMs - sample.elapsedMs) <= 1e-6, 'work + await must account for the complete elapsed interval');
+  }
 }
 
 // This is observation only: no engine, timer, report, React state or event is replaced.
@@ -189,10 +214,44 @@ function selfTest() {
   assert.throws(() => validate(timeout)); // Accurate statistics do not convert a timeout to PASS.
   timeout.trace.finishedAt = null;
   assert.equal(tasksAfterFirstCheck(timeout.trace), null, 'unknown window is never zero blocking');
+  const profile: Awaited<ReturnType<typeof measureSchedulerProfile>> = {
+    scope: 'Synthetic validator records only; no browser or engine executed', comparison: 'self-test only',
+    options: { asOf: '2021-01-01', years: 1, includeMonths: true, topSignalsPerDomain: 'Infinity',
+      systems: ['bazi', 'ziwei', 'numerology'], useTrueSolarTime: true, ziHourConvention: 'late' },
+    limitations: ['These fixtures test validation, not scheduler performance.'],
+    apiSupported: true, order: ['timer', 'scheduler-yield', 'scheduler-yield', 'timer'],
+    referenceSha256: 'a'.repeat(64), referenceBytes: 100,
+    samples: (['timer', 'scheduler-yield', 'scheduler-yield', 'timer'] as const).map(kind => ({ kind, elapsedMs: 306,
+      awaitWaitMs: Array(61).fill(4), workSegmentsMs: Array(62).fill(1), exactFullJsonMatches: true,
+      outputSha256: 'a'.repeat(64), outputBytes: 100 })) };
+  validateSchedulerProfile(profile);
+  const profileMutations: [string, (value: typeof profile) => void][] = [
+    ['unsupported pretending paired comparison', value => { value.apiSupported = false; }],
+    ['missing scheduler sample', value => { value.samples.pop(); }],
+    ['changed complete output', value => { value.samples[0].exactFullJsonMatches = false; }],
+    ['different complete output hash', value => { value.samples[0].outputSha256 = 'b'.repeat(64); }],
+    ['no real units', value => { value.samples[0].awaitWaitMs = []; }],
+    ['different unit counts', value => { value.samples[1].awaitWaitMs.push(1); }],
+    ['missing final work segment', value => { value.samples[0].workSegmentsMs.pop(); }],
+    ['invalid timing', value => { value.samples[0].awaitWaitMs[0] = NaN; }],
+    ['zero elapsed with positive partition', value => { value.samples[0].elapsedMs = 0; }],
+    ['positive elapsed with zero partition', value => {
+      value.samples[0].workSegmentsMs.fill(0); value.samples[0].awaitWaitMs.fill(0);
+    }],
+    ['lost Infinity source option', value => { Object.assign(value.options, { topSignalsPerDomain: null }); }],
+  ];
+  for (const [name, mutate] of profileMutations) {
+    const value = structuredClone(profile); mutate(value); assert.throws(() => validateSchedulerProfile(value), Error, name);
+  }
+  const unsupported = structuredClone(profile); unsupported.apiSupported = false;
+  unsupported.order = ['timer']; unsupported.samples = [unsupported.samples[0]];
+  validateSchedulerProfile(unsupported);
+  assert.throws(() => validateSchedulerProfile(profile, ['synthetic diagnostic page error']));
   console.log(JSON.stringify({ scope: 'evidence-validator self-test only; no browser executed', positiveFixtures: 3,
     rejectedMutations: mutations.map(([name]) => name).concat('stale result after unmount', 'result preceded busy observation'),
     resultDeadlineControls: 'remaining global budget; expired/zero budget rejected',
-    longTaskWindowControls: 'post-DOM-change task retained on timeout; missing finish stays unknown', passed: true }));
+    longTaskWindowControls: 'post-DOM-change task retained on timeout; missing finish stays unknown',
+    schedulerProfileRejectedMutations: profileMutations.map(([name]) => name).concat('diagnostic page error'), passed: true }));
 }
 
 async function makeReport(page: Page) {
@@ -224,6 +283,57 @@ async function settleFrames(page: Page) {
   await page.evaluate(() => new Promise<void>(resolve => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
 }
 
+/** Separate, post-UI diagnostic. Uses the public yield hook, never patches globals or the app. */
+async function measureSchedulerProfile(page: Page, moduleUrl: string) {
+  return page.evaluate(async moduleUrl => {
+    const module = await import(moduleUrl);
+    const bridges = Object.values(module).filter((value: any) =>
+      typeof value?.analyze === 'function' && typeof value?.buildTimelineCooperatively === 'function');
+    if (bridges.length !== 1) throw new Error('Expected one production core bridge');
+    const core = bridges[0] as any;
+    const report = core.analyze({ name: 'Synthetic scheduler QA', year: 1995, month: 7, day: 16,
+      hour: 22, minute: 0, timeKnown: true, gender: 'male', calendarType: 'solar', cityId: 'tainan', timeAccuracy: 'exact' });
+    const options = { asOf: '2021-01-01', years: 1, includeMonths: true, topSignalsPerDomain: Infinity,
+      systems: ['bazi', 'ziwei', 'numerology'], useTrueSolarTime: true, ziHourConvention: 'late' };
+    const expected = JSON.stringify(core.buildTimeline(report.timeContext, options));
+    const bytes = new TextEncoder().encode(expected);
+    const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
+      .map(byte => byte.toString(16).padStart(2, '0')).join('');
+    const native = (globalThis as typeof globalThis & { scheduler?: { yield?: () => Promise<void> } }).scheduler;
+    const supported = typeof native?.yield === 'function';
+    const order = supported ? ['timer', 'scheduler-yield', 'scheduler-yield', 'timer'] as const : ['timer'] as const;
+    const samples = [];
+    for (const kind of order) {
+      const workSegmentsMs: number[] = [], awaitWaitMs: number[] = [];
+      const start = performance.now(); let previousWaitEnd = start;
+      const actual = await core.buildTimelineCooperatively(report.timeContext, options,
+        { signal: new AbortController().signal, yieldTask: async () => {
+          const waitStart = performance.now();
+          workSegmentsMs.push(waitStart - previousWaitEnd);
+          if (kind === 'scheduler-yield') await native!.yield!();
+          else await new Promise<void>(resolve => setTimeout(resolve, 0));
+          previousWaitEnd = performance.now();
+          awaitWaitMs.push(previousWaitEnd - waitStart);
+        } });
+      const end = performance.now();
+      workSegmentsMs.push(end - previousWaitEnd); // final unit/guard/Promise return, too
+      if (JSON.stringify(actual) !== expected) throw new Error(`${kind} changed complete Timeline JSON`);
+      if (awaitWaitMs.length <= 60) throw new Error('Real Ziwei preparation units were not observed');
+      if (samples.length && awaitWaitMs.length !== samples[0].awaitWaitMs.length) throw new Error('Scheduler unit counts differ');
+      samples.push({ kind, elapsedMs: end - start, workSegmentsMs, awaitWaitMs,
+        exactFullJsonMatches: true, outputSha256: digest, outputBytes: bytes.length });
+    }
+    return { scope: 'Separate real production-module scheduler diagnostic; not UI acceptance or a cold-engine benchmark',
+      apiSupported: supported, comparison: supported ? 'paired counter-order samples' : 'UNSUPPORTED: native scheduler.yield absent; timer only',
+      order, options: { ...options, topSignalsPerDomain: 'Infinity' }, samples, referenceSha256: digest, referenceBytes: bytes.length,
+      limitations: ['Report generation and synchronous reference warm engine/JIT before all samples.',
+        'Fixed counter-order mitigates but does not remove JIT/order/shared-runner effects.',
+        'Await wait includes browser queue/scheduling/measurement overhead, not a pure timer-clamp reading.',
+        'Work segments include bridge guards and bookkeeping; this direct Timeline probe does not measure Web cache/commit overhead.',
+        'Only one synthetic annual scope is profiled. The six earlier UI cases retain the real default scheduler and full 16-year reach.'] };
+  }, moduleUrl);
+}
+
 async function run() {
   if (process.env.GITHUB_ACTIONS !== 'true' || process.env.ANSWER_BROWSER_CHECK !== '1') {
     throw new Error('Browser execution is restricted to the approved GitHub Actions job. Do not set runner flags locally.');
@@ -233,10 +343,13 @@ async function run() {
   let browser: Browser | undefined, server: ReturnType<typeof Bun.serve> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined, deadlineCleanup: Promise<void> | undefined;
   let timedOut = false, passed = false, browserVersion: string | null = null;
+  let schedulerProfile: Awaited<ReturnType<typeof measureSchedulerProfile>> | null = null;
+  const schedulerProfileErrors: string[] = [];
   let stopPromise: Promise<void> | undefined;
   const stop = () => stopPromise ??= Promise.resolve().then(() => server?.stop(true));
   const sourceHashes: Record<string, string> = {};
   const runtime: Record<string, unknown> = { bun: Bun.version, platform: process.platform, arch: process.arch,
+    cpuModel: cpus()[0]?.model ?? null, logicalCpus: cpus().length,
     uid: process.getuid?.(), imageOS: process.env.ImageOS ?? null, imageVersion: process.env.ImageVersion ?? null,
     expectedPrHead: process.env.ANSWER_HEAD_SHA ?? null, eventMergeCommit: process.env.GITHUB_SHA ?? null,
     playwright: (createRequire(import.meta.url)('playwright/package.json') as { version: string }).version,
@@ -395,6 +508,30 @@ async function run() {
       }
     }
     assert.equal(results.length, 6, 'all planned cases must finish');
+    // Run after the six genuine UI observations, so diagnostic warming cannot
+    // alter their cold-lookup measurements. Still under the SAME run deadline.
+    remainingRunMs(deadlineAt);
+    const bridges: string[] = [];
+    for (const file of Object.keys(buildFiles)) {
+      if (/^assets\/core-.*\.js$/.test(file) && (await readFile(resolve(ROOT, file), 'utf8')).includes('buildTimelineCooperatively:')) bridges.push(file);
+    }
+    assert.equal(bridges.length, 1, 'exact production bridge required for the bounded profile');
+    const profilingContext = await browser.newContext({ serviceWorkers: 'block' });
+    try {
+      profilingContext.setDefaultTimeout(15_000);
+      await profilingContext.route(/https:\/\/fonts\.(googleapis|gstatic)\.com\//, route => route.abort());
+      const page = await profilingContext.newPage();
+      page.on('pageerror', error => schedulerProfileErrors.push(`pageerror: ${String(error)}`));
+      await page.goto(`${origin}/fortunetelling/`);
+      schedulerProfile = await measureSchedulerProfile(page, `${origin}/fortunetelling/${bridges[0]}`);
+      remainingRunMs(deadlineAt);
+    } catch (error) { schedulerProfileErrors.push(`evaluation: ${String(error)}`); }
+    finally {
+      try { await profilingContext.close(); }
+      catch (error) { schedulerProfileErrors.push(`cleanup: ${String(error)}`); }
+    }
+    assert(schedulerProfile, 'scheduler diagnostic did not return a complete observation');
+    validateSchedulerProfile(schedulerProfile, schedulerProfileErrors);
     passed = true;
   } catch (error) { diagnostics.push({ fatal: String(error) }); process.exitCode = 1; }
   finally {
@@ -404,7 +541,7 @@ async function run() {
       try { await action(); } catch (error) { diagnostics.push({ cleanup: name, error: String(error) }); passed = false; process.exitCode = 1; }
     }
     if (timedOut) { passed = false; process.exitCode = 1; }
-    await writeFile(resolve(OUTPUT, 'results.json'), JSON.stringify({ passed, timedOut, runtime, browserVersion, sourceHashes, fixture,
+    await writeFile(resolve(OUTPUT, 'results.json'), JSON.stringify({ passed, timedOut, runtime, browserVersion, sourceHashes, fixture, schedulerProfile, schedulerProfileErrors,
       plannedCases: 6, attemptedCases: results.length,
       passingObservationCases: results.filter(result => result.functionalObservationGatePassed).length,
       notRunCases: 6 - results.length, results, diagnostics,
