@@ -2,6 +2,8 @@
  * Internal #51 sync session. All projections own one validated immutable natal
  * DTO and its private run-time providers. No Report 8 or legacy replay changes.
  */
+import { createNatalFactStore } from '../facts/natalFactStore';
+import { describeNatalRuleMetadata } from '../facts/natalRuleMetadata';
 import type { CalculationSpec } from './calculationSpec';
 import { createChartSnapshot, validateChartSnapshot, chartSnapshotRuntime } from './chartSnapshot';
 import { buildTimelineWithBaziNatalBasis, buildTimelineCooperativelyWithNatalBasis,
@@ -45,6 +47,13 @@ export function createChartSnapshotSession(spec: CalculationSpec, persisted?: un
   };
   return Object.freeze({
     snapshot,
+    natalRuleMetadata() {
+      if (arguments.length) throw new TypeError('No metadata context overrides allowed');
+      runtime.verifyEnvironment();
+      const result = describeNatalRuleMetadata(snapshot, createNatalFactStore(snapshot));
+      runtime.verifyEnvironment();
+      return result;
+    },
     timeline(requested: PeriodOptions) {
       const timeline = project(runtime.ctx, options(requested), runtime.bazi, runtime.ziwei);
       return { calculation, timeline };

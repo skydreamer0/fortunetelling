@@ -10,6 +10,7 @@
 
 import type { Domain, Grain, Modifier, Rule, SignalTemplate, SignalWindow, Trait } from '../../signals/types';
 import catalogData from './catalog.json';
+import { retainNativeHit, type PlacementDependency } from '../natalHitMetadata';
 import {
   MUTAGEN_ORDER,
   oppositeOf,
@@ -197,8 +198,10 @@ function fixedStarHits(chart: ZiweiRuleChart, starName: string, p: FixedStarPara
     let valenceShift = 0;
     const componentIds = [palace.componentId];
 
+    const dependencies: PlacementDependency[] = [];
     if (p.withLucun) {
       const meet = sanfangOf(chart, palace.index).filter((x) => x.palace.stars.some((s) => s.name === '祿存'));
+      dependencies.push(...meet.map(x => ({ role: `lucun-${x.role}`, palace: x.palace.index, star: '祿存' })));
       if (meet.length > 0) {
         modifiers.push({
           id: `${ruleTag}.with_lucun`,
@@ -210,11 +213,12 @@ function fixedStarHits(chart: ZiweiRuleChart, starName: string, p: FixedStarPara
       }
     }
 
+    dependencies.push(...shaInPalace(palace, starName).map(star => ({ role: 'same-palace-sha', palace: palace.index, star })));
     const sha = shaSamePalacePart(palace, starName);
     modifiers.push(...sha.modifiers);
     valenceShift += sha.valenceShift;
 
-    hits.push({
+    hits.push(retainNativeHit({
       target: `natal:${palace.componentId}:${starName}`,
       componentIds,
       text:
@@ -226,7 +230,7 @@ function fixedStarHits(chart: ZiweiRuleChart, starName: string, p: FixedStarPara
       baseValence: p.template.valence,
       valenceShift,
       modifiers,
-    });
+    }, { kind: 'ziwei.star-placement', hostPalace: palace.index, sourcePalace: palace.index, star: starName, borrowed: false, dependencies }));
   }
   return hits;
 }
