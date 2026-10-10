@@ -428,3 +428,27 @@ functional negative controls remain unchanged; eight additional target/scroll
 counterexamples reject missing, stale, wrong or untrusted hits. A result before
 the B/back event or an input delayed until not-busy still fails. If genuine input
 is also starved, revisit production scheduling rather than relax these gates.
+
+Run `38009649438` at `b736cc22` then passed desktop cold and genuine A→B→A
+observations but failed Back: 2 passed, 3 attempted, 3 NOT RUN. Cold total was
+12.8215 s/max Long Task 138 ms. The trusted textarea pointer and B input arrived
+while busy; B capture→cleared DOM was 1.1 ms. Back's real `mouse.wheel` command
+remained pending for 12671.84 ms; the busy viewport-target notice timed out at
+15 seconds, so Back was never clicked. Installed Playwright's Chromium wheel
+path directly awaits `Input.dispatchMouseEvent` after its normal instrumentation
+hook; it has no locator hit-target cleanup/evaluation. No tracing/screencast/debug
+pause was enabled. The raw trace lacks wheel/scroll arrival events, so host wait
+is not a measured physical-wheel latency or proof of a particular Chrome queue.
+
+The next production candidate keeps this harness and its failure gates unchanged.
+Each Web `prepare` owns a new scheduler closure: at most seven native continuations
+followed by one original zero-delay timer, or a timer every time if the native API
+is absent. All 84 annual unit boundaries, guards and year atomicity remain. This
+bounds consecutive prioritized continuations, not elapsed milliseconds; 8 is an
+engineering candidate, not a proven optimal value or UX pass threshold. Native
+throw/reject still propagates, and a cancelled/new owner cannot inherit a prior
+counter. Tests distinguish two interleaved 84-unit preparations (148 native + 20
+timers) from an incorrect shared counter (147 + 21), exercise real timer task
+boundaries, and require cancellation rollback/reset/retry including a fairness
+timer abort. Only the next exact native run can assess genuine wheel/Back, input,
+cold total and Long Tasks together. No additional harness relaxation is made.

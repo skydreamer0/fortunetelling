@@ -40,13 +40,17 @@ test('browser scheduler default preserves all 84 units, complete year proofs and
   expect(referenceUnits).toBe(84); // Existing synthetic annual sequence, not a timing target.
   let calls = 0;
   await withNativeScheduler(async () => { calls++; }, async () => {
+    const timers = spyOn(globalThis, 'setTimeout');
+    try {
     const lookup = reportSignalLookup(report);
     await lookup.prepare([target.id], new AbortController().signal); // Actual default, no injected callback.
-    expect(calls).toBe(referenceUnits);
+    expect(calls).toBe(74); expect(timers).toHaveBeenCalledTimes(10);
+    expect(calls + timers.mock.calls.length).toBe(referenceUnits);
     expect(JSON.stringify(lookup.directionalEvidence())).toBe(JSON.stringify(reference.directionalEvidence()));
     for (const signal of signals(first)) expect(lookup(signal.id)).toEqual(signal);
     await lookup.prepare([target.id], new AbortController().signal);
-    expect(calls).toBe(referenceUnits);
+    expect(calls).toBe(74); expect(timers).toHaveBeenCalledTimes(10);
+    } finally { timers.mockRestore(); }
   });
 }, 15_000);
 
@@ -67,7 +71,7 @@ test('browser scheduler pending continuation respects custom cancellation with w
       expect(JSON.stringify(lookup.directionalEvidence())).toBe(before);
       calls = 0;
       await lookup.prepare([target.id], new AbortController().signal);
-      expect(calls).toBe(84);
+      expect(calls).toBe(74); // New preparation resets its fairness counter.
       expect(lookup(target.id)).toEqual(target);
     } finally { release.resolve(); await caught; }
   });
@@ -91,11 +95,42 @@ test('browser scheduler throw/rejection stays fatal and actual abort reason wins
       expect(JSON.stringify(lookup.directionalEvidence())).toBe(before);
       calls = 0; fail = false;
       await lookup.prepare([target.id], new AbortController().signal);
-      expect(calls).toBe(84);
+      expect(calls).toBe(74);
       expect(lookup(target.id)).toEqual(target);
     });
   }
 }, 20_000);
+
+test('browser scheduler interleaved preparations own separate 84-unit fairness counters', async () => {
+  const a = reportSignalLookup(report), b = reportSignalLookup(report); let native = 0;
+  await withNativeScheduler(async () => { native++; }, async () => {
+    const timers = spyOn(globalThis, 'setTimeout');
+    try {
+      await Promise.all([a.prepare([target.id], new AbortController().signal), b.prepare([target.id], new AbortController().signal)]);
+      expect(native).toBe(148); expect(timers).toHaveBeenCalledTimes(20);
+      // A shared 168-call counter would produce 147 native + 21 timers instead.
+      expect(JSON.stringify(a.directionalEvidence())).toBe(JSON.stringify(b.directionalEvidence()));
+      for (const signal of signals(first)) { expect(a(signal.id)).toEqual(signal); expect(b(signal.id)).toEqual(signal); }
+    } finally { timers.mockRestore(); }
+  });
+}, 15_000);
+
+test('browser scheduler fairness timer abort preserves the actual reason and rolls back the year', async () => {
+  const lookup = reportSignalLookup(report), controller = new AbortController(), reason = { stop: 'fairness timer' };
+  const before = JSON.stringify(lookup.directionalEvidence()); let native = 0;
+  await withNativeScheduler(async () => { native++; }, async () => {
+    const timer = spyOn(globalThis, 'setTimeout').mockImplementationOnce(((callback: () => void, delay: number) => {
+      expect(delay).toBe(0); controller.abort(reason); callback(); return 1;
+    }) as typeof setTimeout);
+    try { await expect(lookup.prepare([target.id], controller.signal)).rejects.toBe(reason); }
+    finally { timer.mockRestore(); }
+    expect(native).toBe(7);
+    expect(JSON.stringify(lookup.directionalEvidence())).toBe(before);
+    native = 0;
+    await lookup.prepare([target.id], new AbortController().signal);
+    expect(native).toBe(74); expect(lookup(target.id)).toEqual(target);
+  });
+}, 15_000);
 
 test('partial-year abort leaves no proofs/cursor/cache; exact fresh retry and cached zero-work path', async () => {
   const fresh = reportSignalLookup(report); let expectedUnits = 0;
