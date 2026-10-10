@@ -1,10 +1,11 @@
 /** App shell: masthead, view switching (intake ↔ report), loading and toasts. */
 
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { InputView, type Mode } from './components/input/InputView';
 import { InstallHint } from './components/ui/InstallHint';
 import { loadCore } from './lib/calendar';
 import { createReportStore } from './lib/store';
+import { createViewHistory } from './lib/viewHistory';
 import { applyTheme, preferredTheme, type Theme } from './lib/theme';
 import type { BirthInput, CompatibilityResult, Report } from './model/types';
 
@@ -80,22 +81,22 @@ export function App() {
     };
   }, []);
 
-  // Browser back from a report returns to the form instead of leaving the app.
+  // Keep native chapter entries within their report, and restore cached views on
+  // Back/Forward without recalculating or saving personal data in history.state.
+  const navigation = useRef<ReturnType<typeof createViewHistory<View>> | null>(null);
   useEffect(() => {
-    const onPop = () => setView({ kind: 'input' });
-    window.addEventListener('popstate', onPop);
-    return () => window.removeEventListener('popstate', onPop);
+    const history = createViewHistory<View>(window, { kind: 'input' }, setView);
+    navigation.current = history;
+    return () => { history.dispose(); navigation.current = null; };
   }, []);
 
   function show(next: View) {
-    setView(next);
-    if (next.kind !== 'input') window.history.pushState({ view: next.kind }, '');
+    navigation.current?.show(next);
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
   function back() {
-    if (window.history.state?.view) window.history.back();
-    else setView({ kind: 'input' });
+    navigation.current?.back();
     window.scrollTo({ top: 0, behavior: 'auto' });
   }
 
