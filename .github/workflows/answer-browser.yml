@@ -73,3 +73,51 @@ jobs:
             if (existsSync(path)) console.log(readFileSync(path, "utf8"));
             else console.log("MISSING: browser evidence is incomplete; never treat as PASS");
           '
+
+      # System fallback is prepared only AFTER the original timed observations.
+      # Existing Ubuntu repositories only; no production CSS/font route changes.
+      - name: Prepare official Ubuntu CJK fallback for separate visual pass
+        timeout-minutes: 2
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y fonts-noto-cjk
+          dpkg-query -W -f='${Package} ${Version} ${Status}\n' fonts-noto-cjk
+          fc-match 'sans-serif:lang=zh-tw'
+          fc-list :lang=zh-tw family | grep -F 'Noto Sans CJK'
+
+      - name: Capture separate synthetic visual states after timed cases
+        id: visual
+        timeout-minutes: 4
+        env:
+          ANSWER_BROWSER_CHECK: '1'
+          DEBUG: pw:browser
+        run: bun apps/web/scripts/answer-check-browser-check.ts --visual
+
+      - name: Print visual capture status even after failure
+        if: always() && steps.visual.outcome != 'skipped'
+        run: |
+          bun -e '
+            import { existsSync, readFileSync } from "node:fs";
+            const path = "answer-browser-results/visual/manifest.json";
+            if (existsSync(path)) console.log(readFileSync(path, "utf8"));
+            else { console.error("MISSING: visual manifest; visual acceptance NOT RUN"); process.exitCode = 1; }
+          '
+
+      - name: Retain only eight synthetic PNGs and their manifest
+        if: always() && steps.visual.outcome != 'skipped'
+        uses: actions/upload-artifact@v4
+        with:
+          name: answer-visual-${{ github.event.pull_request.head.sha }}-${{ github.run_attempt }}
+          retention-days: 1
+          if-no-files-found: error
+          compression-level: 0
+          path: |
+            answer-browser-results/visual/1280-ready.png
+            answer-browser-results/visual/1280-busy.png
+            answer-browser-results/visual/1280-result.png
+            answer-browser-results/visual/1280-cleared.png
+            answer-browser-results/visual/390-ready.png
+            answer-browser-results/visual/390-busy.png
+            answer-browser-results/visual/390-result.png
+            answer-browser-results/visual/390-cleared.png
+            answer-browser-results/visual/manifest.json

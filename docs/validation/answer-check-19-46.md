@@ -452,3 +452,112 @@ timers) from an incorrect shared counter (147 + 21), exercise real timer task
 boundaries, and require cancellation rollback/reset/retry including a fairness
 timer abort. Only the next exact native run can assess genuine wheel/Back, input,
 cold total and Long Tasks together. No additional harness relaxation is made.
+
+## PR91 delivery and separate visual continuation
+
+PR91 merged as `10021b266fd57c9045e887a160b3a38b5220766b`, tree
+`26c07f760fe14112ade8a4dcf3afbfbb1a9cef15`. Its final native attempt 2
+(`38010426345`) passed all six observations. Cold desktop / mobile-width totals
+were 10.481 / 10.441 s, cold maximum Long Tasks 125 / 110 ms, trusted input
+capture→clear 1.0 / 1.0 ms and Back capture→unmount 16.2 / 15.9 ms.
+PR/master CI and actual Pages artifact-byte verification passed. The earlier
+failed attempts above remain historical; the final delivery receipt is
+[PR91 closeout](https://github.com/skydreamer0/fortunetelling/pull/91#issuecomment-6092000680).
+Shared-runner/date/driver differences prevent isolated causal speedup claims.
+Physical phones, screenshot/visual acceptance and public post-deploy UI were not
+covered, so #19/#46 remain open.
+
+The bounded continuation adds `--visual` to the existing script and a separate
+workflow step **after** the unchanged six timed cases and annual scheduler probe.
+It creates fresh browser contexts at 1280×900 and 390×844, device scale 1, using
+the same built files. It does not run screenshots or new work in any original
+timed case. The original 180-second deadline, 15-second operations, observation
+gates and negative controls remain unchanged. The separate visual process has
+its own 180-second global watchdog and retains the stock installed Chrome,
+sandbox enabled, no added security flags, no browser installation or new application dependency.
+
+Only the existing synthetic birth/report is used. Each viewport captures four
+viewport PNGs: filled ready state; genuine checked/busy state; completed result
+with the true/false citation and honesty warning; and cleared state after genuine
+keyboard replacement. The busy frame must precede its screenshot, the DOM state
+must match both before and after each capture, result must precede the trusted
+edit, and clear must follow it. The complete intended review region must fit
+inside the viewport; horizontal control/content overflow is a failed evidence
+gate, not silently cropped away. Framing centers the measured target using its real bounding rectangle and the
+actual viewport height. It changes only scroll position, not viewport, CSS or
+content. Targets taller/wider than the viewport still fail the full clipping gate;
+this visual pass does not claim native wheel responsiveness.
+Pixels are not masked, styled, resized or synthesized. Native screenshot options
+retain animations/caret and CSS pixel scale. A screenshot can perturb this pass;
+its event timestamps are never substituted for the preceding performance data.
+
+The manifest binds actual checkout SHA/tree/parents, exact preceding timed-results
+digest, runtime versions, unchanged complete production build hashes, viewport,
+phase, attempted/captured/validated counts, before/after state/geometry,
+actual Chrome font usage for a CJK label, and each PNG's actual SHA256/byte count/IHDR
+dimensions. It requires 2 complete contexts and 8 unique ordered captures, no
+page/cleanup/timeout error, and an actual trusted check/input receipt. A bounded
+failed run writes its partial manifest without claiming completion. Once captured
+within the PNG size bound, pixels and their pre-capture geometry are saved before
+state/clipping/font validation. A phase filename identifies an attempt, not a
+success; schema 2 distinguishes attempted, captured, validated, failed and never
+attempted phases. A rejected result capture is not reported as NOT RUN. Source
+self-tests mutate the evidence objects for missing/wrong-sized/mismatched-state
+images, offscreen targets, overflow, stale result, untrusted input, error and
+cleanup cases; these are validation tests, not screenshots or runtime mutation
+proof. All existing functional/profile/pointer controls remain unchanged.
+
+The only artifact allowlist is the eight explicitly named synthetic PNGs plus
+`answer-browser-results/visual/manifest.json`, retained for **one day**. No broad
+directory glob, report exports, personal profile, traces, browser state, secret,
+dependency cache or application data is uploaded. Each PNG is bounded at 4 MiB
+and the manifest at 512 KiB. The next first automatic run must be downloaded
+through the supported artifact route, its exact nine-entry inventory and bytes
+verified, then all eight images actually opened by the author and an independent
+reviewer. Missing/partial artifact or uninspected pixels cannot become visual PASS.
+`captureGatePassed` means capture integrity only; `pixelReview` stays
+`NOT_REVIEWED` in the machine-generated manifest until separate review receipts
+record what was genuinely inspected.
+
+### First visual attempt: retained failure and bounded correction
+
+[PR93](https://github.com/skydreamer0/fortunetelling/pull/93) first automatic run
+[38021611931](https://github.com/skydreamer0/fortunetelling/actions/runs/38021611931)
+checked out head `0431a39185b83c77b024f0504c271bcc61e0b74b`, tree
+`0467343daa96a4a1599533ac96a014be58976152`. Its original six timed observations
+passed: cold totals 9.1548 / 9.3855 s, maximum cold Long Tasks 106 / 101 ms on
+Intel Xeon 6973P-C, four logical CPUs, Bun 1.4.2 and Chrome 154.0.8037.97.
+Those are shared-runner measurements, not controlled speedup against PR91.
+
+Visual acceptance **FAILED**. The actual artifact `11658607257` contained six
+PNGs and the manifest (ZIP 1,147,288 bytes, SHA256
+`64bdabbc18af4b351f8099668617dab5befcb78cfb667d1cf1598d210dc4fa1c`).
+The author opened all six: Chinese labels rendered as missing-glyph boxes.
+Desktop ready/busy/result/clear and 390px ready/busy were retained. The 390px
+result capture was attempted but rejected by the full-viewport clipping gate;
+its PNG/geometry were not retained by schema 1. Thus its precise clipping cause
+is unknown, and it must not be counted as never attempted. Only 390px clear was
+never attempted. Schema 1's `notRunScreenshots: 2` means two unretained images,
+not two unattempted phases; the original manifest and failed images remain
+historical evidence and are not rewritten as a successful run.
+
+The correction prepares [Ubuntu's official fonts-noto-cjk package](https://packages.ubuntu.com/noble/fonts-noto-cjk)
+from the runner's existing repositories **after** the original six cases and
+scheduler profile, before launching the separate visual process. No repository,
+production CSS, external request route, or application dependency is added.
+The workflow checks package installation and CJK font availability; the visual
+process verifies the actual `fc-match` family/file and records file SHA256.
+A read-only [Chrome font-usage probe](https://chromedevtools.github.io/devtools-protocol/tot/CSS/#method-getPlatformFontsForNode)
+records the selected real CJK label and locally rendered Noto Sans CJK glyphs.
+That probe cannot replace seeing every image. External Google Fonts requests
+remain blocked: this is official runner **fallback-font** validation, not
+production Google Fonts loading or complete typography validation.
+
+The corrected candidate's native/pixel acceptance remains **NOT RUN** until its
+own automatic run and actual downloaded image review. Review must cover legibility,
+clipping/wrapping, overlapping controls, complete busy and result/flag presentation,
+and actual disappearance after editing, at both stated viewports. Desktop Chrome at 390px is not a physical phone; no iOS/WebKit,
+public Pages HTTP/UI, identical-A producer identity or background-computation
+cessation claim is introduced. The previously denied public-site route is not
+retried or replaced. Root coordinates integration against other active branches;
+this continuation changes no engine or application runtime behavior.
