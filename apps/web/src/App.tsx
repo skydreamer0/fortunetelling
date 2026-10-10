@@ -2,6 +2,7 @@
 
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { InputView, type Mode } from './components/input/InputView';
+import { BrandMark } from './components/ui/BrandMark';
 import { InstallHint } from './components/ui/InstallHint';
 import { loadCore } from './lib/calendar';
 import { createReportStore } from './lib/store';
@@ -22,7 +23,7 @@ const CompatReport = lazy(() => loadCompatReport().then(module => ({ default: mo
 function ViewLoading() {
   return (
     <div className="loading" role="status" aria-live="polite">
-      <span className="loading__seal" aria-hidden="true">命</span>
+      <BrandMark className="loading__seal" />
       <span className="loading__text">載入中…</span>
     </div>
   );
@@ -149,7 +150,7 @@ export function App() {
       <a className="skip" href="#main">跳到主要內容</a>
       <header className="masthead">
         <button type="button" className="masthead__brand" onClick={() => view.kind !== 'input' && back()} aria-label="回到首頁">
-          <span className="masthead__seal" aria-hidden="true">命</span>
+          <BrandMark className="masthead__seal" />
           <span className="masthead__name">命理綜合分析</span>
         </button>
         <button type="button" className="masthead__theme" onClick={toggleTheme}
@@ -185,7 +186,7 @@ export function App() {
 
       {loading && (
         <div className="loading" role="status" aria-live="polite">
-          <span className="loading__seal" aria-hidden="true">命</span>
+          <BrandMark className="loading__seal" />
           <span className="loading__text">{loading}…</span>
         </div>
       )}
