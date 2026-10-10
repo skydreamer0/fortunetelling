@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ESNext", "lib": ["ESNext", "DOM"], "module": "ESNext",
+    "moduleResolution": "Bundler", "types": ["bun"],
+    "typeRoots": ["../../apps/web/node_modules/@types"],
+    "strict": true, "noEmit": true, "skipLibCheck": true, "resolveJsonModule": true
+  },
+  "include": ["*.ts"]
+}
