@@ -29,13 +29,13 @@ test('built asset contract rejects missing/corrupt references, dimensions, bytes
     bytes.writeUInt32BE(13, 8); bytes.write('IHDR', 12); bytes.writeUInt32BE(size, 16); bytes.writeUInt32BE(size, 20); return bytes;
   };
   const manifest = { icons: [{ src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' }] };
-  const files = ['icons/icon-192.png', 'icons/apple-touch-icon.png', 'favicon.svg', 'manifest.webmanifest'];
+  const files = ['icons/icon-192.png', 'icons/fortune-apple-touch-v1-180.png', 'favicon.svg', 'manifest.webmanifest'];
   const sw = (paths: string[]) => 'const VERSION = "0123456789ab";\nconst PRECACHE_URLS = ' + JSON.stringify(paths) + ';';
   const reset = () => {
     for (const dir of [source, dist]) {
       mkdirSync(join(dir, 'icons'), { recursive: true });
       writeFileSync(join(dir, 'icons/icon-192.png'), png(192));
-      writeFileSync(join(dir, 'icons/apple-touch-icon.png'), png(180));
+      writeFileSync(join(dir, 'icons/fortune-apple-touch-v1-180.png'), png(180));
       writeFileSync(join(dir, 'favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"></svg>');
       writeFileSync(join(dir, 'manifest.webmanifest'), JSON.stringify(manifest));
     }

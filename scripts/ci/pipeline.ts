@@ -5,8 +5,9 @@ import measured from './test-durations.json';
 export type Mode = 'full' | 'docs' | 'assets';
 export const SHARDS = 4;
 const docs = new Set(['README.md', 'ROADMAPS.md']);
-const assets = new Set(['apps/web/public/favicon.svg', 'apps/web/public/icons/icon.svg',
-  'apps/web/public/icons/icon-192.png', 'apps/web/public/icons/icon-512.png', 'apps/web/public/icons/apple-touch-icon.png']);
+const assets = new Set(['apps/web/public/favicon.svg', 'apps/web/public/favicon.ico', 'apps/web/public/icons/fortune-app-v1.svg',
+  'apps/web/public/icons/fortune-app-v1-192.png', 'apps/web/public/icons/fortune-app-v1-512.png',
+  'apps/web/public/icons/fortune-maskable-v1-512.png', 'apps/web/public/icons/fortune-apple-touch-v1-180.png']);
 // Deliberately tiny audited allowlist. In particular docs/MCP-SETUP.md is consumed
 // by docsSync tests and docs/validation may be browser acceptance input.
 export function classify(changes: { status: string; path: string }[], event: string): Mode {
