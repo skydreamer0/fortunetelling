@@ -9,10 +9,12 @@ import exportDelta from './fixtures/export.v0.9.0.delta.json';
 import oldExports from './fixtures/coreRuntimeExports.v0.8.0.json';
 import * as core from '../src/index';
 
-test('0.9.0 retains every existing runtime export including ResolvedBirthData', () => {
+test('0.9.0 retains existing runtime exports and explicitly lists additive APIs', () => {
   expect(oldExports.exports).toHaveLength(254);
   expect(Object.keys(core).sort()).toEqual([...oldExports.exports,
-    'buildTimelineCooperatively', 'TimelineEnvironmentChangedError'].sort());
+    'buildTimelineCooperatively', 'TimelineEnvironmentChangedError',
+    // #57: additive period adapters. Keep the original fixture and exact set check.
+    'ziweiDecadeNativePeriod', 'ziweiYearlyNativePeriod', 'ziweiMonthlyNativePeriod'].sort());
   expect(typeof core.ResolvedBirthData).toBe('function');
   for (const helper of ['calculateZiweiSteps', 'decadeSequenceSteps', 'yearlySequenceSteps', 'monthlySequenceSteps']) {
     expect(helper in core).toBe(false);
