@@ -11,6 +11,7 @@ import { resolveFactReferences } from '../facts/natalFactStore';
 import type { NatalFact, NatalFactStore } from '../facts/types';
 
 const syncSystems = ['bazi', 'ziwei', 'numerology', 'tzolkin', 'mingGua'] as const;
+const ownedFactResults = new WeakSet<object>();
 type Unavailable = { ref: SchoolPackRef; reason: 'time_unknown' };
 export type BoundAnalysisIdentity = DeepReadonly<{
   schemaVersion: 1;
@@ -45,6 +46,15 @@ export type FactBoundAnalysis = DeepReadonly<{
   unavailable: readonly Unavailable[];
   comparisons: readonly SchoolComparison[];
 }>;
+/** Internal provenance capability. Does not weaken registry-local validation. */
+export function assertOwnedFactAnalysis(result: FactBoundAnalysis): void {
+  if (arguments.length !== 1 || !ownedFactResults.has(result)) throw new TypeError('Expected owned fact-backed analysis');
+  const { factStore, snapshot, context } = result.identity;
+  resolveFactReferences(factStore, snapshot, context.factIds);
+  for (const assessment of result.assessments) {
+    for (const conclusion of assessment.conclusions) resolveFactReferences(factStore, snapshot, conclusion.factIds);
+  }
+}
 const reference = (p: SchoolPack): SchoolPackRef => ({ system: p.system, packId: p.packId, packVersion: p.packVersion });
 
 /** Private constructor: callers cannot register or replace executable code. */
@@ -174,6 +184,7 @@ function createRegistry(synthetic: boolean) {
       const output: FactBoundAnalysis = Object.freeze({ analysisId, identity,
         assessments: interpretationData(resolvedAssessments), unavailable: interpretationData(unavailable), comparisons });
       factResults.add(output);
+      ownedFactResults.add(output);
       return output;
     }
     return Object.freeze({ analysisId, identity, run });
