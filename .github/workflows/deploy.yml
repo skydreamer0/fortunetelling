@@ -1,17 +1,21 @@
-# ──────────────────────────────────────────────
-#  GitHub Pages — Build & Deploy
-# ──────────────────────────────────────────────
+# Called only after this exact master push passes the CI acceptance aggregate.
+# No independent push/manual trigger or cross-run/PR artifact promotion.
 name: Deploy to Pages
 
 on:
-  push:
-    branches: [master]
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      accepted_sha:
+        description: Exact source SHA accepted by the calling CI aggregate
+        required: true
+        type: string
+      acceptance_result:
+        description: Result of the calling CI aggregate
+        required: true
+        type: string
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -19,38 +23,101 @@ concurrency:
 
 jobs:
   build:
-    name: Build
+    name: Build accepted master
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
+    outputs:
+      artifact_name: ${{ steps.gate.outputs.artifact_name }}
+      build_attempt: ${{ github.run_attempt }}
     steps:
-      - name: Checkout
+      - name: Checkout exact accepted source
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
 
-      - name: Setup Bun
+      - name: Setup pinned Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.3'
 
-      - name: Install dependencies
+      - name: Verify successful exact-source acceptance and current master
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGES_ACCEPTED_SHA: ${{ inputs.accepted_sha }}
+          PAGES_ACCEPTANCE_RESULT: ${{ inputs.acceptance_result }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'skydreamer0/fortunetelling'
+          export PAGES_CHECKOUT_SHA="$(git rev-parse HEAD)"
+          export PAGES_CURRENT_MASTER_SHA="$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/heads/master" \
+            | jq -er '.object.sha | select(type == "string")')"
+          bun scripts/ci/pages-gate.ts
+
+      - name: Install locked dependencies
         run: bun install --frozen-lockfile
 
-      - name: Build
+      - name: Build accepted source
         run: bun run build
 
-      - name: Upload artifact
+      - name: Verify rebuilt Pages artifact contract
+        run: bun scripts/ci/assets.ts
+
+      - name: Upload immutable same-run Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          name: ${{ steps.gate.outputs.artifact_name }}
           path: ./apps/web/dist
 
   deploy:
-    name: Deploy
+    name: Deploy accepted master
     needs: build
     runs-on: ubuntu-latest
-
+    timeout-minutes: 10
+    # Existing Pages scopes are isolated to publication after accepted master CI.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Checkout exact accepted source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Setup pinned Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.3'
+
+      - name: Reject stale master or mismatched artifact immediately before publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGES_ACCEPTED_SHA: ${{ inputs.accepted_sha }}
+          PAGES_ACCEPTANCE_RESULT: ${{ inputs.acceptance_result }}
+          PAGES_ARTIFACT_NAME: ${{ needs.build.outputs.artifact_name }}
+          PAGES_BUILD_ATTEMPT: ${{ needs.build.outputs.build_attempt }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'skydreamer0/fortunetelling'
+          export PAGES_CHECKOUT_SHA="$(git rev-parse HEAD)"
+          export PAGES_CURRENT_MASTER_SHA="$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/heads/master" \
+            | jq -er '.object.sha | select(type == "string")')"
+          bun scripts/ci/pages-gate.ts
+
+      - name: Deploy verified same-run Pages artifact
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: ${{ needs.build.outputs.artifact_name }}
