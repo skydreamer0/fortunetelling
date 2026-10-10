@@ -26,13 +26,15 @@ async function makeReport(page: Page) {
   assert.equal(await page.locator('.report__title').textContent(), fixture.name);
 }
 
-async function runCase(browser: Browser, origin: string, width: number) {
+async function runCase(browser: Browser, origin: string, width: number, cases: object[]) {
   const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
   const page = await context.newPage();
   page.setDefaultTimeout(10_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(String(error)));
   const observations: object[] = [];
+  const record: Record<string, unknown> = { width, passed: false, observations, errors };
+  cases.push(record);
   try {
     await page.addInitScript(() => {
       window.__navigationQa = { events: [], armed: false, reportRemoved: false, loadingSeen: false };
@@ -59,6 +61,12 @@ async function runCase(browser: Browser, origin: string, width: number) {
       await page.locator(`.chapters a[href="#${id}"]`).click();
       await page.waitForFunction(id => location.hash === `#${id}` && document.querySelector('.report') !== null, id);
       await page.waitForFunction(id => document.querySelector(`.chapters a[href="#${id}"]`)?.getAttribute('aria-current') === 'location', id);
+      // aria-current commits before the effect's horizontal smooth scroll finishes.
+      // Wait for the same visibility requirement; do not weaken it to a timeout/sleep.
+      await page.waitForFunction(id => {
+        const box = document.querySelector(`.chapters a[href="#${id}"]`)?.getBoundingClientRect();
+        return box && box.left >= 0 && box.right <= innerWidth;
+      }, id);
       assert(await original.evaluate(node => node === document.querySelector('.report')), 'chapter click replaced the report');
       const result = await page.evaluate(id => {
         const chapter = document.getElementById(id)!;
@@ -120,8 +128,15 @@ async function runCase(browser: Browser, origin: string, width: number) {
     await page.goBack(); await page.locator('#f-name').waitFor();
     assert.equal(await page.locator('#f-name').inputValue(), fixture.name);
     assert.deepEqual(errors, []);
-    return { width, passed: true, observations, nativeEvents: native.events, errors,
-      checks: ['11 chapters', 'same DOM report', 'no extra history entries', 'same stored input', 'keyboard Tab/Enter', 'chapter Back/Forward', 'app re-input', 'home', 'cached report Forward', 'browser Back to input'] };
+    Object.assign(record, { passed: true, nativeEvents: native.events,
+      checks: ['11 chapters', 'same DOM report', 'no extra history entries', 'same stored input', 'keyboard Tab/Enter', 'chapter Back/Forward', 'app re-input', 'home', 'cached report Forward', 'browser Back to input'] });
+  } catch (error) {
+    record.error = String(error);
+    record.lastState = await page.evaluate(() => ({ hash: location.hash, events: window.__navigationQa.events,
+      links: [...document.querySelectorAll('.chapters a')].map(link => { const r = link.getBoundingClientRect();
+        return { href: link.getAttribute('href'), current: link.getAttribute('aria-current'), left: r.left, right: r.right }; }) }));
+    await page.screenshot({ path: `${OUTPUT}/${width}-failure.png` });
+    throw error;
   } finally { await context.close(); }
 }
 
@@ -152,7 +167,7 @@ async function main() {
   try {
     browser = await chromium.launch({ channel: 'chrome', chromiumSandbox: true, timeout: 15_000 });
     evidence.browserVersion = browser.version();
-    for (const width of [1280, 390]) (evidence.cases as object[]).push(await runCase(browser, `http://127.0.0.1:${server.port}`, width));
+    for (const width of [1280, 390]) await runCase(browser, `http://127.0.0.1:${server.port}`, width, evidence.cases as object[]);
     evidence.passed = true;
   } catch (error) { evidence.error = String(error); throw error; }
   finally {

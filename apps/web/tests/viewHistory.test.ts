@@ -98,7 +98,7 @@ describe('report chapter history', () => {
     const h = harness(); h.nav.show(report); h.fragment('ch-year'); h.nav.dispose();
     let view: View = input;
     const nav = createViewHistory<View>(h.browser, input, next => { view = next; });
-    h.history.go(-1); expect(view).toBe(input);
+    h.history.go(-1); expect<View>(view).toBe(input);
     nav.dispose();
   });
 });
@@ -108,13 +108,13 @@ test('foreign history entry rebases input; a later #main must not revive an old 
   const h = harness(); h.nav.show(report); h.fragment('ch-year'); h.nav.dispose();
   let view: View = input;
   const nav = createViewHistory<View>(h.browser, input, next => { view = next; });
-  h.history.go(-1); expect(view).toBe(input);
-  nav.show(report); expect(view).toBe(report);
-  nav.back(); expect(view).toBe(input);
-  h.fragment('main'); expect(view).toBe(input);
-  nav.show(compat); expect(view).toBe(compat);
-  nav.back(); expect(view).toBe(input);
-  h.history.go(1); expect(view).toBe(compat);
+  h.history.go(-1); expect<View>(view).toBe(input);
+  nav.show(report); expect<View>(view).toBe(report);
+  nav.back(); expect<View>(view).toBe(input);
+  h.fragment('main'); expect<View>(view).toBe(input);
+  nav.show(compat); expect<View>(view).toBe(compat);
+  nav.back(); expect<View>(view).toBe(input);
+  h.history.go(1); expect<View>(view).toBe(compat);
 });
 
 test('repeated app Back while traversal is pending does not queue a second navigation', () => {
