@@ -14,7 +14,9 @@ test('0.9.0 retains existing runtime exports and explicitly lists additive APIs'
   expect(Object.keys(core).sort()).toEqual([...oldExports.exports,
     'buildTimelineCooperatively', 'TimelineEnvironmentChangedError',
     // #57: additive period adapters. Keep the original fixture and exact set check.
-    'ziweiDecadeNativePeriod', 'ziweiYearlyNativePeriod', 'ziweiMonthlyNativePeriod'].sort());
+    'ziweiDecadeNativePeriod', 'ziweiYearlyNativePeriod', 'ziweiMonthlyNativePeriod',
+    // #56: source adapters only; preserve the historical inventory and exact set.
+    'baziAnnualNativePeriod', 'baziMonthlyNativePeriod', 'baziLuckCycleNativePeriod'].sort());
   expect(typeof core.ResolvedBirthData).toBe('function');
   for (const helper of ['calculateZiweiSteps', 'decadeSequenceSteps', 'yearlySequenceSteps', 'monthlySequenceSteps']) {
     expect(helper in core).toBe(false);
