@@ -700,5 +700,301 @@ async function run() {
   }
 }
 
-if (Bun.argv.includes('--self-test')) selfTest();
+// Deliberately separate process/contexts, invoked only AFTER the unchanged timed
+// run. Screenshot work never occurs in its six cases or scheduler profile.
+const VISUAL_OUTPUT = resolve(OUTPUT, 'visual');
+const VISUAL_PHASES = ['ready', 'busy', 'result', 'cleared'] as const;
+type VisualPhase = typeof VISUAL_PHASES[number];
+type VisualSnapshot = {
+  at: number; value: string; busy: boolean; buttonDisabled: boolean; summary: string | null;
+  flags: string[]; unknownText: string; alert: boolean; viewport: { width: number; height: number };
+  scroll: { x: number; y: number }; target: { left: number; top: number; right: number; bottom: number; width: number; height: number };
+  controls: { tag: string; left: number; right: number; width: number; scrollWidth: number; clientWidth: number }[];
+};
+type VisualShot = { file: string; phase: VisualPhase; viewport: { width: number; height: number };
+  png: { width: number; height: number; bytes: number; sha256: string };
+  before: VisualSnapshot; after: VisualSnapshot };
+type VisualCase = { viewport: { width: number; height: number }; asOf: string; knownId: string; reportYears: number;
+  answer: string; events: Observation[]; errors: string[]; cleanupErrors: string[]; recorderFinished: boolean };
+
+function pngIdentity(bytes: Buffer) {
+  assert(bytes.length > 24 && bytes.length <= 4 * 1024 * 1024, 'PNG absent or exceeds the 4 MiB per-image bound');
+  assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+  assert.equal(bytes.subarray(12, 16).toString(), 'IHDR');
+  return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20), bytes: bytes.length,
+    sha256: new Bun.CryptoHasher('sha256').update(bytes).digest('hex') };
+}
+
+function validateVisualShot(shot: VisualShot, entry: VisualCase) {
+  assert.equal(shot.file, `${entry.viewport.width}-${shot.phase}.png`);
+  assert(VISUAL_PHASES.includes(shot.phase));
+  assert.deepEqual(shot.viewport, entry.viewport);
+  assert.equal(shot.png.width, entry.viewport.width); assert.equal(shot.png.height, entry.viewport.height);
+  assert(shot.png.bytes > 24 && shot.png.bytes <= 4 * 1024 * 1024);
+  assert.match(shot.png.sha256, /^[0-9a-f]{64}$/);
+  assert(Number.isFinite(shot.before.at) && shot.after.at >= shot.before.at);
+  for (const state of [shot.before, shot.after]) {
+    assert.deepEqual(state.viewport, entry.viewport);
+    assert.equal(state.alert, false);
+    assert.equal(state.value, shot.phase === 'cleared' ? B : entry.answer);
+    assert.equal(state.busy, shot.phase === 'busy');
+    assert.equal(state.buttonDisabled, shot.phase === 'busy');
+    // Screenshots must contain the entire intended review region, not a clipped
+    // offscreen status/flag presented as visual evidence. No pixels are altered.
+    const r = state.target;
+    assert(Object.values(r).every(Number.isFinite));
+    assert(r.width > 0 && r.height > 0 && r.left >= 0 && r.top >= 0 &&
+      r.right <= entry.viewport.width && r.bottom <= entry.viewport.height, 'review target clipped outside viewport');
+    assert(state.controls.length > 0, 'review controls absent');
+    for (const control of state.controls) {
+      assert(control.width > 0 && control.left >= 0 && control.right <= entry.viewport.width, 'horizontal control clipping');
+      assert(control.scrollWidth <= control.clientWidth + 1, 'horizontal content overflow');
+    }
+    if (shot.phase === 'result') {
+      assert(state.summary?.includes('2 個地方需要留意'));
+      assert.deepEqual([...state.flags].sort(), ['honesty_violation', 'unknown_citation']);
+      assert(state.unknownText.includes(MISSING) && !state.unknownText.includes(entry.knownId));
+    } else {
+      assert.equal(state.summary, null); assert.deepEqual(state.flags, []);
+    }
+  }
+  assert.deepEqual(shot.after.target, shot.before.target, 'target moved during capture');
+  assert.deepEqual(shot.after.scroll, shot.before.scroll, 'viewport scrolled during capture');
+}
+
+function validateVisualCases(cases: VisualCase[], shots: VisualShot[]) {
+  assert.deepEqual(cases.map(c => c.viewport), [{ width: 1280, height: 900 }, { width: 390, height: 844 }]);
+  assert.equal(shots.length, 8, 'all eight PNGs required; partial capture cannot pass');
+  for (const entry of cases) {
+    assert.deepEqual(entry.errors, []); assert.deepEqual(entry.cleanupErrors, []);
+    assert(entry.recorderFinished); assert.equal(entry.reportYears, 5);
+    assert.match(entry.asOf, /^\d{4}-\d{2}-\d{2}$/); assert.match(entry.knownId, /^sig_[0-9a-f]{8,16}$/);
+    const selected = shots.filter(shot => shot.viewport.width === entry.viewport.width);
+    assert.deepEqual(selected.map(shot => shot.phase), VISUAL_PHASES);
+    for (const shot of selected) validateVisualShot(shot, entry);
+    const check = entry.events.find(event => event.kind === 'check' && event.trusted && event.value === entry.answer);
+    const frame = entry.events.find(event => event.kind === 'busy-animation-frame' && event.busy && event.value === entry.answer);
+    const edit = entry.events.find(event => event.kind === 'input' && event.trusted && event.value === B);
+    assert(check && frame && edit && check.at < frame.at, 'real check/busy/input receipts required');
+    assert(selected[0].after.at < check.at, 'ready screenshot must finish before the trusted check');
+    assert(frame.at <= selected[1].before.at);
+    assert(selected[1].after.at < selected[2].before.at && selected[2].after.at < edit.at && edit.at <= selected[3].before.at,
+      'busy/result/real-edit/clear capture ordering invalid');
+  }
+}
+
+async function visualSnapshot(page: Page, phase: VisualPhase): Promise<VisualSnapshot> {
+  return page.evaluate(phase => {
+    const root = document.querySelector('.ask__entry--mcp .ask__paste-block');
+    const textarea = root?.querySelector('textarea') as HTMLTextAreaElement | null;
+    const button = root?.querySelector('.ask__actions button') as HTMLButtonElement | null;
+    const target = phase === 'result' ? root?.querySelector('.ask__check') : root;
+    if (!root || !textarea || !button || !target) throw new Error('visual target absent');
+    const r = target.getBoundingClientRect();
+    return { at: performance.now(), value: textarea.value, busy: Boolean(root.querySelector('[aria-busy="true"]')),
+      buttonDisabled: button.disabled, summary: root.querySelector('.ask__summary')?.textContent ?? null,
+      flags: [...root.querySelectorAll('[data-flag]')].map(n => n.getAttribute('data-flag')!),
+      unknownText: root.querySelector('[data-flag="unknown_citation"]')?.textContent ?? '',
+      alert: Boolean(root.querySelector('[role="alert"]')), viewport: { width: innerWidth, height: innerHeight },
+      scroll: { x: scrollX, y: scrollY }, target: { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height },
+      controls: [...target.querySelectorAll('textarea, button, [role="status"], .ask__summary, .ask__flag-item, .ask__method')].map(node => {
+        const box = node.getBoundingClientRect();
+        return { tag: node.tagName, left: box.left, right: box.right, width: box.width,
+          scrollWidth: node.scrollWidth, clientWidth: node.clientWidth };
+      }) };
+  }, phase);
+}
+
+function visualSelfTest() {
+  // Evidence-object mutations only. These do not generate or review screenshots.
+  const cases: VisualCase[] = [{ width: 1280, height: 900 }, { width: 390, height: 844 }].map(viewport => ({
+    viewport, asOf: '2026-10-10', knownId: 'sig_12345678', reportYears: 5, answer: 'A', errors: [], cleanupErrors: [], recorderFinished: true,
+    events: [{ kind: 'check', at: 2, value: 'A', trusted: true, busy: false, mounted: true, summary: null, flags: [] },
+      { kind: 'busy-animation-frame', at: 3, value: 'A', busy: true, mounted: true, summary: null, flags: [] },
+      { kind: 'input', at: 8, value: B, trusted: true, busy: false, mounted: true, summary: null, flags: [] }] }));
+  const shots: VisualShot[] = cases.flatMap(entry => VISUAL_PHASES.map((phase, index) => {
+    const at = [1, 4, 6, 9][index];
+    const state: VisualSnapshot = { at, value: phase === 'cleared' ? B : 'A', busy: phase === 'busy', buttonDisabled: phase === 'busy',
+      summary: phase === 'result' ? '2 個地方需要留意' : null,
+      flags: phase === 'result' ? ['unknown_citation', 'honesty_violation'] : [], unknownText: phase === 'result' ? MISSING : '', alert: false,
+      viewport: entry.viewport, scroll: { x: 0, y: 0 }, target: { left: 1, right: 101, top: 1, bottom: 101, width: 100, height: 100 },
+      controls: [{ tag: 'TEXTAREA', left: 1, right: 101, width: 100, scrollWidth: 100, clientWidth: 100 }] };
+    return { file: `${entry.viewport.width}-${phase}.png`, phase, viewport: entry.viewport,
+      png: { ...entry.viewport, bytes: 100, sha256: 'a'.repeat(64) }, before: state, after: { ...structuredClone(state), at: at + 0.5 } };
+  }));
+  validateVisualCases(cases, shots);
+  const mutations: [string, (c: VisualCase[], s: VisualShot[]) => void][] = [
+    ['missing screenshot', (_, s) => { s.pop(); }], ['wrong viewport pixels', (_, s) => { s[0].png.width = 1; }],
+    ['ready after check', (_, s) => { s[0].before.at = 2; s[0].after.at = 2.5; }],
+    ['ready after all phases', (_, s) => { s[0].before.at = 10; s[0].after.at = 10.5; }],
+    ['busy ended during screenshot', (_, s) => { s[1].after.busy = false; }],
+    ['missing flags', (_, s) => { s[2].after.flags = []; }], ['old result after edit', (_, s) => { s[3].after.summary = 'stale'; }],
+    ['offscreen screenshot target', (_, s) => { s[0].before.target.top = -1; }],
+    ['horizontal text overflow', (_, s) => { s[2].after.controls[0].scrollWidth = 200; }],
+    ['non-whitelisted PNG', (_, s) => { s[0].file = '../private.png'; }],
+    ['oversized PNG', (_, s) => { s[0].png.bytes = 4 * 1024 * 1024 + 1; }],
+    ['missing hash', (_, s) => { s[0].png.sha256 = ''; }], ['page error', c => { c[0].errors.push('pageerror'); }],
+    ['cleanup error', c => { c[0].cleanupErrors.push('close'); }], ['no finish receipt', c => { c[0].recorderFinished = false; }],
+    ['scripted edit', c => { c[0].events[2].trusted = false; }],
+    ['edit before result capture', c => { c[0].events[2].at = 5; }],
+    ['no busy frame', c => { c[0].events.splice(1, 1); }],
+  ];
+  for (const [name, mutate] of mutations) { const c = structuredClone(cases), s = structuredClone(shots); mutate(c, s); assert.throws(() => validateVisualCases(c, s), Error, name); }
+  assert.throws(() => pngIdentity(Buffer.alloc(32)), Error, 'invalid PNG signature');
+  console.log(JSON.stringify({ scope: 'visual evidence validation only; no screenshot or browser execution',
+    rejectedMutations: mutations.map(([name]) => name).concat('invalid PNG signature'), passed: true }));
+}
+
+async function runVisual() {
+  if (process.env.GITHUB_ACTIONS !== 'true' || process.env.ANSWER_BROWSER_CHECK !== '1')
+    throw new Error('Visual execution uses only the approved stock-Chrome GitHub job; do not spoof runner flags locally.');
+  await mkdir(VISUAL_OUTPUT, { recursive: true });
+  assert.deepEqual(await readdir(VISUAL_OUTPUT), [], 'stale visual output must never be reused');
+  const cases: VisualCase[] = [], screenshots: VisualShot[] = [], errors: string[] = [], cleanupErrors: string[] = [];
+  const runtime: Record<string, unknown> = { bun: Bun.version, platform: process.platform, arch: process.arch,
+    imageOS: process.env.ImageOS, imageVersion: process.env.ImageVersion, cpuModel: cpus()[0]?.model, logicalCpus: cpus().length,
+    expectedPrHead: process.env.ANSWER_HEAD_SHA, eventMergeCommit: process.env.GITHUB_SHA,
+    playwright: (createRequire(import.meta.url)('playwright/package.json') as { version: string }).version,
+    channel: 'chrome', chromiumSandbox: true, deviceScaleFactor: 1 };
+  let browser: Browser | undefined, server: ReturnType<typeof Bun.serve> | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined, deadlineCleanup: Promise<void> | undefined;
+  let timedOut = false, captureGatePassed = false;
+  const outstanding: Promise<unknown>[] = [];
+  try {
+    assert.notEqual(process.getuid?.(), 0); await access('/opt/google/chrome/chrome', constants.X_OK);
+    const git = (...args: string[]) => { const r = Bun.spawnSync(['git', ...args]); assert.equal(r.exitCode, 0); return r.stdout.toString().trim(); };
+    runtime.actualCheckoutCommit = git('rev-parse', 'HEAD'); runtime.actualCheckoutTree = git('rev-parse', 'HEAD^{tree}');
+    runtime.actualCheckoutParents = [...git('cat-file', '-p', 'HEAD').matchAll(/^parent ([0-9a-f]{40})$/gm)].map(m => m[1]);
+    assert.match(String(runtime.expectedPrHead), /^[0-9a-f]{40}$/); assert.equal(runtime.actualCheckoutCommit, runtime.expectedPrHead);
+    // The preceding timed command intentionally wrote this one untracked file.
+    // Reject every other source change, rather than disabling the clean-tree gate.
+    const status = git('status', '--porcelain', '--untracked-files=all');
+    assert(status === '' || status === '?? answer-browser-results/results.json', 'unexpected source/output changes');
+    const timed = JSON.parse(await readFile(resolve(OUTPUT, 'results.json'), 'utf8'));
+    assert.equal(timed.passed, true); assert.equal(timed.timedOut, false);
+    assert.equal(timed.plannedCases, 6); assert.equal(timed.attemptedCases, 6); assert.equal(timed.passingObservationCases, 6);
+    assert.equal(timed.runtime.actualCheckoutCommit, runtime.actualCheckoutCommit);
+    assert.equal(timed.runtime.actualCheckoutTree, runtime.actualCheckoutTree);
+    const build: Record<string, string> = {};
+    async function hashBuild(path: string) {
+      for (const entry of await readdir(path, { withFileTypes: true })) {
+        const full = resolve(path, entry.name);
+        if (entry.isDirectory()) await hashBuild(full);
+        else { assert(entry.isFile()); build[full.slice(ROOT.length + 1)] = new Bun.CryptoHasher('sha256').update(await readFile(full)).digest('hex'); }
+      }
+    }
+    await hashBuild(ROOT); assert(build['index.html']); assert.deepEqual(build, timed.runtime.buildSha256);
+    runtime.buildSha256 = build; runtime.timedResultsSha256 = new Bun.CryptoHasher('sha256').update(await readFile(resolve(OUTPUT, 'results.json'))).digest('hex');
+    runtime.sourceHashes = timed.sourceHashes;
+    for (const [file, hash] of Object.entries(timed.sourceHashes)) assert.equal(new Bun.CryptoHasher('sha256').update(await readFile(file)).digest('hex'), hash);
+    server = Bun.serve({ hostname: '127.0.0.1', port: 0, async fetch(request) {
+      const pathname = decodeURIComponent(new URL(request.url).pathname);
+      if (!pathname.startsWith('/fortunetelling/')) return new Response('not found', { status: 404 });
+      const full = resolve(ROOT, pathname.slice('/fortunetelling/'.length) || 'index.html');
+      if (!full.startsWith(ROOT + sep)) return new Response('not found', { status: 404 });
+      const file = Bun.file(full); return await file.exists() ? new Response(file, { headers: { 'Cache-Control': 'no-store' } }) : new Response('not found', { status: 404 });
+    } });
+    const origin = `http://127.0.0.1:${server.port}`;
+    browser = await chromium.launch({ channel: 'chrome', chromiumSandbox: true, timeout: 15_000 });
+    runtime.browserVersion = browser.version();
+    const deadlineAt = performance.now() + RUN_DEADLINE_MS;
+    timer = setTimeout(() => { timedOut = true; deadlineCleanup = (async () => {
+      for (const value of await Promise.allSettled([Promise.resolve().then(() => server?.stop(true)), browser!.close()]))
+        if (value.status === 'rejected') cleanupErrors.push(`deadline cleanup: ${String(value.reason)}`);
+    })(); }, RUN_DEADLINE_MS);
+    for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 }]) {
+      remainingRunMs(deadlineAt);
+      const entry: VisualCase = { viewport, asOf: '', knownId: '', reportYears: 0, answer: '', events: [], errors: [], cleanupErrors: [], recorderFinished: false };
+      cases.push(entry);
+      let context: BrowserContext | undefined, page: Page | undefined;
+      const input = async (action: () => Promise<unknown>) => {
+        let limit: ReturnType<typeof setTimeout> | undefined;
+        const operation = Promise.resolve().then(action);
+        outstanding.push(operation.catch(() => {}));
+        try {
+          await Promise.race([operation, new Promise<never>((_, reject) => {
+            limit = setTimeout(() => reject(new Error('Visual input exceeded the unchanged 15s interaction limit')), 15_000);
+          })]);
+        } finally { if (limit) clearTimeout(limit); }
+      };
+      try {
+        context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: 'block', reducedMotion: 'reduce' });
+        context.setDefaultTimeout(15_000);
+        await context.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
+        await context.addInitScript(installRecorder); page = await context.newPage();
+        page.on('pageerror', error => entry.errors.push(String(error)));
+        await page.goto(`${origin}/fortunetelling/`); Object.assign(entry, await makeReport(page));
+        entry.answer = `A：這段時期傾向有支撐〔${entry.knownId}〕。\n\n你一定會成功〔${MISSING}〕。`;
+        await page.locator(TEXTAREA).fill(entry.answer);
+        const capture = async (phase: VisualPhase) => {
+          remainingRunMs(deadlineAt);
+          const target = page!.locator(phase === 'result' ? '.ask__entry--mcp .ask__check' : '.ask__entry--mcp .ask__paste-block');
+          await target.scrollIntoViewIfNeeded(); await settleFrames(page!);
+          const before = await visualSnapshot(page!, phase);
+          const file = `${viewport.width}-${phase}.png`;
+          const bytes = await page!.screenshot({ type: 'png', fullPage: false, scale: 'css', animations: 'allow', caret: 'initial', timeout: 15_000 });
+          const after = await visualSnapshot(page!, phase);
+          const shot: VisualShot = { file, phase, viewport, png: pngIdentity(bytes), before, after };
+          validateVisualShot(shot, entry); // Never write a state-mismatched image under a successful phase name.
+          await writeFile(resolve(VISUAL_OUTPUT, file), bytes);
+          assert.deepEqual(await readFile(resolve(VISUAL_OUTPUT, file)), bytes);
+          screenshots.push(shot);
+        };
+        await capture('ready');
+        const [point] = await stablePoints(page, [CHECK]);
+        const busy = page.waitForEvent('console', { timeout: 15_000, predicate: message => {
+          if (!message.text().startsWith(NOTICE)) return false;
+          const value = JSON.parse(message.text().slice(NOTICE.length)) as Observation;
+          return value.kind === 'busy-animation-frame' && value.busy && value.value === entry.answer;
+        } }).then(() => ({ ok: true }), error => ({ error }));
+        outstanding.push(busy);
+        await input(() => page!.mouse.click(point.x, point.y)); const observed = await busy; if ('error' in observed) throw observed.error;
+        await capture('busy');
+        await page.locator('.ask__entry--mcp .ask__check').waitFor({ timeout: remainingRunMs(deadlineAt) });
+        await capture('result');
+        await page.locator(TEXTAREA).scrollIntoViewIfNeeded();
+        const [textPoint] = await stablePoints(page, [TEXTAREA]);
+        await input(() => page!.mouse.click(textPoint.x, textPoint.y));
+        await input(() => page!.keyboard.press('ControlOrMeta+A')); await input(() => page!.keyboard.insertText(B));
+        await page.waitForFunction(({ selector, value }) => {
+          const text = document.querySelector(selector) as HTMLTextAreaElement | null;
+          return text?.value === value && !document.querySelector('.ask__entry--mcp .ask__check') && !document.querySelector('.ask__entry--mcp [aria-busy="true"]');
+        }, { selector: TEXTAREA, value: B });
+        await capture('cleared');
+      } catch (error) { entry.errors.push(String(error)); }
+      finally {
+        if (page && !page.isClosed()) try {
+          const trace: Trace = await page.evaluate(() => window.__answerQa.finish());
+          assert.equal(trace.overflow, false); assert(trace.finishedAt !== null);
+          entry.events = trace.events; entry.recorderFinished = true;
+        } catch (error) { entry.errors.push(`recorder: ${String(error)}`); }
+        try { await context?.close(); } catch (error) { entry.cleanupErrors.push(String(error)); }
+      }
+      if (entry.errors.length || entry.cleanupErrors.length) throw new Error(`${viewport.width}px visual capture failed; remaining phases NOT RUN`);
+    }
+    validateVisualCases(cases, screenshots); captureGatePassed = true;
+  } catch (error) { errors.push(String(error)); process.exitCode = 1; }
+  finally {
+    if (timer) clearTimeout(timer); await deadlineCleanup;
+    for (const action of [() => server?.stop(true), () => browser?.close()]) try { await action(); } catch (error) { cleanupErrors.push(String(error)); }
+    await Promise.allSettled(outstanding);
+    if (timedOut || cleanupErrors.length) { captureGatePassed = false; process.exitCode = 1; }
+    const manifest = { schema: 1, captureGatePassed, pixelReview: 'NOT_REVIEWED: actual downloaded PNG inspection by author and independent reviewer is required',
+      timedOut, runtime, fixture, plannedScreenshots: 8, capturedScreenshots: screenshots.length, notRunScreenshots: 8 - screenshots.length,
+      screenshots, cases, errors, cleanupErrors,
+      scope: 'Separate synthetic visual capture after the original timed run, same production build; desktop Chrome viewports only',
+      limits: ['No screenshots or added work in the original six timed cases or scheduler profile.',
+        'Screenshots may disturb this separate run; its event times are not benchmark or input-latency measurements.',
+        'Same-origin built assets only; external fonts blocked, so fallback-font rendering only. Service workers blocked.',
+        'Viewport framing uses scrollIntoViewIfNeeded; no claim that this visual framing tests native wheel responsiveness.',
+        'No physical phone, iOS/WebKit, deployed public-site HTTP/UI, complete issue acceptance or background-abort proof.',
+        'Only eight explicitly named PNGs and this synthetic manifest may be uploaded, with one-day retention.'] };
+    const serialized = JSON.stringify(manifest, null, 2); assert(Buffer.byteLength(serialized) <= 512 * 1024, 'visual manifest exceeds bound');
+    await writeFile(resolve(VISUAL_OUTPUT, 'manifest.json'), serialized);
+    console.log(JSON.stringify({ captureGatePassed, capturedScreenshots: screenshots.length, pixelReview: manifest.pixelReview, errors, cleanupErrors }));
+  }
+}
+
+if (Bun.argv.includes('--self-test')) { selfTest(); visualSelfTest(); }
+else if (Bun.argv.includes('--visual')) await runVisual();
 else await run();
