@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { createValidationRegistry, DEFAULT_VALIDATION_REGISTRY, validationScopeKey, validationRefKey } from '../src/validation/registry';
 import { createCapabilityRegistry, DEFAULT_CAPABILITY_REGISTRY } from '../src/validation/capabilities';
 import { VALIDATION_AXES } from '../src/validation/types';
+import { SYSTEM_IDS } from '../src/signals/types';
 import type { ValidationRecord, ValidationScope, CapabilityRecord, ValidationSelection } from '../src/validation/types';
 const scope: ValidationScope = { system: 'humanDesign', schoolId: 'default', schoolVersion: '1', ruleId: 'synthetic.test', ruleVersion: '1', questionId: 'synthetic-question', grain: 'month' };
 const refs = (): ValidationSelection => ({ calculationValidation: null, ruleProvenance: null, numericalCalibration: null, predictiveValidation: null });
@@ -98,5 +99,38 @@ describe('conservative capability consumer', () => {
     const c = createCapabilityRegistry([capability()], v);
     for (const invalid of [NaN, Infinity, -1.1, 1.1, null, '0']) expect(() => c.assess(scope, [], invalid as any)).toThrow();
     expect(() => c.assess(scope, ['birth-time','birth-time'], 1)).toThrow(); expect(() => c.assess(scope, new Array(1), 1)).toThrow();
+  });
+});
+
+
+describe('immutable validation allowlists', () => {
+  test('axis mutation cannot widen create/resolve/describe boundaries', () => {
+    const before = [...VALIDATION_AXES];
+    const v = createValidationRegistry([assessed('calculationValidation')]);
+    try {
+      try { (VALIDATION_AXES as unknown as string[]).push('verified'); } catch { /* Frozen array rejects mutation. */ }
+      expect(Object.isFrozen(VALIDATION_AXES)).toBe(true);
+      expect([...VALIDATION_AXES]).toEqual(before);
+      expect(() => createValidationRegistry([evidence('verified' as any)])).toThrow('axis');
+      expect(() => v.resolve({ id: 'missing', version: '1' }, scope, 'verified' as any)).toThrow('axis');
+      expect(Object.keys(v.describe(scope, refs())).sort()).toEqual([...before].sort());
+    } finally {
+      if (!Object.isFrozen(VALIDATION_AXES)) (VALIDATION_AXES as unknown as string[]).splice(0, VALIDATION_AXES.length, ...before);
+    }
+  });
+  test('legacy system-array mutation cannot widen the new boundary', () => {
+    const before = [...SYSTEM_IDS];
+    const forged = { ...scope, system: 'forgedSystem' as any };
+    expect(() => validationScopeKey(forged)).toThrow('system');
+    try {
+      (SYSTEM_IDS as unknown as string[]).push('forgedSystem');
+      expect(() => validationScopeKey(forged)).toThrow('system');
+      expect(() => createValidationRegistry([evidence('calculationValidation', { scope: forged })])).toThrow('system');
+      expect(() => createCapabilityRegistry([capability({ scope: forged })], DEFAULT_VALIDATION_REGISTRY)).toThrow('system');
+      expect(() => DEFAULT_CAPABILITY_REGISTRY.assess(forged, [], 1)).toThrow('system');
+      expect(validationScopeKey(scope)).toBeDefined();
+    } finally {
+      (SYSTEM_IDS as unknown as string[]).splice(0, SYSTEM_IDS.length, ...before);
+    }
   });
 });

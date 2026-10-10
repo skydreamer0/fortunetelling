@@ -3,6 +3,10 @@ import { SYSTEM_IDS } from '../signals/types';
 import { VALIDATION_AXES } from './types';
 import type { ValidationRecord, ValidationRef, ValidationScope, ValidationSelection } from './types';
 
+// Private membership snapshot: legacy exported SYSTEM_IDS is runtime-mutable.
+// Changes elsewhere must never widen this validation boundary after import.
+const validationSystems = new Set<string>(SYSTEM_IDS);
+
 export function validationText(value: unknown): asserts value is string {
   if (typeof value !== 'string' || !value.trim()) throw new TypeError('Validation requires nonempty text');
 }
@@ -15,7 +19,7 @@ export function validationStrings(value: unknown): asserts value is readonly str
 export function validationScopeKey(scope: ValidationScope): string {
   const s = interpretationData(scope);
   exactInterpretationKeys(s, ['system', 'schoolId', 'schoolVersion', 'ruleId', 'ruleVersion', 'questionId', 'grain']);
-  if (!(SYSTEM_IDS as readonly unknown[]).includes(s.system) || !['natal', 'day', 'month', 'year', 'decade'].includes(s.grain as string)) throw new TypeError('Invalid validation system/grain');
+  if (!validationSystems.has(s.system) || !['natal', 'day', 'month', 'year', 'decade'].includes(s.grain as string)) throw new TypeError('Invalid validation system/grain');
   for (const k of ['schoolId', 'schoolVersion', 'ruleId', 'ruleVersion', 'questionId'] as const) validationText(s[k]);
   return JSON.stringify([s.system, s.schoolId, s.schoolVersion, s.ruleId, s.ruleVersion, s.questionId, s.grain]);
 }

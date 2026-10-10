@@ -1,7 +1,7 @@
 import type { SystemId } from '../signals/types';
 
 /** Internal #16 contract. No public exports or production consensus authorization. */
-export const VALIDATION_AXES = ['calculationValidation', 'ruleProvenance', 'numericalCalibration', 'predictiveValidation'] as const;
+export const VALIDATION_AXES = Object.freeze(['calculationValidation', 'ruleProvenance', 'numericalCalibration', 'predictiveValidation'] as const);
 export type ValidationAxis = typeof VALIDATION_AXES[number];
 /** day is explicit here, not an extension of the legacy Signal grain enum. */
 export type CapabilityGrain = 'natal' | 'day' | 'month' | 'year' | 'decade';
