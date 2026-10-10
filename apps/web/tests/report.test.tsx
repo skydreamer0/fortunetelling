@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { CompatReport } from '../src/components/compat/CompatReport';
 import { formulaText } from '../src/components/report/Charts';
 import { band } from '../src/components/report/Domains';
-import { ReportView } from '../src/components/report/ReportView';
+import { chapterAtReadingLine, chapterAtReadingPosition, ReportView } from '../src/components/report/ReportView';
 import { analyze, analyzeCompatibility } from '../src/lib/core';
 import {
   baziStructure, identity, kin, mingGua, notices, numerology, pillars, soulStars, ziweiBoard,
@@ -114,5 +114,27 @@ describe('display helpers', () => {
     expect(formulaText(wood, undefined)).toBe(`2 ÷ 14 × 100% = ${wood.value}%`);
     const strength = report.radars.find(radar => radar.id === 'ziwei_palace_strength')!;
     expect(formulaText(strength.axes[0], undefined)).toStartWith('主星亮度');
+  });
+});
+
+
+describe('chapter reading-line boundary', () => {
+  test('current geometry selects the last chapter at or above the reading line', () => {
+    const positions = [{ id: 'ch-guidance', top: -400 }, { id: 'ch-method', top: 270 }];
+    expect(chapterAtReadingLine(positions, 269.5)).toBe('ch-guidance');
+    expect(chapterAtReadingLine(positions, 270)).toBe('ch-method');
+    expect(chapterAtReadingLine([{ id: 'ch-overview', top: 350 }], 270)).toBe('ch-overview');
+  });
+  test('scrolling upward recalculates the reading chapter without a stale observer entry', () => {
+    expect(chapterAtReadingLine([{ id: 'ch-guidance', top: -400 }, { id: 'ch-method', top: 240 }], 270)).toBe('ch-method');
+    expect(chapterAtReadingLine([{ id: 'ch-guidance', top: -160 }, { id: 'ch-method', top: 480 }], 270)).toBe('ch-guidance');
+  });
+  test('short final chapter is active at page end, including subpixel rounding', () => {
+    expect(chapterAtReadingPosition('ch-guidance', 2000, 2000)).toBe('ch-method');
+    expect(chapterAtReadingPosition('ch-guidance', 1999.5, 2000)).toBe('ch-method');
+  });
+  test('leaving page end restores the chapter at the normal reading line', () => {
+    expect(chapterAtReadingPosition('ch-guidance', 1998, 2000)).toBe('ch-guidance');
+    expect(chapterAtReadingPosition('ch-year', 900, 9000)).toBe('ch-year');
   });
 });
