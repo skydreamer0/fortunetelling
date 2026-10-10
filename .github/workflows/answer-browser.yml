@@ -5,6 +5,10 @@ on:
     branches: [master]
     paths:
       - 'apps/web/scripts/answer-check-browser-check.ts'
+      - 'apps/web/scripts/report-navigation-browser-check.ts'
+      - 'apps/web/src/App.tsx'
+      - 'apps/web/src/lib/viewHistory.ts'
+      - 'apps/web/src/components/report/ReportView.tsx'
       - 'apps/web/tsconfig.answer-browser.json'
       - 'apps/web/src/components/report/AnswerCheck.tsx'
       - 'apps/web/src/model/askAi.ts'
@@ -121,3 +125,19 @@ jobs:
             answer-browser-results/visual/390-result.png
             answer-browser-results/visual/390-cleared.png
             answer-browser-results/visual/manifest.json
+
+      - name: Verify report chapter and app history navigation
+        timeout-minutes: 3
+        env:
+          REPORT_NAVIGATION_CHECK: '1'
+          DEBUG: pw:browser
+        run: bun apps/web/scripts/report-navigation-browser-check.ts
+
+      - name: Retain synthetic navigation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-navigation-${{ github.event.pull_request.head.sha }}-${{ github.run_attempt }}
+          retention-days: 1
+          if-no-files-found: error
+          path: report-navigation-results/

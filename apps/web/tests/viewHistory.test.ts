@@ -102,3 +102,29 @@ describe('report chapter history', () => {
     nav.dispose();
   });
 });
+
+
+test('foreign history entry rebases input; a later #main must not revive an old report', () => {
+  const h = harness(); h.nav.show(report); h.fragment('ch-year'); h.nav.dispose();
+  let view: View = input;
+  const nav = createViewHistory<View>(h.browser, input, next => { view = next; });
+  h.history.go(-1); expect(view).toBe(input);
+  nav.show(report); expect(view).toBe(report);
+  nav.back(); expect(view).toBe(input);
+  h.fragment('main'); expect(view).toBe(input);
+  nav.show(compat); expect(view).toBe(compat);
+  nav.back(); expect(view).toBe(input);
+  h.history.go(1); expect(view).toBe(compat);
+});
+
+test('repeated app Back while traversal is pending does not queue a second navigation', () => {
+  const h = harness(); h.nav.show(report); h.fragment('ch-year');
+  const originalGo = h.history.go;
+  const pending: number[] = [];
+  h.history.go = delta => { pending.push(delta); };
+  h.nav.back(); h.nav.back();
+  expect(pending).toEqual([-2]); expect(h.view).toBe(report);
+  originalGo(pending[0]); expect(h.view).toBe(input);
+  h.history.go = originalGo;
+  h.history.go(1); expect(h.view).toBe(report);
+});
