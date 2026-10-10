@@ -13,6 +13,7 @@
 
 import { TRAITS, type Domain, type Modifier, type RuleHit, type Trait } from '../../signals/types';
 import traitData from '../../traits/ziwei.json';
+import { retainNativeHit } from '../natalHitMetadata';
 import modifierData from '../../traits/ziweiModifiers.json';
 import { oppositeOf, type MutagenKind, type ZiweiPalace, type ZiweiRuleChart, type ZiweiStar } from './chart';
 
@@ -268,7 +269,7 @@ export function starTraitHits(chart: ZiweiRuleChart, palace: ZiweiPalace, opts: 
           ...mut.modifiers,
           ...sha.modifiers,
         ];
-        hits.push({
+        const hit: ZiweiHit = {
           target: `${opts.targetPrefix}:${palace.componentId}:${star.name}${ps.borrowed ? ':borrowed' : ''}`,
           componentIds,
           text:
@@ -280,7 +281,13 @@ export function starTraitHits(chart: ZiweiRuleChart, palace: ZiweiPalace, opts: 
           baseValence: ZIWEI_MODIFIERS.traitValence[trait],
           valenceShift: mut.valenceShift + sha.valenceShift,
           modifiers,
-        });
+        };
+        if (opts.targetPrefix === 'natal') retainNativeHit(hit, { kind: 'ziwei.star-placement', hostPalace: palace.index, sourcePalace: ps.sourcePalace.index, star: star.name, borrowed: ps.borrowed,
+          dependencies: [
+            ...shaInPalace(palace, star.name).map(name => ({ role: 'same-palace-sha', palace: palace.index, star: name })),
+            ...(star.mutagen ? [{ role: 'natal-transformation', palace: ps.sourcePalace.index, star: star.name, mutagen: star.mutagen }] : []),
+          ] });
+        hits.push(hit);
       }
     }
   }

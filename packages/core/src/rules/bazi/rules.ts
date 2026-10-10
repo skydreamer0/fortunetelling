@@ -17,6 +17,7 @@ import {
   type Trait,
 } from '../../signals/types';
 import catalogJson from './catalog.json';
+import { retainNativeHit } from '../natalHitMetadata';
 import { NATAL_PILLARS, normalizeChart, type BaziRuleChart, type NatalPillar } from './chart';
 import {
   branchesClash,
@@ -225,6 +226,10 @@ function toRuleHit(raw: RawHit, rule: CatalogRule): BaziRuleHit {
   const partial = rule.modifiers?.partial;
   if (!raw.complete && partial) {
     hit.modifiers = [{ id: `${rule.id}.partial`, factor: partial.factor, reason: partial.reason }];
+  }
+  if (rule.relation === 'stemControl' && raw.members.length === 2 && raw.members.every(m => m.natal !== null)) {
+    retainNativeHit(hit, { kind: 'bazi.stemControl', directed: raw.directed, complete: raw.complete,
+      controller: raw.members[0]!.natal!, controlled: raw.members[1]!.natal! });
   }
   return hit;
 }
