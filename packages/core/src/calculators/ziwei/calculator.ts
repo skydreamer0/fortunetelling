@@ -23,6 +23,8 @@
 import { BirthData } from '../../core/models/BirthData';
 import { finishCalculation, type CalculationSteps } from '../../core/calculationSteps';
 import { ZiweiEngine } from '../../engines/ZiweiEngine';
+import { ZiweiNatalBasisEngine } from './natalBasisEngine';
+import type { ZiweiNatalBasisProvider } from './natalBasis';
 import type { TimeBasis, TimeContext } from '../../time/types';
 import { categoryValues, componentValue, normalizeAsOf, timeContextToBirthData } from '../birthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';
@@ -42,11 +44,13 @@ import type {
   ZiweiDecade,
   ZiweiEngineChart,
   ZiweiMutagen,
+  ZiweiNatalChart,
   ZiweiNatalTransformation,
   ZiweiPalace,
   ZiweiPalaceRef,
   ZiweiStar,
   ZiweiTimeResolution,
+  ZiweiTimeIndexResult,
 } from './types';
 
 export type * from './types';
@@ -192,11 +196,13 @@ export const ziweiCalculator: Calculator<ZiweiChart, ZiweiCalculatorConfig> = {
 };
 
 /** Internal shared orchestration. No extra public calculator capability or shared cache. */
-export function* calculateZiweiSteps(ctx: TimeContext, config: ZiweiCalculatorConfig = {}): CalculationSteps<ChartResult<ZiweiChart>> {
+export function* calculateZiweiSteps(ctx: TimeContext, config: ZiweiCalculatorConfig = {}, natalBasis?: ZiweiNatalBasisProvider): CalculationSteps<ChartResult<ZiweiChart>> {
   const { date: asOfDate, ymd: asOfYmd } = normalizeAsOf(config.asOf, 'ziwei');
   const legacy = timeContextToBirthData(ctx, { name: config.name });
   const useTrueSolarTime = config.useTrueSolarTime ?? true;
-  const time = timeIndexFrom(ctx, { useTrueSolarTime, ziHourConvention: config.ziHourConvention });
+  const basis = natalBasis?.(ctx, { useTrueSolarTime, ziHourConvention: config.ziHourConvention });
+  const time = basis ? structuredClone(basis.time) as ZiweiTimeIndexResult | null
+    : timeIndexFrom(ctx, { useTrueSolarTime, ziHourConvention: config.ziHourConvention });
 
   if (time === null) {
     // With timeKnown=false the engine itself returns no components (no guessing).
@@ -212,20 +218,22 @@ export function* calculateZiweiSteps(ctx: TimeContext, config: ZiweiCalculatorCo
   }
 
   const { alternatives, ...primary } = time;
-  const result = new ZiweiEngine({ asOf: asOfDate }).run(new ResolvedBirthData(legacy, primary));
+  const result = new ZiweiNatalBasisEngine({ asOf: asOfDate, natalBasis: basis ? () => basis : undefined })
+    .run(new ResolvedBirthData(legacy, primary));
   yield;
   const components = result.components as Component[];
 
   const gender = ctx.profile.gender;
-  const astrolabe = createAstrolabe(primary.date, primary.timeIndex, gender);
+  const astrolabe = basis ? basis.astrolabeFor(primary) : createAstrolabe(primary.date, primary.timeIndex, gender);
   yield;
-  const natal = natalChart(astrolabe);
+  const natal = basis ? structuredClone(basis.natalFor(primary)) as ZiweiNatalChart : natalChart(astrolabe);
   const birthLunarYear = birthLunarYearOf(astrolabe);
   const asOfLunarYear = lunarYearOf(asOfYmd);
 
   const alternativeCharts: ZiweiChart["alternatives"] = [];
   for (const alt of alternatives) {
-    alternativeCharts.push({ ...natalChart(createAstrolabe(alt.date, alt.timeIndex, gender)), resolution: alt });
+    alternativeCharts.push({ ...(basis ? structuredClone(basis.natalFor(alt)) as ZiweiNatalChart
+      : natalChart(createAstrolabe(alt.date, alt.timeIndex, gender))), resolution: alt });
     yield;
   }
   const decades = yield* decadeSequenceSteps(astrolabe, birthLunarYear);
