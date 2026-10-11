@@ -1,0 +1,80 @@
+import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { natalCases } from '../../packages/core/tests/fixtures/natalCalendarCases';
+import { compareBytes, lockIdentity, runners, strictSummary, validateInventory, validateManifest, zones, type Manifest } from './native-calendar';
+
+const expected = { sha: 'a'.repeat(40), tree: 'b'.repeat(40), runId: '123', attempt: '1' };
+const manifest = (): Manifest => ({ schema: 1, status: 'PASS', runner: 'ubuntu-24.04', platform: 'linux', arch: 'x64',
+  ...expected, bun: '1.4.3', revision: 'revision', lock: 'c'.repeat(64),
+  evidence: Object.fromEntries(['natal.json', 'snapshots.json'].map(name => [name, { bytes: 100, sha256: 'd'.repeat(64) }])) });
+function inventory() {
+  const natal: any[] = [], produced: any[] = [], reloaded: any[] = [];
+  const serialized = (id: string, setting: string) => JSON.stringify({ scope: 'analyze-sync-natal', identity: { id, setting }, specHash: `sp-${id}-${setting}`, snapshotId: `sn-${id}-${setting}`, natal: { ziwei: {}, bazi: {}, numerology: {}, mingGua: {}, tzolkin: {} } });
+  for (const [index, zone] of zones.entries()) {
+    const host = { zone, offsetMinutes: [0, -480, 240, -780][index] };
+    for (const mode of ['A', 'B', 'interleaved']) {
+      const rows = natalCases.map(row => (mode === 'interleaved' ? ['A', 'B', 'A'] : [mode]).map(setting => ({ id: row.id, setting, serialized: serialized(row.id, setting) })));
+      natal.push([`${zone}/${mode}`, { host: zone, hostOffsetMinutes: host.offsetMinutes, rows }]);
+      produced.push([`${zone}/${mode}`, { host, rows }]);
+    }
+    const rows = zones.flatMap(origin => natalCases.flatMap(row => ['A', 'B'].map(setting => ({ origin, id: row.id, setting, serialized: serialized(row.id, setting),
+      owned: true, frozen: true, unchangedIds: true, identityError: 'ChartSnapshot identity mismatch', contentError: 'ChartSnapshot content mismatch' }))));
+    reloaded.push([zone, { host, rows }]);
+  }
+  return { natal, snapshots: { produced, reloaded } };
+}
+
+test('lock identity permits only exact Git source or CRLF checkout expansion', () => {
+  const source = '{\n  "version": "fixed"\n}\n';
+  expect(lockIdentity(source, source)).toBe(lockIdentity(source, source.replace(/\n/g, '\r\n')));
+  for (const changed of [source.replace('fixed', 'changed'), source.trimEnd(), source + '\n', source.replace('  ', ' '), source.replace('\n', '\r\r\n')]) expect(() => lockIdentity(source, changed)).toThrow('differs from source blob');
+});
+test('native test completion rejects missing, skipped, todo, failed and partial execution', () => {
+  const clean = ' 12 pass\n 0 fail\nRan 12 tests across 2 files. [1s]';
+  expect(() => strictSummary(clean)).not.toThrow();
+  for (const text of ['', clean.replace('12 pass', '11 pass'), clean.replace('12 tests', '13 tests'), clean.replace('2 files', '1 file'), clean.replace('0 fail', '1 fail'), `${clean}\n1 skip`, `${clean}\n1 todo`, `${clean}\n${clean}`]) expect(() => strictSummary(text)).toThrow();
+});
+test('manifest requires exact source, run, native OS, pinned runtime, complete bounded artifacts', () => {
+  for (const [runner, platform] of Object.entries(runners)) expect(() => validateManifest({ ...manifest(), runner, platform }, runner, expected)).not.toThrow();
+  for (const patch of [{ status: 'NOT RUN' }, { status: 'FAIL' }, { sha: 'e'.repeat(40) }, { tree: 'e'.repeat(40) }, { runId: '124' }, { attempt: '2' }, { platform: 'win32' }, { arch: 'arm64' }, { bun: '1.4.2' }, { revision: '' }, { lock: '' }, { evidence: {} }]) expect(() => validateManifest({ ...manifest(), ...patch }, 'ubuntu-24.04', expected)).toThrow();
+  const oversized = manifest(); oversized.evidence['natal.json']!.bytes = 64 * 1024 * 1024 + 1;
+  expect(() => validateManifest(oversized, 'ubuntu-24.04', expected)).toThrow();
+});
+test('all native clock, fixture, A/B/ABA and 256 reload entries are mandatory', () => {
+  const good = inventory(); expect(() => validateInventory(good.natal, good.snapshots)).not.toThrow();
+  for (const mutate of [
+    (value: ReturnType<typeof inventory>) => value.natal.pop(),
+    (value: ReturnType<typeof inventory>) => value.natal[0][1].rows.pop(),
+    (value: ReturnType<typeof inventory>) => value.natal[0][1].hostOffsetMinutes = 480,
+    (value: ReturnType<typeof inventory>) => value.snapshots.produced[2][1].rows[0].pop(),
+    (value: ReturnType<typeof inventory>) => value.snapshots.produced[0][1].rows[0][0].serialized = '{}',
+    (value: ReturnType<typeof inventory>) => value.snapshots.reloaded.pop(),
+    (value: ReturnType<typeof inventory>) => value.snapshots.reloaded[0][1].rows.pop(),
+    (value: ReturnType<typeof inventory>) => value.snapshots.reloaded[0][1].rows[0].serialized += ' ',
+    (value: ReturnType<typeof inventory>) => value.snapshots.reloaded[0][1].rows[0].contentError = null,
+  ]) { const value = inventory(); mutate(value); expect(() => validateInventory(value.natal, value.snapshots)).toThrow(); }
+});
+test('byte comparison rejects changed content with unchanged IDs and even equivalent reformatting', () => {
+  const original = '{"snapshotId":"same","specHash":"same","palace":"命宮"}';
+  expect(() => compareBytes(original, original, 'same')).not.toThrow();
+  for (const value of [original.replace('命宮', '財帛'), `${original}\n`, '']) expect(() => compareBytes(original, value, 'mutation')).toThrow('full bytes differ at byte');
+});
+test('native lanes preserve full/scoped selection, exact matrix, bounded evidence and fail-closed aggregation', () => {
+  const workflow = Bun.YAML.parse(readFileSync('.github/workflows/ci.yml', 'utf8')) as any;
+  const jobs = workflow.jobs, native = jobs.native_calendar, compare = jobs.native_compare;
+  expect(native.if).toBe("needs.plan.outputs.mode == 'full'");
+  expect(native.strategy.matrix.os).toEqual(Object.keys(runners));
+  expect(native.strategy['fail-fast']).toBe(false);
+  expect(native['runs-on']).toBe('${{ matrix.os }}');
+  expect(native['timeout-minutes']).toBe(8);
+  const upload = native.steps.find((step: any) => step.uses === 'actions/upload-artifact@v4');
+  expect(upload.if).toBe('always()');
+  expect(upload.with['retention-days']).toBe(1);
+  expect(upload.with['if-no-files-found']).toBe('error');
+  expect(upload.with.name).toBe('native-calendar-${{ matrix.os }}-${{ github.run_attempt }}');
+  expect(compare.needs).toEqual(['plan', 'native_calendar']);
+  expect(compare.if).toBe("${{ always() && needs.plan.outputs.mode == 'full' }}");
+  expect(compare.steps.find((step: any) => step.uses === 'actions/download-artifact@v4').with.pattern).toBe('native-calendar-*-${{ github.run_attempt }}');
+  const aggregate = jobs.test.steps.find((step: any) => step.id === 'aggregate');
+  for (const name of ['native_calendar', 'native_compare']) expect(aggregate.env.RESULTS).toContain(`"${name}":"\${{ needs.${name}.result }}"`);
+});

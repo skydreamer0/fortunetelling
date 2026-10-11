@@ -59,6 +59,8 @@ export function assertUnion(files: string[], buckets: string[][]): void {
 export function aggregate(mode: string, results: Record<string, string | undefined>): void {
   if (!['full', 'docs', 'assets'].includes(mode)) throw new Error('Missing or invalid classification');
   if (results.plan !== 'success' || results.checks !== 'success') throw new Error('Plan and typecheck/doctor/build must succeed');
+  const native = mode === 'full' ? 'success' : 'skipped';
+  if (results.native_calendar !== native || results.native_compare !== native) throw new Error('Native calendar regression incomplete');
   if (mode === 'full') {
     if (results.regression !== 'success' || results.lightweight !== 'skipped') throw new Error('Full regression incomplete');
   } else if (results.regression !== 'skipped' || results.lightweight !== 'success') throw new Error('Scoped regression incomplete');
