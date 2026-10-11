@@ -89,3 +89,22 @@ test('existing golden, civil and true-solar boundary pillars retain serialized s
     expect(JSON.stringify(pillarStats(pillars))).toBe(JSON.stringify(legacyPillarStats(pillars)));
   }
 });
+
+test('public string-pillar malformed inputs retain legacy output or exact error', () => {
+  const capture = (calculate: typeof pillarStats, p: BaziPillars) => {
+    try { return { value: JSON.stringify(calculate(p)) }; }
+    catch (error) {
+      if (!(error instanceof Error)) throw error;
+      return { error: { name: error.name, message: error.message } };
+    }
+  };
+  for (const position of ['year', 'month', 'day', 'hour'] as const) {
+    for (const malformed of ['X子', 'X', '', '甲X', 'X丑', '甲子extra', '乙子']) {
+      const pillars: BaziPillars = { year: '甲子', month: '乙丑', day: '丙寅', hour: '丁卯', [position]: malformed };
+      expect(capture(pillarStats, pillars)).toEqual(capture(legacyPillarStats, pillars));
+    }
+  }
+  // Even the old all-unknown-stems result is compatibility behavior, not validation.
+  const unknown = { year: 'X', month: 'X', day: 'X', hour: 'X' };
+  expect(capture(pillarStats, unknown)).toEqual(capture(legacyPillarStats, unknown));
+});

@@ -136,6 +136,18 @@ const STEM_ELEMENTS: Readonly<Record<string, FiveElement>> = Object.freeze({
 const YANG_STEMS = new Set(['甲', '丙', '戊', '庚', '壬']);
 const TEN_GODS = ['比肩', '劫財', '食神', '傷官', '偏財', '正財', '七殺', '正官', '偏印', '正印'] as const;
 
+// pillarStats is public and accepts string pillars. Preserve its legacy handling
+// of unknown stems; all valid ten-god derivation belongs to the shared rules.
+function tenGodFor(dayStem: string, stem: string): string {
+  const de = STEM_ELEMENTS[dayStem];
+  const te = STEM_ELEMENTS[stem];
+  if (!de || !te) {
+    if (de === te) return '比肩';
+    throw new Error(`Cannot derive ten god for ${dayStem}/${stem}`);
+  }
+  return tenGodOf(dayStem as Stem, stem as Stem);
+}
+
 /** Day master, five-element and ten-god occurrence counts of a set of pillars (same method as BaZiEngine). */
 export function pillarStats(p: BaziPillars): {
   dayMaster: BaziDayMaster;
@@ -149,7 +161,7 @@ export function pillarStats(p: BaziPillars): {
   const tenGods: Record<string, number> = Object.fromEntries(TEN_GODS.map((n) => [n, 0]));
   for (const s of stems) {
     fiveElements[STEM_ELEMENTS[s]] += 1;
-    tenGods[tenGodOf(dayStem as Stem, s as Stem)] += 1;
+    tenGods[tenGodFor(dayStem, s)] += 1;
   }
   return {
     dayMaster: { stem: dayStem, element: STEM_ELEMENTS[dayStem], yinYang: YANG_STEMS.has(dayStem) ? '陽' : '陰' },
