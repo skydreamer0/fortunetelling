@@ -22,6 +22,7 @@ type Reject<T extends false> = T;
 type IsAny<T> = 0 extends (1 & T) ? true : false;
 type MetadataViews = [
   Component['meta'],
+  CalculatorComponent['meta'],
   ComponentInput['meta'],
   NonNullable<SystemResultParams['components']>[number]['meta'],
   NonNullable<SystemResultLike['components']>[number]['meta'],
@@ -40,6 +41,7 @@ export type MetadataContract = [
   Reject<true extends ContainsAny ? true : false>,
   Accept<unknown extends Component['meta'] ? true : false>,
   Accept<Producer extends Component ? true : false>,
+  Accept<Component extends CalculatorComponent ? true : false>,
   Accept<{ category: string; meta: unknown } extends ComponentInput ? true : false>,
 ];
 
@@ -50,6 +52,11 @@ export function invalidMetadataReads(component: Component) {
   // @ts-expect-error unknown metadata cannot become a specific payload implicitly
   const convention: { timezone: string } = component.meta;
   return convention;
+}
+
+export function invalidCalculatorMetadataReads(component: CalculatorComponent) {
+  // @ts-expect-error calculator adapters must not restore unchecked metadata fields
+  return component.meta.convention;
 }
 
 function timezoneOf(component: Component): string | undefined {
