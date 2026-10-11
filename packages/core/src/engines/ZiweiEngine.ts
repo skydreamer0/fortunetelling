@@ -26,27 +26,14 @@ import type { Language } from 'iztro/lib/data/types';
 import { BaseEngine } from '../core/BaseEngine';
 import type { BirthData } from '../core/models/BirthData';
 import type { SystemResult } from '../core/models/SystemResult';
+import type {
+  SerializedPalaceFacet, SerializedStar, ZiweiComponent, ZiweiMetadata, ZiweiUnavailableMetadata,
+} from './ziweiTypes';
+export type { SerializedPalaceFacet, SerializedStar } from './ziweiTypes';
 
 type Astrolabe = ReturnType<typeof astro.bySolar>;
 type Palace = Astrolabe['palaces'][number];
 type Star = Palace['majorStars'][number];
-
-/** Compact star shape used in palace / facet components. */
-export interface SerializedStar {
-  name: string;
-  type: string;
-  brightness: string;
-  brightnessScore: number | null;
-  mutagen: string | null;
-}
-
-/** Compact palace shape used by the L3 facets. */
-export interface SerializedPalaceFacet {
-  name: string;
-  index: number;
-  earthlyBranch: string;
-  majorStars: SerializedStar[];
-}
 
 /**
  * 廟旺利得平不陷 → numeric weight (7 best … 1 worst). Exposed so the scoring
@@ -106,7 +93,7 @@ export class ZiweiEngine extends BaseEngine {
       unavailable.meta = {
         unavailableReason: 'unknown-time',
         unavailableMessage: '出生時辰不確定，因此紫微十二宮、命身宮與大限未計算。',
-      };
+      } satisfies ZiweiUnavailableMetadata;
       return unavailable;
     }
     const astrolabe = this._createAstrolabe(birth);
@@ -126,7 +113,7 @@ export class ZiweiEngine extends BaseEngine {
       time: astrolabe.time,
       fiveElementsClass: astrolabe.fiveElementsClass,
       copyright: astrolabe.copyright,
-    };
+    } satisfies ZiweiMetadata;
 
     return result;
   }
@@ -156,7 +143,7 @@ export class ZiweiEngine extends BaseEngine {
         lunarDate: astrolabe.lunarDate,
         chineseDate: astrolabe.chineseDate,
       },
-    });
+    } satisfies ZiweiComponent);
   }
 
   // ─── L0: Palaces + main stars ───────────────────────────────────────────
@@ -183,7 +170,7 @@ export class ZiweiEngine extends BaseEngine {
           minorStars: palace.minorStars.map(this.#serializeStar),
           adjectiveStars: palace.adjectiveStars.map(this.#serializeStar),
         },
-      });
+      } satisfies ZiweiComponent);
 
       for (const star of palace.majorStars) {
         result.add({
@@ -198,7 +185,7 @@ export class ZiweiEngine extends BaseEngine {
             brightnessScore: brightnessScore(star.brightness),
             mutagen: star.mutagen ?? null,
           },
-        });
+        } satisfies ZiweiComponent);
       }
     }
   }
@@ -224,7 +211,7 @@ export class ZiweiEngine extends BaseEngine {
             palace: palace.name,
             palaceIndex: palace.index,
           },
-        });
+        } satisfies ZiweiComponent);
       }
     }
   }
@@ -257,12 +244,12 @@ export class ZiweiEngine extends BaseEngine {
             soul: this.#serializePalaceFacet(soulPalace),
             body: this.#serializePalaceFacet(bodyPalace),
           },
-        });
+        } satisfies ZiweiComponent);
       } else {
         result.warn('命宮或身宮定位失敗，略過 soulVsBody（L3）部件。');
       }
 
-      const facets: Array<[string, typeof soulPalace]> = [['soul', soulPalace], ['body', bodyPalace]];
+      const facets: Array<['soul' | 'body', typeof soulPalace]> = [['soul', soulPalace], ['body', bodyPalace]];
       for (const [facetId, palace] of facets) {
         if (!palace) continue;
         // 命身同宮時兩組三方四正相同，只輸出一組
@@ -280,7 +267,7 @@ export class ZiweiEngine extends BaseEngine {
             wealth: this.#serializePalaceFacet(surrounded.wealth),
             career: this.#serializePalaceFacet(surrounded.career),
           },
-        });
+        } satisfies ZiweiComponent);
       }
     } catch (err) {
       result.warn(`L3 情境部件計算失敗：${(err as Error).message}`);
@@ -325,7 +312,7 @@ export class ZiweiEngine extends BaseEngine {
           palaceIndex: age.index,
           asOf: target.toISOString().slice(0, 10),
         },
-      });
+      } satisfies ZiweiComponent);
     }
 
     const yearly = horoscope.yearly;
@@ -341,7 +328,7 @@ export class ZiweiEngine extends BaseEngine {
           palaceIndex: yearly.index,
           asOf: target.toISOString().slice(0, 10),
         },
-      });
+      } satisfies ZiweiComponent);
     }
   }
 
@@ -402,7 +389,7 @@ export class ZiweiEngine extends BaseEngine {
           mutagen,
           isCurrent,
         },
-      });
+      } satisfies ZiweiComponent);
     });
   }
 
