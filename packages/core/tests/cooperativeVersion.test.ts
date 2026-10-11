@@ -13,6 +13,8 @@ test('0.9.0 retains existing runtime exports and explicitly lists additive APIs'
   expect(oldExports.exports).toHaveLength(254);
   expect(Object.keys(core).sort()).toEqual([...oldExports.exports,
     'buildTimelineCooperatively', 'TimelineEnvironmentChangedError',
+    // #53: settings-only construction; preserve the historical inventory and exact set.
+    'createAsyncEphemerisCalculationSpec', 'ASYNC_EPHEMERIS_SPEC_SCHEMA_VERSION',
     // #57: additive period adapters. Keep the original fixture and exact set check.
     'ziweiDecadeNativePeriod', 'ziweiYearlyNativePeriod', 'ziweiMonthlyNativePeriod',
     // #56: source adapters only; preserve the historical inventory and exact set.

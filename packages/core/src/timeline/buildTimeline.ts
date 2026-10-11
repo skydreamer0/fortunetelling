@@ -32,13 +32,14 @@ import type { BaziNatalBasisProvider } from '../calculators/bazi/natalBasis';
 import { monthlyPillars } from '../calculators/bazi/pillars';
 import { toBaziRuleChart } from '../calculators/bazi/ruleChart';
 import { humanDesignCalculator } from '../calculators/humanDesign/calculator';
-import { evaluateHumanDesignRules } from '../calculators/humanDesign/rules';
+import { evaluateHumanDesignRules, humanDesignTransitRuleForSampling } from '../calculators/humanDesign/rules';
 import { buildJyotishChart } from '../calculators/jyotish/calculator';
 import { evaluateJyotishRules } from '../calculators/jyotish/rules';
 import { monthlySequenceSteps, yearlySequenceSteps } from '../calculators/ziwei/astrolabe';
 import { createZiweiNatalBasisProvider, type ZiweiNatalBasisProvider } from '../calculators/ziwei/natalBasis';
 import { calculateZiweiSteps } from '../calculators/ziwei/calculator';
 import { finishCalculation, type CalculationSteps } from '../core/calculationSteps';
+import { createAsyncEphemerisCalculationSpec, type AsyncEphemerisCalculationOptions, type AsyncEphemerisCalculationSpec } from '../core/asyncEphemerisCalculationSpec';
 import { toZiweiRuleChart } from '../calculators/ziwei/ruleChart';
 import { evaluateBaziRules } from '../rules/bazi/evaluate';
 import { evaluateBaziTenGodRules } from '../rules/bazi/evaluateTenGods';
@@ -74,6 +75,8 @@ export interface SkippedSystem {
 }
 
 export interface TimelineOptions extends AnalysisTimeOptions {
+  /** Ephemeris settings intent only; defaults preserve current results. HD sampling remains unconverged (#63). */
+  ephemeris?: AsyncEphemerisCalculationOptions;
   /** Required effective natal day/hour clock for bazi and ziwei; no downstream default. */
   useTrueSolarTime: boolean;
   /** Required bazi naming: late (sect=2) / early (sect=1).
@@ -237,7 +240,7 @@ interface Prepared {
   skipped: SkippedSystem[];
 }
 
-function* prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: string, firstYear: number, years: number, opts: TimelineOptions, baziNatalBasis?: BaziNatalBasisProvider, ziweiNatalBasis?: ZiweiNatalBasisProvider): CalculationSteps<Prepared> {
+function* prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: string, firstYear: number, years: number, opts: TimelineOptions, ephemerisSpec: AsyncEphemerisCalculationSpec, baziNatalBasis?: BaziNatalBasisProvider, ziweiNatalBasis?: ZiweiNatalBasisProvider): CalculationSteps<Prepared> {
   const evaluators: Partial<Record<SystemId, WindowEvaluator>> = {};
   const skipped: SkippedSystem[] = [];
   const timeKnown = ctx.jd !== null && ctx.utc !== null;
@@ -320,7 +323,8 @@ function* prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: s
         if (!timeKnown) skipped.push({ system, reason: 'time_unknown' });
         else if (!isEphemerisReady()) skipped.push({ system, reason: 'ephemeris_not_initialised' });
         else {
-          const chart = buildJyotishChart(ctx, { asOf });
+          const chart = buildJyotishChart(ctx, { asOf, ...ephemerisSpec.identity.settings.jyotish,
+            dashaYearDays: ephemerisSpec.identity.conventions.jyotish.dashaYearDays });
           evaluators.jyotish = (w) => evaluateJyotishRules(chart, w);
         }
         break;
@@ -329,10 +333,13 @@ function* prepareSystems(ctx: TimeContext, systems: readonly SystemId[], asOf: s
         if (!timeKnown) skipped.push({ system, reason: 'time_unknown' });
         else if (!isEphemerisReady()) skipped.push({ system, reason: 'ephemeris_not_initialised' });
         else {
-          const { chart } = humanDesignCalculator.calculate(ctx, { asOf });
+          const settings = ephemerisSpec.identity.settings.humanDesign;
+          const { chart } = humanDesignCalculator.calculate(ctx, { asOf, node: settings.node });
+          const rules = [humanDesignTransitRuleForSampling('year', settings.sampleDays.year),
+            humanDesignTransitRuleForSampling('month', settings.sampleDays.month)];
           // Only the transit rule (scope = the cell grain). Natal rules are NOT stamped on cells: a constant
           // signal would clear the consensus threshold in every window (see conventions.scopes / humanDesign).
-          evaluators.humanDesign = (w) => evaluateHumanDesignRules(chart, w);
+          evaluators.humanDesign = (w) => evaluateHumanDesignRules(chart, w, { rules });
         }
         break;
       }
@@ -502,6 +509,7 @@ function* buildTimelineSteps(ctx: TimeContext, opts: TimelineOptions, natalBasis
   const asOf = validateAsOf(opts?.asOf);
   const thresholds = resolveAgreementThresholds(opts);
   validateTimeOptions(opts);
+  const ephemerisSpec = createAsyncEphemerisCalculationSpec(opts.ephemeris);
   const years = opts.years ?? DEFAULT_TIMELINE_YEARS;
   if (!Number.isInteger(years) || years < 1 || years > 50) {
     throw new Error(`buildTimeline: years must be an integer in 1..50, got ${years}`);
@@ -524,7 +532,7 @@ function* buildTimelineSteps(ctx: TimeContext, opts: TimelineOptions, natalBasis
   if (topN !== undefined && !(topN === Infinity || (Number.isInteger(topN) && topN >= 0))) {
     throw new Error(`buildTimeline: topSignalsPerDomain must be an integer ≥ 0 or Infinity, got ${topN}`);
   }
-  const { evaluators, skipped } = yield* prepareSystems(ctx, requested, asOf, firstYear, years, opts, natalBasis, ziweiNatalBasis);
+  const { evaluators, skipped } = yield* prepareSystems(ctx, requested, asOf, firstYear, years, opts, ephemerisSpec, natalBasis, ziweiNatalBasis);
   const weightOf = (s: SystemId) => opts.systemWeights?.[s] ?? 1;
   const systems = SYSTEM_IDS.filter((s) => evaluators[s] !== undefined);
   const systemWeights: Partial<Record<SystemId, number>> = {};
@@ -650,6 +658,9 @@ export function restrictTimeline(timeline: Timeline, systems: readonly SystemId[
 /** Validate effective settings before initialization, then include jyotish and humanDesign. */
 export async function buildTimelineAsync(ctx: TimeContext, opts: TimelineOptions): Promise<Timeline> {
   validateTimeOptions(opts);
+  const spec = createAsyncEphemerisCalculationSpec(opts.ephemeris);
+  // Capture selected settings before initialization yields to caller code.
+  const options = { ...opts, ephemeris: spec.identity.settings };
   await initEphemeris();
-  return buildTimeline(ctx, opts);
+  return buildTimeline(ctx, options);
 }
