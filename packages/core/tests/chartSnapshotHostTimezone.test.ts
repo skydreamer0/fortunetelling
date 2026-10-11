@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { ChartSnapshot } from '../src/core/chartSnapshot';
 import { natalCases } from './fixtures/natalCalendarCases';
 import type { ProducedSnapshots, ReloadedSnapshots, SnapshotMode, SnapshotTransfer } from './fixtures/chartSnapshotHostProbe';
@@ -11,6 +11,14 @@ const produced = new Map<string, ProducedSnapshots>();
 const reloaded = new Map<string, ReloadedSnapshots>();
 const transfers: SnapshotTransfer[] = [];
 const get = (zone: string, mode: SnapshotMode) => produced.get(`${zone}/${mode}`)!;
+
+// Preserve complete serialized snapshots and all 256 real session reloads.
+afterAll(async () => {
+  if (!process.env.NATIVE_CALENDAR_OUTPUT) return;
+  const bytes = new TextEncoder().encode(JSON.stringify({ produced: [...produced], reloaded: [...reloaded] }));
+  if (bytes.length > 64 * 1024 * 1024) throw new Error('Snapshot evidence exceeds 64 MiB');
+  await Bun.write(`${process.env.NATIVE_CALENDAR_OUTPUT}/snapshots.json`, bytes);
+});
 
 function child<T>(TZ: string, expression: string, input?: unknown): T {
   const script = `import { produceSnapshots, reloadSnapshots } from ${JSON.stringify(probeUrl)};

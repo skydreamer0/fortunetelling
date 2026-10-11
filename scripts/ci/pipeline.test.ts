@@ -45,15 +45,15 @@ describe('complete duration-weighted inventory', () => {
   });
 });
 describe('aggregate never fabricates success', () => {
-  const full = { plan: 'success', checks: 'success', regression: 'success', lightweight: 'skipped' };
+  const full = { plan: 'success', checks: 'success', regression: 'success', lightweight: 'skipped', native_calendar: 'success', native_compare: 'success' };
   test('only expected full/scoped results pass', () => {
     expect(() => aggregate('full', full)).not.toThrow();
-    for (const mode of ['docs', 'assets']) expect(() => aggregate(mode, { ...full, regression: 'skipped', lightweight: 'success' })).not.toThrow();
+    for (const mode of ['docs', 'assets']) expect(() => aggregate(mode, { ...full, regression: 'skipped', lightweight: 'success', native_calendar: 'skipped', native_compare: 'skipped' })).not.toThrow();
     expect(() => aggregate('', full)).toThrow();
   });
   test.each(['failure', 'cancelled', 'skipped', undefined])('required result %s cannot pass', result => {
-    for (const job of ['plan', 'checks', 'regression']) expect(() => aggregate('full', { ...full, [job]: result })).toThrow();
-    for (const mode of ['docs', 'assets']) expect(() => aggregate(mode, { ...full, regression: 'skipped', lightweight: result })).toThrow();
+    for (const job of ['plan', 'checks', 'regression', 'native_calendar', 'native_compare']) expect(() => aggregate('full', { ...full, [job]: result })).toThrow();
+    for (const mode of ['docs', 'assets']) expect(() => aggregate(mode, { ...full, regression: 'skipped', lightweight: result, native_calendar: 'skipped', native_compare: 'skipped' })).toThrow();
   });
   test('unexpected active/skipped lane fails', () => {
     expect(() => aggregate('full', { ...full, lightweight: 'success' })).toThrow();
@@ -74,7 +74,7 @@ test('workflow wires stable acceptance to all required lanes and trusted master 
   const jobs = workflow.jobs;
   expect(jobs.test.name).toBe('Test & Build');
   expect(jobs.test.if).toBe('always()');
-  expect(jobs.test.needs).toEqual(['plan', 'regression', 'lightweight', 'checks']);
+  expect(jobs.test.needs).toEqual(['plan', 'regression', 'lightweight', 'checks', 'native_calendar', 'native_compare']);
   expect(jobs.regression.strategy['fail-fast']).toBe(false);
   expect(jobs.regression.strategy.matrix.shard).toEqual([0, 1, 2, 3]);
   expect(jobs.publish.needs).toBe('test');
@@ -82,7 +82,7 @@ test('workflow wires stable acceptance to all required lanes and trusted master 
   expect(jobs.publish.uses).toBe('./.github/workflows/deploy.yml');
   expect(jobs.publish.with.accepted_sha).toBe('${{ needs.test.outputs.accepted_sha }}');
   expect(jobs.publish.permissions).toEqual({ contents: 'read', pages: 'write', 'id-token': 'write' });
-  for (const id of ['plan', 'regression', 'lightweight', 'checks', 'test']) {
+  for (const id of ['plan', 'regression', 'lightweight', 'checks', 'native_calendar', 'native_compare', 'test']) {
     const setup = jobs[id].steps.find((step: any) => step.uses === 'oven-sh/setup-bun@v2');
     expect(setup.with['bun-version']).toBe('1.4.3');
     expect(jobs[id].permissions).toBeUndefined();

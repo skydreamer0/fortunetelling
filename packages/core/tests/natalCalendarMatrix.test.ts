@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { dstCases, lunarCases, natalCases } from './fixtures/natalCalendarCases';
 import type { ProbeMode, ProbeResult } from './fixtures/natalCalendarProbe';
 
@@ -7,6 +7,14 @@ const modes = ['A', 'B', 'interleaved'] as const satisfies readonly ProbeMode[];
 const probeUrl = new URL('./fixtures/natalCalendarProbe.ts', import.meta.url).href;
 const results = new Map<string, ProbeResult>();
 const get = (zone: string, mode: ProbeMode) => results.get(`${zone}/${mode}`)!;
+
+// Opt-in CI evidence from the exact assertions below; never recompute the probe.
+afterAll(async () => {
+  if (!process.env.NATIVE_CALENDAR_OUTPUT) return;
+  const bytes = new TextEncoder().encode(JSON.stringify([...results]));
+  if (bytes.length > 64 * 1024 * 1024) throw new Error('Natal evidence exceeds 64 MiB');
+  await Bun.write(`${process.env.NATIVE_CALENDAR_OUTPUT}/natal.json`, bytes);
+});
 
 beforeAll(() => {
   // Serial, fresh Bun processes; no global TZ mutation or process reuse between
