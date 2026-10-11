@@ -178,12 +178,12 @@ test('real producer payload/category/ID mutations fail typecheck only while thei
     expect(baseline.exitCode).toBe(0);
     const mutations = [
       ["id: 'hd_type'", "id: 'hd_authority'"],
-      ['type: chart.type, name: TYPE_NAMES[chart.type]', 'type: chart.type, name: 123'],
+      ['type: chart.type, name: TYPE_NAMES[chart.type]', 'type: chart.type, name: TYPE_NAMES[chart.type].length'],
       ['authority: chart.authority', "authority: 'invalid-authority'"],
       ["category: 'profile', value: chart.profile", "category: 'profile', value: { label: '1/3' }"],
       ['definition: chart.definition', 'definition: 123'],
       ["category: 'incarnationCross', value: chart.incarnationCross", "category: 'incarnationCross', value: chart.profile"],
-      ['defined: defined.has(c)', "defined: 'yes'"],
+      ['defined: defined.has(c)', 'defined: Number(defined.has(c))'],
       ["category: 'channels', value: ch", "category: 'channels', value: chart.profile"],
       ['category: side, value: a', "category: 'channels', value: a"],
       ['category: side, value: a', 'category: side, value: { ...a, line: 7 }'],
