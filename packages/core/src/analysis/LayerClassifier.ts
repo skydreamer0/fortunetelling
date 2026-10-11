@@ -14,6 +14,20 @@
  * @module analysis/LayerClassifier
  */
 
+import type { Component, SystemResultLike } from '../core/models/SystemResult';
+
+// This consumer only reads identity fields and carries payloads through untouched.
+// Nullable/omitted identities retain the existing nullish fallback semantics.
+type ClassificationComponentInput = {
+  [K in 'id' | 'name' | 'category']?: Component[K] | null;
+} & { value?: unknown };
+
+type ClassificationResultInput = {
+  engineId?: SystemResultLike['engineId'] | null;
+  sourceSystem?: SystemResultLike['engineId'] | null;
+  components?: Iterable<ClassificationComponentInput> | null;
+};
+
 // ─── Type Definitions ───────────────────────────────────────────────────────
 
 export type LayerCode = 'L0' | 'L1' | 'L2' | 'L3';
@@ -251,7 +265,7 @@ export class LayerClassifier {
    *
    * @param engineResults - Array of engine result objects
    */
-  classify(engineResults: Record<string, any>[]): LayerClassification {
+  classify<T extends ClassificationResultInput>(engineResults: T[]): LayerClassification {
     const allComponents: ClassifiedComponent[] = [];
 
     for (const result of engineResults) {
@@ -294,7 +308,7 @@ export class LayerClassifier {
   /**
    * Classify a single component.
    */
-  #classifyComponent(component: Record<string, any>, sourceSystem: string): ClassifiedComponent {
+  #classifyComponent(component: ClassificationComponentInput, sourceSystem: string): ClassifiedComponent {
     const category = component.category ?? '';
     const matchedRule = this.#findRule(sourceSystem, category);
 
