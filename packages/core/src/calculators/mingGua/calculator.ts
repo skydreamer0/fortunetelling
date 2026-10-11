@@ -10,40 +10,33 @@
  */
 
 import { MingGuaEngine } from '../../engines/MingGuaEngine';
-import type { MingGuaValue } from '../../engines/mingGuaTypes';
+import type {
+  MingGuaDirectionsValue,
+  MingGuaDirectionValue,
+  MingGuaMetadata,
+  MingGuaValue,
+} from '../../engines/mingGuaTypes';
 import type { TimeContext } from '../../time/types';
 import { componentValue, timeContextToBirthData } from '../birthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';
 
-export interface MingGuaDirection {
-  /** Compass code, e.g. 'SE'. */
-  code: string;
-  /** e.g. '東南'. */
-  zh: string;
-}
+/** Compass code (e.g. 'SE') and Chinese label (e.g. '東南'). */
+export interface MingGuaDirection extends MingGuaDirectionValue {}
 
-export interface MingGuaInfo {
+export interface MingGuaInfo extends Pick<MingGuaValue,
+  'name' | 'element' | 'elementZh' | 'group' | 'groupName' | 'yearForGua'
+> {
   /** 1–9 except 5. */
-  number: number;
-  /** Trigram, e.g. '坎'. */
-  name: string;
-  element: string;
-  elementZh: string;
-  group: 'east' | 'west';
-  groupName: string;
-  /** Solar year used (before Feb 4 → previous year). */
-  yearForGua: number;
+  number: MingGuaValue['guaNumber'];
 }
 
 export interface MingGuaChart {
   gua: MingGuaInfo | null;
   /** 伏位 direction code. */
-  bestDirection: string | null;
+  bestDirection: MingGuaValue['bestDirection'] | null;
+  /** 生氣 / 天醫 / 延年 / 伏位 and 絕命 / 五鬼 / 六煞 / 禍害. */
   directions: {
-    /** 生氣 / 天醫 / 延年 / 伏位. */
-    auspicious: Record<string, MingGuaDirection>;
-    /** 絕命 / 五鬼 / 六煞 / 禍害. */
-    inauspicious: Record<string, MingGuaDirection>;
+    [Kind in keyof MingGuaDirectionsValue]: Record<string, MingGuaDirection>;
   } | null;
 }
 
@@ -79,7 +72,7 @@ export const mingGuaCalculator: Calculator<MingGuaChart> = {
     const birth = timeContextToBirthData(ctx, { name: config.name });
     const result = new MingGuaEngine().run(birth);
     const components = result.components as Component[];
-    const boundaryAmbiguous = Boolean((result.meta as { boundaryAmbiguous?: boolean } | undefined)?.boundaryAmbiguous);
+    const boundaryAmbiguous = Boolean((result.meta as Partial<Pick<MingGuaMetadata, 'boundaryAmbiguous'>> | undefined)?.boundaryAmbiguous);
     return {
       system: 'mingGua',
       version: MINGGUA_CALCULATOR_VERSION,
