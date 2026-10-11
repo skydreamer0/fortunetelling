@@ -172,7 +172,7 @@ test('shared tenGodOf preserves all 10 × 10 engine stem relations', () => {
   let checked = 0;
   for (const dayStem of STEMS) {
     for (const stem of STEMS) {
-      expect(tenGodOf(dayStem, stem)).toBe(legacyTenGodFor(dayStem, stem));
+      expect(legacyTenGodFor(dayStem, stem)).toBe(tenGodOf(dayStem, stem));
       checked++;
     }
   }
