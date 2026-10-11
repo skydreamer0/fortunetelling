@@ -251,3 +251,23 @@ test('Jyotish defaults and invalid asOf errors remain unchanged', () => {
   expect(() => jyotishCalculator.calculate(ctx)).toThrow();
   expect(() => jyotishCalculator.calculate(ctx, { asOf: 'not-a-date' })).toThrow();
 });
+
+test('Jyotish producer emits identical JavaScript and its contract has no runtime code', async () => {
+  const source = await Bun.file(new URL('../src/calculators/jyotish/calculator.ts', import.meta.url)).text();
+  const tests = await Bun.file(import.meta.path).text();
+  const start = source.indexOf('export function jyotishComponents(');
+  const end = source.indexOf('\nexport const jyotishCalculator', start);
+  const oldStart = tests.indexOf('function legacyJyotishComponents(');
+  const oldEnd = tests.indexOf('\ntest(', oldStart);
+  expect(start).toBeGreaterThanOrEqual(0);
+  expect(end).toBeGreaterThan(start);
+  expect(oldStart).toBeGreaterThanOrEqual(0);
+  expect(oldEnd).toBeGreaterThan(oldStart);
+  const transpiler = new Bun.Transpiler({ loader: 'ts' });
+  const baseline = tests.slice(oldStart, oldEnd).replace(
+    'function legacyJyotishComponents(', 'export function jyotishComponents(',
+  );
+  expect(transpiler.transformSync(source.slice(start, end))).toBe(transpiler.transformSync(baseline));
+  const types = await Bun.file(new URL('../src/calculators/jyotish/componentTypes.ts', import.meta.url)).text();
+  expect(transpiler.transformSync(types).trim()).toBe('');
+});
