@@ -16,6 +16,8 @@ import { BaseEngine } from '../core/BaseEngine';
 import type { BirthData } from '../core/models/BirthData';
 import type { Component, SystemResult } from '../core/models/SystemResult';
 import type { FiveElement } from '../calculators/bazi/calculator';
+import type { Stem } from '../rules/bazi/relations';
+import { tenGodOf } from '../rules/bazi/tenGods';
 import type { BaziAvailableMetadata, BaziComponent, BaziNatalComponent, BaziUnavailableMetadata } from './baziTypes';
 
 const STEM_ELEMENTS: Readonly<Record<string, FiveElement>> = Object.freeze({
@@ -23,9 +25,6 @@ const STEM_ELEMENTS: Readonly<Record<string, FiveElement>> = Object.freeze({
 });
 
 const YANG_STEMS = new Set(['甲', '丙', '戊', '庚', '壬']);
-
-const ELEMENT_PRODUCES: Readonly<Record<string, string>> = Object.freeze({ 木: '火', 火: '土', 土: '金', 金: '水', 水: '木' });
-const ELEMENT_CONTROLS: Readonly<Record<string, string>> = Object.freeze({ 木: '土', 火: '金', 土: '水', 金: '木', 水: '火' });
 
 const TEN_GODS = Object.freeze(['比肩', '劫財', '食神', '傷官', '偏財', '正財', '七殺', '正官', '偏印', '正印']);
 
@@ -72,8 +71,8 @@ export const ASOF_CONVENTION = Object.freeze({
   precision: 'date',
 });
 /**
- * Classify a stem relative to the day master using the orthodox five-element
- * producing/controlling cycles and the stem's yin/yang polarity.
+ * Preserve this engine's unsupported-stem error while delegating all valid
+ * ten-god classification to the shared rule helper.
  */
 function tenGodFor(dayStem: string, stem: string): string {
   const dayElement = STEM_ELEMENTS[dayStem];
@@ -82,14 +81,7 @@ function tenGodFor(dayStem: string, stem: string): string {
     throw new Error(`Unsupported heavenly stem: ${stem}`);
   }
 
-  const samePolarity = YANG_STEMS.has(dayStem) === YANG_STEMS.has(stem);
-  if (targetElement === dayElement) return samePolarity ? '比肩' : '劫財';
-  if (ELEMENT_PRODUCES[dayElement] === targetElement) return samePolarity ? '食神' : '傷官';
-  if (ELEMENT_PRODUCES[targetElement] === dayElement) return samePolarity ? '偏印' : '正印';
-  if (ELEMENT_CONTROLS[dayElement] === targetElement) return samePolarity ? '偏財' : '正財';
-  if (ELEMENT_CONTROLS[targetElement] === dayElement) return samePolarity ? '七殺' : '正官';
-
-  throw new Error(`Cannot derive ten god for ${dayStem}/${stem}`);
+  return tenGodOf(dayStem as Stem, stem as Stem);
 }
 
 /** Default wording of the `elements` limitation (civil clock, no true solar time). */
