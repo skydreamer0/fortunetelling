@@ -1,6 +1,7 @@
 # Async ephemeris settings: bounded #53 consumer slice
 
 Base: `0d5eafaed93bf5b3f30fafdf31d70113b3d61849`.
+Integrated with master `612f5cedc76abde13f192ddff0421b22e535b19c` (#126).
 
 ## Implemented boundary
 
@@ -28,6 +29,10 @@ does not gain a settings hash or imply new persisted replay guarantees.
 - HD steps are restricted to 1/24 through 366 days at this new public boundary.
   This is a resource/progress bound (roughly 8,800 samples per calendar year),
   not an accuracy tolerance. The existing internal factory is unchanged.
+  Opting into the minimum step with the maximum 50-year horizon can request
+  roughly 449,000 samples including month cells. This extreme combination has
+  not been performance-benchmarked and can block responsiveness; this API offers
+  no cancellation or execution-time budget guarantee. Defaults remain 15/3 days.
 
 ## Verification and limits
 
@@ -44,6 +49,13 @@ typechecks, build and browser checks are **not run**. GitHub CI and independent
 review must verify the exact remote candidate. The tests use this repository's
 Swiss Ephemeris implementation as an execution oracle, not an independently
 verified astronomical oracle. Passing them does not prove prediction validity.
+
+First remote candidate `fe831c44` ran all ten new tests successfully and passed
+typechecks, doctor, build and the browser observation workflow. Its full suite
+had one failure: the exact public-export inventory did not yet include the two
+new API names. The correction explicitly adds those names without relaxing the
+set assertion or changing historical fixtures. This first-run evidence does not
+substitute for rerunning CI on the integrated revision.
 
 ## Remaining #53 / #63 work
 
