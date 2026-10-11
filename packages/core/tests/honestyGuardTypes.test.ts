@@ -55,7 +55,7 @@ export type Contract = [
 const transpiler = new Bun.Transpiler({ loader: 'ts' });
 const BASE_SOURCE = await Bun.file(new URL('./fixtures/honestyGuard.before-types.ts', import.meta.url)).text();
 const baselineJs = transpiler.transformSync(BASE_SOURCE);
-const outcome = (guard: typeof HonestyGuard, input: unknown) => {
+const outcome = (guard: typeof HonestyGuard | typeof Legacy, input: unknown) => {
   try { return { value: guard.auditReport(input as Input) }; }
   catch (error) { return { name: (error as Error).name, message: (error as Error).message }; }
 };
