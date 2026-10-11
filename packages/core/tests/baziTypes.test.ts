@@ -142,7 +142,11 @@ test('legacy natal rebuilding preserves custom convention metadata and component
   expect(components[0]).toEqual({
     id: 'natal', name: '四柱', category: 'natal', value: { ...pillars, convention }, meta: { convention },
   } satisfies BaziComponent);
-  expect(components[0].meta.convention).toBe(convention);
+  const metadata = components[0].meta;
+  if (!metadata || typeof metadata !== 'object' || !('convention' in metadata)) {
+    throw new Error('The natal component must retain its convention metadata.');
+  }
+  expect(metadata.convention).toBe(convention);
   expect(components[0].value.convention).toBe(convention);
   expect(components[2].value.limitation).toBe('custom limitation');
   expect(components.slice(1).every(component => !Object.hasOwn(component, 'meta'))).toBe(true);
