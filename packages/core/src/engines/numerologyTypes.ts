@@ -1,24 +1,38 @@
 /** Internal producer contracts for the legacy Numerology components (#21).
- * Reuse calculator payloads; this module adds no runtime logic or interpretation.
+ * Shared producer/adapter payloads; no runtime logic or interpretation.
  */
-import type { NumerologyChart, NumerologyNumber } from '../calculators/numerology/calculator';
 import type { NumerologyPeriod } from '../calculators/numerology/numerology';
 import type { BirthData } from '../core/models/BirthData';
 
 /** The legacy number payload predates the calculator's derived display field. */
-export type NumerologyNumberValue = Pick<NumerologyNumber, 'number' | 'isMaster'>;
+export interface NumerologyNumberValue {
+  number: number;
+  isMaster: boolean;
+}
+
+/** Loose chart view; the engine's complete digit set is specified below. */
+export type NumerologyDigitCounts = Record<string, number>;
+
+export interface NumerologyPersonalYearValue {
+  number: number;
+  year: number;
+}
+
+export interface NumerologyPersonalMonthValue extends NumerologyPersonalYearValue {
+  month: number;
+}
 
 /** Every digit 1–9 is emitted, including digits whose frequency is zero. */
-export type NumerologyDigitFrequencyValue = NonNullable<NumerologyChart['digitFrequency']>
+export type NumerologyDigitFrequencyValue = NumerologyDigitCounts
   & Record<'1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9', number>;
 
-export type NumerologyPinnacleValue = NumerologyPeriod & Pick<NumerologyNumber, 'isMaster'>;
+export type NumerologyPinnacleValue = NumerologyPeriod & Pick<NumerologyNumberValue, 'isMaster'>;
 
 /** The legacy sequence also records its starting year and requested length. */
 export interface NumerologyPersonalYearsValue {
   fromYear: number;
   count: number;
-  years: NumerologyChart['personalYears'];
+  years: Record<number, number>;
 }
 
 /** Each legacy category has its own payload; none emits component metadata. */
@@ -28,8 +42,8 @@ export type NumerologyComponent =
   | { id: 'soul_urge'; name: string; category: 'soulUrge'; value: NumerologyNumberValue }
   | { id: 'personality'; name: string; category: 'personality'; value: NumerologyNumberValue }
   | { id: 'digit_frequency'; name: string; category: 'digitFrequency'; value: NumerologyDigitFrequencyValue }
-  | { id: 'personal_year'; name: string; category: 'personalYear'; value: NonNullable<NumerologyChart['personalYear']> }
-  | { id: 'personal_month'; name: string; category: 'personalMonth'; value: NonNullable<NumerologyChart['personalMonth']> }
+  | { id: 'personal_year'; name: string; category: 'personalYear'; value: NumerologyPersonalYearValue }
+  | { id: 'personal_month'; name: string; category: 'personalMonth'; value: NumerologyPersonalMonthValue }
   | { id: 'birthday_number'; name: string; category: 'birthdayNumber'; value: NumerologyNumberValue }
   | { id: 'attitude'; name: string; category: 'attitude'; value: NumerologyNumberValue }
   | { id: `pinnacle_${number}`; name: string; category: 'pinnacles'; value: NumerologyPinnacleValue }

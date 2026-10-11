@@ -11,6 +11,14 @@
  */
 
 import { NumerologyEngine } from '../../engines/NumerologyEngine';
+import type {
+  NumerologyDigitCounts,
+  NumerologyNumberValue,
+  NumerologyPersonalMonthValue,
+  NumerologyPersonalYearValue,
+  NumerologyPersonalYearsValue,
+} from '../../engines/numerologyTypes';
+import type { NumerologyPeriod } from './numerology';
 import type { TimeContext } from '../../time/types';
 import { categoryValues, componentValue, normalizeAsOf } from '../birthData';
 import { profileDateToBirthData } from '../profileDateBirthData';
@@ -18,19 +26,12 @@ import type { Calculator, CalculatorConfig, ChartResult, Component } from '../ty
 import { displayNumber } from './numerology';
 
 /** A reduced number (1–9 or master 11/22/33). */
-export interface NumerologyNumber {
-  number: number;
-  isMaster: boolean;
+export interface NumerologyNumber extends NumerologyNumberValue {
   /** `'11/2'` for master numbers, `'7'` otherwise. */
   display: string;
 }
 
-export interface NumerologyPeriodValue {
-  index: number;
-  number: number;
-  startAge: number;
-  endAge: number | null;
-}
+export interface NumerologyPeriodValue extends NumerologyPeriod {}
 
 export interface NumerologyChart {
   lifePath: NumerologyNumber | null;
@@ -41,18 +42,18 @@ export interface NumerologyChart {
   personality: NumerologyNumber | null;
   pinnacles: NumerologyPeriodValue[];
   challenges: NumerologyPeriodValue[];
-  personalYear: { number: number; year: number } | null;
-  personalMonth: { number: number; year: number; month: number } | null;
+  personalYear: NumerologyPersonalYearValue | null;
+  personalMonth: NumerologyPersonalMonthValue | null;
   /** Personal-year numbers keyed by year, starting at the asOf year. */
-  personalYears: Record<number, number>;
+  personalYears: NumerologyPersonalYearsValue['years'];
   /** Counts of digits 1–9 in the birth date. */
-  digitFrequency: Record<string, number> | null;
+  digitFrequency: NumerologyDigitCounts | null;
 }
 
 export const NUMEROLOGY_CALCULATOR_VERSION = '0.1.1';
 
 function numberOf(components: readonly Component[], id: string): NumerologyNumber | null {
-  const v = componentValue<{ number: number; isMaster: boolean }>(components, id);
+  const v = componentValue<NumerologyNumberValue>(components, id);
   return v ? { number: v.number, isMaster: v.isMaster, display: displayNumber(v.number) } : null;
 }
 
@@ -73,10 +74,10 @@ export function extractNumerologyChart(components: readonly Component[]): Numero
     personality: numberOf(components, 'personality'),
     pinnacles: categoryValues<NumerologyPeriodValue>(components, 'pinnacles').map(period),
     challenges: categoryValues<NumerologyPeriodValue>(components, 'challenges').map(period),
-    personalYear: componentValue<{ number: number; year: number }>(components, 'personal_year'),
-    personalMonth: componentValue<{ number: number; year: number; month: number }>(components, 'personal_month'),
-    personalYears: { ...(componentValue<{ years: Record<number, number> }>(components, 'personal_years')?.years ?? {}) },
-    digitFrequency: componentValue<Record<string, number>>(components, 'digit_frequency'),
+    personalYear: componentValue<NumerologyPersonalYearValue>(components, 'personal_year'),
+    personalMonth: componentValue<NumerologyPersonalMonthValue>(components, 'personal_month'),
+    personalYears: { ...(componentValue<Pick<NumerologyPersonalYearsValue, 'years'>>(components, 'personal_years')?.years ?? {}) },
+    digitFrequency: componentValue<NumerologyDigitCounts>(components, 'digit_frequency'),
   };
 }
 
@@ -89,7 +90,7 @@ export const numerologyCalculator: Calculator<NumerologyChart> = {
     const { date } = normalizeAsOf(config.asOf, 'numerology');
     const birth = profileDateToBirthData(ctx, { name: config.name });
     const result = new NumerologyEngine({ asOf: date }).run(birth);
-    const components = result.components as Component[];
+    const components = result.components;
     return {
       system: 'numerology',
       version: NUMEROLOGY_CALCULATOR_VERSION,
