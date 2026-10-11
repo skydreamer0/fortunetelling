@@ -197,7 +197,7 @@ test('Jyotish optional current components retain omission and fixed ordering', (
       const components = jyotishComponents(input);
       expect(JSON.stringify(components)).toBe(JSON.stringify(legacyJyotishComponents(input)));
       expect(components.filter(c => c.category === 'current').map(c => c.id)).toEqual([
-        ...(dasha ? ['current_dasha'] : []), ...(transits ? ['transits'] : []),
+        ...(dasha ? ['current_dasha' as const] : []), ...(transits ? ['transits' as const] : []),
       ]);
     }
   }
@@ -215,10 +215,10 @@ test('Jyotish retains admitted null payload fields without normalizing or clonin
   const settings = components.find(c => c.category === 'settings');
   expect(settings?.value.degrees).toBeNull();
   for (const component of components) {
-    if (component.category === 'graha') expect(component.value).toBe(input.planets.find(p => component.id === `graha_${p.graha}`));
+    if (component.category === 'graha') expect(component.value).toBe(input.planets.find(p => component.id === `graha_${p.graha}`)!);
     if (component.category === 'house') expect(component.value.lordHouse).toBeNull();
     if (component.category === 'divisional') expect(component.value).toBe(input.divisionalCharts![component.value.id]);
-    if (component.id === 'transits') expect(component.value).toBe(input.current.transits);
+    if (component.id === 'transits') expect(component.value).toBe(input.current.transits!);
   }
 });
 
