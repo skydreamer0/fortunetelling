@@ -56,6 +56,37 @@ export interface LintResult {
   problems: string[];
 }
 
+// Only the paths read by auditReport belong to this consumer contract. All
+// optional/nullish nodes keep their existing fallback behavior; this is not a
+// runtime validator. Extra producer fields are accepted through the generic entry.
+type AuditText = Violation['text'] | null | undefined;
+type AuditNode<T> = T | null | undefined;
+type AuditList<T> = readonly AuditNode<T>[] | null;
+type AuditSignal = {
+  window?: AuditNode<{ grain?: string | null }>;
+  evidence?: AuditNode<{
+    text?: AuditText;
+    modifiers?: AuditList<{ reason?: AuditText }>;
+  }>;
+};
+
+export interface HonestyReportInput {
+  stateTable?: AuditNode<{ scenarios?: AuditList<{
+    cells?: AuditList<{ expression?: AuditText }>;
+  }> }>;
+  evolution?: AuditNode<{
+    periods?: AuditList<{ summary?: AuditText | readonly AuditText[] }>;
+    narrative?: AuditText;
+  }>;
+  insights?: AuditNode<{
+    domains?: AuditList<{ insight?: AuditText; stage?: AuditText }>;
+    annual?: AuditNode<{ themes?: AuditList<{ text?: AuditText }> }>;
+    guidance?: AuditNode<{ balance?: AuditNode<{ text?: AuditText }> }>;
+  }>;
+  signals?: AuditList<AuditSignal>;
+  timeContext?: AuditNode<{ flags?: AuditList<{ detail?: AuditText }> }>;
+}
+
 // ─── Pattern Registry ───────────────────────────────────────────────────────
 
 /** 時間與情境層（禁止定性斷言的分層）。 */
@@ -148,27 +179,28 @@ export class HonestyGuard {
    *
    * @param report - `analyze()` 產出的 Report（或同形狀物件）
    */
-  static auditReport(report: Record<string, any>): Violation[] {
+  static auditReport<T extends HonestyReportInput>(report: T | null | undefined): Violation[] {
     const violations: Violation[] = [];
     if (!report || typeof report !== 'object') return violations;
 
-    const check = (text: any, layer: LayerCode, location: string) => {
+    const check = (text: unknown, layer: LayerCode, location: string) => {
       const { ok, problems } = HonestyGuard.lint(text, layer);
       if (ok) return;
       for (const problem of problems) {
-        violations.push({ layer, location, text, problem });
+        // lint only reports problems for nonempty strings; preserve its single call.
+        violations.push({ layer, location, text, problem } as Violation);
       }
     };
 
     const scenarios = report.stateTable?.scenarios ?? [];
-    scenarios.forEach((scenario: any, si: number) => {
-      (scenario?.cells ?? []).forEach((cell: any, ci: number) => {
+    scenarios.forEach((scenario, si: number) => {
+      (scenario?.cells ?? []).forEach((cell, ci: number) => {
         check(cell?.expression, 'L3', `stateTable.scenarios[${si}].cells[${ci}]`);
       });
     });
 
     const periods = report.evolution?.periods ?? [];
-    periods.forEach((period: any, pi: number) => {
+    periods.forEach((period, pi: number) => {
       const summary = period?.summary;
       const lines = Array.isArray(summary) ? summary : summary != null ? [summary] : [];
       lines.forEach((line: unknown, li: number) => {
@@ -178,11 +210,11 @@ export class HonestyGuard {
 
     check(report.evolution?.narrative, 'L1', 'evolution.narrative');
 
-    (report.insights?.domains ?? []).forEach((domain: any, index: number) => {
+    (report.insights?.domains ?? []).forEach((domain, index: number) => {
       check(domain?.insight, 'L3', `insights.domains[${index}].insight`);
       check(domain?.stage, 'L1', `insights.domains[${index}].stage`);
     });
-    (report.insights?.annual?.themes ?? []).forEach((theme: any, index: number) => {
+    (report.insights?.annual?.themes ?? []).forEach((theme, index: number) => {
       check(theme?.text, 'L2', `insights.annual.themes[${index}].text`);
     });
     check(report.insights?.guidance?.balance?.text, 'L3', 'insights.guidance.balance.text');
@@ -192,14 +224,14 @@ export class HonestyGuard {
     // timeline 各格的 topSignals 與 `signals` 是同一批物件（signals 為其去重聯集），
     // 另外逐格檢查只會重複回報，因此只稽核 `signals`。
     const SIGNAL_LAYER: Record<string, LayerCode> = { natal: 'L0', decade: 'L1', year: 'L2', month: 'L2' };
-    (Array.isArray(report.signals) ? report.signals : []).forEach((signal: any, index: number) => {
-      const layer = SIGNAL_LAYER[signal?.window?.grain] ?? 'L2';
+    (Array.isArray(report.signals) ? report.signals : []).forEach((signal: AuditNode<AuditSignal>, index: number) => {
+      const layer = SIGNAL_LAYER[signal?.window?.grain as string] ?? 'L2';
       check(signal?.evidence?.text, layer, `signals[${index}].evidence.text`);
-      (signal?.evidence?.modifiers ?? []).forEach((modifier: any, mi: number) => {
+      (signal?.evidence?.modifiers ?? []).forEach((modifier, mi: number) => {
         check(modifier?.reason, layer, `signals[${index}].evidence.modifiers[${mi}].reason`);
       });
     });
-    (report.timeContext?.flags ?? []).forEach((flag: any, index: number) => {
+    (report.timeContext?.flags ?? []).forEach((flag, index: number) => {
       check(flag?.detail, 'L2', `timeContext.flags[${index}].detail`);
     });
 
