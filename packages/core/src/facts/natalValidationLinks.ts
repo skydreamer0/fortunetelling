@@ -49,7 +49,7 @@ export function describeNatalValidationLinks(
   const seen = new Set<string>();
   const bound = new Set<number>();
   const links: Link[] = [];
-  for (const binding of declarations) {
+  for (const binding of declarations as readonly NatalValidationBinding[]) {
     exactInterpretationKeys(binding, ['recordIndex', 'scope', 'validationRefs']);
     if (!Number.isSafeInteger(binding.recordIndex) || binding.recordIndex < 0 || binding.recordIndex >= metadata.records.length) {
       throw new TypeError('Unknown metadata record position');
