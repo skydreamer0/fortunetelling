@@ -22,6 +22,7 @@ import type { TimeContext } from '../../time/types';
 import { flagWarnings } from '../birthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';
 import { CENTERS, CENTER_NAMES, type Center } from './bodygraph';
+import type { HumanDesignActivationComponent, HumanDesignComponent } from './componentTypes';
 import {
   computeHumanDesign,
   distanceToLineBoundary,
@@ -100,21 +101,21 @@ export function humanDesignComponents(chart: HumanDesignChart): Component[] {
   if (!chart.type) return [];
   const defined = new Set(chart.definedCenters);
   const out: Component[] = [
-    { id: 'hd_type', name: 'Type', category: 'type', value: { type: chart.type, name: TYPE_NAMES[chart.type] } },
-    { id: 'hd_authority', name: 'Authority', category: 'authority', value: { authority: chart.authority } },
-    { id: 'hd_profile', name: 'Profile', category: 'profile', value: chart.profile },
-    { id: 'hd_definition', name: 'Definition', category: 'definition', value: { definition: chart.definition } },
-    { id: 'hd_incarnation_cross', name: 'Incarnation Cross', category: 'incarnationCross', value: chart.incarnationCross },
+    { id: 'hd_type', name: 'Type', category: 'type', value: { type: chart.type, name: TYPE_NAMES[chart.type] } } satisfies HumanDesignComponent,
+    { id: 'hd_authority', name: 'Authority', category: 'authority', value: { authority: chart.authority } } satisfies HumanDesignComponent,
+    { id: 'hd_profile', name: 'Profile', category: 'profile', value: chart.profile } satisfies HumanDesignComponent,
+    { id: 'hd_definition', name: 'Definition', category: 'definition', value: { definition: chart.definition } } satisfies HumanDesignComponent,
+    { id: 'hd_incarnation_cross', name: 'Incarnation Cross', category: 'incarnationCross', value: chart.incarnationCross } satisfies HumanDesignComponent,
   ];
   for (const c of CENTERS) {
-    out.push({ id: `hd_center_${c}`, name: CENTER_NAMES[c], category: 'centers', value: { center: c, defined: defined.has(c) } });
+    out.push({ id: `hd_center_${c}`, name: CENTER_NAMES[c], category: 'centers', value: { center: c, defined: defined.has(c) } } satisfies HumanDesignComponent);
   }
   for (const ch of chart.channels) {
-    out.push({ id: `hd_channel_${ch.id}`, name: `Channel ${ch.id}`, category: 'channels', value: ch });
+    out.push({ id: `hd_channel_${ch.id}`, name: `Channel ${ch.id}`, category: 'channels', value: ch } satisfies HumanDesignComponent);
   }
   for (const side of ['personality', 'design'] as const) {
     for (const a of chart[side]) {
-      out.push({ id: `hd_${side}_${a.planet}`, name: `${side} ${a.planet}`, category: side, value: a });
+      out.push({ id: `hd_${side}_${a.planet}`, name: `${side} ${a.planet}`, category: side, value: a } satisfies HumanDesignActivationComponent<typeof side>);
     }
   }
   return out;
