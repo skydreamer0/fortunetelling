@@ -21,6 +21,8 @@
  */
 
 import { LunarUtil } from 'lunar-javascript';
+import type { Stem } from '../../rules/bazi/relations';
+import { tenGodOf } from '../../rules/bazi/tenGods';
 import { BaZiEngine } from '../../engines/BaZiEngine';
 import type { TimeContext, TimeFlag } from '../../time/types';
 import { categoryValues, componentValue, normalizeAsOf, timeContextToBirthData } from '../birthData';
@@ -132,20 +134,18 @@ const STEM_ELEMENTS: Readonly<Record<string, FiveElement>> = Object.freeze({
   甲: '木', 乙: '木', 丙: '火', 丁: '火', 戊: '土', 己: '土', 庚: '金', 辛: '金', 壬: '水', 癸: '水',
 });
 const YANG_STEMS = new Set(['甲', '丙', '戊', '庚', '壬']);
-const PRODUCES: Readonly<Record<FiveElement, FiveElement>> = Object.freeze({ 木: '火', 火: '土', 土: '金', 金: '水', 水: '木' });
-const CONTROLS: Readonly<Record<FiveElement, FiveElement>> = Object.freeze({ 木: '土', 火: '金', 土: '水', 金: '木', 水: '火' });
 const TEN_GODS = ['比肩', '劫財', '食神', '傷官', '偏財', '正財', '七殺', '正官', '偏印', '正印'] as const;
 
+// pillarStats is public and accepts string pillars. Preserve its legacy handling
+// of unknown stems; all valid ten-god derivation belongs to the shared rules.
 function tenGodFor(dayStem: string, stem: string): string {
   const de = STEM_ELEMENTS[dayStem];
   const te = STEM_ELEMENTS[stem];
-  const same = YANG_STEMS.has(dayStem) === YANG_STEMS.has(stem);
-  if (te === de) return same ? '比肩' : '劫財';
-  if (PRODUCES[de] === te) return same ? '食神' : '傷官';
-  if (PRODUCES[te] === de) return same ? '偏印' : '正印';
-  if (CONTROLS[de] === te) return same ? '偏財' : '正財';
-  if (CONTROLS[te] === de) return same ? '七殺' : '正官';
-  throw new Error(`Cannot derive ten god for ${dayStem}/${stem}`);
+  if (!de || !te) {
+    if (de === te) return '比肩';
+    throw new Error(`Cannot derive ten god for ${dayStem}/${stem}`);
+  }
+  return tenGodOf(dayStem as Stem, stem as Stem);
 }
 
 /** Day master, five-element and ten-god occurrence counts of a set of pillars (same method as BaZiEngine). */
