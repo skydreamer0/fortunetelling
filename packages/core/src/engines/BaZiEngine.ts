@@ -15,8 +15,10 @@ import { LunarUtil, Solar } from 'lunar-javascript';
 import { BaseEngine } from '../core/BaseEngine';
 import type { BirthData } from '../core/models/BirthData';
 import type { Component, SystemResult } from '../core/models/SystemResult';
+import type { FiveElement } from '../calculators/bazi/calculator';
+import type { BaziAvailableMetadata, BaziComponent, BaziNatalComponent, BaziUnavailableMetadata } from './baziTypes';
 
-const STEM_ELEMENTS: Readonly<Record<string, string>> = Object.freeze({
+const STEM_ELEMENTS: Readonly<Record<string, FiveElement>> = Object.freeze({
   甲: '木', 乙: '木', 丙: '火', 丁: '火', 戊: '土', 己: '土', 庚: '金', 辛: '金', 壬: '水', 癸: '水',
 });
 
@@ -116,7 +118,7 @@ export function buildBaziNatalComponents(
   const contextVisibleStems = [pillars.year[0]!, pillars.month[0]!, pillars.time[0]!];
   const hiddenStems: string[] = all.flatMap(gz => LunarUtil.ZHI_HIDE_GAN[gz[1]!]);
   const allStems = [...visibleStems, ...hiddenStems];
-  const elementCounts: Record<string, number> = { 木: 0, 火: 0, 土: 0, 金: 0, 水: 0 };
+  const elementCounts: Record<FiveElement, number> = { 木: 0, 火: 0, 土: 0, 金: 0, 水: 0 };
   const tenGodCounts = Object.fromEntries(TEN_GODS.map(name => [name, 0]));
 
   for (const stem of allStems) {
@@ -207,7 +209,7 @@ export function buildBaziNatalComponents(
         presenceConvention: 'visible-hidden-absent',
       },
     },
-  ];
+  ] satisfies BaziNatalComponent[];
 }
 
 /**
@@ -235,7 +237,7 @@ export class BaZiEngine extends BaseEngine {
       unavailable.meta = {
         unavailableReason: 'unknown-time',
         unavailableMessage: '出生時辰不確定，因此八字四柱、十神與大運未計算。',
-      };
+      } satisfies BaziUnavailableMetadata;
       return unavailable;
     }
     if (!this.asOf || typeof this.asOf !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(this.asOf)) {
@@ -284,7 +286,7 @@ export class BaZiEngine extends BaseEngine {
       asOfConvention: ASOF_CONVENTION,
       dayBoundary: 'eight-char sect=2',
       yunCalculation: 'getYun sect=2',
-    };
+    } satisfies BaziAvailableMetadata;
     for (const component of buildBaziNatalComponents(pillars)) result.add(component);
 
     const daYuns = yun.getDaYun(11);
@@ -310,7 +312,7 @@ export class BaZiEngine extends BaseEngine {
           isCurrent,
           ageConvention: 'nominal-year-age',
         },
-      });
+      } satisfies BaziComponent);
     }
 
     result.add({
@@ -321,7 +323,7 @@ export class BaZiEngine extends BaseEngine {
         year: asOfParts[0],
         ganZhi: asOfSolar.getLunar().getYearInGanZhiExact(),
       },
-    });
+    } satisfies BaziComponent);
 
     return result;
   }
