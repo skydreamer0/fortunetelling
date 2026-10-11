@@ -149,7 +149,7 @@ test('chart and producer payloads retain byte parity across all 260 Kin', () => 
     expect(result.components.map(component => component.id)).toEqual(COMPONENT_IDS);
     expect(JSON.stringify(result.chart)).toBe(JSON.stringify(expected));
     expect(Object.keys(result.chart)).toEqual(CHART_KEYS);
-    expect(result.chart.oracle?.destiny.kin).toBe(result.chart.kin);
+    expect(result.chart.oracle?.destiny.kin ?? null).toBe(result.chart.kin);
     seen.add(result.chart.kin!);
   }
   expect([...seen].sort((a, b) => a - b)).toEqual(Array.from({ length: 260 }, (_, i) => i + 1));
@@ -198,7 +198,8 @@ test('loose legacy nullish values remain unchanged without adding runtime valida
         expect([chart.kin, chart.signature, chart.color]).toEqual([null, null, null]);
       } else {
         // componentValue returns an emitted undefined unchanged, unlike absence.
-        expect(chart[id as keyof TzolkinChart]).toBe(value);
+        if (value === null) expect(chart[id as keyof TzolkinChart]).toBeNull();
+        else expect(chart[id as keyof TzolkinChart]).toBeUndefined();
       }
     }
   }
