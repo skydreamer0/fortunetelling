@@ -15,7 +15,7 @@ const PRODUCES: Readonly<Record<FiveElement, FiveElement>> = Object.freeze({ 木
 const CONTROLS: Readonly<Record<FiveElement, FiveElement>> = Object.freeze({ 木: '土', 火: '金', 土: '水', 金: '木', 水: '火' });
 const TEN_GODS = ['比肩', '劫財', '食神', '傷官', '偏財', '正財', '七殺', '正官', '偏印', '正印'] as const;
 
-function legacyTenGodFor(dayStem: string, stem: string): string {
+function legacyTenGodFor(dayStem: string, stem: string): (typeof TEN_GODS)[number] {
   const de = STEM_ELEMENTS[dayStem];
   const te = STEM_ELEMENTS[stem];
   const same = YANG_STEMS.has(dayStem) === YANG_STEMS.has(stem);
