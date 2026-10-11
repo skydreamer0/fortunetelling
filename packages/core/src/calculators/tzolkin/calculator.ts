@@ -10,33 +10,35 @@
  */
 
 import { DreamspellEngine } from '../../engines/DreamspellEngine';
+import type {
+  DreamspellKinValue,
+  DreamspellOracleKinValue,
+  DreamspellOracleValue,
+  DreamspellSealValue,
+  DreamspellToneValue,
+  DreamspellWavespellValue,
+} from '../../engines/dreamspellTypes';
 import type { TimeContext } from '../../time/types';
 import { componentValue } from '../birthData';
 import { profileDateToBirthData } from '../profileDateBirthData';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';
-import type { Castle, KinRef } from './tzolkin';
+import type { Castle } from './tzolkin';
 
-export interface TzolkinNamedKin extends KinRef {
-  /** e.g. '白電力巫師'. */
-  name: string;
-}
+/** Named oracle Kin, e.g. '白電力巫師'. */
+export interface TzolkinNamedKin extends DreamspellOracleKinValue {}
 
 export interface TzolkinChart {
   /** 1–260; null only if the engine failed. */
-  kin: number | null;
+  kin: DreamspellKinValue['kin'] | null;
   /** e.g. '電力巫師'. */
-  signature: string | null;
-  color: string | null;
-  tone: { number: number; name: string } | null;
-  seal: { number: number; name: string; color: string } | null;
-  wavespell: { number: number; startKin: number; seal: number; name: string } | null;
+  signature: DreamspellKinValue['signature'] | null;
+  color: DreamspellKinValue['color'] | null;
+  tone: DreamspellToneValue | null;
+  seal: DreamspellSealValue | null;
+  wavespell: DreamspellWavespellValue | null;
   castle: Castle | null;
   oracle: {
-    destiny: TzolkinNamedKin;
-    guide: TzolkinNamedKin;
-    analog: TzolkinNamedKin;
-    antipode: TzolkinNamedKin;
-    occult: TzolkinNamedKin;
+    [Role in keyof DreamspellOracleValue]: TzolkinNamedKin;
   } | null;
 }
 
@@ -44,7 +46,7 @@ export const TZOLKIN_CALCULATOR_VERSION = '0.1.1';
 
 /** Typed view of the engine components. */
 export function extractTzolkinChart(components: readonly Component[]): TzolkinChart {
-  const kin = componentValue<{ kin: number; signature: string; color: string }>(components, 'kin');
+  const kin = componentValue<DreamspellKinValue>(components, 'kin');
   return {
     kin: kin?.kin ?? null,
     signature: kin?.signature ?? null,
