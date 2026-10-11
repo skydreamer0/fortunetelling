@@ -283,7 +283,10 @@ function transitGatesRule(scope: Grain, samplingStepDays?: number): HdRule {
   };
 }
 
-/** @internal Explicit step only for sampling validation; production rules retain catalog defaults. */
+/** @internal Explicit-step factory for sampling characterization and spec-driven timelines.
+ * Uses the existing production rule; neither default nor overridden steps certify convergence (#63).
+ * Public timeline options additionally bound sampling work in the ephemeris spec resolver.
+ */
 export function humanDesignTransitRuleForSampling(scope: 'year' | 'month', stepDays: number): HdRule {
   if (!Number.isFinite(stepDays) || stepDays <= 0) throw new RangeError('sampling step must be positive and finite');
   return transitGatesRule(scope, stepDays);
