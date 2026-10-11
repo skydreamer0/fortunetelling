@@ -90,11 +90,53 @@ jobs:
       - name: Verify built public assets and PWA precache
         run: bun scripts/ci/assets.ts
 
+  native_calendar:
+    name: Native calendar (${{ matrix.os }})
+    needs: plan
+    if: needs.plan.outputs.mode == 'full'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-15-intel]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.3'
+      - run: bun install --frozen-lockfile
+      - run: bun scripts/ci/native-calendar.ts run native-calendar-output ${{ matrix.os }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-calendar-${{ matrix.os }}-${{ github.run_attempt }}
+          path: native-calendar-output/
+          if-no-files-found: error
+          retention-days: 1
+
+  native_compare:
+    name: Native calendar cross-OS equality
+    needs: [plan, native_calendar]
+    if: ${{ always() && needs.plan.outputs.mode == 'full' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.3'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: native-calendar-*-${{ github.run_attempt }}
+          path: native-calendar-artifacts
+      - run: bun scripts/ci/native-calendar.ts compare native-calendar-artifacts
+
   test:
     # Preserve the existing required-check display name. Only intentionally
     # excluded lanes may be skipped; missing, cancelled or failed work fails.
     name: Test & Build
-    needs: [plan, regression, lightweight, checks]
+    needs: [plan, regression, lightweight, checks, native_calendar, native_compare]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 3
@@ -108,7 +150,7 @@ jobs:
       - id: aggregate
         env:
           MODE: ${{ needs.plan.outputs.mode }}
-          RESULTS: '{"plan":"${{ needs.plan.result }}","regression":"${{ needs.regression.result }}","lightweight":"${{ needs.lightweight.result }}","checks":"${{ needs.checks.result }}"}'
+          RESULTS: '{"plan":"${{ needs.plan.result }}","regression":"${{ needs.regression.result }}","lightweight":"${{ needs.lightweight.result }}","checks":"${{ needs.checks.result }}","native_calendar":"${{ needs.native_calendar.result }}","native_compare":"${{ needs.native_compare.result }}"}'
         run: bun scripts/ci/pipeline.ts aggregate
 
   publish:
