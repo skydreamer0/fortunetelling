@@ -333,4 +333,3 @@ test('calculator emits byte-identical JavaScript to the frozen pre-refactor sour
   expect(after.length).toBeGreaterThan(0);
   expect(after).toBe(before);
 });
-
