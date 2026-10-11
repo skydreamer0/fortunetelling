@@ -17,7 +17,8 @@ import { EPHEMERIS_MOSHIER_WARNING, type Ayanamsa } from '../astro/ephemeris';
 import { ayanamsaValue } from '../astro/positions';
 import { flagWarnings, normalizeAsOf } from '../birthData';
 import type { TimeContext } from '../../time/types';
-import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';
+import type { Calculator, CalculatorConfig, ChartResult } from '../types';
+import type { JyotishComponent } from './componentTypes';
 import {
   dashaAt,
   divisionalChart,
@@ -132,9 +133,9 @@ export function buildJyotishChart(ctx: TimeContext, config: JyotishConfig = {}):
 }
 
 /** v1-style components (id / name / category / value) so the chart can be layered later. */
-export function jyotishComponents(chart: JyotishChart): Component[] {
+export function jyotishComponents(chart: JyotishChart): JyotishComponent[] {
   if (!chart.timeKnown) return [];
-  const out: Component[] = [
+  const out: JyotishComponent[] = [
     {
       id: 'ayanamsa',
       name: `Ayanamsa (${chart.settings.ayanamsa})`,
@@ -217,4 +218,3 @@ export const jyotishCalculator: Calculator<JyotishChart, JyotishConfig> = {
     };
   },
 };
-
