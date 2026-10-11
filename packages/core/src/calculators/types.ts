@@ -27,7 +27,8 @@ export interface Component {
   name: string;
   category: string;
   value: unknown;
-  meta?: Record<string, unknown>;
+  /** Same opaque metadata boundary as the v1 engine component. */
+  meta?: unknown;
 }
 
 /** What a calculator needs from the BirthProfile to produce its chart. */

@@ -29,8 +29,8 @@ export interface Component {
   category: string;
   /** The payload (any shape the engine needs) */
   value: any;
-  /** Optional extra metadata for the UI */
-  meta?: any;
+  /** Optional engine-specific metadata; narrow its shape before reading fields. */
+  meta?: unknown;
 }
 
 /** Loose component input accepted by {@link SystemResult.component}: only `category` is required. */
