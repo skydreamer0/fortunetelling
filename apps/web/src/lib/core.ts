@@ -13,7 +13,7 @@ export const analyzeCompatibility = (first: BirthInput, second: BirthInput): Com
 // V4 life events + backtesting: pure core functions, re-exported so components keep one bridge.
 export {
   BACKTEST_METHOD, INSUFFICIENT_SAMPLE, LIFE_EVENT_CATEGORIES, LIFE_EVENT_CATEGORY_LABELS,
-  buildBacktestTimeline, hashString, proposeWeights, runBacktest, suggestedDomains, validateLifeEvent,
+  buildBacktestTimeline, hashString, hasUnsupportedLifeEventVersion, proposeWeights, runBacktest, suggestedDomains, validateLifeEvent,
 } from '@fortune/core';
 export type {
   BacktestGroup, BacktestMetrics, BacktestResult, BacktestTimeline, LifeEvent, LifeEventCategory, TimeContext,

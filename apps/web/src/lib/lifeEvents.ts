@@ -5,7 +5,7 @@
  * every read/write guarded, corrupt data → empty.
  */
 
-import { hashString, validateLifeEvent, type LifeEvent } from './core';
+import { hashString, hasUnsupportedLifeEventVersion, validateLifeEvent, type LifeEvent } from './core';
 import { fingerprintOfReport } from './profileFile';
 import { safeLocalStorage } from './store';
 import type { Report } from '../model/types';
@@ -55,6 +55,10 @@ export function cleanEvents(items: unknown): LifeEvent[] {
     .slice(0, MAX_LIFE_EVENTS_PER_PROFILE);
 }
 
+function containsUnsupportedVersion(items: unknown): boolean {
+  return Array.isArray(items) && items.some(hasUnsupportedLifeEventVersion);
+}
+
 export function createLifeEventStore(storage: KeyValueStorage | undefined = safeLocalStorage()) {
   function read(): StoredData {
     try {
@@ -82,8 +86,14 @@ export function createLifeEventStore(storage: KeyValueStorage | undefined = safe
     return cleanEvents(read().profiles[profileKey]?.events);
   }
 
+  function hasUnsupportedVersion(profileKey: string): boolean {
+    return containsUnsupportedVersion(read().profiles[profileKey]?.events);
+  }
+
+  /** Replace supported v1 data only. Refuse opaque stored/input versions without writing. */
   function replace(profileKey: string, events: LifeEvent[]): boolean {
     const data = read();
+    if (containsUnsupportedVersion(data.profiles[profileKey]?.events) || containsUnsupportedVersion(events)) return false;
     const clean = cleanEvents(events);
     if (clean.length === 0) delete data.profiles[profileKey];
     else data.profiles[profileKey] = { events: clean };
@@ -93,6 +103,7 @@ export function createLifeEventStore(storage: KeyValueStorage | undefined = safe
   /**
    * Move the events under `fromKey` (the legacy key) to `toKey`. Events already under `toKey`
    * win on a same-id clash; nothing is dropped except events that were already invalid.
+   * Unsupported per-event versions in either profile block the move, preserving raw storage.
    * The old key is removed only after the new data is written. Returns true when something moved.
    */
   function migrate(fromKey: string, toKey: string): boolean {
@@ -100,6 +111,7 @@ export function createLifeEventStore(storage: KeyValueStorage | undefined = safe
     const data = read();
     const legacy = data.profiles[fromKey];
     if (!legacy) return false;
+    if (containsUnsupportedVersion(legacy.events) || containsUnsupportedVersion(data.profiles[toKey]?.events)) return false;
     const merged = cleanEvents([...(data.profiles[toKey]?.events ?? []), ...(Array.isArray(legacy.events) ? legacy.events : [])]);
     if (merged.length > 0) data.profiles[toKey] = { events: merged };
     delete data.profiles[fromKey];
@@ -108,6 +120,7 @@ export function createLifeEventStore(storage: KeyValueStorage | undefined = safe
 
   return {
     list,
+    hasUnsupportedVersion,
     replace,
     migrate,
     /** Add or replace (same id) one event. Invalid events are rejected. */
@@ -116,11 +129,22 @@ export function createLifeEventStore(storage: KeyValueStorage | undefined = safe
       return replace(profileKey, [...list(profileKey).filter(item => item.id !== event.id), event]);
     },
     remove(profileKey: string, id: string): boolean {
+      const data = read();
+      const events = data.profiles[profileKey]?.events;
+      if (containsUnsupportedVersion(events)) {
+        // Explicit deletion targets only this id; do not normalize the opaque survivors.
+        const remaining = events.filter(item => item === null || typeof item !== 'object' || item.id !== id);
+        if (remaining.length === 0) delete data.profiles[profileKey];
+        else data.profiles[profileKey] = { ...data.profiles[profileKey], events: remaining };
+        return write(data);
+      }
       return replace(profileKey, list(profileKey).filter(item => item.id !== id));
     },
     /** 「刪除全部」: every event of this profile. */
     clearProfile(profileKey: string): boolean {
-      return replace(profileKey, []);
+      const data = read();
+      delete data.profiles[profileKey];
+      return write(data);
     },
     /** Every life event of every profile on this device. */
     clearAll(): boolean {
