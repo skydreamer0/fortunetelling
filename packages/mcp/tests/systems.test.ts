@@ -10,6 +10,7 @@ import { monthSignalProvider, slimAnswer } from '../src/tools/questions';
 import baseline from './fixtures/systemsBaseline.json';
 import agreementDelta from './fixtures/systemsBaseline.v0.6.0.delta.json';
 import abstentionDelta from './fixtures/systemsBaseline.v0.7.0.delta.json';
+import { classifySystemsBaselineChange } from './systemsBaselineSemantics';
 function expectedHash(key: string): string {
   const delta = (agreementDelta.changes as Record<string, {before:string; after:string}>)[key];
   expect(delta.before).toBe((baseline as Record<string,string>)[key]);
@@ -32,6 +33,26 @@ afterAll(() => fx.cleanup());
 
 const aq = (extra: Record<string, unknown> = {}) =>
   fx.call('answer_question', { profileId: 'sky', category: 'vehicle_purchase', range: RANGE, asOf: ASOF, ...extra });
+
+/** Current-response negative controls, before legacy omissions. Not historical replay. */
+function assertBaselineAttribution(json: any) {
+  const caveatOnly = {
+    ...json,
+    caveats: [...json.caveats, { code: 'synthetic_baseline_control', message: 'Test-only caveat' }],
+  };
+  expect(classifySystemsBaselineChange(json, caveatOnly)).toEqual({
+    kind: 'caveats-only', changed: { data: false, caveats: true, versions: false, envelope: false },
+  });
+  // A new/unknown data field must never disappear behind a caveat or version update.
+  const mixed = {
+    ...caveatOnly,
+    versionsHash: `${json.versionsHash}-synthetic-control`,
+    data: { ...json.data, syntheticBaselineControl: true },
+  };
+  expect(classifySystemsBaselineChange(json, mixed)).toEqual({
+    kind: 'data-change', changed: { data: true, caveats: true, versions: true, envelope: false },
+  });
+}
 
 /** 移除這次新增的欄位與敏感度 caveat，用來和改動前的錄製比對。 */
 function stripNew(json: any) {
@@ -59,6 +80,7 @@ describe('不指定系統：保留舊基準並套用 D-045 字面差異', () => 
   test('answer_question detail:true 的完整結構（去掉新欄位）符合已審查 v0.6.0 字面差異', async () => {
     for (const [cat, start, end] of [['vehicle_purchase', '2027-01', '2027-12'], ['job_change', '2026-10', '2028-09']]) {
       const r = await fx.call('answer_question', { profileId: 'sky', category: cat, range: { start, end }, asOf: ASOF, detail: true });
+      assertBaselineAttribution(r.json);
       expect(sha((await expandIds(stripNew(r.json))).data)).toBe(expectedHash(`aq-detail|${cat}`));
     }
   }, 120_000);
@@ -79,6 +101,7 @@ describe('不指定系統：保留舊基準並套用 D-045 字面差異', () => 
     ];
     for (const [name, args, extra, noYears] of cases) {
       const r = await fx.call(name, { ...args, ...extra });
+      assertBaselineAttribution(r.json);
       const j = await expandIds(stripNew(r.json));
       if (noYears) {
         delete j.data.years;

@@ -1,0 +1,236 @@
+{
+  "schemaVersion": 1,
+  "issue": "https://github.com/skydreamer0/fortunetelling/issues/20",
+  "auditedBase": "c48d351d9df7daee369757a251d08280012837fc",
+  "evidenceKind": "source-and-recorded-digests",
+  "historicalReplay": "NOT_RUN",
+  "limitations": [
+    "No historical MCP response payloads are stored here or reconstructed from digests.",
+    "Digest changes are observations, not automatic permission to rerecord baselines.",
+    "Source classifications describe the cited source changes; classifier tests use explicitly synthetic or current response mutations, not historical replay."
+  ],
+  "legacyHashContract": {
+    "aq-detail": "sha256(JSON.stringify(data)) after the existing stripNew and short-ID expansion",
+    "get_timeline/get_consensus": "sha256(JSON.stringify(canonicalStringify(envelope))) after the existing stripNew, short-ID expansion and versionsHash substitution",
+    "noYears": "Only the three existing |noYears keys also omit data.years/data.yearTable and use versionsHash='X'; no new omission is introduced"
+  },
+  "preservedFiles": [
+    {
+      "file": "systemsBaseline.json",
+      "sha256": "7e228c3f364056066ca214924d538195c469345cd62676148a429db04324bcd8"
+    },
+    {
+      "file": "systemsBaseline.v0.6.0.delta.json",
+      "sha256": "00b3eb1877bf03fe5e2fe958e9afc0df51fc27049a47fdfbc739b020be18e701"
+    },
+    {
+      "file": "systemsBaseline.v0.7.0.delta.json",
+      "sha256": "ae35a02ea1291925960218a40b0fe28c0c5341d490dbc6c471d17f258c261b77"
+    }
+  ],
+  "transitions": [
+    {
+      "id": "M5-03",
+      "parent": "16eed91b84f103cfc946d2e12fd6725871ea6701",
+      "commit": "129dab4f4f900ae860086aa6555f87c0bfadfe88",
+      "beforeBlob": "e4530e0119bf0776686ca52fabb6e820fa285dfb",
+      "afterBlob": "ce81340569296491bd1780a7b7cd22f6cebd9752",
+      "sourceClassification": "caveats-and-eligibility",
+      "scopeNote": "M5-03 removes the humanDesign experimental caveat AND changes EXPERIMENTAL_SYSTEM_IDS / verifiedOnly / sensitivity eligibility. Two projected answer data digests are unchanged; this does not make the whole commit caveat-only, and the six envelope digests cannot identify which payload fields changed.",
+      "baselineSources": {
+        "before": "https://github.com/skydreamer0/fortunetelling/blob/16eed91b84f103cfc946d2e12fd6725871ea6701/packages/mcp/tests/fixtures/systemsBaseline.json",
+        "after": "https://github.com/skydreamer0/fortunetelling/blob/129dab4f4f900ae860086aa6555f87c0bfadfe88/packages/mcp/tests/fixtures/systemsBaseline.json"
+      },
+      "sourceFiles": [
+        "https://github.com/skydreamer0/fortunetelling/blob/129dab4f4f900ae860086aa6555f87c0bfadfe88/packages/core/src/questions/engine.ts",
+        "https://github.com/skydreamer0/fortunetelling/blob/129dab4f4f900ae860086aa6555f87c0bfadfe88/packages/mcp/src/envelope.ts",
+        "https://github.com/skydreamer0/fortunetelling/blob/129dab4f4f900ae860086aa6555f87c0bfadfe88/packages/mcp/tests/systems.test.ts"
+      ],
+      "entries": [
+        {
+          "beforeKey": "aq-detail|vehicle_purchase",
+          "afterKey": "aq-detail|vehicle_purchase",
+          "before": "038af138f44a27aae83bdd2c2fac15a0ae43b60fd8fcb49970f8fa404c36f59d",
+          "after": "038af138f44a27aae83bdd2c2fac15a0ae43b60fd8fcb49970f8fa404c36f59d"
+        },
+        {
+          "beforeKey": "aq-detail|job_change",
+          "afterKey": "aq-detail|job_change",
+          "before": "f25c6b673c009440c24315eb14043fe8d7a1458c0f152a0ba9c580895f4af328",
+          "after": "f25c6b673c009440c24315eb14043fe8d7a1458c0f152a0ba9c580895f4af328"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}",
+          "before": "c8d57f7d231c7ba52a990b5cc329c0f0471f8ee180a70e03e04a3a16ad366512",
+          "after": "540d2992658e56da1b2e0011cb32ca8c3521023ba517957e9dae08a1367ff0f9"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}",
+          "before": "550c01729b036673efe32ccdc2d5e761906deb08169f150c1ab9450977d267a2",
+          "after": "646bd01405cc9c0babb8bfb9c978bf90773988eb53d9e9ca6a6dcd6806f89d84"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\",\"detail\":true}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\",\"detail\":true}",
+          "before": "79f7e87dc4351dd5593d67c901eb235d4761dd92255bbe48c06fb530180539c5",
+          "after": "5d0d45c4e2c2ea6d5fd71d66e06f6d7ec4582129c0c6f43feaafc528d1163a63"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}",
+          "before": "f97dc55ca2e4c9ffb06d3baf029966db082f7dd6d2b31a36a26b0a9a1990b51e",
+          "after": "f9b43a71b5b68a852a956554e0f3035f17aec89e0d4464811e6a19323dee6538"
+        },
+        {
+          "beforeKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}",
+          "afterKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}",
+          "before": "1ec471653c5b10256ce59b9a144dfdb8565e61717d79e58f85c3bdd871a38203",
+          "after": "b531ba6067124c40600a8aae71f6b8228d5dd577aaf75caa90c1b922d2aaff35"
+        },
+        {
+          "beforeKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}",
+          "afterKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}",
+          "before": "e9212812a6e84e4532cdfa9a5fa3df741e216454665736fa7449c9be2e0a2e84",
+          "after": "1bfda44fdc5d387fe9e2161be541865255da05713e8128b6243d12cee358b414"
+        }
+      ]
+    },
+    {
+      "id": "M5-04",
+      "parent": "2fdf841dbee27e5533536201180e369a03226fa6",
+      "commit": "caec7dd3ed0fc55eebdc528667b4a33759957587",
+      "beforeBlob": "ce81340569296491bd1780a7b7cd22f6cebd9752",
+      "afterBlob": "e8395e22e56da9ec6a8fe09368df7ae2ce76b343",
+      "sourceClassification": "calculation-data-change",
+      "scopeNote": "M5-04 source changes humanDesign from repeated natal rules to transit.gates and bumps its catalog v1 to v2. All eight recorded digests change. The historical fixture comment reports a non-HD perSystem comparison; that report has not been rerun here.",
+      "baselineSources": {
+        "before": "https://github.com/skydreamer0/fortunetelling/blob/2fdf841dbee27e5533536201180e369a03226fa6/packages/mcp/tests/fixtures/systemsBaseline.json",
+        "after": "https://github.com/skydreamer0/fortunetelling/blob/caec7dd3ed0fc55eebdc528667b4a33759957587/packages/mcp/tests/fixtures/systemsBaseline.json"
+      },
+      "sourceFiles": [
+        "https://github.com/skydreamer0/fortunetelling/blob/caec7dd3ed0fc55eebdc528667b4a33759957587/packages/core/src/calculators/humanDesign/catalog.json",
+        "https://github.com/skydreamer0/fortunetelling/blob/caec7dd3ed0fc55eebdc528667b4a33759957587/packages/core/src/calculators/humanDesign/rules.ts",
+        "https://github.com/skydreamer0/fortunetelling/blob/caec7dd3ed0fc55eebdc528667b4a33759957587/packages/core/src/timeline/buildTimeline.ts"
+      ],
+      "entries": [
+        {
+          "beforeKey": "aq-detail|vehicle_purchase",
+          "afterKey": "aq-detail|vehicle_purchase",
+          "before": "038af138f44a27aae83bdd2c2fac15a0ae43b60fd8fcb49970f8fa404c36f59d",
+          "after": "7be2a2a816a6c57bb80a7318eb77a4d910545d23c2f07b33c994d6aee0ea0608"
+        },
+        {
+          "beforeKey": "aq-detail|job_change",
+          "afterKey": "aq-detail|job_change",
+          "before": "f25c6b673c009440c24315eb14043fe8d7a1458c0f152a0ba9c580895f4af328",
+          "after": "6adbb80dd13673992f0041d6abb04bdd096f1d597cb0a217fc47ca666e3b3620"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}",
+          "before": "540d2992658e56da1b2e0011cb32ca8c3521023ba517957e9dae08a1367ff0f9",
+          "after": "0b7188195a278a9aefb5b899f588dc2db901cf423a95f0054e2ac5b558853528"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}",
+          "before": "646bd01405cc9c0babb8bfb9c978bf90773988eb53d9e9ca6a6dcd6806f89d84",
+          "after": "fecaa88ceea1262f059dc93870c211defa6d82467e6425f0e8a2125fdc8f329c"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\",\"detail\":true}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\",\"detail\":true}",
+          "before": "5d0d45c4e2c2ea6d5fd71d66e06f6d7ec4582129c0c6f43feaafc528d1163a63",
+          "after": "0c5ad187ba7c703f88882df0090a6a42bd8d4819027022c45bf25fa2c6883cc7"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}",
+          "before": "f9b43a71b5b68a852a956554e0f3035f17aec89e0d4464811e6a19323dee6538",
+          "after": "004371be645cf2120ca0b1170afa7b86aa3680d6b974c084e2c362abd9b944dd"
+        },
+        {
+          "beforeKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}",
+          "afterKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}",
+          "before": "b531ba6067124c40600a8aae71f6b8228d5dd577aaf75caa90c1b922d2aaff35",
+          "after": "110d6f05a8f3441ca6f98307683b924998584be505a80f7ca16428238fbbaabf"
+        },
+        {
+          "beforeKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}",
+          "afterKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}",
+          "before": "1bfda44fdc5d387fe9e2161be541865255da05713e8128b6243d12cee358b414",
+          "after": "a6b65bc41e0784624700830245dbd443c427a74af54447c0a35ef19b7f90588b"
+        }
+      ]
+    },
+    {
+      "id": "short-ids-and-year-table",
+      "parent": "3a91b975c651801075cb0df5ebc932c88050b886",
+      "commit": "33743600253a44bc178d2dc37b5ec1d5c8ac82d8",
+      "beforeBlob": "e8395e22e56da9ec6a8fe09368df7ae2ce76b343",
+      "afterBlob": "347a823949b6875a79453e3e45dbd6803c9eb7cf",
+      "sourceClassification": "baseline-format-normalization",
+      "scopeNote": "This records only the baseline projection change in 33743600, not a claim that the entire commit is formatting-only. Three timeline keys change to |noYears; five other digests remain equal after the legacy ID-expansion policy. Comparing hashes across the three changed scopes cannot establish year-data equivalence.",
+      "baselineSources": {
+        "before": "https://github.com/skydreamer0/fortunetelling/blob/3a91b975c651801075cb0df5ebc932c88050b886/packages/mcp/tests/fixtures/systemsBaseline.json",
+        "after": "https://github.com/skydreamer0/fortunetelling/blob/33743600253a44bc178d2dc37b5ec1d5c8ac82d8/packages/mcp/tests/fixtures/systemsBaseline.json"
+      },
+      "sourceFiles": [
+        "https://github.com/skydreamer0/fortunetelling/blob/33743600253a44bc178d2dc37b5ec1d5c8ac82d8/packages/mcp/tests/systems.test.ts",
+        "https://github.com/skydreamer0/fortunetelling/blob/33743600253a44bc178d2dc37b5ec1d5c8ac82d8/packages/mcp/src/tools/questions.ts"
+      ],
+      "entries": [
+        {
+          "beforeKey": "aq-detail|vehicle_purchase",
+          "afterKey": "aq-detail|vehicle_purchase",
+          "before": "7be2a2a816a6c57bb80a7318eb77a4d910545d23c2f07b33c994d6aee0ea0608",
+          "after": "7be2a2a816a6c57bb80a7318eb77a4d910545d23c2f07b33c994d6aee0ea0608"
+        },
+        {
+          "beforeKey": "aq-detail|job_change",
+          "afterKey": "aq-detail|job_change",
+          "before": "6adbb80dd13673992f0041d6abb04bdd096f1d597cb0a217fc47ca666e3b3620",
+          "after": "6adbb80dd13673992f0041d6abb04bdd096f1d597cb0a217fc47ca666e3b3620"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}|noYears",
+          "before": "0b7188195a278a9aefb5b899f588dc2db901cf423a95f0054e2ac5b558853528",
+          "after": "0855877a48efb689eb8cdcdd393b9c9efe2ef4ede5dc89e1b2a3e0da4a1158e4"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\"}|noYears",
+          "before": "fecaa88ceea1262f059dc93870c211defa6d82467e6425f0e8a2125fdc8f329c",
+          "after": "e6bb4d9db626fa91f22c4eea481139d4f0b3dd38e6dabe04a6857a28b0da940c"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\",\"detail\":true}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-12\"},\"domain\":\"wealth\",\"detail\":true}",
+          "before": "0c5ad187ba7c703f88882df0090a6a42bd8d4819027022c45bf25fa2c6883cc7",
+          "after": "0c5ad187ba7c703f88882df0090a6a42bd8d4819027022c45bf25fa2c6883cc7"
+        },
+        {
+          "beforeKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}",
+          "afterKey": "get_timeline|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"months\":{\"start\":\"2027-01\",\"end\":\"2027-03\"}}|noYears",
+          "before": "004371be645cf2120ca0b1170afa7b86aa3680d6b974c084e2c362abd9b944dd",
+          "after": "8cee054eb3a5623928e5c59fa2bf044d2ae555aa17e5946eb3b58dacf3a177fc"
+        },
+        {
+          "beforeKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}",
+          "afterKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\"}",
+          "before": "110d6f05a8f3441ca6f98307683b924998584be505a80f7ca16428238fbbaabf",
+          "after": "110d6f05a8f3441ca6f98307683b924998584be505a80f7ca16428238fbbaabf"
+        },
+        {
+          "beforeKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}",
+          "afterKey": "get_consensus|{\"profileId\":\"sky\",\"asOf\":\"2026-09-30\",\"detail\":true}",
+          "before": "a6b65bc41e0784624700830245dbd443c427a74af54447c0a35ef19b7f90588b",
+          "after": "a6b65bc41e0784624700830245dbd443c427a74af54447c0a35ef19b7f90588b"
+        }
+      ]
+    }
+  ]
+}
