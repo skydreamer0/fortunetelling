@@ -16,6 +16,7 @@
 import { EPHEMERIS_MOSHIER_WARNING, type Ayanamsa } from '../astro/ephemeris';
 import { ayanamsaValue } from '../astro/positions';
 import { flagWarnings, normalizeAsOf } from '../birthData';
+import { resolveJyotishChartSettings } from '../../core/ephemerisSettings';
 import type { TimeContext } from '../../time/types';
 import type { Calculator, CalculatorConfig, ChartResult } from '../types';
 import type { JyotishComponent } from './componentTypes';
@@ -92,12 +93,7 @@ function emptyChart(settings: JyotishChart['settings'], asOf: string, asOfJd: nu
 export function buildJyotishChart(ctx: TimeContext, config: JyotishConfig = {}): JyotishChart {
   const { ymd } = normalizeAsOf(config.asOf, 'Jyotish');
   const asOfJd = isoToJd(`${ymd}T00:00:00Z`);
-  const settings: JyotishChart['settings'] = {
-    ayanamsa: config.ayanamsa ?? 'lahiri',
-    node: config.node ?? 'mean',
-    dashaYearDays: config.dashaYearDays ?? 365.25,
-    houseSystem: 'whole_sign',
-  };
+  const settings = resolveJyotishChartSettings(config);
   if (ctx.jd === null) return emptyChart(settings, ymd, asOfJd);
   requireEphemeris();
 

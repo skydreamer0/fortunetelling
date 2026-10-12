@@ -16,6 +16,7 @@
  */
 
 import type { TimeContext } from '../time/types';
+import { createAsyncEphemerisCalculationSpec, type AsyncEphemerisCalculationOptions } from '../core/asyncEphemerisCalculationSpec';
 import { initEphemeris } from './astro/index';
 import { humanDesignCalculator } from './humanDesign/calculator';
 import { jyotishCalculator } from './jyotish/calculator';
@@ -34,12 +35,25 @@ export const EPHEMERIS_CALCULATORS: readonly EphemerisCalculatorEntry[] = Object
   { calculator: jyotishCalculator as Calculator<unknown>, verified: false },
 ]);
 
-/** `await initEphemeris()`, then run every ephemeris calculator (one ChartResult each, registry order). */
+/**
+ * Capture effective settings before `await initEphemeris()`, then run every
+ * ephemeris calculator (one ChartResult each, registry order). The shared spec
+ * selects settings only: its aes1 hash is not this chart run's identity.
+ */
 export async function runEphemerisCalculators(
   ctx: TimeContext,
-  { asOf, name }: RunCalculatorsOptions,
+  { asOf, name, ephemeris }: RunCalculatorsOptions & { ephemeris?: AsyncEphemerisCalculationOptions },
 ): Promise<ChartResult<unknown>[]> {
+  const spec = createAsyncEphemerisCalculationSpec(ephemeris);
+  // A Date is mutable, unlike the primitive setting choices. Detach it too.
+  const selectedAsOf = asOf instanceof Date ? new Date(asOf.getTime()) : asOf;
+  const common = name === undefined ? { asOf: selectedAsOf } : { asOf: selectedAsOf, name };
+  const jyotish = {
+    ...common, ...spec.identity.settings.jyotish,
+    dashaYearDays: spec.identity.conventions.jyotish.dashaYearDays,
+  };
+  const humanDesign = { ...common, node: spec.identity.settings.humanDesign.node };
   await initEphemeris();
   return EPHEMERIS_CALCULATORS.map(({ calculator }) =>
-    calculator.calculate(ctx, name === undefined ? { asOf } : { asOf, name }));
+    calculator.calculate(ctx, calculator.id === 'jyotish' ? jyotish : humanDesign));
 }
