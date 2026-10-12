@@ -1,0 +1,48 @@
+/** R4 current-base checkout-root regression candidate. Historical R2/R3 bytes are preserved.
+ * Requires an explicitly authorized disposable clean checkout, existing Bun
+ * 1.4.3, and no installation. Does not clean up a failing attempt automatically.
+ * Outer command: bun --no-install test /absolute/r4/checkout-root-guard.test.ts
+ */
+import { expect, test } from 'bun:test';
+import { lstatSync, realpathSync } from 'node:fs';
+import { isAbsolute, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const sourceSha = 'f61a6c281c4b6a0a155de1ee2946b0c576c85ee9';
+const canonicalKey = (p: string) => process.platform === 'win32' ? resolve(p).toLowerCase() : resolve(p);
+function absent(path: string): boolean {
+  try { lstatSync(path); return false; }
+  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return true; throw error; }
+}
+test('nested REPO and checkout-sibling OUT reject before creating any output', () => {
+  const input = process.env.FORTUNE54_REPO;
+  if (!input || !isAbsolute(input)) throw new Error('Set FORTUNE54_REPO to the authorized disposable checkout root');
+  const root = realpathSync.native(input);
+  function git(...args: string[]): string {
+    const p = Bun.spawnSync(['git', '-C', root, ...args], { stdout: 'pipe', stderr: 'pipe' });
+    if (p.exitCode !== 0) throw new Error(new TextDecoder().decode(p.stderr));
+    return new TextDecoder().decode(p.stdout).trim();
+  }
+  expect(process.versions.bun).toBe('1.4.3');
+  expect(canonicalKey(realpathSync.native(git('rev-parse', '--show-toplevel')))).toBe(canonicalKey(root));
+  expect(git('rev-parse', 'HEAD')).toBe(sourceSha);
+  const before = git('status', '--porcelain');
+  expect(before).toBe('');
+  const nested = join(root, 'packages', 'core');
+  expect(lstatSync(nested).isDirectory()).toBe(true);
+  const output = join(root, `fortune54-r4-must-not-exist-${crypto.randomUUID()}`);
+  expect(absent(output)).toBe(true);
+  const candidate = fileURLToPath(new URL('./ny-dst-oracle.test.ts', import.meta.url));
+  const child = Bun.spawnSync([process.execPath, '--no-install', 'test', candidate], {
+    cwd: root, env: { ...process.env, FORTUNE54_REPO: nested, FORTUNE54_OUT: output },
+    stdout: 'pipe', stderr: 'pipe', timeout: 30000,
+  });
+  const log = new TextDecoder().decode(child.stdout) + new TextDecoder().decode(child.stderr);
+  expect(child.exitCode).not.toBe(0);
+  expect(log).toContain('FORTUNE54_REPO must be the verified Git checkout root; no output was created');
+  // No directory means neither initial receipt nor any descendant could have
+  // been created. Check the checkout also stayed clean. On failure, stop and
+  // report the actual path; do not silently delete evidence or retry elsewhere.
+  if (!absent(output)) throw new Error(`Guard regression created forbidden output: ${output}`);
+  expect(git('status', '--porcelain')).toBe(before);
+}, 45000);
