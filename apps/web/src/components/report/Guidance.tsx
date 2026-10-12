@@ -1,4 +1,4 @@
-/** 捌 建議 — low-stakes balancing prompts (color, direction, numbers). */
+/** 捌 建議 — count-only elements, plus separate direction and number reminders. */
 
 import type { Report } from '../../model/types';
 import { EmptyNote, Section, Sources } from '../ui/primitives';
@@ -6,24 +6,20 @@ import { EmptyNote, Section, Sources } from '../ui/primitives';
 export function Guidance({ report }: { report: Report }) {
   const guidance = report.insights?.guidance;
   return (
-    <Section id="ch-guidance" index="捌" title="建議" lede="只作為生活上的小提醒；色彩、方位與數字不是結果保證。">
-      {!guidance ? <EmptyNote>平衡建議資料不足。</EmptyNote> : (
+    <Section id="ch-guidance" index="捌" title="建議" lede="五行只描述出現次數；八宅方位與數字只作為生活提醒，不是結果保證。">
+      {!guidance ? <EmptyNote>建議資料不足。</EmptyNote> : (
         <>
           <div className="guidance">
             <article className="guidance__item">
-              <h3 className="subhead">五行平衡</h3>
+              <h3 className="subhead">五行出現次數</h3>
               {guidance.balance ? (
                 <>
-                  <p className="guidance__lead">從「{guidance.balance.element}」開始小幅調整</p>
-                  <p>{guidance.balance.text}</p>
-                  <dl className="pairs">
-                    <div><dt>色彩</dt><dd>{guidance.balance.color}</dd></div>
-                    <div><dt>方位</dt><dd>{guidance.balance.direction}</dd></div>
-                    <div><dt>習慣</dt><dd>{guidance.balance.habit}</dd></div>
-                  </dl>
+                  <p>{report.insights.version === 2
+                    ? guidance.balance.text
+                    : '此報告僅有五行出現次數資料，未判定旺衰或喜忌，不能據此提出補缺建議。'}</p>
                   <p className="footnote">※ {guidance.balance.limitation}</p>
                 </>
-              ) : <p>時辰資料不足，未判定五行調整方向。</p>}
+              ) : <p>可用的五行出現次數資料不足，未判定旺衰或喜忌，不能據此提出補缺建議。</p>}
             </article>
             <article className="guidance__item">
               <h3 className="subhead">八宅四吉方</h3>

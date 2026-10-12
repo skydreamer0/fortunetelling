@@ -1,12 +1,12 @@
 /**
  * @fileoverview Re-groups existing engine output around user questions:
- * life domains, the current year, and non-prescriptive balancing suggestions.
+ * life domains, the current year, and count-only element observations.
  */
 
 import type { Component, SystemResultLike } from '../core/models/SystemResult';
 import type { Radar } from './RadarBuilder';
 
-export const INSIGHT_VERSION = 1;
+export const INSIGHT_VERSION = 2;
 
 /** Reference to the engine component an insight was derived from. */
 export interface InsightSource {
@@ -34,14 +34,6 @@ const TAI_SUI_PAIRS = Object.freeze({
   刑: ['子卯', '寅巳', '巳申', '申寅', '丑戌', '戌未', '未丑'],
   害: ['子未', '丑午', '寅巳', '卯辰', '申亥', '酉戌'],
   六合: ['子丑', '寅亥', '卯戌', '辰酉', '巳申', '午未'],
-});
-
-const ELEMENT_GUIDANCE: Readonly<Record<string, { color: string; direction: string; habit: string }>> = Object.freeze({
-  木: { color: '青綠、木色', direction: '東方', habit: '替成長目標留出固定時段，並用散步或伸展切換狀態' },
-  火: { color: '朱紅、暖橙', direction: '南方', habit: '安排適量日照、表達或創作活動，讓想法有可見出口' },
-  土: { color: '米黃、陶土色', direction: '中央／居所', habit: '用規律作息、收納與可完成的小任務建立安定感' },
-  金: { color: '白、銀灰', direction: '西方', habit: '精簡物品與待辦，替界線、規則與決策留下清楚文字' },
-  水: { color: '深藍、墨色', direction: '北方', habit: '保留安靜反思與彈性移動的時間，避免行程排得過滿' },
 });
 
 function engineById(engines: Engines, id: string): SystemResultLike | undefined {
@@ -213,13 +205,16 @@ function buildAnnual(engines: Engines, asOf: unknown) {
   };
 }
 
-/** Suggestion for the least-represented element (occurrence count). */
+/** Count-only observation. Legacy suggestion fields stay empty for shape compatibility. */
 export interface BalanceSuggestion {
   element: string;
   tiedElements: string[];
   count: number;
+  /** @deprecated Occurrence counts cannot select a recommended color. Always empty. */
   color: string;
+  /** @deprecated Occurrence counts cannot select a recommended direction. Always empty. */
   direction: string;
+  /** @deprecated Occurrence counts cannot select a recommended habit. Always empty. */
   habit: string;
   text: string;
   source: InsightSource | null;
@@ -239,14 +234,19 @@ function buildGuidance(engines: Engines) {
   if (elements?.value?.counts) {
     const counts = Object.entries(elements.value.counts as Record<string, number>);
     const minimum = Math.min(...counts.map(([, count]) => count));
-    const weakest = counts.filter(([, count]) => count === minimum).map(([element]) => element);
-    const element = weakest[0];
+    const leastFrequent = counts.filter(([, count]) => count === minimum).map(([element]) => element);
+    const element = leastFrequent[0];
+    const countText = leastFrequent.length === counts.length
+      ? `五行出現次數皆為 ${minimum} 次`
+      : `五行出現次數中${leastFrequent.join('、')}最少（${minimum} 次）`;
     balance = {
       element,
-      tiedElements: weakest,
+      tiedElements: leastFrequent,
       count: minimum,
-      ...ELEMENT_GUIDANCE[element],
-      text: `五行出現次數中${weakest.join('、')}最低。若想平衡「${element}」所象徵的面向，可以從色彩、空間方位與日常節奏做小幅嘗試。`,
+      color: '',
+      direction: '',
+      habit: '',
+      text: `${countText}。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。`,
       source: source('bazi', elements),
       limitation: elements.value.limitation,
     };
@@ -272,13 +272,13 @@ function buildGuidance(engines: Engines) {
       source('numerology', lifePath), source('numerology', personalYear),
     ]),
     limitations: [
-      '顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。',
+      '八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。',
       '五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。',
     ],
   };
 }
 
-/** Report `insights`: life domains, the current year and balancing suggestions. */
+/** Report `insights`: life domains, the current year and count-only observations. */
 export interface Insights {
   version: number;
   domains: ReturnType<typeof buildDomains>;

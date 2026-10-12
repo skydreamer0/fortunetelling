@@ -172,6 +172,8 @@ export interface Report {
   scoringRules: { totalRules: number; byRadarType: Record<string, ScoringRule[]> };
   summary: { sentences: SummarySentence[]; limitations: string[] };
   insights: {
+    /** Absent on legacy saved reports; version 2 uses count-only element text. */
+    version?: number;
     domains: Domain[];
     annual: null | {
       year: number;
