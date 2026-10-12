@@ -5,7 +5,7 @@
  * every read/write guarded, corrupt data → empty.
  */
 
-import { hashString, hasUnsupportedLifeEventVersion, validateLifeEvent, type LifeEvent } from './core';
+import { hashString, validateLifeEvent, type LifeEvent } from './core';
 import { fingerprintOfReport } from './profileFile';
 import { safeLocalStorage } from './store';
 import type { Report } from '../model/types';
@@ -56,7 +56,11 @@ export function cleanEvents(items: unknown): LifeEvent[] {
 }
 
 function containsUnsupportedVersion(items: unknown): boolean {
-  return Array.isArray(items) && items.some(hasUnsupportedLifeEventVersion);
+  // Inspect raw records before cleaning without adding a public core API. Keep the
+  // same v1 marker rule as validateLifeEvent; the version matrix tests cover both.
+  return Array.isArray(items) && items.some(item => typeof item === 'object' && item !== null
+    && Object.prototype.hasOwnProperty.call(item, 'schemaVersion')
+    && item.schemaVersion !== 1);
 }
 
 export function createLifeEventStore(storage: KeyValueStorage | undefined = safeLocalStorage()) {

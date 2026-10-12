@@ -86,7 +86,7 @@ function validDate(date: unknown): boolean {
 }
 
 /** Versionless events and numeric 1 are legacy v1. No coercion or future-version downgrade. */
-export function hasUnsupportedLifeEventVersion(input: unknown): boolean {
+function hasUnsupportedLifeEventVersion(input: unknown): boolean {
   return typeof input === 'object' && input !== null
     && Object.prototype.hasOwnProperty.call(input, 'schemaVersion')
     && (input as Record<string, unknown>).schemaVersion !== 1;

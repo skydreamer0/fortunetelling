@@ -3,6 +3,7 @@ import { validateLifeEvent, type LifeEvent } from '../src/backtest/lifeEvents';
 import { runBacktest } from '../src/backtest/runBacktest';
 import { DOMAINS } from '../src/signals/types';
 import type { BacktestTimeline } from '../src/backtest/timeline';
+import * as core from '../src/index';
 
 const event: LifeEvent = { id: 'synthetic', date: '2026-06', category: 'other', domains: ['career'], confidence: 'certain' };
 const timeline: BacktestTimeline = {
@@ -12,6 +13,10 @@ const timeline: BacktestTimeline = {
     score: domain === 'career' && year === 2026 ? 100 : 0, perSystem: {}, perRule: {},
   }])) as BacktestTimeline['cells'][number]['domains'] })),
 };
+test('version rejection does not introduce a public runtime helper API', () => {
+  expect('hasUnsupportedLifeEventVersion' in core).toBe(false);
+  expect(core.validateLifeEvent({ ...event, schemaVersion: 2 }).ok).toBe(false);
+});
 for (const schemaVersion of [2, 0, 99, null, '1', undefined]) {
   test(`unsupported own schemaVersion ${String(schemaVersion)} is rejected, not scored, and not mutated`, () => {
     const input = Object.freeze({ ...event, schemaVersion, labelStatus: 'confirmed_negative' });
