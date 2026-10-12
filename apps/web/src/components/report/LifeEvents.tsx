@@ -119,6 +119,8 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
   const timeline = computed?.report === report ? computed.timeline : null;
   const [computing, setComputing] = useState(false);
   const backtestable = canBacktest(report);
+  const unsupportedStoredVersion = store.hasUnsupportedVersion(profileKey)
+    || store.hasUnsupportedVersion(legacyProfileKeyOf(report.input));
 
   const result = useMemo(
     () => (timeline && events.length > 0 ? runBacktest(events, timeline, { seed: profileKey }) : null),
@@ -148,8 +150,8 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
       setError(null);
       refresh();
     } else {
-      // Storage unavailable (e.g. private mode): keep the event in memory for this page only.
-      setError('無法寫入這個瀏覽器的儲存空間（可能是私密瀏覽模式），事件只保留到關閉頁面。');
+      // A blocked version or unavailable storage: keep the event in memory for this page only.
+      setError('事件未儲存（可能有不支援的資料版本，或瀏覽器儲存空間不可用），這次變更只保留到關閉頁面。');
       setEvents(current => cleanEvents([...current.filter(item => item.id !== checked.value.id), checked.value]));
     }
     setForm(emptyForm());
@@ -165,14 +167,20 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
   }
 
   function remove(id: string) {
-    store.remove(profileKey, id);
+    if (!store.remove(profileKey, id)) {
+      setError('刪除未儲存：無法寫入這個瀏覽器的儲存空間。');
+      return;
+    }
     setEvents(current => current.filter(item => item.id !== id));
     if (form.id === id) setForm(emptyForm());
   }
 
   function removeAll() {
     if (typeof window !== 'undefined' && !window.confirm('刪除這份命盤在本機的全部人生事件？此動作無法復原。')) return;
-    store.clearProfile(profileKey);
+    if (!store.clearProfile(profileKey)) {
+      setError('刪除未儲存：無法寫入這個瀏覽器的儲存空間。');
+      return;
+    }
     setEvents([]);
     setForm(emptyForm());
   }
@@ -204,6 +212,11 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
       <p className="life__privacy" role="note">
         <strong>隱私</strong>人生事件只存在這個瀏覽器（localStorage），不會上傳到任何伺服器；按「刪除全部」或清除瀏覽器資料即永久移除。
       </p>
+      {unsupportedStoredVersion && (
+        <p className="life__warning" role="alert">
+          本機含不支援版本的人生事件，原始資料已保留；這些事件不會顯示或納入回驗，相關資料的儲存或搬移已暫停。
+        </p>
+      )}
 
       <form className="life__form" onSubmit={submit} aria-label={form.id ? '編輯人生事件' : '新增人生事件'}>
         <label className="field">

@@ -85,11 +85,21 @@ function validDate(date: unknown): boolean {
   return dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d;
 }
 
-/** Strict validation; returns a normalised copy (domains in DOMAINS order, description trimmed). */
+/** Versionless events and numeric 1 are legacy v1. No coercion or future-version downgrade. */
+function hasUnsupportedLifeEventVersion(input: unknown): boolean {
+  return typeof input === 'object' && input !== null
+    && Object.prototype.hasOwnProperty.call(input, 'schemaVersion')
+    && (input as Record<string, unknown>).schemaVersion !== 1;
+}
+
+/** Strict v1 validation; returns a normalised copy (domains ordered, description trimmed).
+ * An explicitly present undefined version is unsupported too (unlike a missing property).
+ */
 export function validateLifeEvent(input: unknown): LifeEventValidation {
   if (typeof input !== 'object' || input === null || Array.isArray(input)) return { ok: false, errors: ['event must be an object'] };
   const errors: string[] = [];
   const x = input as Record<string, unknown>;
+  if (hasUnsupportedLifeEventVersion(input)) errors.push('unsupported life-event schemaVersion; expected absent or numeric 1');
   if (typeof x.id !== 'string' || x.id.trim() === '' || x.id.length > 64) errors.push('id must be a non-empty string (≤ 64 chars)');
   if (!validDate(x.date)) errors.push(`date must be 'YYYY-MM' or 'YYYY-MM-DD', got ${JSON.stringify(x.date)}`);
   if (!(LIFE_EVENT_CATEGORIES as readonly unknown[]).includes(x.category)) errors.push(`unknown category ${JSON.stringify(x.category)}`);
