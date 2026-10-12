@@ -11,6 +11,10 @@ import jyotishCatalog from '../calculators/jyotish/catalog.json';
 import { canonicalStringify } from '../portable/canonical';
 import { fnv1a64Hex } from '../signals/signalId';
 import type { DeepReadonly } from './calculationSpec';
+import {
+  HUMAN_DESIGN_SETTINGS_DEFAULTS, JYOTISH_SETTINGS_DEFAULTS,
+  resolveHumanDesignChartSettings, resolveJyotishChartSettings,
+} from './ephemerisSettings';
 import { VERSION } from './version';
 
 export const ASYNC_EPHEMERIS_SPEC_SCHEMA_VERSION = 1 as const;
@@ -43,7 +47,11 @@ const VERSIONS = freezeDeep({
 // Existing implementation facts, not choices of algorithms that are not implemented.
 const CONVENTIONS = freezeDeep({
   ephemeris: 'moshier' as const,
-  jyotish: { houseSystem: 'whole_sign' as const, dashaYearDays: 365.25, transitMethod: 'window-midpoint' as const },
+  jyotish: {
+    houseSystem: JYOTISH_SETTINGS_DEFAULTS.houseSystem,
+    dashaYearDays: JYOTISH_SETTINGS_DEFAULTS.dashaYearDays,
+    transitMethod: 'window-midpoint' as const,
+  },
   humanDesign: { transitMethod: 'fixed-step-inclusive-tail' as const, convergence: 'unverified' as const },
 });
 
@@ -96,13 +104,20 @@ export function createAsyncEphemerisCalculationSpec(options: AsyncEphemerisCalcu
   const rule = hdCatalog.rules.find(entry => entry.id === 'humanDesign.transit.gates');
   const defaults = rule?.params.sampleDays;
   if (!defaults) throw new Error('humanDesign catalog: missing transit sampleDays');
+  const jyotishSettings = resolveJyotishChartSettings({
+    ayanamsa: choice(jyotish, 'ayanamsa', JYOTISH_SETTINGS_DEFAULTS.ayanamsa, Object.keys(SE_SIDM) as Ayanamsa[]),
+    node: choice(jyotish, 'node', JYOTISH_SETTINGS_DEFAULTS.node, ['mean', 'true'] as const),
+  });
+  const hdSettings = resolveHumanDesignChartSettings({
+    node: choice(hd, 'node', HUMAN_DESIGN_SETTINGS_DEFAULTS.node, ['mean', 'true'] as const),
+  });
   const settings: AsyncEphemerisSettings = {
     jyotish: {
-      ayanamsa: choice(jyotish, 'ayanamsa', 'lahiri', Object.keys(SE_SIDM) as Ayanamsa[]),
-      node: choice(jyotish, 'node', 'mean', ['mean', 'true']),
+      ayanamsa: jyotishSettings.ayanamsa,
+      node: jyotishSettings.node,
     },
     humanDesign: {
-      node: choice(hd, 'node', 'true', ['mean', 'true']),
+      node: hdSettings.node,
       sampleDays: { year: sampleDays(steps, 'year', defaults.year), month: sampleDays(steps, 'month', defaults.month) },
     },
   };

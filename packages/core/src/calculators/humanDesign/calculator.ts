@@ -20,6 +20,7 @@
 import { EPHEMERIS_MOSHIER_WARNING, isEphemerisReady } from '../astro/index';
 import type { TimeContext } from '../../time/types';
 import { flagWarnings } from '../birthData';
+import { resolveHumanDesignChartSettings } from '../../core/ephemerisSettings';
 import type { Calculator, CalculatorConfig, ChartResult, Component } from '../types';
 import { CENTERS, CENTER_NAMES, type Center } from './bodygraph';
 import type { HumanDesignActivationComponent, HumanDesignComponent } from './componentTypes';
@@ -126,7 +127,7 @@ export const humanDesignCalculator: Calculator<HumanDesignChart, HumanDesignConf
   version: HUMAN_DESIGN_CALCULATOR_VERSION,
   requires: { time: true, location: false, name: false },
   calculate(ctx: TimeContext, config: HumanDesignConfig = {}): ChartResult<HumanDesignChart> {
-    const node = config.node ?? 'true';
+    const { node } = resolveHumanDesignChartSettings(config);
     const warnings = flagWarnings(ctx, TIME_WARNINGS);
     const empty = (extra: string[]): ChartResult<HumanDesignChart> => ({
       system: 'humanDesign',
