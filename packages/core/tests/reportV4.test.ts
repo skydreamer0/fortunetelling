@@ -13,6 +13,12 @@ import {
   ZiweiEngine,
 } from '../src/index';
 import type { AnalyzeInput, Report } from '../src/core/analyze';
+import type { ZiweiTimeResolution } from '../src/calculators/ziwei/types';
+
+// Only the fields consumed by these known-engine metadata assertions.
+type ZiweiTimeConvention = Pick<ZiweiTimeResolution, 'timeIndex'> & {
+  iztroDate: ZiweiTimeResolution['date'];
+};
 
 const AS_OF = '2026-07-11';
 // analyze() takes ~1 s since v4 (sync timeline); several tests run multiple reports.
@@ -59,8 +65,8 @@ test('23:30 出生：紫微用晚子（timeIndex 12），v3 誤用同日早子',
   const report = analyze(input, { asOf: AS_OF });
   const ziwei = engine(report, 'ziwei');
   assert.equal(ziwei.meta.time, '晚子時');
-  assert.equal(ziwei.meta.timeConvention.timeIndex, 12);
-  assert.equal(ziwei.meta.timeConvention.iztroDate, '1990-06-15');
+  assert.equal((ziwei.meta.timeConvention as ZiweiTimeConvention).timeIndex, 12);
+  assert.equal((ziwei.meta.timeConvention as ZiweiTimeConvention).iztroDate, '1990-06-15');
 
   // v3 engine path (legacy BirthData.timeIndex) gave 早子 of the same civil date.
   const legacy = new ZiweiEngine({ asOf: new Date(AS_OF) }).run(new BirthData(input as any));
@@ -73,8 +79,8 @@ test('23:30 出生：紫微用晚子（timeIndex 12），v3 誤用同日早子',
 
   // 子初換日（early）：23:00 起算次日早子
   const early = analyze({ ...input, ziHourConvention: 'early' }, { asOf: AS_OF });
-  assert.equal(engine(early, 'ziwei').meta.timeConvention.iztroDate, '1990-06-16');
-  assert.equal(engine(early, 'ziwei').meta.timeConvention.timeIndex, 0);
+  assert.equal((engine(early, 'ziwei').meta.timeConvention as ZiweiTimeConvention).iztroDate, '1990-06-16');
+  assert.equal((engine(early, 'ziwei').meta.timeConvention as ZiweiTimeConvention).timeIndex, 0);
   assert.notEqual(natal(early).day, natal(report).day, 'bazi early convention moves the day pillar');
   assert.equal(report.timeContext.conventions.ziHourConvention, 'late');
   assert.equal(early.timeContext.conventions.ziwei.ziHourConvention, 'nextDayAt23');
@@ -90,7 +96,10 @@ test('New York 2026-03-05 12:00（驚蟄 13:59Z 之後）→ 月柱 辛卯（v3 
   assert.equal(report.timeContext.conventions.birthplaceSource, 'cityId');
   assert.equal(natal(report).month, '辛卯');
   assert.equal(natal(report).year, '丙午');
-  const tc = engine(report, 'bazi').meta.timeConvention;
+  const tc = engine(report, 'bazi').meta.timeConvention as {
+    engineWallClockPillars: { month: string };
+    overriddenFields: string[];
+  };
   assert.equal(tc.engineWallClockPillars.month, '庚寅');
   assert.deepEqual(tc.overriddenFields, ['month']);
   // 大運 follow the corrected month pillar (丙午 陽年男 → 順：壬辰 …)

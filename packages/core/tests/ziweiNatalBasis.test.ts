@@ -98,7 +98,10 @@ describe('Issue #51 run-local Ziwei natal reuse (not a persisted ChartSnapshot)'
     expect(stable(main)).toEqual(stable(expectedEngine));
     const palace = main.components.find(component => component.category === 'palaces' && component.value.decadalRange)!;
     palace.value.decadalRange[0] = -123;
-    main.meta.timeConvention.alternatives[0].reasons.push('caller mutation');
+    // The test intentionally adds a non-catalogue reason to this mutable copy.
+    // Narrow only that metadata projection, preserving the mutation probe.
+    const timeConvention = main.meta.timeConvention as { alternatives: Array<{ reasons: string[] }> };
+    timeConvention.alternatives[0].reasons.push('caller mutation');
     expect(stable(new TimeContextZiweiEngine({ ctx, asOf: new Date(ASOF), ...options, natalBasis: provider } as any).run(birth)))
       .toEqual(stable(expectedEngine));
     const first = sharedCalculator(ctx, { asOf: ASOF, ...ziweiOptions }, provider);

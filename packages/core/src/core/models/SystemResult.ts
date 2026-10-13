@@ -36,8 +36,8 @@ export interface Component {
 /** Loose component input accepted by {@link SystemResult.component}: only `category` is required. */
 export type ComponentInput = Partial<Component> & { category: string };
 
-/** Engine-level metadata (chart summary, conventions, unavailable reasons, …). */
-export type SystemResultMeta = Record<string, any>;
+/** Engine-level metadata; narrow each field before reading its engine-specific shape. */
+export type SystemResultMeta = Record<string, unknown>;
 
 export interface SystemResultParams {
   /** Stable engine id (e.g. "ziwei") */
