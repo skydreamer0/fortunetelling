@@ -144,7 +144,7 @@ test('unknown birth time preserves empty charts, true-node default and mean-node
 const coreRoot = resolve(import.meta.dir, '..');
 const calculatorPath = join(coreRoot, 'src/calculators/humanDesign/calculator.ts');
 const source = readFileSync(calculatorPath, 'utf8');
-const contractImport = "import type { HumanDesignActivationComponent, HumanDesignComponent } from './componentTypes';\n";
+const contractImport = "import type { HumanDesignActivationComponent, HumanDesignComponent } from './componentTypes';";
 const guards = / satisfies HumanDesign(?:ActivationComponent<typeof side>|Component)/g;
 
 test('the complete calculator emits byte-identical JavaScript with and without its new type-only contracts', () => {
@@ -166,7 +166,7 @@ test('real producer payload/category/ID mutations fail typecheck only while thei
     cpSync(join(coreRoot, 'tsconfig.json'), join(temp, 'tsconfig.json'));
     const dependencies = [join(coreRoot, 'node_modules'), resolve(coreRoot, '../../node_modules')].find(existsSync);
     expect(dependencies).toBeDefined();
-    symlinkSync(dependencies!, join(temp, 'node_modules'), 'dir');
+    symlinkSync(dependencies!, join(temp, 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
     const target = join(temp, 'src/calculators/humanDesign/calculator.ts');
     const check = (candidate: string) => {
       writeFileSync(target, candidate);
