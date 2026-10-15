@@ -1,0 +1,901 @@
+{
+  "version": "0.9.1",
+  "issue": "https://github.com/skydreamer0/fortunetelling/issues/65",
+  "reason": "Counts cannot support supplementation. Preserve original fixture and every prior delta. New literals change only core/insight versions, count-only wording, legacy recommendation fields (empty), and guidance disclaimer wording. Counts, sources, all other guidance and report sections stay exact.",
+  "changes": [
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "insights",
+        "version"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "insights",
+        "guidance",
+        "limitations"
+      ],
+      "before": [
+        "顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ],
+      "after": [
+        "八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ]
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "insights",
+        "guidance",
+        "balance",
+        "color"
+      ],
+      "before": "深藍、墨色",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "insights",
+        "guidance",
+        "balance",
+        "direction"
+      ],
+      "before": "北方",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "insights",
+        "guidance",
+        "balance",
+        "habit"
+      ],
+      "before": "保留安靜反思與彈性移動的時間，避免行程排得過滿",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "insights",
+        "guidance",
+        "balance",
+        "text"
+      ],
+      "before": "五行出現次數中水最低。若想平衡「水」所象徵的面向，可以從色彩、空間方位與日常節奏做小幅嘗試。",
+      "after": "五行出現次數中水最少（1 次）。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。"
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "insights",
+        "version"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "insights",
+        "guidance",
+        "limitations"
+      ],
+      "before": [
+        "顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ],
+      "after": [
+        "八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ]
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "insights",
+        "guidance",
+        "balance",
+        "color"
+      ],
+      "before": "青綠、木色",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "insights",
+        "guidance",
+        "balance",
+        "direction"
+      ],
+      "before": "東方",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "insights",
+        "guidance",
+        "balance",
+        "habit"
+      ],
+      "before": "替成長目標留出固定時段，並用散步或伸展切換狀態",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "insights",
+        "guidance",
+        "balance",
+        "text"
+      ],
+      "before": "五行出現次數中木、金最低。若想平衡「木」所象徵的面向，可以從色彩、空間方位與日常節奏做小幅嘗試。",
+      "after": "五行出現次數中木、金最少（2 次）。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。"
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "insights",
+        "version"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "insights",
+        "guidance",
+        "limitations"
+      ],
+      "before": [
+        "顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ],
+      "after": [
+        "八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ]
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "insights",
+        "guidance",
+        "balance",
+        "color"
+      ],
+      "before": "朱紅、暖橙",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "insights",
+        "guidance",
+        "balance",
+        "direction"
+      ],
+      "before": "南方",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "insights",
+        "guidance",
+        "balance",
+        "habit"
+      ],
+      "before": "安排適量日照、表達或創作活動，讓想法有可見出口",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "insights",
+        "guidance",
+        "balance",
+        "text"
+      ],
+      "before": "五行出現次數中火、金、水最低。若想平衡「火」所象徵的面向，可以從色彩、空間方位與日常節奏做小幅嘗試。",
+      "after": "五行出現次數中火、金、水最少（1 次）。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。"
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "insights",
+        "version"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "insights",
+        "guidance",
+        "limitations"
+      ],
+      "before": [
+        "顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ],
+      "after": [
+        "八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ]
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "insights",
+        "guidance",
+        "balance",
+        "color"
+      ],
+      "before": "朱紅、暖橙",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "insights",
+        "guidance",
+        "balance",
+        "direction"
+      ],
+      "before": "南方",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "insights",
+        "guidance",
+        "balance",
+        "habit"
+      ],
+      "before": "安排適量日照、表達或創作活動，讓想法有可見出口",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "insights",
+        "guidance",
+        "balance",
+        "text"
+      ],
+      "before": "五行出現次數中火、土、金最低。若想平衡「火」所象徵的面向，可以從色彩、空間方位與日常節奏做小幅嘗試。",
+      "after": "五行出現次數中火、土、金最少（2 次）。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "insights",
+        "version"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "insights",
+        "guidance",
+        "limitations"
+      ],
+      "before": [
+        "顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ],
+      "after": [
+        "八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ]
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "insights",
+        "guidance",
+        "balance",
+        "color"
+      ],
+      "before": "白、銀灰",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "insights",
+        "guidance",
+        "balance",
+        "direction"
+      ],
+      "before": "西方",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "insights",
+        "guidance",
+        "balance",
+        "habit"
+      ],
+      "before": "精簡物品與待辦，替界線、規則與決策留下清楚文字",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "insights",
+        "guidance",
+        "balance",
+        "text"
+      ],
+      "before": "五行出現次數中金最低。若想平衡「金」所象徵的面向，可以從色彩、空間方位與日常節奏做小幅嘗試。",
+      "after": "五行出現次數中金最少（0 次）。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "insights",
+        "version"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "insights",
+        "guidance",
+        "limitations"
+      ],
+      "before": [
+        "顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ],
+      "after": [
+        "八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ]
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "insights",
+        "guidance",
+        "balance",
+        "color"
+      ],
+      "before": "白、銀灰",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "insights",
+        "guidance",
+        "balance",
+        "direction"
+      ],
+      "before": "西方",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "insights",
+        "guidance",
+        "balance",
+        "habit"
+      ],
+      "before": "精簡物品與待辦，替界線、規則與決策留下清楚文字",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "insights",
+        "guidance",
+        "balance",
+        "text"
+      ],
+      "before": "五行出現次數中金最低。若想平衡「金」所象徵的面向，可以從色彩、空間方位與日常節奏做小幅嘗試。",
+      "after": "五行出現次數中金最少（0 次）。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。"
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "insights",
+        "version"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "insights",
+        "guidance",
+        "limitations"
+      ],
+      "before": [
+        "顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ],
+      "after": [
+        "八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ]
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "insights",
+        "version"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "insights",
+        "guidance",
+        "limitations"
+      ],
+      "before": [
+        "顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ],
+      "after": [
+        "八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ]
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "insights",
+        "guidance",
+        "balance",
+        "color"
+      ],
+      "before": "青綠、木色",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "insights",
+        "guidance",
+        "balance",
+        "direction"
+      ],
+      "before": "東方",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "insights",
+        "guidance",
+        "balance",
+        "habit"
+      ],
+      "before": "替成長目標留出固定時段，並用散步或伸展切換狀態",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "insights",
+        "guidance",
+        "balance",
+        "text"
+      ],
+      "before": "五行出現次數中木最低。若想平衡「木」所象徵的面向，可以從色彩、空間方位與日常節奏做小幅嘗試。",
+      "after": "五行出現次數中木最少（1 次）。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。"
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "insights",
+        "version"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "insights",
+        "guidance",
+        "limitations"
+      ],
+      "before": [
+        "顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ],
+      "after": [
+        "八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ]
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "insights",
+        "guidance",
+        "balance",
+        "color"
+      ],
+      "before": "青綠、木色",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "insights",
+        "guidance",
+        "balance",
+        "direction"
+      ],
+      "before": "東方",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "insights",
+        "guidance",
+        "balance",
+        "habit"
+      ],
+      "before": "替成長目標留出固定時段，並用散步或伸展切換狀態",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "insights",
+        "guidance",
+        "balance",
+        "text"
+      ],
+      "before": "五行出現次數中木最低。若想平衡「木」所象徵的面向，可以從色彩、空間方位與日常節奏做小幅嘗試。",
+      "after": "五行出現次數中木最少（0 次）。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。"
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "insights",
+        "version"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "insights",
+        "guidance",
+        "limitations"
+      ],
+      "before": [
+        "顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ],
+      "after": [
+        "八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ]
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "insights",
+        "guidance",
+        "balance",
+        "color"
+      ],
+      "before": "深藍、墨色",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "insights",
+        "guidance",
+        "balance",
+        "direction"
+      ],
+      "before": "北方",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "insights",
+        "guidance",
+        "balance",
+        "habit"
+      ],
+      "before": "保留安靜反思與彈性移動的時間，避免行程排得過滿",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "insights",
+        "guidance",
+        "balance",
+        "text"
+      ],
+      "before": "五行出現次數中水最低。若想平衡「水」所象徵的面向，可以從色彩、空間方位與日常節奏做小幅嘗試。",
+      "after": "五行出現次數中水最少（0 次）。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。"
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "insights",
+        "version"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "insights",
+        "guidance",
+        "limitations"
+      ],
+      "before": [
+        "顏色、方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ],
+      "after": [
+        "八宅方位與數字屬於低風險的自我提醒，不宣稱能改變外在事件。",
+        "五行出現次數不等同喜用神判定；完整喜用神仍需月令、旺衰與調候等另行評估。"
+      ]
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "insights",
+        "guidance",
+        "balance",
+        "color"
+      ],
+      "before": "朱紅、暖橙",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "insights",
+        "guidance",
+        "balance",
+        "direction"
+      ],
+      "before": "南方",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "insights",
+        "guidance",
+        "balance",
+        "habit"
+      ],
+      "before": "安排適量日照、表達或創作活動，讓想法有可見出口",
+      "after": ""
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "insights",
+        "guidance",
+        "balance",
+        "text"
+      ],
+      "before": "五行出現次數中火最低。若想平衡「火」所象徵的面向，可以從色彩、空間方位與日常節奏做小幅嘗試。",
+      "after": "五行出現次數中火最少（0 次）。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。"
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-1991-1986",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-ny-unknown",
+        "version"
+      ],
+      "before": "0.9.0",
+      "after": "0.9.1"
+    }
+  ]
+}

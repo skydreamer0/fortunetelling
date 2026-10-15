@@ -25,11 +25,11 @@ test('0.9.0 retains existing runtime exports and explicitly lists additive APIs'
   }
 });
 
-test('0.9.0 release explicitly changes only the recorded CalculationSpec core version and its derived hash', () => {
-  expect(VERSION).toBe('0.9.0'); expect(REPORT_SCHEMA_VERSION).toBe(7);
+test('0.9.1 retains the CalculationSpec core-only version delta and its derived hash', () => {
+  expect(VERSION).toBe('0.9.1'); expect(REPORT_SCHEMA_VERSION).toBe(7);
   const current = createCalculationSpec(old.input as Parameters<typeof createCalculationSpec>[0]);
   const expectedIdentity = structuredClone(old.spec.identity);
-  expectedIdentity.versions.core = '0.9.0'; // Explicit new expected value, not removed from comparison.
+  expectedIdentity.versions.core = '0.9.1'; // Explicit new expected value, not removed from comparison.
   expect(current.identity).toEqual(expectedIdentity as any);
   expect(current.source as unknown).toEqual(old.spec.source);
   expect(old.spec.schemaVersion).toBe(current.schemaVersion);
@@ -42,7 +42,7 @@ test('0.9.0 release explicitly changes only the recorded CalculationSpec core ve
 
 test('MCP version-hash input has an explicit core-only release delta; no schema/catalog/calculator changes', () => {
   const current = buildVersionInfo({ asOf: old.versions.asOf, ephemeris: 'not_initialized' });
-  expect(current as unknown).toEqual({ ...old.versions, coreVersion: '0.9.0' });
+  expect(current as unknown).toEqual({ ...old.versions, coreVersion: '0.9.1' });
   const hash = (versions: typeof current) => {
     const { asOf: _asOf, ...rest } = versions;
     return createHash('sha256').update(canonicalStringify(rest)).digest('hex').slice(0, 12);
