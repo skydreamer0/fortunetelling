@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const statePath = join(process.env.RUNNER_TEMP!, 'fortune-windows-calendar.json');
 const suites = [
-  ['baziNatalBasis', 14, 'e4dcb1a7ef3ace2a7e68038cd0f5732bf3a28d2e'],
+  ['baziNatalBasis', 14, '553dd05c7674419061462577fcd94a2cb147d2f7'],
   ['calculationSpec', 19, 'dd86ed6ffe62e65f8788e00c8c3dd7f185add241'],
   ['calendarHostTimezone', 7, '0b32fe7783d65b8468de77a1d2dfa085a14c5a09'],
   ['dateOnlyCalendar', 8, '4f6548f1597bc8469adc4c57e81a135d57f65aec'],
@@ -122,12 +122,23 @@ if (native) {
       for (const positive of record.controls.slice(0, 2)) {
         normalExit(positive); require(positive.stdout.trim() === marker, `${positive.kind} marker mismatch`);
       }
-      const negative = record.controls[2];
-      require(Number.isInteger(negative.exitCode) && negative.exitCode > 0 && !negative.signal && !negative.timedOut && !negative.maxBufferExceeded,
-        'pathname control must fail normally, not time out or fail to spawn');
-      require(negative.stderr.includes('Cannot find module') && negative.stderr.includes(url.pathname),
-        'pathname control must report Cannot find module naming the malformed pathname');
-      require(!negative.stdout.includes(marker), 'Malformed pathname unexpectedly imported the module');
+      // Node's ESM URL resolver (including tsx) may validly accept URL.pathname.
+      // Retain that observation, but test the actual filesystem-path defect:
+      // raw pathname still contains escapes (and a leading / before Windows drive).
+      record.pathnameImport = record.controls[2];
+      const pathnameImport = record.pathnameImport;
+      require(Number.isInteger(pathnameImport.exitCode) && pathnameImport.exitCode >= 0 && !pathnameImport.signal && !pathnameImport.timedOut && !pathnameImport.maxBufferExceeded,
+        'Pathname import observation must complete normally');
+      if (pathnameImport.exitCode === 0) require(pathnameImport.stdout.trim() === marker, 'Normalized pathname import marker mismatch');
+      require(readFileSync(fileURLToPath(url), 'utf8').includes(marker), 'Decoded filesystem path must read the fixture');
+      const rawPathProbe = `import { readFileSync } from 'node:fs'; readFileSync(${JSON.stringify(url.pathname)}, 'utf8'); console.log(${JSON.stringify(marker)});`;
+      const negative = command([process.execPath, '--input-type=module', '--eval', rawPathProbe], process.env, 15000);
+      record.rawPathnameFilesystem = negative;
+      require(negative.exitCode !== null && Number.isInteger(negative.exitCode) && negative.exitCode > 0 && !negative.signal && !negative.timedOut && !negative.maxBufferExceeded,
+        'Raw pathname filesystem control must fail normally, not time out or fail to spawn');
+      require(negative.stderr.includes('ENOENT') && negative.stderr.includes(url.pathname),
+        'Raw pathname must report ENOENT naming the malformed filesystem path');
+      require(!negative.stdout.includes(marker), 'Malformed filesystem pathname unexpectedly read the fixture');
     } finally { rmSync(root, { recursive: true, force: true }); }
   });
 }
@@ -136,7 +147,7 @@ if (installed) {
     record.expectedPass = expectedPass;
     const reportPath = join(process.env.RUNNER_TEMP!, `fortune-windows-${name}.json`);
     const cli = join(dirname(createRequire(import.meta.url).resolve('vitest/package.json')), 'vitest.mjs');
-    record.result = command([process.execPath, cli, 'run', `packages/core/tests/${name}.test.ts`, '--reporter=json', `--outputFile=${reportPath}`]);
+    record.result = command([process.execPath, cli, 'run', `packages/core/tests/${name}.test.ts`, '--config=scripts/ci/windows-vitest.config.ts', '--reporter=default', '--reporter=json', `--outputFile=${reportPath}`]);
     const report = JSON.parse(readFileSync(reportPath, 'utf8'));
     require(report.success === true && report.testResults.length === 1, 'Exactly one successful suite required');
     const suite = report.testResults[0];
