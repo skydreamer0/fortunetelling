@@ -1,0 +1,229 @@
+/** R2 candidate only. NOT RUN / NOT TYPECHECKED. Original draft is preserved.
+ * Outer invocation MUST be: bun --no-install test /absolute/ny-dst-oracle.test.ts
+ * Dependencies must already exist. No install, network fetch or Node fallback.
+ * USNO civil fields are the oracle; other TimeContext fields are equality only.
+ */
+import { afterAll, beforeAll, expect, test } from 'bun:test';
+import { readFileSync, mkdirSync, writeFileSync, realpathSync, lstatSync } from 'node:fs';
+import { release, type as osType, version as osVersion } from 'node:os';
+import { resolve, join, isAbsolute, sep, dirname, basename, relative } from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+type Result = 'NOT_RUN' | 'PASS' | 'FAIL';
+const UNKNOWN = 'UNKNOWN';
+const expectedSource = {
+  sha: 'c48d351d9df7daee369757a251d08280012837fc',
+  tree: '5e53cea370303327af6e8849521d224919d372b8',
+  lockSha256: '994b5695ec941c8b957824483c08e1fed93910503cf994b9288b402fc7feba15',
+  bunVersion: '1.4.3', tzdb: '2026e', lunarJavascript: '1.7.7',
+};
+const observedSource = {
+  sha: UNKNOWN, tree: UNKNOWN, checkoutClean: UNKNOWN,
+  lockRawSha256: UNKNOWN, lockLfSha256: UNKNOWN,
+  lunarJavascript: UNKNOWN, iztro: UNKNOWN,
+};
+const valueOrUnknown = (value: unknown): string => typeof value === 'string' && value.length > 0 ? value : UNKNOWN;
+const runtime = {
+  bunVersion: valueOrUnknown(process.versions.bun), bunRevision: valueOrUnknown(Bun.revision),
+  platform: valueOrUnknown(process.platform), arch: valueOrUnknown(process.arch),
+  osType: valueOrUnknown(osType()), osRelease: valueOrUnknown(release()), osVersion: valueOrUnknown(osVersion()),
+  icu: valueOrUnknown(process.versions.icu), hostTzdb: valueOrUnknown(process.versions.tz),
+};
+const repoEnv = process.env.FORTUNE54_REPO, outEnv = process.env.FORTUNE54_OUT;
+if (!repoEnv || !outEnv || !isAbsolute(repoEnv) || !isAbsolute(outEnv)) {
+  throw new Error('Set FORTUNE54_REPO and FORTUNE54_OUT to absolute paths');
+}
+const repo = realpathSync.native(repoEnv);
+if (!lstatSync(repo).isDirectory()) throw new Error('Source checkout must be a directory');
+const key = (p: string): string => process.platform === 'win32' ? resolve(p).toLowerCase() : resolve(p);
+const samePath = (a: string, b: string): boolean => key(a) === key(b);
+function git(...args: string[]): string {
+  const p = Bun.spawnSync(['git', '-C', repo, ...args], { stdout: 'pipe', stderr: 'pipe' });
+  if (p.exitCode !== 0) throw new Error(new TextDecoder().decode(p.stderr));
+  return new TextDecoder().decode(p.stdout).trim();
+}
+// Read-only Git root preflight MUST precede output mkdir and every write.
+// A caller-supplied repository subdirectory is never a containment boundary.
+const checkoutRoot = realpathSync.native(git('rev-parse', '--show-toplevel'));
+if (!lstatSync(checkoutRoot).isDirectory() || !samePath(repo, checkoutRoot)) {
+  throw new Error('FORTUNE54_REPO must be the verified Git checkout root; no output was created');
+}
+const requestedOut = resolve(outEnv), requestedParent = dirname(requestedOut), leaf = basename(requestedOut);
+if (!leaf || leaf === '.' || leaf === '..') throw new Error('Attempt output must name a new leaf directory');
+if (process.platform === 'win32' && (/[<>:"|?*\u0000-\u001f]/.test(leaf) || /[ .]$/.test(leaf))) {
+  throw new Error('Unsafe Windows output leaf name');
+}
+// Parent must already exist. realpath resolves symlinks/junctions BEFORE mkdir
+// or any file write. Windows comparisons also fold case; lexical prefix checks
+// alone are insufficient. Do not recursively create ancestors.
+const parent = realpathSync.native(requestedParent);
+if (!lstatSync(parent).isDirectory()) throw new Error('Output parent must already exist');
+const out = join(parent, leaf);
+function inside(child: string, ancestor: string): boolean {
+  const rest = relative(key(ancestor), key(child));
+  return rest === '' || (rest !== '..' && !rest.startsWith('..' + sep) && !isAbsolute(rest));
+}
+function assertOutsideSource(target: string): void {
+  if (inside(target, checkoutRoot)) throw new Error('Output resolves inside the verified Git checkout root');
+}
+assertOutsideSource(parent);
+assertOutsideSource(out);
+// lstat rejects existing files, directories, symlinks and dangling links.
+try {
+  lstatSync(out);
+  throw new Error('Attempt output already exists; choose a fresh attempt directory');
+} catch (error) {
+  if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+}
+if (!samePath(realpathSync.native(requestedParent), parent)) throw new Error('Output parent changed');
+assertOutsideSource(realpathSync.native(requestedParent));
+// First mutation: exclusive non-recursive mkdir, after all target checks.
+// A concurrent creator yields EEXIST and aborts; no prior attempt is reused.
+mkdirSync(out, { recursive: false, mode: 0o700 });
+const attemptIdentity = lstatSync(out);
+const attemptCanonical = realpathSync.native(out);
+if (attemptIdentity.isSymbolicLink() || !attemptIdentity.isDirectory() || !samePath(attemptCanonical, out)) {
+  throw new Error('New attempt directory changed or resolves through an unexpected link');
+}
+assertOutsideSource(attemptCanonical);
+function assertAttemptStable(): void {
+  const now = lstatSync(out);
+  const canonical = realpathSync.native(out);
+  if (now.isSymbolicLink() || !now.isDirectory() || now.dev !== attemptIdentity.dev || now.ino !== attemptIdentity.ino ||
+      !samePath(canonical, attemptCanonical) || !samePath(realpathSync.native(requestedParent), parent)) {
+    throw new Error('Attempt path changed; refusing further writes');
+  }
+  assertOutsideSource(canonical);
+}
+function writeNew(name: string, payload: unknown): void {
+  if (basename(name) !== name) throw new Error('Evidence filename must be a leaf');
+  assertAttemptStable();
+  // Each file is created once. No overwrite/append/repair of an existing receipt.
+  writeFileSync(join(out, name), JSON.stringify(payload, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
+}
+
+const hosts = ['UTC', 'Asia/Taipei', 'America/New_York', 'Europe/London', 'Pacific/Apia'];
+const nativeOffsets: Record<string, number[]> = {
+  UTC: [0, 0], 'Asia/Taipei': [-480, -480], 'America/New_York': [300, 240],
+  'Europe/London': [0, -60], 'Pacific/Apia': [-780, -780],
+};
+// Two synthetic wall-time fixtures, three resolutions. :00 is minute-input
+// formatting, not an astronomical or sub-minute accuracy claim.
+const cases = [
+  { id: 'ny-gap-2025', date: '2025-03-09', time: '02:30', choice: 'earlier', invocation: 'omitted',
+    utc: '2025-03-09T07:30:00Z', local: '2025-03-09T03:30:00-04:00', offset: -240, dst: true },
+  { id: 'ny-overlap-earlier-2025', date: '2025-11-02', time: '01:30', choice: 'earlier', invocation: 'omitted',
+    utc: '2025-11-02T05:30:00Z', local: '2025-11-02T01:30:00-04:00', offset: -240, dst: true },
+  { id: 'ny-overlap-later-control-2025', date: '2025-11-02', time: '01:30', choice: 'later', invocation: 'explicit-later',
+    utc: '2025-11-02T06:30:00Z', local: '2025-11-02T01:30:00-05:00', offset: -300, dst: false },
+] as const;
+const outputs = new Map<string, any>();
+const statuses: Record<string, Result> = Object.fromEntries(hosts.map(h => [h, 'NOT_RUN' as Result]));
+const childRuntimes: Record<string, unknown> = Object.fromEntries(hosts.map(h => [h, UNKNOWN]));
+let setupResult: Result = 'NOT_RUN', hostEqualityResult: Result = 'NOT_RUN';
+function nativeSuiteResult(): Result {
+  if (setupResult === 'FAIL' || hostEqualityResult === 'FAIL' || Object.values(statuses).includes('FAIL')) return 'FAIL';
+  if (setupResult === 'PASS' && hostEqualityResult === 'PASS' && Object.values(statuses).every(s => s === 'PASS')) return 'PASS';
+  return 'NOT_RUN';
+}
+const manifest = () => ({
+  schema: 'fortune54-ny-dst-r2', expectedSource, observedSource, runtime, childRuntimes,
+  verifiedCheckoutRoot: checkoutRoot, attemptDirectory: attemptCanonical,
+  setupResult, hostOracleResults: statuses, hostEqualityResult, nativeSuiteResult: nativeSuiteResult(),
+  // These stages are deliberately outside this single-OS candidate. They are
+  // never promoted by local test success, an environment variable or old data.
+  independentReviewResult: 'NOT_RUN', crossOSResult: 'NOT_RUN', aggregateAcceptanceResult: 'NOT_RUN',
+  scope: 'USNO civil DST fields + complete TimeContext host equality only',
+  excluded: ['A/B/ABA natal or snapshot integration', 'native cross-OS acceptance', 'solar term accuracy', 'true-solar oracle'],
+});
+writeNew('manifest.initial.json', manifest());
+function installedVersion(name: string): string {
+  try { return valueOrUnknown(JSON.parse(readFileSync(join(repo, 'node_modules', name, 'package.json'), 'utf8')).version); }
+  catch { return UNKNOWN; }
+}
+beforeAll(() => {
+  setupResult = 'FAIL';
+  expect(runtime.bunVersion).toBe(expectedSource.bunVersion);
+  observedSource.sha = valueOrUnknown(git('rev-parse', 'HEAD'));
+  observedSource.tree = valueOrUnknown(git('rev-parse', 'HEAD^{tree}'));
+  expect(samePath(realpathSync.native(git('rev-parse', '--show-toplevel')), checkoutRoot)).toBe(true);
+  expect(observedSource.sha).toBe(expectedSource.sha);
+  expect(observedSource.tree).toBe(expectedSource.tree);
+  const status = git('status', '--porcelain');
+  observedSource.checkoutClean = status === '' ? 'CLEAN' : 'DIRTY';
+  expect(status).toBe('');
+  const lockBytes = readFileSync(join(repo, 'bun.lock'));
+  observedSource.lockRawSha256 = new Bun.CryptoHasher('sha256').update(lockBytes).digest('hex');
+  observedSource.lockLfSha256 = new Bun.CryptoHasher('sha256').update(lockBytes.toString('utf8').replace(/\r\n/g, '\n')).digest('hex');
+  expect([observedSource.lockRawSha256, observedSource.lockLfSha256]).toContain(expectedSource.lockSha256);
+  observedSource.lunarJavascript = installedVersion('lunar-javascript');
+  observedSource.iztro = installedVersion('iztro');
+  expect(observedSource.lunarJavascript).toBe(expectedSource.lunarJavascript);
+  const url = pathToFileURL(join(repo, 'packages/core/src/time/index.ts')).href;
+  const code = `
+    const {createTimeContext, TZDB_VERSION} = await import(${JSON.stringify(url)});
+    const rows = ${JSON.stringify(cases)}.map(row => {
+      const profile = {date: row.date, time: row.time, timeAccuracy: 'exact', gender: 'female',
+        birthplace: {label: 'Synthetic New York', lat: 40.7128, lng: -74.006, timezone: 'America/New_York'}};
+      // Omit the options argument for the default-earlier and gap cases.
+      const context = row.invocation === 'omitted' ? createTimeContext(profile)
+        : createTimeContext(profile, {dstOverlap: 'later'});
+      return {id: row.id, invocation: row.invocation, context};
+    });
+    const known = value => typeof value === 'string' && value ? value : 'UNKNOWN';
+    console.log(JSON.stringify({host: process.env.TZ, tzdb: TZDB_VERSION,
+      runtime: {bunVersion: known(process.versions.bun), bunRevision: known(Bun.revision),
+        platform: known(process.platform), arch: known(process.arch), icu: known(process.versions.icu), hostTzdb: known(process.versions.tz)},
+      offsets: ['2025-01-15T12:00:00Z','2025-07-15T12:00:00Z'].map(x => new Date(x).getTimezoneOffset()), rows}));`;
+  for (const host of hosts) {
+    const p = Bun.spawnSync([process.execPath, '--no-install', '--eval', code], {
+      cwd: repo, env: { ...process.env, TZ: host }, stdout: 'pipe', stderr: 'pipe', timeout: 30000,
+    });
+    if (p.exitCode !== 0) throw new Error(`${host}: ${new TextDecoder().decode(p.stderr)}`);
+    const parsed = JSON.parse(new TextDecoder().decode(p.stdout));
+    outputs.set(host, parsed);
+    childRuntimes[host] = { runtime: parsed.runtime ?? UNKNOWN, bundledTzdb: valueOrUnknown(parsed.tzdb) };
+  }
+  // Runtime/OS metadata is in receipts, not stripped from TimeContext content.
+  // This file keeps all fields of every context and is suitable for a later,
+  // separate whole-file comparison across native OSes.
+  writeNew('complete-contexts.json', hosts.map(host => [host, outputs.get(host).rows]));
+  setupResult = 'PASS';
+}, 180000);
+for (const host of hosts) test(`${host}: independent civil DST fields`, () => {
+  statuses[host] = 'FAIL';
+  const result = outputs.get(host);
+  expect(result.host).toBe(host);
+  expect(result.offsets).toEqual(nativeOffsets[host]);
+  expect(result.tzdb).toBe(expectedSource.tzdb);
+  expect(result.runtime.bunVersion).toBe(expectedSource.bunVersion);
+  expect(result.runtime.platform).toBe(runtime.platform);
+  expect(result.runtime.arch).toBe(runtime.arch);
+  expect(result.rows.length).toBe(cases.length);
+  for (let n = 0; n < cases.length; n++) {
+    const row = cases[n], actual = result.rows[n], ctx = actual.context;
+    expect(actual.id).toBe(row.id);
+    expect(actual.invocation).toBe(row.invocation);
+    expect(ctx.utc.iso).toBe(row.utc);
+    expect(ctx.local).toEqual({iso: row.local, utcOffsetMinutes: row.offset, dst: row.dst});
+    const gap = ctx.flags.find((f: any) => f.code === 'dst_gap');
+    const overlap = ctx.flags.find((f: any) => f.code === 'dst_overlap');
+    if (n === 0) {
+      expect(overlap).toBeUndefined();
+      expect(gap.data).toEqual({requestedLocal: '2025-03-09T02:30:00', resolvedLocal: '2025-03-09T03:30:00', gapMinutes: 60, requiresConfirmation: true});
+    } else {
+      expect(gap).toBeUndefined();
+      expect(overlap.data).toEqual({requestedLocal: '2025-11-02T01:30:00', chosen: row.choice, requiresConfirmation: true,
+        candidates: [{utcIso: '2025-11-02T05:30:00Z', utcOffsetMinutes: -240}, {utcIso: '2025-11-02T06:30:00Z', utcOffsetMinutes: -300}]});
+    }
+  }
+  statuses[host] = 'PASS';
+});
+test('complete contexts agree across host processes (engineering equality only)', () => {
+  hostEqualityResult = 'FAIL';
+  expect(outputs.size).toBe(hosts.length);
+  const baseline = JSON.stringify(outputs.get('UTC').rows);
+  for (const host of hosts) expect(JSON.stringify(outputs.get(host).rows)).toBe(baseline);
+  hostEqualityResult = 'PASS';
+});
+afterAll(() => writeNew('manifest.final.json', manifest()));
