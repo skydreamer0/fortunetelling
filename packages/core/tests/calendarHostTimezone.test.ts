@@ -1,4 +1,5 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { beforeAll, describe, expect, test } from 'vitest';
 
 const moduleRoot = new URL('../src/', import.meta.url).href;
 const zones = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'];
@@ -7,6 +8,7 @@ const invalidDates = ['0000-01-01', '0001-01-01', '0099-12-31', '1900-02-29', '2
 const malformedDates = ['', '2026-2-01', '10000-01-01', '-001-01-01', '2026-01-01T00:00:00Z', ' 2026-01-01', null, 20260101];
 
 const script = `
+import { createHash } from "node:crypto";
 import { parseIsoDate, lunarToSolarDate } from ${JSON.stringify(moduleRoot + 'core/calendar.ts')};
 import { BirthData } from ${JSON.stringify(moduleRoot + 'core/models/BirthData.ts')};
 import { BaZiEngine } from ${JSON.stringify(moduleRoot + 'engines/BaZiEngine.ts')};
@@ -19,7 +21,7 @@ const input = { year: 1991, month: 10, day: 5, hour: 14, minute: 0, gender: 'fem
 const birth = new BirthData(input);
 const capture = fn => { try { return { value: fn() }; } catch (e) { return { error: e.message }; } };
 const volatile = new Set(['computedAt', 'durationMs', 'generatedAt', 'classifiedAt', 'exportedAt']);
-const hash = value => new Bun.CryptoHasher('sha256').update(JSON.stringify(value, (key, v) => volatile.has(key) ? undefined : v)).digest('hex');
+const hash = value => createHash('sha256').update(JSON.stringify(value, (key, v) => volatile.has(key) ? undefined : v)).digest('hex');
 const parsed = [...valid, ...invalid, ...malformed].map(value => ({ input: value, ...capture(() => parseIsoDate(value)) }));
 const engines = [...valid, ...invalid, ...malformed, new Date('2026-01-01T00:00:00Z'), new Date(NaN)].map(asOf => {
   const result = new BaZiEngine({ asOf }).run(birth);
@@ -46,8 +48,8 @@ console.log(JSON.stringify({ parsed, engines, reports, unknown: { errors: unknow
 let results: Record<string, any>;
 beforeAll(() => {
   results = Object.fromEntries(zones.map(TZ => {
-    const child = Bun.spawnSync([process.execPath, '--eval', script], { env: { ...process.env, TZ } });
-    expect(child.exitCode, new TextDecoder().decode(child.stderr)).toBe(0);
+    const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], { env: { ...process.env, TZ } });
+    expect(child.status, new TextDecoder().decode(child.stderr)).toBe(0);
     return [TZ, JSON.parse(new TextDecoder().decode(child.stdout).trim())];
   }));
 }, 120000);

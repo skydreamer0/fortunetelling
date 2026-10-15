@@ -2,7 +2,7 @@
 
 > **🚧 v2 遷移中（2026-09-25）**：目標架構見 [ARCHITECTURE-V2.md](ARCHITECTURE-V2.md)，
 > 決策 D-021～D-029。遷移完成前，本文件仍是**現行程式碼**的契約；
-> D-002／D-003／D-013 已被取代，執行環境改以 Bun 為準（D-025）。
+> D-002／D-003／D-013 已被取代，執行環境改以 Node.js 24 LTS／npm 11 為準（Issue #140，取代 D-025 runtime 決策）。
 
 > 本文件是**執行任何開發任務前必讀**的設計契約。修改程式前先讀完本文件與
 > [DECISIONS.md](DECISIONS.md)；進行中任務以 [GitHub Issues](https://github.com/skydreamer0/fortunetelling/issues) 為準，
@@ -49,7 +49,7 @@ packages/core/            @fortune/core — 框架無關核心（V0 起自 src/ 
     analysis/            ✅ LayerClassifier / ScoringRules / RadarBuilder / AxisNotes / StateSwitchTable /
                             EvolutionCalculator / HonestyGuard / SummaryBuilder / InsightBuilder
     visualization/       ✅ TextFallback（純文字降級，無 DOM 依賴）
-  tests/                 ✅ 核心與整合測試（bun test）
+  tests/                 ✅ 核心與整合測試（npm test／Vitest）
 apps/web/                 @fortune/web — React 19 + TypeScript + Vite（D-030；只透過 @fortune/core 取用核心）
   src/
     main.tsx  App.tsx    ✅ 進入點與 App 殼（畫面切換、載入、主題、列印）
@@ -281,10 +281,10 @@ type ConsensusSummary = {
 
 ## 6. 執行環境（D-025）
 
-- **權威 runtime：Bun**，Bun workspaces 管理 `packages/*` 與 `apps/*`。
-- 根目錄指令：`bun install`、`bun test`（跑所有 workspace 的測試）、`bun run dev`、`bun run build`
+- **權威 runtime：Node.js 24 LTS**，npm workspaces 管理 `packages/*` 與 `apps/*`。
+- 根目錄指令：`npm ci`、`npm test`（跑所有 workspace 的測試）、`npm run dev`、`npm run build`
   （轉交 `@fortune/web`，輸出在 `apps/web/dist`）。
-- 型別檢查：`bun run --filter @fortune/web typecheck`（CI 執行）；`bun run --filter @fortune/core typecheck`（D-024；已知 JSDoc 型別債，尚未納入 CI）。
+- 型別檢查：`npm run typecheck --workspace @fortune/web`（CI 執行）；`npm run typecheck --workspace @fortune/core`（D-024；已知 JSDoc 型別債，尚未納入 CI）。
 - CI：`.github/workflows/ci.yml`（test + build）；部署：`deploy.yml` 上傳 `apps/web/dist` 到 GitHub Pages。
 
 ## 7. 里程碑總覽

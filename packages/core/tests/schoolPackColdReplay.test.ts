@@ -1,4 +1,6 @@
-import { afterAll, beforeAll, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { afterAll, beforeAll, expect, test } from 'vitest';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -11,23 +13,22 @@ const worker = fileURLToPath(new URL('./fixtures/schoolPackColdReplayWorker.ts',
 const temporary = mkdtempSync(join(tmpdir(), 'fortune66-cold-replay-'));
 const archivePath = join(temporary, 'archive.json');
 let archive: ColdReplayArchive;
-const run = (mode: 'capture' | 'reconstruct', path: string) => Bun.spawnSync({
-  cmd: [process.execPath, '--no-install', worker, mode, path], env: { ...process.env, ANTHROPIC_API_KEY: '' },
-  stdout: 'pipe', stderr: 'pipe', timeout: 30_000,
+const run = (mode: 'capture' | 'reconstruct', path: string) => spawnSync(process.execPath, ['--import', 'tsx', worker, mode, path], { env: { ...process.env, ANTHROPIC_API_KEY: '' },
+  stdio: ['pipe', 'pipe', 'pipe'], timeout: 30_000,
 });
 beforeAll(async () => {
   const producer = run('capture', archivePath);
-  expect(producer.exitCode, producer.stderr.toString()).toBe(0);
-  archive = await Bun.file(archivePath).json();
+  expect(producer.status, producer.stderr.toString()).toBe(0);
+  archive = JSON.parse(readFileSync(archivePath, 'utf8'));
   expect(JSON.parse(producer.stdout.toString()).producerPid).toBe(archive.producerPid);
 });
 afterAll(() => rmSync(temporary, { recursive: true, force: true }));
 
 test('persisted exact versions reconstruct in fresh processes with complete current-build byte equality', () => {
   const first = run('reconstruct', archivePath);
-  expect(first.exitCode, first.stderr.toString()).toBe(0);
+  expect(first.status, first.stderr.toString()).toBe(0);
   const second = run('reconstruct', archivePath);
-  expect(second.exitCode, second.stderr.toString()).toBe(0);
+  expect(second.status, second.stderr.toString()).toBe(0);
   const a = JSON.parse(first.stdout.toString()), b = JSON.parse(second.stdout.toString());
   expect(a.status).toBe('PASS_CURRENT_BUILD_RECONSTRUCTION_ONLY');
   expect(a.producerPid).toBe(archive.producerPid);
@@ -107,7 +108,7 @@ for (const [index, mutation] of mutations.entries()) {
     const path = join(temporary, `negative-${index}.json`);
     writeFileSync(path, JSON.stringify(altered));
     const result = run('reconstruct', path);
-    expect(result.exitCode).not.toBe(0);
+    expect(result.status).not.toBe(0);
     expect(result.stderr.toString()).toMatch(mutation.error);
     expect(result.stdout.toString()).not.toContain('PASS_CURRENT_BUILD_RECONSTRUCTION_ONLY');
   }, 30_000);

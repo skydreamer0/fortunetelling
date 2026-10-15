@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { join } from 'node:path';
@@ -8,7 +8,7 @@ import { makeFixture, SAMPLE_PROFILE } from './helpers';
 
 const EXPECTED_TOOLS = [
   'list_profiles', 'get_profile',
-  'get_chart', 'get_time_context',
+  'get_chart', 'get_time_context', 'compare_bazi_conventions',
   'list_signals', 'get_signal', 'get_timeline', 'get_consensus', 'list_conflicts',
   'answer_question', 'list_question_categories', 'compare_profiles',
   'check_answer', 'import_profile', 'batch',
@@ -23,7 +23,7 @@ beforeAll(async () => {
   await client.connect(
     new StdioClientTransport({
       command: process.execPath,
-      args: ['run', join(import.meta.dir, '../src/bin.ts')],
+      args: [join(import.meta.dirname, '../dist/bin.js')],
       env: { ...(process.env as Record<string, string>), FORTUNE_PROFILES_DIR: fx.dir },
     }),
   );

@@ -1,194 +1,273 @@
-<div align="center">
+# Fortune Telling Platform · 命理綜合分析
 
-<p>FORTUNE TELLING PLATFORM</p>
+**Local-first chart calculations, traceable rules, and MCP tools for developers.**
 
-# 命理綜合分析
+把排盤、規則與 AI 解讀分開，讓每一層都能被閱讀、核對與改進。
 
-### 一個生辰，五種讀法。
+Fortune Telling Platform 是以 TypeScript 與 npm workspace 建立的命理研究專案。它提供框架無關的計算核心、本機 MCP server，以及使用同一套核心的 Web 介面。你可以從網站探索報告、讓支援 stdio MCP 的 AI 客戶端查詢規則依據，或在程式中直接使用核心。
 
-以八字與紫微斗數為主軸，整合多系統排盤、時間分析與可追溯的規則訊號。<br>
-在瀏覽器整理命盤，在本機 MCP 查詢證據，再由你與 AI 討論。
+一般排盤與 MCP server 不需要模型 API key；AI 對話由你選擇的客戶端負責。專案希望讓計算口徑、規則來源與已知缺口公開可查，歡迎以問題、測試與程式碼一起改進。
 
-**本機優先 · 計算與解讀分層 · 保留不確定性**
+> **授權狀態：尚未定案。** Repository 目前沒有專案層級的 `LICENSE`；可閱讀原始碼不代表已授予自由重用或散布的權利。整合與再發布前，請先閱讀下方[授權與第三方依賴](#授權與第三方依賴)。
+>
+> 命理分數是未校準的研究訊號，不是事件機率或預測準確率。計算器結果對照也不等於預測有效性已獲證實。
 
-[快速啟動](#快速啟動) · [產品流程](#產品流程) · [系統架構](#系統架構) · [能力與限制](#能力與限制) · [文件入口](#文件入口)
+[快速開始](#快速開始) · [MCP](#透過-mcp-使用) · [Core API](#在程式中使用核心) · [架構](#系統架構) · [限制](#能力與限制) · [參與貢獻](#參與貢獻) · [文件](#文件入口)
 
-</div>
+## 可以拿它做什麼？
 
----
+- **研究計算與規則**：檢查命盤、時間標準化、訊號與規則來源，對照不同輸入或計算口徑的差異。
+- **接入 AI 工具流程**：透過 MCP 查詢 profile、命盤、時間軸與訊號，讓回答引用可追查的依據。
+- **探索自己的介面**：從 core 的結構化報告建立 CLI、研究工具或其他 UI；目前以 repository 原始碼與 workspace 為使用方式。
+- **改善共同基礎**：補上可重現的邊界案例、交叉驗證資料與文件，讓限制更清楚，錯誤更容易修正。
 
-## 為理解建立的工具
+Web 提供報告、年度與月份視角、雙人合盤、本機事件紀錄、AI prompt 匯出與回答檢查。L0–L3 分層用來區分恆定特質、慢變、年變與情境訊號；跨系統的共同關注、同向共識與矛盾則分開呈現。
 
-Fortune Telling Platform 將傳統命理的計算、規則與解讀拆開，讓結果可以逐層核對。網站不需登入，也不需為一般排盤設定模型 API key；出生資料在瀏覽器內計算，查詢紀錄保存在使用者的裝置。
+## 快速開始
 
-| 關注的問題 | 平台提供的能力 |
-| :--- | :--- |
-| **這個結論從哪裡來？** | 命盤部件、計分規則與訊號來源可查；雷達按系統分開呈現，避免把不同尺度混成一個總分。 |
-| **本命與當下有何不同？** | 以 L0 恆定、L1 慢變、L2 年變、L3 情境區分特質與狀態，搭配大運／大限、年度與月份視角。 |
-| **不同系統說法相反怎麼辦？** | 分開呈現共同關注、同向共識與矛盾，保留兩側證據與來源。 |
-| **如何讓 AI 討論有依據？** | 程式負責排盤與規則計算；AI 透過 MCP 或匯出內容解讀，回答可貼回檢查引用與用語。 |
-
-介面沿用「通書」的紙、墨、朱印語彙，以章節索引、細線與數據層級組織長報告。支援明暗主題、自繪 SVG 圖表、列印樣式與減少動態偏好。設計依據見 [Design System](design-system/fortune-telling-platform/MASTER.md)。
-
-> 分數是尚未校準的研究訊號，不是事件機率、預測準確率或決策保證。計算器的交叉對照，也不等於命理預測有效性已被證實。
-
-## 產品流程
-
-### 01 · 建立輸入
-
-輸入生日、時間、出生地與性別，可選國曆／農曆並標示時間精度。需要的資料不足時，報告會揭露無法計算的範圍與時間邊界警告。首頁也提供範例與本機最近查詢。
-
-### 02 · 閱讀報告
-
-從命格提要進入本年、時間軸、領域分析與命盤細節，再查看規則依據。雙人合盤比較五行分布、生命靈數與八宅分組；人生事件可保存在本機，供回顧與規則回驗使用。
-
-### 03 · 帶著證據討論
-
-- **瀏覽器路徑**：複製整理過的 prompt 到慣用的 AI，再把回答貼回網站檢查。
-- **本機 MCP 路徑**：下載 `.fortune.json`，讓 Claude 桌面版按需查詢命盤、訊號、時間軸與問題結果。
-- **閱讀問事結果**：只有 `status = ranked` 時才比較排名；資料不足或無法區分時，先讀取拒絕排名的原因。排名本身仍受下方[模型限制](#能力與限制)約束。
-
-「檢查回答」會標示引用與部分用語問題，不能取代對回答內容的完整事實查核。
-
-## 快速啟動
-
-需要 Git 與 [Bun](https://bun.sh)。本專案以 Bun 管理 workspace、執行程式及測試。
+準備 Git 與 [Node.js 24 LTS](https://nodejs.org)；目前 [CI](.github/workflows/ci.yml) 使用 Node.js **24.19.0** 與 npm **11.9.0**。以下指令都從 repository 根目錄執行。
 
 ```bash
 git clone https://github.com/skydreamer0/fortunetelling.git
 cd fortunetelling
-bun install --frozen-lockfile
-bun run dev
+npm ci
+npm run dev
 ```
 
-開啟終端機顯示的網址，預設為 `http://localhost:5173/fortunetelling/`。可先使用表單的範例資料探索報告。
+開啟終端機顯示的網址，預設為 `http://localhost:5173/fortunetelling/`，可先使用表單中的範例資料。一般排盤不需登入、不需應用後端，也不需設定模型 API key。
 
 | 指令 | 用途 |
-| :--- | :--- |
-| `bun run dev` | 啟動 Vite 開發伺服器 |
-| `bun test` | 執行 workspace 測試 |
-| `bun run build` | 產生靜態網站至 `apps/web/dist` |
-| `bun run preview` | 預覽已建置的網站 |
-| `bun run doctor` | 檢查本機 MCP、profile 與桌面版設定 |
+| --- | --- |
+| `npm run dev` | 啟動 Web 開發伺服器 |
+| `npm test` | 執行 workspace 測試 |
+| `npm run build` | 建置靜態網站至 `apps/web/dist` |
+| `npm run preview` | 預覽已建置的網站 |
+| `npm run doctor` | 檢查 MCP 啟動、profile 與 Claude 桌面版設定 |
 
-建置的預設 base path 為 `/fortunetelling/`。部署至其他路徑前，請核對 [Vite 設定](apps/web/vite.config.ts)；現有 [Pages workflow](.github/workflows/deploy.yml) 由 `master` 推送觸發。
+只想使用 MCP 或核心時，完成安裝後可直接往下，不必啟動 Web。
 
-### 接上本機 MCP
+## 透過 MCP 使用
 
-MCP server 與網頁共用計算核心，目前註冊 **15 個工具**，涵蓋 profile、命盤、訊號、時間軸、共識、問事、合盤、回答檢查與批次查詢。完整工具與隱私說明見 [MCP 設定指南](docs/MCP-SETUP.md)。
+MCP server 以 **stdio** 提供本機工具，與 Web 共用 core。它負責計算與提供證據；AI 客戶端負責對話。本節以 Claude 桌面版為例，其他支援 stdio 的客戶端需依自己的設定格式接入。
 
-<details>
-<summary><strong>最小設定：建立 profile，接上 Claude 桌面版</strong></summary>
+### 1. 建立示範 profile
 
-建立一份示例 profile，預設寫入 `~/.fortune/profiles/`：
+以下為虛構示例，不含姓名：
 
 ```bash
-bun run --filter @fortune/mcp add-profile demo \
+npm run add-profile --workspace @fortune/mcp -- demo \
   --date 1990-05-17 --time 08:30 --gender female --city 台南
 ```
 
-也可從網站下載 `.fortune.json` 後放入該目錄，或使用 `import_profile` 讀取本機檔案路徑。
+預設儲存在 `~/.fortune/profiles/demo.fortune.json`；可用 `FORTUNE_PROFILES_DIR` 改變目錄。也可以從網站下載 `.fortune.json`，放入 profiles 目錄。出生時間未知時請省略 `--time`，不要為了得到完整命盤填入猜測值。
 
-在 `claude_desktop_config.json` 加入以下設定，將路徑換成實際的專案絕對路徑。若桌面版找不到 `bun`，也須將 `command` 換成 Bun 的絕對路徑。
+### 2. 設定客戶端
+
+在 Claude 桌面版的 `claude_desktop_config.json` 中加入：
 
 ```json
 {
   "mcpServers": {
     "fortune": {
-      "command": "bun",
-      "args": ["run", "/絕對路徑/fortunetelling/packages/mcp/src/bin.ts"]
+      "command": "node",
+      "args": ["/絕對路徑/fortunetelling/packages/mcp/dist/bin.js"]
     }
   }
 }
 ```
 
-重開 Claude 桌面版後，可請它列出 `demo` 的命盤與計算口徑。查詢個人資料時明確指定 `profileId`；時間相關工具另需 `asOf`，例如 `2026-10-09`。設定檔位置、工具參數與疑難排解請依 [MCP 設定指南](docs/MCP-SETUP.md) 操作。
+將路徑換成實際的專案位置。若客戶端找不到 `node`，將 `command` 也換成 Node.js 的絕對路徑。完全結束並重新開啟客戶端，再執行 `npm run doctor` 檢查連線。各平台設定檔位置、自訂目錄與疑難排解見 [MCP 設定指南](docs/MCP-SETUP.md)。
 
-</details>
+### 3. 從可核對的查詢開始
 
-### 安裝與離線使用
+可以對客戶端說：
 
-正式建置包含 PWA manifest 與 Service Worker。在 HTTPS 站台，可從 iPhone Safari 的分享選單加入主畫面；離線使用需先成功註冊 Service Worker 並完成資產快取。
+> 請先列出可用 profile，再查詢 demo 的八字命盤。asOf 使用 2026-10-15。請說明採用的計算口徑與警告，缺少資料時不要自行補值。
 
-```bash
-bun run build
-bun run preview
+對應的 `get_chart` 工具參數如下。這是 MCP 工具引數，不是終端機指令：
+
+```json
+{
+  "profileId": "demo",
+  "system": "bazi",
+  "asOf": "2026-10-15",
+  "detail": "summary"
+}
 ```
 
-Service Worker 只在正式建置註冊，`bun run dev` 不會啟用；測試環境須為 HTTPS 或 `localhost`。目前快取實作已包含 Vary 比對修正，但部署站與手機的離線／更新流程仍須實機驗收，不能以建置成功代替。追蹤見 [#18](https://github.com/skydreamer0/fortunetelling/issues/18)。
+先由 `list_profiles` 取得 id；個人查詢明確指定 `profileId`，時間相關工具明確指定 `asOf`。成功結果會包含 `data`、`caveats` 與 `versionsHash`；命盤另外附上 `conventions`。不要只取結論而丟棄警告與口徑。
+
+目前共有 **16 個工具**：
+
+| 類型 | 工具 |
+| --- | --- |
+| Profile | `list_profiles`、`get_profile`、`import_profile` |
+| 命盤與時間 | `get_chart`、`get_time_context`、`get_timeline` |
+| 規則依據 | `list_signals`、`get_signal`、`get_consensus`、`list_conflicts` |
+| 問事與比較 | `list_question_categories`、`answer_question`、`compare_profiles`、`compare_bazi_conventions` |
+| 回答檢查與批次 | `check_answer`、`batch` |
+
+`import_profile` 會寫入本機檔案；`batch` 僅支援唯讀查詢，最多 8 個，不能包含匯入或巢狀批次。完整參數與回應格式見 [MCP 設定指南](docs/MCP-SETUP.md)。
+
+問事只在 `status = ranked` 時比較排名；其他狀態應先讀 `abstentionReasons`。`check_answer` 可以標示引用與部分用語問題，不能當成完整事實查核或預測有效性驗證。
+
+## 在程式中使用核心
+
+`@fortune/core` 是 workspace 套件，公開入口為 [`packages/core/src/index.ts`](packages/core/src/index.ts)。目前 root 與 core 的 package 都標記 `private: true`，core 提供編譯後的 ESM 與 TypeScript 宣告；本文件不假設已有可從 npm 安裝的獨立發行版。
+
+完成上述 clone 與安裝後，在 repository 根目錄建立 `example.mjs`：
+
+```ts
+import { analyze, VERSION, REPORT_SCHEMA_VERSION } from '@fortune/core';
+
+// 虛構示範資料。明確指定地點、時區、時間精度與計算口徑。
+const report = analyze(
+  {
+    year: 1990,
+    month: 5,
+    day: 17,
+    hour: 8,
+    minute: 30,
+    gender: 'female',
+    birthplace: {
+      label: 'Tainan',
+      lat: 22.99,
+      lng: 120.22,
+      timezone: 'Asia/Taipei',
+    },
+    timeAccuracy: 'exact',
+    useTrueSolarTime: true,
+    ziHourConvention: 'late',
+  },
+  { asOf: '2026-10-15' },
+);
+
+console.log({
+  coreVersion: VERSION,
+  reportSchemaVersion: REPORT_SCHEMA_VERSION,
+  asOf: report.asOf,
+  systems: report.engines.map(engine => engine.engineId),
+  signalCount: report.signals.length,
+  conventions: report.timeContext.conventions,
+  skippedSystems: report.timeline.skippedSystems,
+});
+```
+
+```bash
+node example.mjs
+```
+
+此例不需 Web server、MCP 客戶端或模型 API key。它使用編譯後的公開 package 入口；在已宣告 `@fortune/core: "*"` 依賴的 workspace 中，可改用 `import { analyze } from '@fortune/core'`。避免依賴套件內部深路徑。
+
+- `analyze()` 回傳同步 `Report`，包括各引擎結果、分層、計分規則、訊號、時間軸與共識。
+- 同步報告涵蓋八字、紫微斗數、生命靈數、馬雅 Kin 與八宅命卦。人類圖／吠陀占星需要非同步星曆路徑，不會因你先初始化星曆就自動加入 `analyze()`。
+- 直接使用 `buildTimeline`、`buildTimelineAsync` 或 `buildBacktestTimeline` 時，須明確提供 `useTrueSolarTime` 與 `ziHourConvention`；詳見[有效設定契約](docs/CONTRIBUTING.md)。
+- 目前 core 為 **0.9.1**，Report schema 為 **7**，兩者獨立演進。保存結果時也應保存輸入、有效口徑與版本；這不代表已具備跨版本歷史重播能力。
 
 ## 系統架構
 
-四個 workspace 分離計算、介面、AI 交接與工具協定。Web 以 React + TypeScript + Vite 建置為靜態網站；一般排盤不需要應用後端。
-
 ```text
-packages/core  @fortune/core
-  出生資料與時間標準化 → 計算器 → 規則／訊號 → 共識／時間軸／問事
-       │
-       ├── apps/web      @fortune/web   報告、合盤、回驗、PWA
-       ├── packages/ai   @fortune/ai    對話指示、payload、回答檢查
-       └── packages/mcp  @fortune/mcp   本機 stdio 工具介面
+出生資料 → 時間標準化 → 計算器 → 規則與訊號 → 時間軸／共識／問事
+                         packages/core
+                              │
+              ┌───────────────┼────────────────┐
+              ▼               ▼                ▼
+           apps/web       packages/mcp     packages/ai
+           Web 報告       本機 stdio       AI 交接與檢查
 ```
 
-`@fortune/web` 與 `@fortune/mcp` 也使用 `@fortune/ai` 的對話與檢查能力；AI 層不另寫一套排盤邏輯。
+| Workspace | 責任與邊界 |
+| --- | --- |
+| [`@fortune/core`](packages/core) | 框架無關的 TypeScript 計算核心；包括時間處理、計算器、規則、訊號與資料契約。 |
+| [`@fortune/web`](apps/web) | React + Vite 靜態網站；瀏覽器內計算、顯示報告與管理本機紀錄。 |
+| [`@fortune/mcp`](packages/mcp) | Profile 檔案、stdio 工具與回應封裝；計算仍交給 core。 |
+| [`@fortune/ai`](packages/ai) | 共用對話指示、payload 與回答檢查；Web／MCP 都會使用。另有選用的模型呼叫入口。 |
 
-| 層次 | 技術與邊界 |
-| :--- | :--- |
-| **計算核心** | 框架無關的 TypeScript 核心；以 `iztro`、`lunar-javascript` 與星曆套件支援各系統計算。公開入口為 [`@fortune/core`](packages/core/src/index.ts)。 |
-| **Web** | 瀏覽器內執行同步分析，計算核心與報告頁延遲載入；查詢與事件資料保存在本機瀏覽器。 |
-| **AI 交接** | 網站組合 prompt、檢查貼回答案，不直接呼叫模型；選用的程式呼叫層另由 `@fortune/ai/client` 提供。 |
-| **MCP** | 本機 profile 檔案搭配 stdio server；包裝核心輸出，附版本、口徑與限制資訊。 |
-
-目前 `@fortune/core` 為 **0.8.0**、Report schema 為 **7**。套件版本與資料契約分開演進；Timeline／Backtest 要求明確的真太陽時與子時設定。詳細契約以[目前公開型別](packages/core/src/index.ts)、[協作者指南](docs/CONTRIBUTING.md)與[決策紀錄](docs/DECISIONS.md)共同核對，架構文件中的早期版本不代表現行介面。
+Web 的 prompt 複製／回答貼回流程不直接呼叫模型。若自行使用 `@fortune/ai/client`，則需另外處理模型供應商的憑證、費用與資料政策。
 
 ## 能力與限制
 
-### 計算覆蓋
+| 範圍 | 現況與邊界 |
+| --- | --- |
+| 八字、紫微、生命靈數、馬雅 Kin、八宅命卦 | 已接入同步核心與 Web；各系統的資料需求與時間訊號覆蓋不同。 |
+| 人類圖 Human Design | 已有非同步計算與專案計算器交叉驗證；可由 MCP／匯出使用，不在同步五系統報告內。[驗證範圍](packages/core/tests/fixtures/validation/humandesign-validation-report.md)。 |
+| 吠陀占星 Jyotish | 仍為 `experimental`；尚未達專案公開計算器交叉驗證門檻，不計入高共識。支援此參數的工具可用 `verifiedOnly` 排除。[驗證紀錄](packages/core/tests/fixtures/validation/jyotish-validation-report.md)。 |
+| SchoolPack／流派比較 | 已有內部契約與測試，預設 pack 仍為不下結論的 placeholder；synthetic fixture 僅供測試，不能當成已交付的真實流派規則。 |
+| 歷史報告重播 | 已有當前程式版本的 cold-process reconstruction 測試；尚非 archive-only 或跨歷史計算器版本的報告重播。見[驗證邊界](docs/validation/school-pack-cold-replay-66.md)。 |
 
-| 範圍 | 現行狀態 | 使用邊界 |
-| :--- | :--- | :--- |
-| 八字、紫微斗數、生命靈數、馬雅 Kin、八宅命卦 | 同步計算核心與網站報告已接入 | 各系統有不同資料需求；有命盤不代表每個系統都提供逐月訊號。 |
-| 人類圖 Human Design | 星曆擴充；已達專案計算器交叉驗證門檻 | 經非同步核心、MCP／匯出使用，不在網站同步 `analyze()` 的五系統報告內。[驗證範圍](packages/core/tests/fixtures/validation/humandesign-validation-report.md)不等於預測能力認證。 |
-| 吠陀占星 Jyotish | 已有計算器與對照報告，仍標記 `experimental` | 未達專案要求的公開吠陀計算器交叉驗證門檻，不計入高共識；可用 `verifiedOnly` 排除。[驗證紀錄](packages/core/tests/fixtures/validation/jyotish-validation-report.md)。 |
+還有幾個重要邊界：
 
-### 使用前應知道
+- **分數不是機率。** 同源規則累積與問事方向語義仍有研究缺口；月份排名不能直接當成重大決策建議。
+- **共同關注不等於同向支持。** 高共識需符合系統數、權重、時間窗與方向門檻；中性訊號與 experimental 系統不能當成同向票。詳見 [D-045](docs/DECISIONS.md)。
+- **時間口徑會改變結果。** 出生時間精度、歷史時區、夏令時間、真太陽時與子時換日都需要核對；資料不足時應保留不可算或拒絕排名的結果。
+- **星曆覆蓋不完整。** 人類圖行運年格／月格未含凱龍星；月格另未取樣天王星、海王星與冥王星。見[規則目錄](packages/core/src/calculators/humanDesign/catalog.json)。
+- **測試通過有範圍。** 單元測試、型別檢查與建置成功，不等同真實客戶端、手機或 PWA 的完整驗收。
 
-- **分數與方向仍有研究缺口。** 分數未校準；不同 id 的同源規則仍可能累積，使 noisy-OR 分數上升（[#28](https://github.com/skydreamer0/fortunetelling/issues/28)）。問事的 trait 與 valence 方向不一致尚待語義決策（[#47](https://github.com/skydreamer0/fortunetelling/issues/47)），月份排名不宜直接當成行動建議。
-- **共同關注與同向共識有不同定義。** `activityAgreement` 計共同關注；「高共識」需同領域、同時間窗至少三套符合門檻的正權重、非 experimental 系統同向。人類圖行運訊號的 `valence` 為 0，只能貢獻共同關注，不投同向票；完整資格見 [ADR](docs/DECISIONS.md) D-045。
-- **時間與星曆覆蓋有邊界。** 出生時間精度、歷史時區及換日口徑都會影響結果。人類圖行運年格／月格均未含凱龍星，月格另未取樣天王星、海王星與冥王星；細節見[規則目錄](packages/core/src/calculators/humanDesign/catalog.json)。
-- **本機計算不等於 AI 對話完全離線。** MCP 工具結果會進入 AI 上下文；`.fortune.json` 含出生資料，匯出或分享前應先檢查。`get_profile` 預設省略姓名與原始出生欄位，其他工具仍可能帶可識別資訊。見 [MCP 隱私說明](docs/MCP-SETUP.md#隱私)。
-- **部分驗收與契約仍在進行。** 回答檢查已有分年掃描、取消與過期結果隔離，桌機／手機瀏覽器的互動及效能驗收另由 [#19](https://github.com/skydreamer0/fortunetelling/issues/19)／[#46](https://github.com/skydreamer0/fortunetelling/issues/46) 追蹤；跨入口共用 ChartSnapshot 及舊報告重播保證尚未交付（[#51](https://github.com/skydreamer0/fortunetelling/issues/51)）。
+進行中工作與優先順序以 [Issues](https://github.com/skydreamer0/fortunetelling/issues) 與 [Roadmap](ROADMAPS.md) 為準；研究中的功能不代表已交付。
 
-資料庫／帳號同步與 Next.js 遷移目前暫停。進行中工作以 [GitHub Issues](https://github.com/skydreamer0/fortunetelling/issues) 為準，方向與相依關係見 [Roadmap](ROADMAPS.md)。
+## 隱私與資料流
 
-## 開發與驗證
+- Web 的一般排盤在瀏覽器內執行，查詢與事件紀錄保存在本機瀏覽器；MCP profile 預設保存在本機檔案。
+- **本機計算不代表 AI 對話完全離線。** MCP 結果進入客戶端／模型上下文後，是否傳至雲端由該客戶端與供應商決定。
+- `.fortune.json` 包含出生資料，可能含姓名；完整 `Report` 也含輸入與衍生資料。匯出、貼給 AI 或分享前請檢查內容及接收對象。
+- `get_profile` 預設省略姓名與原始出生欄位，但其他工具仍可能提供可識別的時間或命盤資訊；這不是匿名化保證。
+- 回報 bug 請使用虛構或經適當處理的案例。不要把真實 profile、完整個人報告、憑證或私人對話提交到公開 Issue／PR。
 
-以下對應目前 [CI workflow](.github/workflows/ci.yml) 的主要檢查，可在 repository 根目錄執行：
+更完整的工具資料流見 [MCP 隱私說明](docs/MCP-SETUP.md#隱私)。
+
+## 建置與離線使用
 
 ```bash
-bun test
-bun run --filter @fortune/core typecheck
-bun run --filter @fortune/web typecheck
-bun run --filter @fortune/ai typecheck
-bun run --filter @fortune/mcp typecheck
-bun run packages/mcp/src/cli/doctor.ts --ci
-bun run build
+npm run build
+npm run preview
 ```
 
-測試涵蓋核心計算、資料契約、規則、AI 交接、MCP 與 Web 邏輯；外部 Claude live smoke 需另行設定憑證，預設不執行。單元測試、建置與 MCP smoke 不代表已完成真實瀏覽器、手機或 PWA 驗收。
+預設部署路徑是 `/fortunetelling/`，輸出位於 `apps/web/dist`；變更站台路徑時請先檢查 [Vite 設定](apps/web/vite.config.ts)。現有 GitHub Pages 流程由 [CI](.github/workflows/ci.yml) 在 `master` 推送通過驗收後呼叫[部署 workflow](.github/workflows/deploy.yml)。
+
+正式建置包含 PWA manifest 與 Service Worker；開發模式不會註冊 Service Worker。離線使用需先在 HTTPS 或 `localhost` 成功註冊並快取資產。安裝到主畫面、手機離線與更新流程仍需依實際瀏覽器驗收，不能只憑建置成功判定。
+
+## 參與貢獻
+
+歡迎提出問題、修正文件、補測試與討論規則。你不必先熟悉所有命理系統才能參與。
+
+- **發現結果不一致**：請附虛構的最小輸入、core／schema 版本、`asOf`、有效計算設定、預期與實際結果；若引用其他計算器，請說明來源與口徑。
+- **改善規則或新增系統**：先開 Issue 討論適用範圍、資料來源、授權與驗證方法。將計算事實、解讀規則與 UI 分開，並保留資料不足與拒絕下結論的情況。
+- **修復程式或文件**：保持 PR 範圍清楚；附相關測試、未驗證的部分及相容性影響。文件範例若與程式不一致，也值得單獨修正。
+
+從 [Issues](https://github.com/skydreamer0/fortunetelling/issues) 與[協作者指南](docs/CONTRIBUTING.md) 開始。部分架構與指南保留早期範例，實作時請交叉核對目前的 package exports、型別與測試；本 README 的 core 範例使用現行入口。
+
+在 repository 根目錄可執行：
+
+```bash
+npm test
+npm run typecheck --workspace @fortune/core --
+npm run typecheck --workspace @fortune/web --
+npm run typecheck --workspace @fortune/ai --
+npm run typecheck --workspace @fortune/mcp --
+npm run doctor -- --ci
+npm run build
+```
+
+CI 另包含變更範圍分類、資產驗證與原生跨平台日曆檢查，完整流程以 [workflow](.github/workflows/ci.yml) 為準。需要外部模型憑證的 live smoke 不屬於無憑證的基本使用流程。
 
 ## 文件入口
 
-| 想了解 | 從這裡開始 |
-| :--- | :--- |
-| 文件的現行／歷史邊界 | [文件索引](docs/README.md) |
-| 安裝 MCP、工具參數與隱私 | [MCP-SETUP](docs/MCP-SETUP.md) |
-| 開發方式、公開介面與有效時間設定 | [CONTRIBUTING](docs/CONTRIBUTING.md) |
-| 系統分層、計算管線與演進 | [ARCHITECTURE](docs/ARCHITECTURE.md) · [ARCHITECTURE-V2](docs/ARCHITECTURE-V2.md) |
-| 設計取捨、口徑與相容性 | [DECISIONS](docs/DECISIONS.md) |
-| 視覺與互動語言 | [Design System](design-system/fortune-telling-platform/MASTER.md) |
-| 後續方向與已完成紀錄 | [ROADMAPS](ROADMAPS.md) · [HISTORY](docs/HISTORY.md) · [Archive](docs/archive/README.md) |
+| 想了解 | 文件 |
+| --- | --- |
+| 現行文件與歷史文件的界線 | [文件索引](docs/README.md) |
+| MCP 安裝、工具參數與隱私 | [MCP-SETUP](docs/MCP-SETUP.md) |
+| 開發、公開 API 與有效設定 | [CONTRIBUTING](docs/CONTRIBUTING.md) |
+| 架構與演進 | [ARCHITECTURE](docs/ARCHITECTURE.md) · [ARCHITECTURE-V2](docs/ARCHITECTURE-V2.md) |
+| 計算口徑與設計決策 | [DECISIONS](docs/DECISIONS.md) |
+| 視覺與互動設計 | [Design System](design-system/fortune-telling-platform/MASTER.md) |
+| 規劃與完成紀錄 | [ROADMAPS](ROADMAPS.md) · [HISTORY](docs/HISTORY.md) · [Archive](docs/archive/README.md) |
+
+## 授權與第三方依賴
+
+本專案目前**尚未提供根目錄 `LICENSE`**，因此不標示為 MIT、Apache-2.0 或其他已確立的開源授權。正式重用、修改後散布或納入其他產品前，請先向維護者確認專案授權；本文的技術範例不是額外的授權聲明。
+
+第三方依賴各自適用其授權，包括 `iztro`、`lunar-javascript` 與 `@swisseph/browser`。其中星曆依賴的授權尤其需要在再發布前核對；專案本身的授權不能取代第三方條件。正式開源發布仍需補齊授權選擇、相依授權確認及必要聲明。
 
 ---
 
-本專案供學習與個人分析使用。命理結果僅供參考，不構成醫療、法律、投資或其他重大決策建議。
+本專案供學習與研究參考，不構成醫療、法律、投資或其他重大決策建議。

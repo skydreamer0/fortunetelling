@@ -3,11 +3,11 @@
  * Runtime imports from core are allowed only through src/core-pure.ts, and only
  * of the pure questions engine and HonestyGuard. Everything else: `import type`.
  */
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const SRC = join(import.meta.dir, '..', 'src');
+const SRC = join(import.meta.dirname, '..', 'src');
 const files = readdirSync(SRC).filter((f) => f.endsWith('.ts'));
 
 function imports(source: string): Array<{ spec: string; typeOnly: boolean }> {
@@ -40,10 +40,10 @@ describe('import boundaries (D-021)', () => {
   test('@fortune/core is imported for types only; runtime core access only via core-pure.ts', () => {
     for (const f of files) {
       for (const { spec, typeOnly } of imports(readFileSync(join(SRC, f), 'utf8'))) {
+        if (spec.startsWith('@fortune/core/')) expect({ f, spec }).toEqual({ f: 'core-pure.ts', spec: '@fortune/core/pure' });
         if (spec === '@fortune/core') expect({ f, typeOnly }).toEqual({ f, typeOnly: true });
         if (spec.includes('core/src')) {
-          expect(f).toBe('core-pure.ts');
-          expect(ALLOWED_CORE_RUNTIME.has(spec)).toBe(true);
+          throw new Error(`Cross-package source import forbidden: ${f}: ${spec}`);
         }
       }
     }
@@ -52,7 +52,9 @@ describe('import boundaries (D-021)', () => {
   test('the pure core modules themselves do not pull calculators', () => {
     const coreSrc = join(SRC, '..', '..', 'core', 'src');
     const seen = new Set<string>();
-    const queue = ['questions/engine.ts', 'analysis/HonestyGuard.ts', 'export/redact.ts', 'signals/shortId.ts', 'signals/eligibility.ts', 'signals/directionalEvidence.ts'];
+    const pure = imports(readFileSync(join(coreSrc, 'pure.ts'), 'utf8'));
+    expect(pure.filter(entry => !entry.typeOnly).map(entry => `../../core/src/${entry.spec.slice(2)}`).sort()).toEqual([...ALLOWED_CORE_RUNTIME].sort());
+    const queue = ['pure.ts'];
     while (queue.length) {
       const rel = queue.shift()!;
       if (seen.has(rel)) continue;

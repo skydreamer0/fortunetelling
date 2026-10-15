@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 /** Isolated child-process probe. Imported through URL.href by the test, never a new runtime API. */
 import { analyze } from '../../src/core/analyze';
 import { resolveCalculationSpec } from '../../src/core/calculationSpec';
@@ -15,7 +16,7 @@ const AS_OF = '2026-09-25';
 // Only nondeterministic metadata is omitted; chart, periods, warnings, flags,
 // rules, identity and all other public output fields participate in the digest.
 const volatile = new Set(['computedAt', 'durationMs', 'generatedAt', 'classifiedAt', 'exportedAt']);
-const digest = (value: unknown) => new Bun.CryptoHasher('sha256')
+const digest = (value: unknown) => createHash('sha256')
   .update(JSON.stringify(value, (key, item) => volatile.has(key) ? undefined : item)).digest('hex');
 type Setting = keyof typeof settings;
 export type ProbeMode = Setting | 'interleaved';

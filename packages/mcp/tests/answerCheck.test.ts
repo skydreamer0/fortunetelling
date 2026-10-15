@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { makeFixture } from './helpers';
 
 const AS_OF = '2026-09-30';

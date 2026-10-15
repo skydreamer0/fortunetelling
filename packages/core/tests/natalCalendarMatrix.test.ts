@@ -1,4 +1,6 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { dstCases, lunarCases, natalCases } from './fixtures/natalCalendarCases';
 import type { ProbeMode, ProbeResult } from './fixtures/natalCalendarProbe';
 
@@ -13,17 +15,17 @@ afterAll(async () => {
   if (!process.env.NATIVE_CALENDAR_OUTPUT) return;
   const bytes = new TextEncoder().encode(JSON.stringify([...results]));
   if (bytes.length > 64 * 1024 * 1024) throw new Error('Natal evidence exceeds 64 MiB');
-  await Bun.write(`${process.env.NATIVE_CALENDAR_OUTPUT}/natal.json`, bytes);
+  writeFileSync(`${process.env.NATIVE_CALENDAR_OUTPUT}/natal.json`, bytes);
 });
 
 beforeAll(() => {
-  // Serial, fresh Bun processes; no global TZ mutation or process reuse between
+  // Serial, fresh Node processes; no global TZ mutation or process reuse between
   // A-only, B-only and interleaved calculations. Keep file URLs intact on Windows.
   for (const TZ of zones) for (const mode of modes) {
     const script = `import { runNatalCalendarProbe } from ${JSON.stringify(probeUrl)};
       console.log(JSON.stringify(runNatalCalendarProbe(${JSON.stringify(mode)})));`;
-    const child = Bun.spawnSync([process.execPath, '--eval', script], { env: { ...process.env, TZ }, timeout: 60_000 });
-    expect(child.exitCode, `${TZ}/${mode}: ${new TextDecoder().decode(child.stderr)}`).toBe(0);
+    const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], { env: { ...process.env, TZ }, timeout: 60_000, maxBuffer: 64 * 1024 * 1024 });
+    expect(child.status, `${TZ}/${mode}: ${new TextDecoder().decode(child.stderr)}`).toBe(0);
     results.set(`${TZ}/${mode}`, JSON.parse(new TextDecoder().decode(child.stdout)) as ProbeResult);
   }
 }, 180_000);

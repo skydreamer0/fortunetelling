@@ -3,22 +3,37 @@
   "version": "0.9.1",
   "private": true,
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./pure": {
+      "types": "./dist/pure.d.ts",
+      "import": "./dist/pure.js"
+    }
   },
   "scripts": {
-    "test": "bun test",
-    "typecheck": "tsc -p tsconfig.json"
+    "test": "vitest run --config vitest.config.ts --root ../.. packages/core/tests",
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "node ../../scripts/build-package.mjs"
   },
   "dependencies": {
     "@swisseph/browser": "1.3.1",
-    "iztro": "^2.5.8",
-    "lunar-javascript": "^1.7.7"
+    "iztro": "2.5.8",
+    "lunar-javascript": "1.7.7"
   },
   "devDependencies": {
-    "@types/bun": "^1.4.2",
-    "astronomy-engine": "^2.1.19",
-    "typescript": "^7.0.2"
-  }
+    "astronomy-engine": "2.1.19",
+    "typescript": "7.0.2"
+  },
+  "engines": {
+    "node": ">=24.19.0 <25",
+    "npm": ">=11 <12"
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ]
 }

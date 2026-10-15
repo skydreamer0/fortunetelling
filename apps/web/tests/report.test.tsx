@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { CompatReport } from '../src/components/compat/CompatReport';
 import { formulaText } from '../src/components/report/Charts';
@@ -113,7 +113,7 @@ describe('display helpers', () => {
     const wood = balance.axes.find(axis => axis.key === 'wood')!;
     expect(formulaText(wood, undefined)).toBe(`2 ÷ 14 × 100% = ${wood.value}%`);
     const strength = report.radars.find(radar => radar.id === 'ziwei_palace_strength')!;
-    expect(formulaText(strength.axes[0], undefined)).toStartWith('主星亮度');
+    expect(formulaText(strength.axes[0], undefined)).toMatch(/^主星亮度/);
   });
 });
 

@@ -1,4 +1,6 @@
-import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { transformSync } from 'esbuild';
+import { expect, test } from 'vitest';
 import {
   SystemResult,
   type Component,
@@ -114,8 +116,8 @@ test('constructor, chaining, category lookup and JSON snapshot preserve metadata
 
 test('erasing the metadata type leaves the entire executable module byte-identical to frozen master', async () => {
   // Frozen verbatim from master 16f149f3153c4ffca43b89acdadbd061606b1ba3.
-  const before = await Bun.file(new URL('./fixtures/systemResult.before-meta-unknown.ts', import.meta.url)).text();
-  const after = await Bun.file(new URL('../src/core/models/SystemResult.ts', import.meta.url)).text();
-  const transpiler = new Bun.Transpiler({ loader: 'ts' });
+  const before = readFileSync(new URL('./fixtures/systemResult.before-meta-unknown.ts', import.meta.url), 'utf8');
+  const after = readFileSync(new URL('../src/core/models/SystemResult.ts', import.meta.url), 'utf8');
+  const transpiler = { transformSync: (source: string) => transformSync(source, { loader: 'ts', format: 'esm', target: 'esnext' }).code };
   expect(transpiler.transformSync(after)).toBe(transpiler.transformSync(before));
 });

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import * as core from '@fortune/core';
 import { shortSignalId } from '../src/lib/core';
 import { checkAnswer } from '@fortune/ai/mcp';

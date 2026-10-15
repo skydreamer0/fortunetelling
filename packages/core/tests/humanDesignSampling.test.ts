@@ -1,4 +1,5 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { initEphemeris } from '../src/calculators/astro/index';
 import { humanDesignCalculator } from '../src/calculators/humanDesign/calculator';
 import { longitudesAt, type NodeKind } from '../src/calculators/humanDesign/humanDesign';
@@ -54,7 +55,7 @@ describe('#48 Human Design step-halving: real ephemeris characterization, not a 
       for (let jd = jdOf(window.start); jd < end; jd += step) expectedJds.push(jd);
       expectedJds.push(end);
       const sample = sampleHumanDesignTransitWindow(window, chart.node, step);
-      expect(new Bun.CryptoHasher('sha256').update(JSON.stringify(evaluateHumanDesignRules(chart, window))).digest('hex'))
+      expect(createHash('sha256').update(JSON.stringify(evaluateHumanDesignRules(chart, window))).digest('hex'))
         .toBe(preExtractionSignalDigests[window.start]!);
       expect(sample.jds).toEqual(expectedJds);
       expect(sample.samples).toEqual(expectedJds.map(jd => longitudesAt(jd, chart.node)));

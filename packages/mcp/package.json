@@ -3,25 +3,40 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "bin": { "fortune-mcp": "./src/bin.ts" },
-  "main": "./src/index.ts",
-  "exports": { ".": "./src/index.ts" },
+  "bin": {
+    "fortune-mcp": "./dist/bin.js"
+  },
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "scripts": {
-    "start": "bun run src/bin.ts",
-    "add-profile": "bun run src/cli/addProfile.ts",
-    "doctor": "bun run src/cli/doctor.ts",
-    "export-profile": "bun run src/cli/exportBundle.ts",
-    "test": "bun test",
-    "typecheck": "tsc -p tsconfig.json"
+    "start": "node dist/bin.js",
+    "add-profile": "node dist/cli/addProfile.js",
+    "doctor": "node dist/cli/doctor.js",
+    "export-profile": "node dist/cli/exportBundle.js",
+    "test": "vitest run --config vitest.config.ts --root ../.. packages/mcp/tests",
+    "typecheck": "tsc -p tsconfig.json",
+    "build": "node ../../scripts/build-package.mjs"
   },
   "dependencies": {
-    "@fortune/ai": "workspace:*",
-    "@fortune/core": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.31.0",
-    "zod": "^3.25.0"
+    "@fortune/ai": "*",
+    "@fortune/core": "*",
+    "@modelcontextprotocol/sdk": "1.31.0",
+    "zod": "3.25.76"
   },
   "devDependencies": {
-    "@types/bun": "^1.4.2",
-    "typescript": "^7.0.2"
-  }
+    "typescript": "7.0.2"
+  },
+  "engines": {
+    "node": ">=24.19.0 <25",
+    "npm": ">=11 <12"
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ]
 }

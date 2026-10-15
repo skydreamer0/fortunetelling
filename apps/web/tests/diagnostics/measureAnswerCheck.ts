@@ -1,8 +1,11 @@
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 /**
  * Opt-in, real-engine diagnostics for #19 / #46. Run from the repository root:
- *   bun run apps/web/tests/diagnostics/measureAnswerCheck.ts > answer-check.json
+ *   node --import tsx apps/web/tests/diagnostics/measureAnswerCheck.ts > answer-check.json
  *
- * This is a Bun process measurement, NOT browser paint, input latency, or a
+ * This is a Node process measurement, NOT browser paint, input latency, or a
  * Long Tasks measurement. It intentionally does not mark either issue passed.
  * No mocked engines, saved personal reports, network calls, or extra packages.
  */
@@ -106,16 +109,16 @@ assert.equal(resumed.aborted, false);
 assert.equal(resumed.synchronousSegmentsMs.length, fullScan.synchronousSegmentsMs.length);
 assert.deepEqual(checkAnswer(answer, { signalLookup: resumable }).unknownCitations, [MISSING_ID]);
 
-const head = Bun.spawnSync(['git', 'rev-parse', 'HEAD']);
-const worktree = Bun.spawnSync(['git', 'status', '--porcelain']);
-assert.equal(head.exitCode, 0, 'Run this diagnostic inside the repository');
-assert.equal(worktree.exitCode, 0);
-const diagnosticSha256 = new Bun.CryptoHasher('sha256').update(await Bun.file(import.meta.path).arrayBuffer()).digest('hex');
+const head = spawnSync('git', [ 'rev-parse', 'HEAD']);
+const worktree = spawnSync('git', [ 'status', '--porcelain']);
+assert.equal(head.status, 0, 'Run this diagnostic inside the repository');
+assert.equal(worktree.status, 0);
+const diagnosticSha256 = createHash('sha256').update(readFileSync(import.meta.filename)).digest('hex');
 console.log(JSON.stringify({
   schemaVersion: 2, generatedAt,
-  scope: 'Bun real-engine diagnostics only; browser acceptance remains unverified',
+  scope: 'Node real-engine diagnostics only; browser acceptance remains unverified',
   source: { head: head.stdout.toString().trim(), worktree: worktree.stdout.toString().trim(), diagnosticSha256 },
-  runtime: { bun: Bun.version, os: platform(), release: release(), arch: arch(), cpu: cpus()[0]?.model,
+  runtime: { node: process.versions.node, os: platform(), release: release(), arch: arch(), cpu: cpus()[0]?.model,
     logicalCpus: cpus().length, loadAverageAtStart: loadAtStart, loadAverageAtEnd: loadavg() },
   fixture: { input: INPUT, asOf: AS_OF, coreVersion: VERSION, reportSchemaVersion: report.schemaVersion,
     systems: report.timeline?.systems, knownId, missingId: MISSING_ID, answer },
@@ -130,7 +133,7 @@ console.log(JSON.stringify({
   limitations: [
     'No React render, DOM, desktop/mobile layout, browser input or paint was measured.',
     'Synchronous segment durations include lookup overhead; they are not browser Long Tasks or input latency.',
-    'Fresh lookup caches are measured in one already-warmed Bun process; this is not cold-process or cold-browser timing.',
+    'Fresh lookup caches are measured in one already-warmed Node process; this is not cold-process or cold-browser timing.',
     'The shared runner has no CPU isolation; competing work can affect these diagnostic timings.',
     'One synthetic sync report excludes async ephemeris systems and does not establish a universal performance budget.',
     'Genuine annual engine exceptions retain the existing skip policy; unit counts and source-defined reach do not prove every year succeeded.',

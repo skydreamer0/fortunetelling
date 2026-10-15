@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { SYSTEM_IDS } from '../src/signals/types';
 import type { SchoolPack, SchoolPackRef, SchoolContext, SchoolAssessment } from '../src/schools/types';
 import { createSchoolPackRegistry, DEFAULT_SCHOOL_REGISTRY, compareSchoolAssessments, schoolPackKey } from '../src/schools/registry';

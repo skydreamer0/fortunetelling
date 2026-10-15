@@ -13,7 +13,7 @@
  *
  * 容差的量測依據寫在 fixtures/validation/jyotish-validation-report.md。
  */
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { ascendantAndHouses, initEphemeris, planetPositions } from '../src/calculators/astro/index';
 import { buildJyotishChart, isoToJd, type JyotishChart } from '../src/calculators/jyotish/index';
 import { createTimeContext } from '../src/time/index';
@@ -141,7 +141,7 @@ describe('案例組成', () => {
     expect(new Set(cs.map((c) => c.id)).size).toBe(cs.length);
     for (const c of cs) {
       expect(c.rodden).toBe('AA');
-      expect(c.adbUrl).toStartWith('https://www.astro.com/astro-databank/');
+      expect(c.adbUrl).toMatch(/^https:\/\/www\.astro\.com\/astro\-databank\//);
     }
     const n = (pred: (c: Case) => boolean) => cs.filter(pred).length;
     expect(n((c) => c.lat < 0)).toBeGreaterThanOrEqual(2);

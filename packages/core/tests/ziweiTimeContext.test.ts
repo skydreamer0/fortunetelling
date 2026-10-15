@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { BirthData } from '../src/core/models/BirthData';
 import { ZiweiEngine } from '../src/engines/ZiweiEngine';
 import {

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { ReportView } from '../src/components/report/ReportView';
 import { HISTORICAL_ZONE_WARNING_TEXT, analyze } from '../src/lib/core';

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import {
   analyze, answerQuestion, buildBacktestTimeline, buildTimeline, initEphemeris,
   type Signal, type SignalWindow, type TimeContext, type Timeline,

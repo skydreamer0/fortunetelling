@@ -1,7 +1,10 @@
-import { expect, test } from 'bun:test';
+import { createRequire } from 'node:module';
+import { transformSync } from 'esbuild';
+import { spawnSync } from 'node:child_process';
+import { expect, test } from 'vitest';
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { humanDesignCalculator, humanDesignComponents, type HumanDesignChart } from '../src/calculators/humanDesign/calculator';
 import { CENTERS, CENTER_NAMES, CHANNELS, type Center } from '../src/calculators/humanDesign/bodygraph';
 import { HD_PLANETS, type HdChannel, type PlanetActivation } from '../src/calculators/humanDesign/humanDesign';
@@ -141,14 +144,14 @@ test('unknown birth time preserves empty charts, true-node default and mean-node
   }
 });
 
-const coreRoot = resolve(import.meta.dir, '..');
+const coreRoot = resolve(import.meta.dirname, '..');
 const calculatorPath = join(coreRoot, 'src/calculators/humanDesign/calculator.ts');
 const source = readFileSync(calculatorPath, 'utf8');
 const contractImport = "import type { HumanDesignActivationComponent, HumanDesignComponent } from './componentTypes';";
 const guards = / satisfies HumanDesign(?:ActivationComponent<typeof side>|Component)/g;
 
 test('the complete calculator emits byte-identical JavaScript with and without its new type-only contracts', () => {
-  const transpiler = new Bun.Transpiler({ loader: 'ts' });
+  const transpiler = { transformSync: (source: string) => transformSync(source, { loader: 'ts', format: 'esm', target: 'esnext' }).code };
   expect(source.includes(contractImport)).toBe(true);
   expect([...source.matchAll(guards)]).toHaveLength(8);
   const beforeContracts = source.replace(contractImport, '').replace(guards, '');
@@ -170,12 +173,12 @@ test('real producer payload/category/ID mutations fail typecheck only while thei
     const target = join(temp, 'src/calculators/humanDesign/calculator.ts');
     const check = (candidate: string) => {
       writeFileSync(target, candidate);
-      const run = Bun.spawnSync([process.execPath, 'run', 'typecheck'], { cwd: temp, stdout: 'pipe', stderr: 'pipe' });
-      return { exitCode: run.exitCode, output: new TextDecoder().decode(run.stdout) + new TextDecoder().decode(run.stderr) };
+      const run = spawnSync(process.execPath, [join(dirname(createRequire(import.meta.url).resolve('typescript/package.json')), 'bin', 'tsc'), '--noEmit'], { cwd: temp, stdio: ['pipe', 'pipe', 'pipe'] });
+      return { status: run.status, output: new TextDecoder().decode(run.stdout) + new TextDecoder().decode(run.stderr) };
     };
     const baseline = check(source);
     expect(baseline.output).not.toContain('error TS');
-    expect(baseline.exitCode).toBe(0);
+    expect(baseline.status).toBe(0);
     const mutations = [
       ["id: 'hd_type'", "id: 'hd_authority'"],
       ['type: chart.type, name: TYPE_NAMES[chart.type]', 'type: chart.type, name: TYPE_NAMES[chart.type].length'],
@@ -192,12 +195,12 @@ test('real producer payload/category/ID mutations fail typecheck only while thei
       expect(source.split(from)).toHaveLength(2);
       const mutant = source.replace(from, to);
       const rejected = check(mutant);
-      expect(rejected.exitCode).not.toBe(0);
+      expect(rejected.status).not.toBe(0);
       expect(rejected.output).toContain('src/calculators/humanDesign/calculator.ts');
       expect(rejected.output).toContain('error TS');
       const unguarded = check(mutant.replace(contractImport, '').replace(guards, ''));
       expect(unguarded.output).not.toContain('error TS');
-      expect(unguarded.exitCode).toBe(0);
+      expect(unguarded.status).toBe(0);
     }
   } finally {
     rmSync(temp, { recursive: true, force: true });

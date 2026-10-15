@@ -1,4 +1,6 @@
-import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { transformSync } from 'esbuild';
+import { expect, test } from 'vitest';
 import { componentValue, timeContextToBirthData } from '../src/calculators/birthData';
 import {
   extractMingGuaChart,
@@ -326,8 +328,8 @@ export const mingGuaCalculator: Calculator<MingGuaChart> = {
 `;
 
 test('calculator emits byte-identical JavaScript to the frozen pre-refactor source', async () => {
-  const source = await Bun.file(new URL('../src/calculators/mingGua/calculator.ts', import.meta.url)).text();
-  const transpiler = new Bun.Transpiler({ loader: 'ts', target: 'bun' });
+  const source = readFileSync(new URL('../src/calculators/mingGua/calculator.ts', import.meta.url), 'utf8');
+  const transpiler = { transformSync: (source: string) => transformSync(source, { loader: 'ts', format: 'esm', target: 'esnext' }).code };
   const before = transpiler.transformSync(BASE_CALCULATOR_SOURCE);
   const after = transpiler.transformSync(source);
   expect(after.length).toBeGreaterThan(0);

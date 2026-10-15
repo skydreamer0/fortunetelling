@@ -2,7 +2,7 @@
  * systems／verifiedOnly、experimentalSensitivity、answer_question 精簡回傳、get_timeline 逐月表格。
  * 使用測試樣本 sky（非真人資料）。
  */
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { createHash } from 'node:crypto';
 import { answerQuestion, buildConsensus, canonicalStringify, listQuestionCategories, restrictTimeline } from '@fortune/core';
 import { compactAnswer } from '../src/answerSummary';

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import * as api from '../src/index';
 import { annualPillars, monthlyPillars, luckCycles, type LuckCycles } from '../src/calculators/bazi/pillars';
 import { createTimeContext } from '../src/time';

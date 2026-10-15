@@ -22,7 +22,7 @@
  */
 
 import { astro } from 'iztro';
-import type { Language } from 'iztro/lib/data/types';
+import type { Language } from 'iztro/lib/data/types/index.js';
 import { BaseEngine } from '../core/BaseEngine';
 import type { BirthData } from '../core/models/BirthData';
 import type { SystemResult } from '../core/models/SystemResult';
@@ -284,6 +284,8 @@ export class ZiweiEngine extends BaseEngine {
    */
   #addHoroscope(result: SystemResult, astrolabe: Astrolabe, birth: BirthData): void {
     const target = this.asOf ? new Date(this.asOf) : new Date();
+    // Preserve the established public failure across host-specific RangeError wording.
+    if (Number.isNaN(target.getTime())) throw new RangeError('Invalid Date');
     let horoscope: ReturnType<Astrolabe['horoscope']> | null = null;
     try {
       // iztro/lunar-lite reads Date fields in the host timezone. Pass the same

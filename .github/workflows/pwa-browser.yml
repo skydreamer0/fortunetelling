@@ -8,7 +8,7 @@ on:
       - 'apps/web/scripts/pwa-browser-check.ts'
       - 'apps/web/tsconfig.pwa-browser.json'
       - 'package.json'
-      - 'bun.lock'
+      - 'package-lock.json'
       - '.github/workflows/pwa-browser.yml'
 
 permissions:
@@ -32,18 +32,17 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          bun-version: '1.4.2'
-          no-cache: true
+          node-version: '24.19.0'
 
       - name: Install locked dependencies without lifecycle scripts
-        run: bun install --frozen-lockfile --ignore-scripts
+        run: npm ci --ignore-scripts
 
       - name: Record stock Chrome and runner versions
         run: |
-          bun -e '
+          node --input-type=module -e '
             import { accessSync, constants, mkdirSync, writeFileSync } from "node:fs";
             import { createRequire } from "node:module";
             const evidence = {
@@ -52,7 +51,7 @@ jobs:
               platform: process.platform,
               arch: process.arch,
               uid: process.getuid?.() ?? null,
-              bun: Bun.version,
+              node: process.versions.node,
               playwright: createRequire(import.meta.url)("playwright/package.json").version,
               chromePath: "/opt/google/chrome/chrome",
               browserChannel: "chrome",
@@ -68,8 +67,9 @@ jobs:
                 ["chromeVersion", [evidence.chromePath, "--version"]],
                 ["checkoutCommit", ["git", "rev-parse", "HEAD"]],
               ]) {
-                const result = Bun.spawnSync(command);
-                if (result.exitCode !== 0 || result.signalCode) {
+                const { spawnSync } = await import("node:child_process");
+                const result = spawnSync(command[0], command.slice(1));
+                if (result.status !== 0 || result.signal) {
                   throw new Error(`${key} failed: ${result.stderr.toString()}`);
                 }
                 evidence[key] = result.stdout.toString().trim();
@@ -85,19 +85,19 @@ jobs:
           '
 
       - name: Typecheck browser harness
-        run: bun run --cwd apps/web --bun tsc -p tsconfig.pwa-browser.json
+        run: node node_modules/typescript/bin/tsc -p apps/web/tsconfig.pwa-browser.json
 
       - name: Run positive and negative PWA controls
         timeout-minutes: 4
         env:
           PWA_BROWSER_CHECK: '1'
           DEBUG: pw:browser
-        run: bun apps/web/scripts/pwa-browser-check.ts
+        run: node --import tsx apps/web/scripts/pwa-browser-check.ts
 
       - name: Print browser evidence even after failure
         if: always()
         run: |
-          bun -e '
+          node --input-type=module -e '
             import { existsSync, readFileSync } from "node:fs";
             for (const name of ["runtime.json", "results.json"]) {
               const path = `pwa-browser-results/${name}`;

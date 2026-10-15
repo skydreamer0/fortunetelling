@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { answerQuestion, type BirthProfile } from '@fortune/core';
 import { monthSignalProvider, slimAnswer } from '../src/tools/questions';
 import { makeFixture } from './helpers';

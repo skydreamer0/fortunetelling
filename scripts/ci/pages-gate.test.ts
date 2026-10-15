@@ -1,4 +1,6 @@
-import { describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { parse as parseYaml } from 'yaml';
+import { describe, expect, test } from 'vitest';
 import { mkdtempSync, readFileSync, rmSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -16,7 +18,7 @@ const accepted: PagesContext = {
 
 describe('Pages exact-source acceptance gate', () => {
   test('reusable deployment has no independent trigger and gates both build and publish', () => {
-    const workflow = Bun.YAML.parse(readFileSync(new URL('../../.github/workflows/deploy.yml', import.meta.url), 'utf8')) as any;
+    const workflow = parseYaml(readFileSync(new URL('../../.github/workflows/deploy.yml', import.meta.url), 'utf8')) as any;
     expect(Object.keys(workflow.on)).toEqual(['workflow_call']);
     expect(workflow.permissions).toEqual({ contents: 'read' });
     expect(workflow.jobs.deploy.permissions).toEqual({ contents: 'read', pages: 'write', 'id-token': 'write' });
@@ -24,17 +26,17 @@ describe('Pages exact-source acceptance gate', () => {
     for (const job of [workflow.jobs.build, workflow.jobs.deploy]) {
       const steps = job.steps as any[];
       expect(steps.find(s => s.uses === 'actions/checkout@v4').with).toEqual({ ref: '${{ github.sha }}', 'persist-credentials': false });
-      expect(steps.find(s => s.uses === 'oven-sh/setup-bun@v2').with['bun-version']).toBe('1.4.3');
-      const gate = steps.findIndex(s => s.run?.includes('bun scripts/ci/pages-gate.ts'));
+      expect(steps.find(s => s.uses === 'actions/setup-node@v4').with['node-version']).toBe('24.19.0');
+      const gate = steps.findIndex(s => s.run?.includes('node scripts/ci/pages-gate.ts'));
       expect(gate).toBeGreaterThan(0);
       expect(steps[gate].run).toContain('/git/ref/heads/master');
       expect(steps[gate].env.PAGES_ACCEPTED_SHA).toBe('${{ inputs.accepted_sha }}');
       expect(steps[gate].env.PAGES_ACCEPTANCE_RESULT).toBe('${{ inputs.acceptance_result }}');
-      expect(gate).toBeLessThan(steps.findIndex(s => s.run === 'bun run build' || s.uses === 'actions/deploy-pages@v4'));
+      expect(gate).toBeLessThan(steps.findIndex(s => s.run === 'npm run build' || s.uses === 'actions/deploy-pages@v4'));
     }
     const deploy = workflow.jobs.deploy.steps.find((s: any) => s.uses === 'actions/deploy-pages@v4');
     expect(deploy.with.artifact_name).toBe('${{ needs.build.outputs.artifact_name }}');
-    const artifactGate = workflow.jobs.deploy.steps.find((s: any) => s.run?.includes('bun scripts/ci/pages-gate.ts'));
+    const artifactGate = workflow.jobs.deploy.steps.find((s: any) => s.run?.includes('node scripts/ci/pages-gate.ts'));
     expect(artifactGate.env.PAGES_ARTIFACT_NAME).toBe('${{ needs.build.outputs.artifact_name }}');
     expect(artifactGate.env.PAGES_BUILD_ATTEMPT).toBe('${{ needs.build.outputs.build_attempt }}');
   });
@@ -94,7 +96,7 @@ describe('Pages exact-source acceptance gate', () => {
     try {
       for (const result of ['success', 'failure', 'cancelled', 'skipped']) {
         const output = join(directory, `${result}.out`);
-        const child = Bun.spawnSync([process.execPath, fileURLToPath(new URL('./pages-gate.ts', import.meta.url))], {
+        const child = spawnSync(process.execPath, [fileURLToPath(new URL('./pages-gate.ts', import.meta.url))], {
           env: {
             ...process.env,
             GITHUB_REPOSITORY: accepted.repository!, GITHUB_EVENT_NAME: 'push', GITHUB_REF: accepted.ref!,
@@ -104,10 +106,10 @@ describe('Pages exact-source acceptance gate', () => {
           },
         });
         if (result === 'success') {
-          expect(child.exitCode).toBe(0);
+          expect(child.status).toBe(0);
           expect(readFileSync(output, 'utf8')).toBe(`artifact_name=github-pages-${sha}-123-1\n`);
         } else {
-          expect(child.exitCode).not.toBe(0);
+          expect(child.status).not.toBe(0);
           expect(existsSync(output)).toBe(false);
         }
       }
@@ -122,14 +124,14 @@ test('deploy-only rerun CLI reports the verified earlier build artifact', () => 
   const output = join(directory, 'output');
   const sha = 'a'.repeat(40), artifact = `github-pages-${sha}-123-1`;
   try {
-    const child = Bun.spawnSync([process.execPath, fileURLToPath(new URL('./pages-gate.ts', import.meta.url))], {
+    const child = spawnSync(process.execPath, [fileURLToPath(new URL('./pages-gate.ts', import.meta.url))], {
       env: { ...process.env,
         GITHUB_REPOSITORY: 'skydreamer0/fortunetelling', GITHUB_EVENT_NAME: 'push', GITHUB_REF: 'refs/heads/master',
         GITHUB_SHA: sha, PAGES_ACCEPTED_SHA: sha, PAGES_ACCEPTANCE_RESULT: 'success',
         PAGES_CHECKOUT_SHA: sha, PAGES_CURRENT_MASTER_SHA: sha, GITHUB_RUN_ID: '123', GITHUB_RUN_ATTEMPT: '2',
         PAGES_ARTIFACT_NAME: artifact, PAGES_BUILD_ATTEMPT: '1', GITHUB_OUTPUT: output },
     });
-    expect(child.exitCode).toBe(0);
+    expect(child.status).toBe(0);
     expect(child.stdout.toString()).toContain(`Authorized exact-source Pages artifact: ${artifact}`);
     expect(readFileSync(output, 'utf8')).toBe(`artifact_name=${artifact}\n`);
   } finally { rmSync(directory, { recursive: true, force: true }); }

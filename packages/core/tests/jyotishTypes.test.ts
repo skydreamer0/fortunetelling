@@ -1,4 +1,6 @@
-import { beforeAll, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { transformSync } from 'esbuild';
+import { beforeAll, expect, test } from 'vitest';
 import { EPHEMERIS_MOSHIER_WARNING, initEphemeris } from '../src/calculators/astro/index';
 import {
   buildJyotishChart, jyotishCalculator, jyotishComponents,
@@ -253,8 +255,8 @@ test('Jyotish defaults and invalid asOf errors remain unchanged', () => {
 });
 
 test('Jyotish producer emits identical JavaScript and its contract has no runtime code', async () => {
-  const source = await Bun.file(new URL('../src/calculators/jyotish/calculator.ts', import.meta.url)).text();
-  const tests = await Bun.file(import.meta.path).text();
+  const source = readFileSync(new URL('../src/calculators/jyotish/calculator.ts', import.meta.url), 'utf8');
+  const tests = readFileSync(import.meta.filename, 'utf8');
   const start = source.indexOf('export function jyotishComponents(');
   const end = source.indexOf('\nexport const jyotishCalculator', start);
   const oldStart = tests.indexOf('function legacyJyotishComponents(');
@@ -263,11 +265,11 @@ test('Jyotish producer emits identical JavaScript and its contract has no runtim
   expect(end).toBeGreaterThan(start);
   expect(oldStart).toBeGreaterThanOrEqual(0);
   expect(oldEnd).toBeGreaterThan(oldStart);
-  const transpiler = new Bun.Transpiler({ loader: 'ts' });
+  const transpiler = { transformSync: (source: string) => transformSync(source, { loader: 'ts', format: 'esm', target: 'esnext' }).code };
   const baseline = tests.slice(oldStart, oldEnd).replace(
     'function legacyJyotishComponents(', 'export function jyotishComponents(',
   );
   expect(transpiler.transformSync(source.slice(start, end))).toBe(transpiler.transformSync(baseline));
-  const types = await Bun.file(new URL('../src/calculators/jyotish/componentTypes.ts', import.meta.url)).text();
+  const types = readFileSync(new URL('../src/calculators/jyotish/componentTypes.ts', import.meta.url), 'utf8');
   expect(transpiler.transformSync(types).trim()).toBe('');
 });

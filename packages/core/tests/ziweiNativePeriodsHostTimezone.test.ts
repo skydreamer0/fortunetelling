@@ -1,4 +1,5 @@
-import { expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { expect, test } from 'vitest';
 
 const moduleUrl = new URL('../src/calculators/ziwei/index.ts', import.meta.url).href;
 const script = `
@@ -25,8 +26,8 @@ console.log(JSON.stringify({hostOffset, results}));
 
 test('#57 adapter outputs are identical across four real host TZs without Intl fallback', () => {
   const rows = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'].map(TZ => {
-    const result = Bun.spawnSync([process.execPath, '--eval', script], { env: { ...process.env, TZ } });
-    expect(result.exitCode, result.stderr.toString()).toBe(0);
+    const result = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], { env: { ...process.env, TZ } });
+    expect(result.status, result.stderr.toString()).toBe(0);
     return JSON.parse(result.stdout.toString());
   });
   expect(new Set(rows.map(row => row.hostOffset)).size).toBe(4);

@@ -1,4 +1,4 @@
-import { test, expect, describe, beforeAll } from 'bun:test';
+import { test, expect, describe, beforeAll } from 'vitest';
 import {
   initEphemeris,
   isEphemerisReady,

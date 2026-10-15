@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { buildVersionInfo } from '@fortune/core';
 import { hashVersions, ok } from '../src/envelope';
 

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { createValidationRegistry, DEFAULT_VALIDATION_REGISTRY, validationScopeKey, validationRefKey } from '../src/validation/registry';
 import { createCapabilityRegistry, DEFAULT_CAPABILITY_REGISTRY } from '../src/validation/capabilities';
 import { VALIDATION_AXES } from '../src/validation/types';

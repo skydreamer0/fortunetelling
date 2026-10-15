@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import type { BirthProfile } from '../src/profile/index';
 import { DOMAINS, type Domain, type SystemId } from '../src/signals/types';
 import { createTimeContext } from '../src/time/index';

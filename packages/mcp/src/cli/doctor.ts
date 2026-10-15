@@ -1,5 +1,5 @@
 /**
- * 輕量健康檢查：`bun run doctor`（本機）、`bun run doctor --ci`（CI，略過只存在你電腦上的項目）。
+ * 輕量健康檢查：`npm run doctor --`（本機）、`npm run doctor -- --ci`（CI，略過只存在你電腦上的項目）。
  *
  * 只檢查這個專案真的會出事的地方：
  *   1. 本機 profile 目錄（格式、檔名與 profileId 一致、指紋是否過期）
@@ -9,8 +9,8 @@
  * 結果分四種：ok／warn／fail／skip。只有 fail 會讓結束碼為 1。
  */
 
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { accessSync, constants, existsSync, readdirSync, readFileSync } from 'node:fs';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { delimiter, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,7 +23,7 @@ import { TOOLS } from '../tools/index';
 export type Status = 'ok' | 'warn' | 'fail' | 'skip';
 export type CheckResult = { name: string; status: Status; detail: string };
 
-const BIN_PATH = fileURLToPath(new URL('../bin.ts', import.meta.url));
+const BIN_PATH = fileURLToPath(new URL(import.meta.url.endsWith('.ts') ? '../../dist/bin.js' : '../bin.js', import.meta.url));
 
 // ─── 1. profile 目錄 ────────────────────────────────────────────────────────
 
@@ -68,12 +68,12 @@ export async function checkMcpServer(): Promise<CheckResult[]> {
       gender: 'female',
       birthplace: { label: '台南', lat: 22.9999, lng: 120.2269, timezone: 'Asia/Taipei' },
     });
-    await Bun.write(join(dir, `${SMOKE_ID}${PROFILE_FILE_EXTENSION}`), serializeProfileFile(file));
+    await writeFile(join(dir, `${SMOKE_ID}${PROFILE_FILE_EXTENSION}`), serializeProfileFile(file));
 
     await client.connect(
       new StdioClientTransport({
         command: process.execPath,
-        args: ['run', BIN_PATH],
+        args: [BIN_PATH],
         env: { ...(process.env as Record<string, string>), FORTUNE_PROFILES_DIR: dir },
         stderr: 'pipe',
       }),
@@ -166,13 +166,13 @@ export function inspectDesktopConfig(config: unknown, fs: FsProbe, expectedBin: 
   results.push(
     commandFound
       ? { name: '桌面版 command', status: 'ok', detail: command }
-      : { name: '桌面版 command', status: 'fail', detail: `找不到指令 ${JSON.stringify(command)}；請改成 bun 的完整路徑` },
+      : { name: '桌面版 command', status: 'fail', detail: `找不到指令 ${JSON.stringify(command)}；請改成 node 的完整路徑` },
   );
 
   const args = Array.isArray(entry.args) ? entry.args.filter((a): a is string => typeof a === 'string') : [];
   const script = args.find(a => /\.(ts|js)$/.test(a));
   if (!script) {
-    results.push({ name: '桌面版 args', status: 'fail', detail: 'args 裡找不到 bin.ts 的路徑' });
+    results.push({ name: '桌面版 args', status: 'fail', detail: 'args 裡找不到 dist/bin.js 的路徑' });
   } else if (/^[A-Za-z]:[^\\/]/.test(script)) {
     results.push({ name: '桌面版 args', status: 'fail', detail: `路徑的反斜線被吃掉了：${script}；JSON 裡要寫成 C:\\\\Users\\\\...` });
   } else if (!fs.exists(script)) {
@@ -196,7 +196,17 @@ export function inspectDesktopConfig(config: unknown, fs: FsProbe, expectedBin: 
 
 const realFs: FsProbe = {
   exists: p => existsSync(p),
-  which: cmd => Bun.which(cmd),
+  which: cmd => {
+    const extensions = process.platform === 'win32' ? (process.env.PATHEXT ?? '.EXE;.CMD;.BAT').split(';') : [''];
+    for (const directory of (process.env.PATH ?? '').split(delimiter)) {
+      for (const extension of ['', ...extensions]) {
+        const candidate = join(directory, `${cmd}${extension}`);
+        try { accessSync(candidate, process.platform === 'win32' ? constants.F_OK : constants.X_OK); return candidate; }
+        catch { /* Try the next PATH candidate. */ }
+      }
+    }
+    return null;
+  },
 };
 
 export function checkDesktopConfig(candidates: string[] = desktopConfigCandidates()): CheckResult[] {

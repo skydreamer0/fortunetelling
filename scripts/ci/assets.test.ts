@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { pngDimensions, precachePaths } from './assets';
 
 test('PNG signature, IHDR and positive dimensions are required', () => {

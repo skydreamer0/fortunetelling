@@ -4,9 +4,10 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "types": ["bun"],
+    "types": ["node"],
     "strict": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true
   },
   "include": ["scripts/answer-check-browser-check.ts", "scripts/report-navigation-browser-check.ts"]

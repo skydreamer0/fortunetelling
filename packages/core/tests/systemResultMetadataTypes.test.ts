@@ -1,4 +1,6 @@
-import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { transformSync } from 'esbuild';
+import { expect, test } from 'vitest';
 import {
   SystemResult, type SystemResultMeta, type SystemResultParams,
   type SystemResultLike, type SystemResultJSON,
@@ -68,9 +70,9 @@ test('metadata remains reference-preserving and accepts arbitrary field payloads
 });
 
 test('engine metadata change must erase to identical executable JavaScript', async () => {
-  const before = await Bun.file(new URL('./fixtures/systemResult.before-meta-unknown.ts', import.meta.url)).text();
-  const after = await Bun.file(new URL('../src/core/models/SystemResult.ts', import.meta.url)).text();
-  const transpiler = new Bun.Transpiler({ loader: 'ts' });
+  const before = readFileSync(new URL('./fixtures/systemResult.before-meta-unknown.ts', import.meta.url), 'utf8');
+  const after = readFileSync(new URL('../src/core/models/SystemResult.ts', import.meta.url), 'utf8');
+  const transpiler = { transformSync: (source: string) => transformSync(source, { loader: 'ts', format: 'esm', target: 'esnext' }).code };
   expect(transpiler.transformSync(after)).toBe(transpiler.transformSync(before));
 });
 

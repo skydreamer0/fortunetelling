@@ -1,4 +1,5 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { resolve } from 'node:path';
 import { initEphemeris } from '../src/calculators/astro/ephemeris';
 import { runEphemerisCalculators } from '../src/calculators/ephemerisRegistry';
@@ -22,10 +23,10 @@ const ephemerisDefaults = {
 } as const;
 
 function freshProcess(source: string): unknown {
-  const child = Bun.spawnSync([process.execPath, '-e', source], {
-    cwd: resolve(import.meta.dir, '../..'), stdout: 'pipe', stderr: 'pipe',
+  const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', source], {
+    cwd: resolve(import.meta.dirname, '../..'), stdio: ['pipe', 'pipe', 'pipe'],
   });
-  expect(child.exitCode, new TextDecoder().decode(child.stderr)).toBe(0);
+  expect(child.status, new TextDecoder().decode(child.stderr)).toBe(0);
   return JSON.parse(new TextDecoder().decode(child.stdout).trim().split('\n').at(-1)!);
 }
 

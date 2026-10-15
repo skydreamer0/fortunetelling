@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import countOnlyDelta from './fixtures/export.v0.9.1.delta.json';
 import cooperativeDelta from './fixtures/export.v0.9.0.delta.json';
 import requiredOptionsDelta from './fixtures/export.v0.8.0.delta.json';
@@ -7,7 +8,7 @@ import calendarValidationDelta from './fixtures/export.v0.6.3.delta.json';
 import asOfDelta from './fixtures/export.v0.6.2.delta.json';
 import evidenceDelta from './fixtures/export.v0.6.1.delta.json';
 import agreementDelta from './fixtures/export.v0.6.0.delta.json';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -120,13 +121,13 @@ describe('buildExportBundle', () => {
 describe('golden', () => {
   // Preserve the v0.5.0 fixture. D-040 changes only the manifest core version;
   // D-045 then applies reviewed literal provenance/schema/export deltas.
-  const goldenPath = join(import.meta.dir, 'fixtures', 'export.golden.json');
+  const goldenPath = join(import.meta.dirname, 'fixtures', 'export.golden.json');
   test('share-redacted 檔案內容指紋固定', async () => {
     const bundle = await buildExportBundle(file, { preset: 'share-redacted', asOf: ASOF });
     const actual = { versions: bundle.manifest.versions, files: bundle.manifest.files, signalCount: (bundle.signals as any).count };
     const text = `${JSON.stringify(actual, null, 2)}\n`;
     const original = readFileSync(goldenPath, 'utf8').replace(/\r\n/g, '\n');
-    expect(new Bun.CryptoHasher('sha256').update(original).digest('hex')).toBe('90189fb31fea2937ec78db9688a5cea49714504f054525fe46a39ecc6a860668');
+    expect(createHash('sha256').update(original).digest('hex')).toBe('90189fb31fea2937ec78db9688a5cea49714504f054525fe46a39ecc6a860668');
     const recorded = JSON.parse(original);
     expect(recorded.versions.coreVersion).toBe('0.5.0');
     recorded.versions.coreVersion = '0.5.3';

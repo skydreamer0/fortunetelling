@@ -5,8 +5,8 @@
  *
  *   1. 下載官方資料並解壓：https://data.iana.org/time-zones/releases/tzdata<版本>.tar.gz
  *      （IANA tz 資料庫，公有領域 public domain）
- *   2. bun packages/core/src/time/tzdb/build.ts <解壓後的目錄>
- *   3. bun test packages/core/tests/timeTzdb.test.ts packages/core/tests/timeHistorical.test.ts
+ *   2. node --import tsx packages/core/src/time/tzdb/build.ts <解壓後的目錄>
+ *   3. npm test -- packages/core/tests/timeTzdb.test.ts packages/core/tests/timeHistorical.test.ts
  *
  * 需要 `awk`（Git Bash、macOS、Linux 皆內建）：用 tz 官方的 `ziguard.awk` 產生兩份 zic 輸入，
  * 與官方 Makefile 的 `PACKRATDATA=backzone PACKRATLIST=zone.tab`、`DATAFORM=rearguard` 相同：
@@ -124,7 +124,7 @@ function verify(name: string, compiled: CompiledZone, encoded: string): void {
 
 function main(): void {
   const dir = process.argv[2];
-  if (!dir) throw new Error('用法：bun packages/core/src/time/tzdb/build.ts <tzdata 目錄>');
+  if (!dir) throw new Error('用法：node --import tsx packages/core/src/time/tzdb/build.ts <tzdata 目錄>');
   const version = readFileSync(join(dir, 'version'), 'utf8').trim();
   const back = parseTzSource(ziguard(dir, true));
   const main = parseTzSource(ziguard(dir, false));

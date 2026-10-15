@@ -36,8 +36,8 @@ export function mcpConfigSnippet(os: DesktopOs): string {
   return JSON.stringify({
     mcpServers: {
       fortune: {
-        command: 'bun',
-        args: ['run', windows ? 'C:\\Users\\你\\fortunetelling\\packages\\mcp\\src\\bin.ts' : '/絕對路徑/fortunetelling/packages/mcp/src/bin.ts'],
+        command: 'node',
+        args: [windows ? 'C:\\Users\\你\\fortunetelling\\packages\\mcp\\dist\\bin.js' : '/絕對路徑/fortunetelling/packages/mcp/dist/bin.js'],
         env: { FORTUNE_PROFILES_DIR: windows ? 'C:\\Users\\你\\.fortune\\profiles' : '/Users/你/.fortune/profiles' },
       },
     },
@@ -133,9 +133,9 @@ export function McpEntry({ report, clipboard, onDownload = downloadTextFile }: {
         <li className="ask__step">
           <h3 className="ask__step-title">安裝本機 MCP</h3>
           <p>
-            安裝 <a href="https://bun.sh" target="_blank" rel="noreferrer">Bun</a>，在專案資料夾執行：
+            安裝 <a href="https://nodejs.org" target="_blank" rel="noreferrer">Node.js 24 LTS</a>，在專案資料夾執行：
           </p>
-          <pre className="ask__code ask__code--inline" tabIndex={0}><code>bun install</code></pre>
+          <pre className="ask__code ask__code--inline" tabIndex={0}><code>npm ci</code></pre>
         </li>
 
         <li className="ask__step">
@@ -214,7 +214,7 @@ export function McpEntry({ report, clipboard, onDownload = downloadTextFile }: {
               {os === 'windows' && <> JSON 裡的路徑反斜線要寫成 <code>\\</code>（兩個），單一個 <code>\</code> 會讓設定檔無法讀取。</>}
             </li>
             <li>
-              找不到 <code>bun</code> 時，把 <code>command</code> 改成 {os === 'windows' ? <code>where bun</code> : <code>which bun</code>} 印出的完整路徑。
+              找不到 <code>node</code> 時，把 <code>command</code> 改成 {os === 'windows' ? <code>where node</code> : <code>which node</code>} 印出的完整路徑。
             </li>
             <li>已經有其他 <code>mcpServers</code> 的話，只加入 <code>fortune</code> 這一段。存檔後完全結束並重開 Claude 桌面版。</li>
           </ul>

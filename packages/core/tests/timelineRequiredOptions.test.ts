@@ -1,4 +1,5 @@
-import { describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { describe, expect, test } from 'vitest';
 import { resolve } from 'node:path';
 import { resolveCalculationSpec } from '../src/core/calculationSpec';
 import { createTimeContext } from '../src/time/createTimeContext';
@@ -40,8 +41,8 @@ describe('Issue #51: timeline settings are explicit at every entry', () => {
   }
 
   test('async rejects missing settings before initializing ephemeris', () => {
-    const root = resolve(import.meta.dir, '../..');
-    const child = Bun.spawnSync([process.execPath, '-e', `
+    const root = resolve(import.meta.dirname, '../..');
+    const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', `
       const { buildTimelineAsync } = await import('./core/src/timeline/buildTimeline.ts');
       const { isEphemerisReady } = await import('./core/src/calculators/astro/ephemeris.ts');
       const { createTimeContext } = await import('./core/src/time/createTimeContext.ts');
@@ -52,8 +53,8 @@ describe('Issue #51: timeline settings are explicit at every entry', () => {
         catch (error) { results.push(error.message); }
       }
       console.log(JSON.stringify({ results, ephemerisReady: isEphemerisReady() }));
-    `], { cwd: root, stdout: 'pipe', stderr: 'pipe' });
-    expect(child.exitCode, new TextDecoder().decode(child.stderr)).toBe(0);
+    `], { cwd: root, stdio: ['pipe', 'pipe', 'pipe'] });
+    expect(child.status, new TextDecoder().decode(child.stderr)).toBe(0);
     const result = JSON.parse(new TextDecoder().decode(child.stdout).trim().split('\n').at(-1)!);
     expect(result.results[0]).toContain('useTrueSolarTime');
     expect(result.results[1]).toContain('ziHourConvention');

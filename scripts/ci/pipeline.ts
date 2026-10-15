@@ -1,5 +1,8 @@
-import { appendFileSync, readFileSync } from 'node:fs';
-import { basename } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { tmpdir } from 'node:os';
+import { appendFileSync, readFileSync, mkdtempSync, rmSync } from 'node:fs';
+import { dirname, basename, resolve, join } from 'node:path';
 import measured from './test-durations.json';
 
 export type Mode = 'full' | 'docs' | 'assets';
@@ -30,13 +33,13 @@ export function isTest(path: string): boolean {
   return !path.split('/').some(p => p.startsWith('.') || p === 'node_modules') && /[._](test|spec)\.(js|jsx|ts|tsx|mjs|cjs|mts|cts)$/.test(basename(path));
 }
 function git(...args: string[]): string {
-  const child = Bun.spawnSync(['git', ...args], { stdout: 'pipe', stderr: 'pipe' });
-  if (child.exitCode !== 0) throw new Error(`git ${args[0]} failed: ${child.stderr.toString()}`);
+  const child = spawnSync('git', args, { stdio: ['pipe', 'pipe', 'pipe'] });
+  if (child.status !== 0) throw new Error(`git ${args[0]} failed: ${child.stderr.toString()}`);
   return child.stdout.toString();
 }
 export function inventory(): string[] {
   const files = git('ls-files', '-z').split('\0').filter(Boolean);
-  if (files.some(p => /(^|\/)bunfig\.toml$/.test(p))) throw new Error('Review test discovery when adding bunfig.toml');
+  if (files.some(p => /(^|\/)(vitest\.workspace|vitest\.projects)\./.test(p))) throw new Error('Review test discovery when adding project-specific configuration');
   const tests = files.filter(isTest).sort();
   if (!tests.length || new Set(tests).size !== tests.length) throw new Error('Empty or duplicate inventory');
   return tests;
@@ -65,11 +68,53 @@ export function aggregate(mode: string, results: Record<string, string | undefin
     if (results.regression !== 'success' || results.lightweight !== 'skipped') throw new Error('Full regression incomplete');
   } else if (results.regression !== 'skipped' || results.lightweight !== 'success') throw new Error('Scoped regression incomplete');
 }
-export function verifySummary(output: string, expectedFiles: number): void {
-  const summaries = [...output.matchAll(/Ran (\d+) tests? across (\d+) files?\./g)];
-  if (summaries.length !== 1 || Number(summaries[0]![2]) !== expectedFiles || Number(summaries[0]![1]) < expectedFiles) throw new Error('Test execution did not cover the planned file count');
-  const failed = [...output.matchAll(/^\s*(\d+) fail\s*$/gm)];
-  if (failed.length !== 1 || Number(failed[0]![1]) !== 0) throw new Error('Missing clean test summary');
+export interface TestReport {
+  success: boolean; numTotalTests: number; numPassedTests: number; numFailedTests: number;
+  numPendingTests: number; numTodoTests: number;
+  testResults: { name: string; status: string; assertionResults: { status: string; fullName?: string; title?: string }[] }[];
+}
+export function verifySummary(output: string, expectedFiles: number, expectedPaths?: string[]): TestReport {
+  const report = JSON.parse(output) as TestReport;
+  if (!report || !Array.isArray(report.testResults) || report.testResults.length !== expectedFiles ||
+      new Set(report.testResults.map(file => file.name)).size !== expectedFiles ||
+      !Number.isInteger(report.numTotalTests) || report.numTotalTests < expectedFiles) {
+    throw new Error('Test execution did not cover the planned file count');
+  }
+  const allowedSkipped = report.testResults.filter(file => resolve(file.name) === resolve('packages/ai/tests/live.test.ts') && !process.env.ANTHROPIC_API_KEY);
+  const skipped = allowedSkipped.flatMap(file => file.assertionResults).filter(test => test.status === 'skipped');
+  if (skipped.length && (skipped.length !== 2 || skipped.map(test => test.title).sort().join('|') !== ['interpret returns validated, cited sections', 'parseQuestion classifies a catalog question'].sort().join('|'))) throw new Error('Unexpected live-test skip inventory');
+  if (report.success !== true || report.numFailedTests !== 0 || report.numPendingTests !== skipped.length ||
+      report.numTodoTests !== 0 || report.numPassedTests + skipped.length !== report.numTotalTests ||
+      report.testResults.some(file => (file.status !== 'passed' && !(allowedSkipped.includes(file) && ['pending', 'skipped'].includes(file.status))) || !Array.isArray(file.assertionResults) ||
+        !file.assertionResults.length || file.assertionResults.some(test => test.status !== 'passed' && !(allowedSkipped.includes(file) && test.status === 'skipped'))) ||
+      report.testResults.reduce((total, file) => total + file.assertionResults.length, 0) !== report.numTotalTests) {
+    throw new Error('Missing clean test summary (failed, skipped, todo or incomplete execution)');
+  }
+  if (expectedPaths) {
+    const actual = report.testResults.map(file => resolve(file.name)).sort();
+    const expected = expectedPaths.map(file => resolve(file)).sort();
+    if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Executed files differ from the exact planned inventory');
+  }
+  return report;
+}
+export function runTests(files: string[], env = process.env, outputDirectory?: string): string {
+  const temporary = outputDirectory ?? mkdtempSync(join(tmpdir(), 'fortune-vitest-'));
+  const resultPath = join(temporary, 'tests.json');
+  const cli = join(dirname(createRequire(import.meta.url).resolve('vitest/package.json')), 'vitest.mjs');
+  try {
+    rmSync(resultPath, { force: true });
+    // Vitest CLI arguments are substring filters. Never trust them alone: exact
+    // executed file identities are checked against the audited inventory below.
+    const child = spawnSync(process.execPath, [cli, 'run', ...files.map(file => `./${file}`),
+      '--reporter=default', '--reporter=json', `--outputFile.json=${resultPath}`], {
+      env: { ...env, NO_COLOR: '1' }, encoding: 'utf8', timeout: 8 * 60_000, maxBuffer: 64 * 1024 * 1024,
+    });
+    console.log(child.stdout); console.error(child.stderr);
+    if (child.error || child.status !== 0 || child.signal) throw new Error(`Tests did not exit normally: ${child.error ?? child.signal ?? child.status}`);
+    const json = readFileSync(resultPath, 'utf8');
+    verifySummary(json, files.length, files);
+    return json;
+  } finally { if (!outputDirectory) rmSync(temporary, { recursive: true, force: true }); }
 }
 export function output(name: string, value: string): void {
   if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
@@ -86,7 +131,7 @@ export async function main(command: string, index?: string) {
       } catch (error) { console.log(`Uncertain diff: running full suite. ${error}`); }
     }
     const files = inventory(), shards = partition(files);
-    console.log(JSON.stringify({ mode, checkout: git('rev-parse', 'HEAD').trim(), bun: Bun.version, totalFiles: files.length,
+    console.log(JSON.stringify({ mode, checkout: git('rev-parse', 'HEAD').trim(), node: process.versions.node, totalFiles: files.length,
       measuredSource: measured.source, shards: shards.map((files, index) => ({ index, files })) }, null, 2));
     output('mode', mode);
   } else if (command === 'aggregate') {
@@ -104,15 +149,9 @@ export async function main(command: string, index?: string) {
       files = shards[Number(index)]!;
     }
     if (!files.length) throw new Error('Empty selected suite');
-    console.log(JSON.stringify({ shard: index, bun: Bun.version, revision: Bun.revision, files }, null, 2));
+    console.log(JSON.stringify({ shard: index, node: process.versions.node, v8: process.versions.v8, files }, null, 2));
     const started = performance.now();
-    // Explicit ./ paths are exact-file arguments, never substring filters. Each
-    // job owns its process; do not introduce concurrent mocks or global clocks.
-    const child = Bun.spawn([process.execPath, 'test', ...files.map(p => `./${p}`)], { stdout: 'pipe', stderr: 'pipe', env: { ...process.env, NO_COLOR: '1' } });
-    const [stdout, stderr, code] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]);
-    console.log(stdout); console.log(stderr);
-    if (code !== 0) throw new Error(`Tests exited ${code}`);
-    verifySummary((stdout + '\n' + stderr).replace(/\x1b\[[0-9;]*m/g, ''), files.length);
+    runTests(files);
     console.log(JSON.stringify({ shard: index, files: files.length, durationMs: Math.round(performance.now() - started), status: 'PASS' }));
   } else throw new Error('Unknown CI command');
 }

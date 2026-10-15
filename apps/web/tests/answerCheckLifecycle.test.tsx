@@ -1,4 +1,5 @@
-import { expect, test } from 'bun:test';
+import { build as buildModule } from 'esbuild';
+import { expect, test } from 'vitest';
 import { createRequire } from 'node:module';
 import { isValidElement, type ReactNode } from 'react';
 
@@ -20,16 +21,15 @@ async function harness() {
     directionalEvidence() { return []; },
   });
   const mod: any = { exports: {} };
-  const build = await Bun.build({ entrypoints: ['apps/web/src/components/report/AnswerCheck.tsx'], target: 'bun', format: 'cjs', external: ['*'] });
-  if (!build.success) throw new Error(build.logs.join('\n'));
-  const compiled = await build.outputs[0].text();
+  const built = await buildModule({ entryPoints: ['apps/web/src/components/report/AnswerCheck.tsx'], platform: 'node', format: 'cjs', external: ['*'], bundle: true, write: false });
+  const compiled = built.outputFiles[0].text;
   const load = (id: string) => id === 'react' ? react : id === '../../model/askAi' ? {
     reportSignalLookup() { if (failInit) throw new Error('synthetic initialization failure'); return lookup; },
   } : id === '@fortune/ai/mcp' ? { checkAnswer(text: string, options: any) {
     if (options.directionalEvidence) checks++;
     return { ok: true, paragraphCount: 1, citedIds: [text], unknownCitations: [], issues: [] };
   } } : require(id);
-  new Function(`return (\n${compiled}\n)` )()(mod.exports, load, mod, 'AnswerCheck.tsx', '.');
+  new Function(`return function(exports, require, module, __filename, __dirname) {\n${compiled}\n}` )()(mod.exports, load, mod, 'AnswerCheck.tsx', '.');
   function render() { cursor = 0; ec = 0; tree = mod.exports.AnswerCheck({ report }); pendingEffects.splice(0).forEach(fn => fn()); }
   function walk(n: ReactNode): any[] { if (Array.isArray(n)) return n.flatMap(x => walk(x)); if (!isValidElement<any>(n)) return []; return [n, ...walk((n.props as { children?: ReactNode }).children)]; }
   function nodes() { return walk(tree); }

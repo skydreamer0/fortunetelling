@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { createSignal } from '@fortune/core';
 import { callTool } from '../src/tools';
 

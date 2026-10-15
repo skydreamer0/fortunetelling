@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { aggregateSignals, createSignal, type CreateSignalParams, type Signal } from '../src/signals/index';
 
 const window = { grain: 'year', start: '2026-01-01', end: '2026-12-31' } as const;

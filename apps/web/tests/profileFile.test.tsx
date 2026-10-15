@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { PROFILE_ID_RE, isValidProfileId, parseProfileFile } from '@fortune/core';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { McpEntry, mcpConfigSnippet } from '../src/components/report/McpEntry';
@@ -102,11 +102,12 @@ describe('MCP config snippet', () => {
   test('is valid JSON for both systems; Windows backslashes are escaped', () => {
     for (const os of ['windows', 'mac'] as const) {
       const parsed = JSON.parse(mcpConfigSnippet(os));
-      expect(parsed.mcpServers.fortune.command).toBe('bun');
-      expect(parsed.mcpServers.fortune.args[0]).toBe('run');
+      expect(parsed.mcpServers.fortune.command).toBe('node');
+      expect(parsed.mcpServers.fortune.args).toHaveLength(1);
+      expect(parsed.mcpServers.fortune.args[0]).toMatch(/packages[\\/]mcp[\\/]dist[\\/]bin\.js$/);
     }
     const windows = mcpConfigSnippet('windows');
-    expect(windows).toContain('C:\\\\Users\\\\你\\\\fortunetelling\\\\packages\\\\mcp\\\\src\\\\bin.ts');
+    expect(windows).toContain('C:\\\\Users\\\\你\\\\fortunetelling\\\\packages\\\\mcp\\\\dist\\\\bin.js');
     expect(windows).not.toMatch(/[^\\]\\[^\\]/);
     expect(mcpConfigSnippet('mac')).toContain('/Users/你/.fortune/profiles');
   });

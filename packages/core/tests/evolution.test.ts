@@ -1,7 +1,7 @@
 /**
  * D4 契約測試：EvolutionCalculator（區塊 H③ 時期演化）。
  */
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   BirthData,

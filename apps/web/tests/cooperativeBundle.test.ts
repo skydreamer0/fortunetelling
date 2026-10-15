@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -10,7 +10,7 @@ test('the real Vite production bridge reads the iztro language instance, not its
   const output = await mkdtemp(join(tmpdir(), 'fortune-cooperative-bundle-'));
   try {
     // Use the real app configuration, including its chunk splitting. This is
-    // module interoperability under Bun, not browser/input acceptance.
+    // module interoperability under Node, not browser/input acceptance.
     await build({ root: web, configFile: join(web, 'vite.config.ts'), logLevel: 'silent',
       build: { outDir: output, emptyOutDir: true } });
     const candidates: string[] = [];

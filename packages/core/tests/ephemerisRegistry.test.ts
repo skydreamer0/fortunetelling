@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { CALCULATORS } from '../src/calculators/index';
 import { EPHEMERIS_CALCULATORS, runEphemerisCalculators } from '../src/calculators/ephemerisRegistry';
 import { EXPERIMENTAL_SYSTEMS } from '../src/portable/versions';

@@ -5,7 +5,7 @@
 ## 1. 安裝
 
 ```bash
-bun install
+npm ci
 ```
 
 ## 2. 建立 profile
@@ -13,7 +13,7 @@ bun install
 profile 是 profiles 目錄下的 `<profileId>.fortune.json`（預設 `~/.fortune/profiles/`，可用環境變數 `FORTUNE_PROFILES_DIR` 改）。網站報告的「用 Claude 桌面版討論」入口已可下載 `.fortune.json`（[M4-02 實作](../apps/web/src/components/report/McpEntry.tsx)）；下載後可自行放進 profiles 目錄，或在對話裡請 Claude 用 `import_profile` 讀取本機檔案路徑。若改用全文 `content` 匯入，先閱讀下方隱私說明。沒有檔案時可用指令建立：
 
 ```bash
-bun run --filter @fortune/mcp add-profile sky \
+npm run add-profile --workspace @fortune/mcp -- sky \
   --date 1990-05-17 --time 08:30 --gender female --city 台南 --name 王小明
 ```
 
@@ -32,15 +32,15 @@ bun run --filter @fortune/mcp add-profile sky \
 {
   "mcpServers": {
     "fortune": {
-      "command": "bun",
-      "args": ["run", "/絕對路徑/fortunetelling/packages/mcp/src/bin.ts"],
+      "command": "node",
+      "args": ["/絕對路徑/fortunetelling/packages/mcp/dist/bin.js"],
       "env": { "FORTUNE_PROFILES_DIR": "/Users/你/.fortune/profiles" }
     }
   }
 }
 ```
 
-`command` 若找不到 `bun`，改成 `which bun` 印出的完整路徑。存檔後完全結束並重開 Claude 桌面版。
+`command` 若找不到 `node`，改成 `which node` 印出的完整路徑。存檔後完全結束並重開 Claude 桌面版。
 
 ## 4. 工具一覽
 
@@ -52,6 +52,7 @@ bun run --filter @fortune/mcp add-profile sky \
 | `get_profile` | 性別、時間精度、時區；姓名與出生資料要加 `includeName`／`includeBirthData` 才會回 |
 | `get_chart` | 單一系統命盤（`summary`／`full`）；每次都附 `conventions`（這張盤採用的口徑，見下方「排盤口徑 `conventions`」） |
 | `get_time_context` | 真太陽時、節氣、農曆，以及邊界與夏令時間等 flags |
+| `compare_bazi_conventions` | 同一份 profile、同一 asOf 的兩組八字計算口徑比較；回有效設定、本命欄位差異、來源、時間警示與目前版本。不是流派判斷、評分或歷史重播。見 [使用範例](BAZI-CONVENTION-COMPARISON.md) |
 | `list_signals` / `get_signal` | 規則訊號（可篩選、分頁）與單筆完整證據。`get_signal` 的 `signalId` 接受短編號、完整編號或 ≥ 8 位前綴（見下方「短訊號編號」）；回 `signal`（`id` 為完整編號）與 `shortId` |
 | `get_timeline` | 逐年各領域分數，預設為精簡年度表 `yearTable`（每年每領域一列，只列前 3 個短編號與總筆數，約 6.7 KB；`detail: true` 回完整年度 cell）；加 `months: {start,end}`（`YYYY-MM`，最多 36 個月）才回逐月；指定 `domain` 時逐月為每月一列的 `monthTable`。可帶 `systems`／`verifiedOnly` |
 | `get_consensus` / `list_conflicts` | 跨系統共識與矛盾；`get_consensus` 可帶 `systems`／`verifiedOnly`（`list_conflicts` 不篩選） |
@@ -152,9 +153,9 @@ server 連線時會自動把下面這段當作 `instructions` 送給客戶端；
 接不上或懷疑設定壞掉時，先跑：
 
 ```bash
-bun run doctor
+npm run doctor
 ```
 
 會檢查：profile 目錄與檔案格式、MCP server 是否真的能啟動（隔離的暫存 profile，不動你的資料）、工具是否齊全、回應外殼與錯誤格式、Claude 桌面版設定檔（含 Windows Microsoft Store 版的位置、`command` 是否存在、路徑的反斜線有沒有被吃掉）。有 ✗ 時結束碼為 1，`!` 只是警告。
 
-CI 使用 `bun run packages/mcp/src/cli/doctor.ts --ci`：略過只存在你電腦上的項目，其餘照跑。
+CI 使用 `npm run doctor -- --ci`：略過只存在你電腦上的項目，其餘照跑。

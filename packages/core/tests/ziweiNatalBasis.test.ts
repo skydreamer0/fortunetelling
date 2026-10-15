@@ -1,4 +1,7 @@
-import { afterEach, describe, expect, spyOn, test } from 'bun:test';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+import { afterEach, describe, expect, test, vi  } from 'vitest';
+const spyOn = vi.spyOn;
 // Observe the implementation behind iztro's read-only re-export accessor.
 // No mock module or replacement calculation: every call still runs real iztro.
 const astro = require('iztro/lib/astro/astro') as typeof import('iztro/lib/astro/astro');

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { createProfileFile } from '@fortune/core';
 import { buildProfileFromArgs } from '../src/cli/addProfile';
 

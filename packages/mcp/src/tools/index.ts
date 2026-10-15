@@ -1,5 +1,6 @@
 import { answerCheckTools } from './answerCheck';
 import { chartTools } from './chart';
+import { comparisonTools } from './compareBazi';
 import { importProfileTools } from './importProfile';
 import { profileTools } from './profiles';
 import { questionTools } from './questions';
@@ -9,7 +10,7 @@ import { z } from 'zod';
 import { MAX_RESPONSE_CHARS, ok, render, renderError, type Caveat } from '../envelope';
 import { ToolError } from '../errors';
 
-const BASE_TOOLS: readonly ToolDef<any>[] = [...profileTools, ...chartTools, ...signalTools, ...questionTools, ...answerCheckTools, ...importProfileTools];
+const BASE_TOOLS: readonly ToolDef<any>[] = [...profileTools, ...chartTools, ...comparisonTools, ...signalTools, ...questionTools, ...answerCheckTools, ...importProfileTools];
 
 /** batch 一次最多幾個呼叫。 */
 export const MAX_BATCH_CALLS = 8;

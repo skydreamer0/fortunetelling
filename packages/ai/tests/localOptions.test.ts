@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildCopyPrompt, COPY_PROMPT_VERSION } from '../src/copyPrompt';
@@ -44,17 +44,17 @@ describe('buildInterpretationPayload — redact / budget 可選（M3-02）', () 
 });
 
 describe('進入點分流（M3-01）', () => {
-  const src = (f: string) => readFileSync(join(import.meta.dir, '..', 'src', f), 'utf8');
+  const src = (f: string) => readFileSync(join(import.meta.dirname, '..', 'src', f), 'utf8');
   test('index.ts 與 mcp.ts 不匯出 client／anthropic', () => {
     for (const f of ['index.ts', 'mcp.ts']) {
       expect(src(f)).not.toMatch(/export[^\n]*from '\.\/(client|anthropic)'/);
     }
   });
   test('package.json 有獨立的 ./client 與 ./mcp 子路徑', () => {
-    const pkg = JSON.parse(readFileSync(join(import.meta.dir, '..', 'package.json'), 'utf8'));
-    expect(pkg.exports['./client']).toBe('./src/client.ts');
-    expect(pkg.exports['./mcp']).toBe('./src/mcp.ts');
-    expect(pkg.exports['.']).toBe('./src/index.ts');
+    const pkg = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'package.json'), 'utf8'));
+    expect(pkg.exports['./client']).toEqual({ types: './dist/client.d.ts', import: './dist/client.js' });
+    expect(pkg.exports['./mcp']).toEqual({ types: './dist/mcp.d.ts', import: './dist/mcp.js' });
+    expect(pkg.exports['.']).toEqual({ types: './dist/index.d.ts', import: './dist/index.js' });
   });
 });
 

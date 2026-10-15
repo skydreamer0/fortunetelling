@@ -1,4 +1,7 @@
-import { describe, expect, test, spyOn } from 'bun:test';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+import { describe, expect, test, vi  } from 'vitest';
+const spyOn = vi.spyOn;
 import * as pillars from '../src/calculators/bazi/pillars';
 const astro = require('iztro/lib/astro/astro') as typeof import('iztro/lib/astro/astro');
 import { createCalculationSpec } from '../src/core/calculationSpec';

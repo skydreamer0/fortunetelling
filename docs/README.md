@@ -8,7 +8,7 @@
 |---|---|---|
 | 安裝、操作與本機 MCP | [專案 README](../README.md)、[MCP-SETUP](MCP-SETUP.md) | 操作指南；本機計算不代表工具結果不會進入 AI 對話 |
 | 進行中任務、優先序與驗收條件 | [ROADMAPS](../ROADMAPS.md)、[GitHub Issues](https://github.com/skydreamer0/fortunetelling/issues) | Issue 是進度來源，不能用舊規劃中的勾選狀態代替 |
-| 開發與有效時間設定 | [CONTRIBUTING](CONTRIBUTING.md)、[專案執行規則](../.agents/AGENTS.md) | 依任務授權範圍工作；runtime、套件管理與測試使用 Bun |
+| 開發與有效時間設定 | [CONTRIBUTING](CONTRIBUTING.md)、[專案執行規則](../.agents/AGENTS.md) | 依任務授權範圍工作；runtime 使用 Node.js 24 LTS；套件管理 npm 11；測試 Vitest |
 | 架構與介面演進 | [ARCHITECTURE](ARCHITECTURE.md)、[ARCHITECTURE-V2](ARCHITECTURE-V2.md) | 混有歷史 schema 與藍圖片段，須連同後續 ADR、目前公開型別與測試閱讀 |
 | 設計決策、取代關係與限制 | [DECISIONS](DECISIONS.md) | ADR 編號與原決策保留；後續決策可以修訂舊決策，不能把單一舊段落當成目前完整契約 |
 | 完成里程碑與實作紀錄 | [HISTORY](HISTORY.md) | 歷史證據，不再更新進度；文中當時的版本與待辦不能當成目前狀態 |

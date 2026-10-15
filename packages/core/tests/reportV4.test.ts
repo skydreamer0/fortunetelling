@@ -2,7 +2,7 @@
  * Report Schema v4（V1-14, D-032）：timeContext／signals／timeline 與
  * 八字／紫微改用 TimeContext 後的黃金行為變更。
  */
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   analyze,

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { aggregateSignals, analyze, buildConsensus, buildTimeline, createSignal } from '@fortune/core';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { selectConsensus, selectTimelineYears } from '../src/model/selectors';

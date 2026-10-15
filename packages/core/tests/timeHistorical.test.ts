@@ -2,7 +2,7 @@
  * 歷史時區／地方平時修正（time-fix-report.md）的案例測試：
  * Björk 1965、Oslo 1948、Ulm 1879／Einstein、Van Gogh 1853，以及現代資料不變的回歸測試。
  */
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import type { BirthProfile } from '../src/profile/index';
 import { createTimeContext, type TimeContext } from '../src/time/index';
 import modernGolden from './timeFix.modernGolden.json';

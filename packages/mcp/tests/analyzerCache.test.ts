@@ -1,4 +1,5 @@
-import { describe, expect, spyOn, test } from 'bun:test';
+import { describe, expect, test, vi  } from 'vitest';
+const spyOn = vi.spyOn;
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { canonicalStringify, createProfileFile, type ProfileFileV1 } from '@fortune/core';

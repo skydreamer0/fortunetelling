@@ -1,9 +1,12 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { beforeAll, describe, expect, test } from 'vitest';
 
 const moduleRoot=new URL('../src/',import.meta.url).href;
 const zones=['UTC','Asia/Taipei','America/New_York','Pacific/Apia'];
 const script=`
-import {setSystemTime} from 'bun:test';
+import { createHash } from "node:crypto";
+import { mock } from 'node:test';
+const setSystemTime = (date) => date ? mock.timers.enable({ apis: ['Date'], now: date }) : mock.timers.reset();
 import {analyze} from ${JSON.stringify(moduleRoot+'core/analyze.ts')};
 import {resolveCalculationSpec} from ${JSON.stringify(moduleRoot+'core/calculationSpec.ts')};
 import {createTimeContext} from ${JSON.stringify(moduleRoot+'time/createTimeContext.ts')};
@@ -19,7 +22,7 @@ const cases=[['before','2026-02-16'],['boundary','2026-02-17'],['after','2026-02
 const value=(r,id)=>r.components.find(c=>c.id===id)?.value;
 const volatile=new Set(['computedAt','durationMs','generatedAt','classifiedAt','exportedAt']);
 const clean=v=>JSON.parse(JSON.stringify(v,(k,v)=>volatile.has(k)?undefined:v));
-const hash=v=>new Bun.CryptoHasher('sha256').update(JSON.stringify(clean(v))).digest('hex');
+const hash=v=>createHash('sha256').update(JSON.stringify(clean(v))).digest('hex');
 const results=[];
 for(const [index,input] of inputs.entries()) {
  const {birth,profile,options,spec}=resolveCalculationSpec(input);
@@ -59,8 +62,8 @@ console.log(JSON.stringify(results));
 let results:Record<string,any[]>;
 beforeAll(()=>{
  results=Object.fromEntries(zones.map(TZ=>{
-  const child=Bun.spawnSync([process.execPath,'--eval',script],{env:{...process.env,TZ}});
-  expect(child.exitCode,new TextDecoder().decode(child.stderr)).toBe(0);
+  const child=spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval',script],{env:{...process.env,TZ}});
+  expect(child.status,new TextDecoder().decode(child.stderr)).toBe(0);
   return [TZ,JSON.parse(new TextDecoder().decode(child.stdout).trim())];
  }));
 },120000);

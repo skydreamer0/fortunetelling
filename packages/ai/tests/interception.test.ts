@@ -3,7 +3,7 @@
  * fakes citations, or uses fatalistic L0 wording for time-varying content is
  * intercepted by the PROGRAM, with reasons; a valid cited section survives.
  */
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { interpret, createMemoryStore } from '../src/client';
 import { buildInterpretationPayload } from '../src/payload';
 import { validateSections } from '../src/validate';

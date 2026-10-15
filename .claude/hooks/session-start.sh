@@ -9,4 +9,4 @@ fi
 cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}"
 
 # Install workspace dependencies (packages/core, apps/web) for tests, typecheck and build
-bun install
+npm ci

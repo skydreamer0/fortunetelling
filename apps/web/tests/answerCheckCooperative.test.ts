@@ -1,4 +1,5 @@
-import { expect, spyOn, test } from 'bun:test';
+import { expect, test, vi  } from 'vitest';
+const spyOn = vi.spyOn;
 import { analyze, baziCalculator, buildTimeline, ZiweiEngine, BirthData, TimelineEnvironmentChangedError, type Signal } from '@fortune/core';
 import { reportSignalLookup } from '../src/model/askAi';
 import { reportTimelineOptions } from '../src/model/reportTimeline';

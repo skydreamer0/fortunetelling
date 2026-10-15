@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { createCalculationSpec } from '../src/core/calculationSpec';
 import { canonicalStringify } from '../src/portable/canonical';
 import { NumerologyEngine } from '../src/engines/NumerologyEngine';

@@ -1,7 +1,7 @@
 /**
  * 契約測試：LayerClassifier 分層規則（含審計修正的 4 個偏差回歸）。
  */
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { LayerClassifier } from '../src/index';
 

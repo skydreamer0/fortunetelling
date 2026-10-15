@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { REDACTED_NAME, REDACTED_PLACE } from '../src/core-pure';
 import { buildInterpretationPayload } from '../src/payload';
 import { loadQuestion, loadRankedQuestion, loadReport } from './helpers';

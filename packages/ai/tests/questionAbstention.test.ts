@@ -1,4 +1,6 @@
-import { describe, expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { describe, expect, test } from 'vitest';
 import { answerQuestion } from '../../core/src/questions';
 import { createSignal } from '../../core/src/signals/createSignal';
 import { buildInterpretationPayload } from '../src/payload';
@@ -51,8 +53,8 @@ describe('#45 all AI consumers share the explicit question decision', () => {
     expect(checkAnswer('推薦三月', {signalLookup:()=>null})).toMatchObject({ok:false,questionCheck:'not_provided',questionStatus:null,issues:[{code:'question_context_missing'}]});
   });
   test('preserved legacy input has no attested policy and never gains a live recommendation', async () => {
-    const original = await Bun.file(new URL('./fixtures/question-vehicle.json',import.meta.url)).text();
-    expect(new Bun.CryptoHasher('sha256').update(original).digest('hex')).toBe(legacyDelta.originalSha256);
+    const original = readFileSync(new URL('./fixtures/question-vehicle.json',import.meta.url), 'utf8');
+    expect(createHash('sha256').update(original).digest('hex')).toBe(legacyDelta.originalSha256);
     const old=loadQuestion(),before=JSON.stringify(old);
     const q=buildInterpretationPayload(report,{question:old}).payload.question!;
     expect(q.status).toBe('insufficient_evidence'); expect(q.top).toEqual([]);

@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, spyOn, test } from 'bun:test';
+import { afterEach, describe, expect, test, vi  } from 'vitest';
+const spyOn = vi.spyOn;
 import { analyze, type AnalyzeInput, type Report } from '../src/core/analyze';
 import { resolveCalculationSpec } from '../src/core/calculationSpec';
 import { createTimeContext } from '../src/time/createTimeContext';

@@ -2,7 +2,7 @@
  * 短訊號編號：輸出縮短、輸入容錯（完整／短／前綴／大小寫）、ambiguous／none／invalid、碰撞退回完整編號。
  * 使用測試樣本 sky（非真人資料）。
  */
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import type { Signal } from '@fortune/core';
 import { SignalIndex } from '../src/signalIndex';
 import { makeFixture } from './helpers';

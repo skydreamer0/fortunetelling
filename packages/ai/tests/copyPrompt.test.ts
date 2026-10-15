@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildCopyPrompt, COPY_PROMPT_VERSION, DEFAULT_COPY_MAX_CHARS } from '../src/copyPrompt';
@@ -238,7 +238,7 @@ describe('checkPastedAnswer — paste-back checker', () => {
 
 describe('browser entry stays SDK-free (D-035)', () => {
   test('copy.ts and its local imports never reach ./client, ./anthropic or @anthropic-ai', () => {
-    const src = join(import.meta.dir, '..', 'src');
+    const src = join(import.meta.dirname, '..', 'src');
     const seen = new Set<string>();
     const queue = ['copy.ts'];
     while (queue.length) {

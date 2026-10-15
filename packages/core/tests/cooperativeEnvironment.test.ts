@@ -1,6 +1,6 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { astro } from 'iztro';
-import i18next from 'iztro/lib/i18n';
+import i18next from 'iztro/lib/i18n/index.js';
 import { finishCooperatively, readIztroLanguageState, supportedTimelineEnvironment, TimelineEnvironmentChangedError } from '../src/timeline/cooperative';
 import { ZiweiEngine } from '../src/engines/ZiweiEngine';
 import { BirthData } from '../src/core/models/BirthData';

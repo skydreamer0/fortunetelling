@@ -24,6 +24,6 @@
 
 ## 驗證範圍
 
-執行 `bun test apps/web/tests/brandIcons.test.ts`、Web typecheck 與正式建置；檢查產物中的 manifest、圖示 URL 與 Service Worker 預快取清單。手機桌面的實際裁切及既有安裝的圖示更新仍需在對應裝置驗收。
+執行 `npm test -- apps/web/tests/brandIcons.test.ts`、Web typecheck 與正式建置；檢查產物中的 manifest、圖示 URL 與 Service Worker 預快取清單。手機桌面的實際裁切及既有安裝的圖示更新仍需在對應裝置驗收。
 
 此變更不修改 CI 工作流程。既有一般 CI 在建立 PR 時執行；Pages 僅在 master 推送或手動觸發時部署。Draft PR 並不會自動停用所有 CI。

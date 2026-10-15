@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { analyze, type AnalyzeInput } from '../src/core/analyze';
 import { resolveAnalyzeInput, toZiweiZiConvention, type AnalysisTimeOptions } from '../src/core/analyzeInput';
 import { createTimeContext } from '../src/time/createTimeContext';

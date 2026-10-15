@@ -1,9 +1,9 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 /**
  * 把一個 profile 匯出成一個資料夾（manifest／profile／chart／signals／timeline／consensus／README）。
  *
- *   bun run export-profile sky --asOf 2026-10-03 --preset local-full --out ./out/sky
- *   bun run export-profile sky --asOf 2026-10-03 --preset share-redacted --out ./out/sky-share
+ *   npm run export-profile -- sky --asOf 2026-10-03 --preset local-full --out ./out/sky
+ *   npm run export-profile -- sky --asOf 2026-10-03 --preset share-redacted --out ./out/sky-share
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';

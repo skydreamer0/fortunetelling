@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { analyze, InsightBuilder } from '@fortune/core';
 import { Guidance } from '../src/components/report/Guidance';

@@ -1,4 +1,8 @@
-import { afterEach, describe, expect, spyOn, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { afterEach, describe, expect, test, vi  } from 'vitest';
+// Native ESM namespaces are immutable; auto-spies preserve real implementations.
+vi.mock('../src/calculators/bazi/pillars', { spy: true });
+const spyOn = vi.spyOn;
 import { analyze, REPORT_SCHEMA_VERSION } from '../src/core/analyze';
 import { resolveCalculationSpec } from '../src/core/calculationSpec';
 import { TimeContextBaZiEngine } from '../src/core/timeContextEngines';
@@ -11,6 +15,8 @@ import * as timelineModule from '../src/timeline/buildTimeline';
 import * as publicCore from '../src/index';
 import type { AnalyzeInput } from '../src/core/analyze';
 
+const originalPillars = await vi.importActual<typeof import('../src/calculators/bazi/pillars')>('../src/calculators/bazi/pillars');
+
 const birth: AnalyzeInput = {
   year: 1990, month: 5, day: 17, hour: 23, minute: 10, gender: 'female', name: 'ALICE',
   birthplace: { label: 'Synthetic birthplace', lat: 22.9999, lng: 119.2269, timezone: 'Asia/Taipei' },
@@ -22,7 +28,8 @@ const restorers: Array<{ mockRestore(): void }> = [];
 afterEach(() => { for (const spy of restorers.splice(0)) spy.mockRestore(); });
 
 function observed(object: any, key: string): any {
-  const spy = spyOn(object, key);
+  const spy = vi.isMockFunction(object[key]) ? object[key] : spyOn(object, key);
+  spy.mockClear();
   restorers.push(spy);
   return spy;
 }
@@ -200,7 +207,7 @@ describe('run-local immutable bazi natal basis', () => {
   });
 
   test('a transient natal failure remains an engine error and timeline can retry it', () => {
-    const actual = pillars.computePillars;
+    const actual = originalPillars.computePillars;
     let calls = 0;
     observed(pillars, 'computePillars').mockImplementation((...args: any[]) => {
       if (++calls === 1) throw new Error('synthetic first-attempt failure');
@@ -230,7 +237,7 @@ describe('run-local immutable bazi natal basis', () => {
   test('successful pillars survive a transient luck failure but failed luck is never cached', async () => {
     const create = await factory();
     const { ctx, options } = resolved();
-    const actual = pillars.luckCycles;
+    const actual = originalPillars.luckCycles;
     const p = observed(pillars, 'computePillars');
     let attempts = 0;
     observed(pillars, 'luckCycles').mockImplementation((...args: any[]) => {
@@ -285,8 +292,8 @@ describe('run-local immutable bazi natal basis', () => {
       const ctx = createTimeContext(r.profile, { dstOverlap: r.spec.identity.settings.time.dstOverlap });
       console.log(JSON.stringify(createBaziNatalBasisProvider(ctx, r.options)(ctx, r.options)));`;
     const outputs = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'].map(TZ => {
-      const result = Bun.spawnSync([process.execPath, '--eval', script], { env: { ...process.env, TZ } });
-      expect(result.exitCode).toBe(0);
+      const result = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], { env: { ...process.env, TZ } });
+      expect(result.status).toBe(0);
       return result.stdout.toString().trim();
     });
     expect(new Set(outputs).size).toBe(1);

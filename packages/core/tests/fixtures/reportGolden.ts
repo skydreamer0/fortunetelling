@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { writeFileSync } from 'node:fs';
 /**
  * Behaviour-parity golden (V1-16): `analyze()` / `analyzeCompatibility()` /
  * calendar-helper outputs recorded with the ORIGINAL JavaScript core before the
@@ -61,7 +63,7 @@ export const INLINE_LIMIT = 8000;
 function digestSection(value: unknown): unknown {
   const json = JSON.stringify(value, stripVolatile);
   if (json === undefined || json.length <= INLINE_LIMIT) return value === undefined ? null : JSON.parse(json);
-  return { sha256: new Bun.CryptoHasher('sha256').update(json).digest('hex'), length: json.length };
+  return { sha256: createHash('sha256').update(json).digest('hex'), length: json.length };
 }
 
 function digestReport(report: object): Record<string, unknown> {
@@ -93,6 +95,6 @@ export function buildGolden(): string {
 export const GOLDEN_PATH = new URL('./reportGolden.json', import.meta.url);
 
 if (import.meta.main && process.argv.includes('--write')) {
-  await Bun.write(GOLDEN_PATH, buildGolden());
+  writeFileSync(GOLDEN_PATH, buildGolden());
   console.log(`wrote ${GOLDEN_PATH.pathname}`);
 }
