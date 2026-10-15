@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { serveFixture, fileResponse, runCommand } from './node-http';
+import { serveFixture, fileResponse, runCommand } from './node-http.ts';
 /** #19/#46 only: real built app and engines on the approved stock-Chrome runner. */
 import assert from 'node:assert/strict';
 import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';

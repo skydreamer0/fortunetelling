@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { serveFixture, fileResponse, runCommand } from './node-http';
+import { serveFixture, fileResponse, runCommand } from './node-http.ts';
 /** #100: native chapter/history regression against the real built app, synthetic inputs only. */
 import assert from 'node:assert/strict';
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';

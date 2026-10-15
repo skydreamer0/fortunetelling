@@ -54,7 +54,7 @@ jobs:
         run: node node_modules/typescript/bin/tsc -p apps/web/tsconfig.answer-browser.json
 
       - name: Check evidence gates and negative mutations without a browser
-        run: node --import tsx apps/web/scripts/answer-check-browser-check.ts --self-test
+        run: node apps/web/scripts/answer-check-browser-check.ts --self-test
 
       - name: Build the real application
         run: npm run build
@@ -64,7 +64,7 @@ jobs:
         env:
           ANSWER_BROWSER_CHECK: '1'
           DEBUG: pw:browser
-        run: node --import tsx apps/web/scripts/answer-check-browser-check.ts
+        run: node apps/web/scripts/answer-check-browser-check.ts
 
       - name: Print bounded evidence even after failure
         if: always()
@@ -94,7 +94,7 @@ jobs:
         env:
           ANSWER_BROWSER_CHECK: '1'
           DEBUG: pw:browser
-        run: node --import tsx apps/web/scripts/answer-check-browser-check.ts --visual
+        run: node apps/web/scripts/answer-check-browser-check.ts --visual
 
       - name: Print visual capture status even after failure
         if: always() && steps.visual.outcome != 'skipped'
@@ -130,7 +130,7 @@ jobs:
         env:
           REPORT_NAVIGATION_CHECK: '1'
           DEBUG: pw:browser
-        run: node --import tsx apps/web/scripts/report-navigation-browser-check.ts
+        run: node apps/web/scripts/report-navigation-browser-check.ts
 
       - name: Retain synthetic navigation evidence
         if: always()
