@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { release, version } from 'node:os';
-import { dirname, basename, join } from 'node:path';
+import { dirname, basename, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const statePath = join(process.env.RUNNER_TEMP!, 'fortune-windows-calendar.json');
@@ -131,13 +131,18 @@ if (native) {
         'Pathname import observation must complete normally');
       if (pathnameImport.exitCode === 0) require(pathnameImport.stdout.trim() === marker, 'Normalized pathname import marker mismatch');
       require(readFileSync(fileURLToPath(url), 'utf8').includes(marker), 'Decoded filesystem path must read the fixture');
-      const rawPathProbe = `import { readFileSync } from 'node:fs'; readFileSync(${JSON.stringify(url.pathname)}, 'utf8'); console.log(${JSON.stringify(marker)});`;
+      const rawPathProbe = `import { readFileSync } from 'node:fs';
+        try { readFileSync(${JSON.stringify(url.pathname)}, 'utf8'); console.log(${JSON.stringify(marker)}); }
+        catch (error) { console.error(JSON.stringify({ code: error.code, syscall: error.syscall, path: error.path })); process.exitCode = 1; }`;
+      record.expectedRawFilesystemPath = resolve(url.pathname);
       const negative = command([process.execPath, '--input-type=module', '--eval', rawPathProbe], process.env, 15000);
       record.rawPathnameFilesystem = negative;
       require(negative.exitCode !== null && Number.isInteger(negative.exitCode) && negative.exitCode > 0 && !negative.signal && !negative.timedOut && !negative.maxBufferExceeded,
         'Raw pathname filesystem control must fail normally, not time out or fail to spawn');
-      require(negative.stderr.includes('ENOENT') && negative.stderr.includes(url.pathname),
-        'Raw pathname must report ENOENT naming the malformed filesystem path');
+      const failure = JSON.parse(negative.stderr.trim());
+      record.rawFilesystemError = failure;
+      require(failure.code === 'ENOENT' && failure.syscall === 'open' && failure.path === record.expectedRawFilesystemPath,
+        'Raw pathname must report ENOENT/open with the exact OS-resolved malformed filesystem path');
       require(!negative.stdout.includes(marker), 'Malformed filesystem pathname unexpectedly read the fixture');
     } finally { rmSync(root, { recursive: true, force: true }); }
   });

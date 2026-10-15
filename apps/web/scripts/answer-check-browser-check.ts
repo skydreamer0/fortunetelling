@@ -466,7 +466,7 @@ async function run() {
     const status = runCommand(['git', 'status', '--porcelain']);
     assert.equal(status.exitCode, 0); assert.equal(status.stdout.toString().trim(), '', 'tracked or untracked source changes invalidate candidate identity');
     for (const file of ['apps/web/src/components/report/AnswerCheck.tsx', 'apps/web/src/model/askAi.ts',
-      'apps/web/scripts/answer-check-browser-check.ts', 'bun.lock']) {
+      'apps/web/scripts/answer-check-browser-check.ts', 'package-lock.json']) {
       sourceHashes[file] = createHash('sha256').update(await readFile(file)).digest('hex');
     }
     const buildFiles: Record<string, string> = {};
