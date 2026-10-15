@@ -17,7 +17,7 @@
  *   測試會失敗，避免記錄過時。
  */
 
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { initEphemeris, sunLongitude } from '../src/calculators/astro/index';
 import {

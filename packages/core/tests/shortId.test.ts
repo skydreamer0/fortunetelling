@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import {
   isSignalIdLike, resolveSignalId, shortIdCollisions, shortSignalId, shortenSignalIds, SHORT_ID_HEX,
 } from '../src/signals/shortId';

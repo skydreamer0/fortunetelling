@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { SummaryBuilder, SUMMARY_VERSION } from '../src/index';
 import type { Component, SystemResultLike } from '../src/core/models/SystemResult';

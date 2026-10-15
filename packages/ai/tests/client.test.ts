@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { AiOutputError, createAnthropicComplete, createMemoryStore, interpret, interpretationCacheKey } from '../src/client';
 import { buildInterpretationPayload } from '../src/payload';
 import { INTERPRET_PROMPT_VERSION, INTERPRET_SYSTEM_PROMPT } from '../src/prompts';

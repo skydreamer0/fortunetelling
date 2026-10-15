@@ -7,9 +7,9 @@
 ## 快速開始
 
 ```bash
-bun install
-bun run dev    # Vite dev server（apps/web）
-bun test       # 所有 workspace 的測試
+npm ci
+npm run dev    # Vite dev server（apps/web）
+npm test       # 所有 workspace 的測試
 ```
 
 ## 只重用計算核心（不要 UI）
@@ -45,7 +45,7 @@ report.honesty;      // 語言規則已就位；違規稽核里程碑 D
 也沒有改動 MCP、匯出或 profile 格式。不要把原始出生資料代入本 API 後回填舊報告的有效設定。
 specHash 使用非密碼學 FNV-1a 64-bit；未來快取須同時比較完整 canonical identity，
 且期間／asOf 必須是另一層識別，不能拿同一本命 spec 互換不同期間結果。
-依賴升級時更新 `core/calculationDependencies.json`，完整版本及 integrity 必須符合 bun.lock；
+依賴升級時更新 `core/calculationDependencies.json`，完整版本及 integrity 必須符合 package-lock.json；
 測試會檢查同步計算 dependency closure，不能手寫猜測值。詳細邊界見 D-042。
 
 ## Timeline 有效設定（core 0.8.0）

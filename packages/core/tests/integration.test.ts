@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { analyze } from '../src/index';
 import { INTEGRATION_CASES, type IntegrationCase } from './fixtures/integrationCases';

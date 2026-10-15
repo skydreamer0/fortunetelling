@@ -1,7 +1,7 @@
 /**
  * 整合測試：analyze() 對外契約（Report 形狀與內容保證）。
  */
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { analyze, VERSION, REPORT_SCHEMA_VERSION, BirthData } from '../src/index';
 import type { AnalyzeInput } from '../src/core/analyze';

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import * as core from '@fortune/core';
@@ -39,7 +39,7 @@ describe('問 AI section', () => {
   });
 
   test('print stylesheet hides the section', () => {
-    const css = readFileSync(join(import.meta.dir, '..', 'src', 'styles', 'print.css'), 'utf8');
+    const css = readFileSync(join(import.meta.dirname, '..', 'src', 'styles', 'print.css'), 'utf8');
     expect(css).toMatch(/\.ask\s*\{\s*display: none|, \.ask \{ display: none !important; \}/);
   });
 });

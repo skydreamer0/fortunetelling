@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { answerQuestion, createSignal } from '@fortune/core';
 import { buildCopyPrompt, checkPastedAnswer } from '@fortune/ai/copy';

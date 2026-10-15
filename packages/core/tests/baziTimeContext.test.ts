@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { Solar } from 'lunar-javascript';
 import { BaZiEngine } from '../src/engines/BaZiEngine';
 import {

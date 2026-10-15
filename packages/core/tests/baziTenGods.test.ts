@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { LunarUtil } from 'lunar-javascript';
 import { baziCalculator, toBaziRuleChart } from '../src/calculators/bazi/calculator';

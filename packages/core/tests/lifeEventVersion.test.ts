@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { validateLifeEvent, type LifeEvent } from '../src/backtest/lifeEvents';
 import { runBacktest } from '../src/backtest/runBacktest';
 import { DOMAINS } from '../src/signals/types';

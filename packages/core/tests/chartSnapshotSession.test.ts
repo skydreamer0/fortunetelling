@@ -1,10 +1,13 @@
-import { afterEach, expect, spyOn, test } from 'bun:test';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+import { afterEach, expect, test, vi  } from 'vitest';
+const spyOn = vi.spyOn;
 import { createCalculationSpec, resolveCalculationSpec } from '../src/core/calculationSpec';
 import { createTimeContext } from '../src/time/createTimeContext';
 import { buildTimeline } from '../src/timeline/buildTimeline';
 import { buildBacktestTimeline } from '../src/backtest/timeline';
 import * as pillars from '../src/calculators/bazi/pillars';
-import i18next from 'iztro/lib/i18n';
+import i18next from 'iztro/lib/i18n/index.js';
 const astro = require('iztro/lib/astro/astro') as typeof import('iztro/lib/astro/astro');
 const api: any = await import('../src/core/chartSnapshotSession').catch(() => ({}));
 const BIRTH = { year: 1990, month: 5, day: 17, hour: 23, minute: 10, name: 'ALICE', gender: 'female' as const,

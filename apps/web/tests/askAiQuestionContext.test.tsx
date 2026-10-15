@@ -1,5 +1,6 @@
+import { build as buildModule } from 'esbuild';
 /** Controlled hook/timer regression for report-bound question provenance; not a browser/paint benchmark. */
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { createRequire } from 'node:module';
 import { isValidElement, type ReactNode } from 'react';
 
@@ -20,12 +21,11 @@ test('AskAi never uses report A question decision in report B, including A→B�
     localQuestion(r:typeof a){calls.push(r.id);return {category:'investment',categoryName:'投資時機',range,answer:{owner:r.id,status:r.id==='A'?'ranked':'no_clear_advantage',top:[],abstentionReasons:[]}}},
   };
   const mod:any={exports:{}};
-  const built=await Bun.build({entrypoints:['apps/web/src/components/report/AskAi.tsx'],target:'bun',format:'cjs',external:['*']});
-  if(!built.success)throw Error(built.logs.join('\n'));
+  const built = await buildModule({ entryPoints: ['apps/web/src/components/report/AskAi.tsx'], platform: 'node', format: 'cjs', external: ['*'], bundle: true, write: false });
   const load=(id:string)=>id==='react'?react:id==='../../model/askAi'?model:id==='@fortune/ai/copy'?{
     buildCopyPrompt(r:unknown,o:any){lastPrompt={report:r,answer:o.questionAnswer};return {text:'fixture',charCount:7,truncated:false,payload:{payload:{signals:[]},signalIds:new Set()}}},checkPastedAnswer:()=>null,
   }:id==='../ui/primitives'?{Section:'section'}:id==='./McpEntry'?{McpEntry:'aside'}:id==='./copyText'?{copyText:async()=> 'clipboard'}:require(id);
-  const compile=new Function('setTimeout','clearTimeout',`return (\n${await built.outputs[0].text()}\n)`);
+  const compile=new Function('setTimeout','clearTimeout',`return function(exports, require, module, __filename, __dirname) {\n${built.outputFiles[0].text}\n}`);
   compile((fn:()=>void)=>{const id=++nextTimer;timers.set(id,fn);return id},(id:number)=>timers.delete(id))(mod.exports,load,mod,'AskAi.tsx','.');
   function walk(n:ReactNode):any[]{if(Array.isArray(n))return n.flatMap(walk);if(!isValidElement<any>(n))return [];return [n,...walk((n.props as {children?:ReactNode}).children)]}
   function render(){cursor=0;ec=0;tree=mod.exports.AskAi({report});pending.splice(0).forEach(fn=>fn())}

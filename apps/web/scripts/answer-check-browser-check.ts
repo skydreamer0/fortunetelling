@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { serveFixture, fileResponse, runCommand } from './node-http';
 /** #19/#46 only: real built app and engines on the approved stock-Chrome runner. */
 import assert from 'node:assert/strict';
 import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
@@ -433,7 +435,7 @@ async function run() {
   }
   await mkdir(OUTPUT, { recursive: true });
   const results: { functionalObservationGatePassed: boolean; [key: string]: unknown }[] = [], diagnostics: object[] = [];
-  let browser: Browser | undefined, server: ReturnType<typeof Bun.serve> | undefined;
+  let browser: Browser | undefined, server: Awaited<ReturnType<typeof serveFixture>> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined, deadlineCleanup: Promise<void> | undefined;
   let timedOut = false, passed = false, browserVersion: string | null = null;
   let schedulerProfile: Awaited<ReturnType<typeof measureSchedulerProfile>> | null = null;
@@ -441,7 +443,7 @@ async function run() {
   let stopPromise: Promise<void> | undefined;
   const stop = () => stopPromise ??= Promise.resolve().then(() => server?.stop(true));
   const sourceHashes: Record<string, string> = {};
-  const runtime: Record<string, unknown> = { bun: Bun.version, platform: process.platform, arch: process.arch,
+  const runtime: Record<string, unknown> = { node: process.versions.node, platform: process.platform, arch: process.arch,
     cpuModel: cpus()[0]?.model ?? null, logicalCpus: cpus().length,
     uid: process.getuid?.(), imageOS: process.env.ImageOS ?? null, imageVersion: process.env.ImageVersion ?? null,
     expectedPrHead: process.env.ANSWER_HEAD_SHA ?? null, eventMergeCommit: process.env.GITHUB_SHA ?? null,
@@ -450,40 +452,39 @@ async function run() {
   try {
     assert.notEqual(runtime.uid, 0, 'root execution refused');
     await access('/opt/google/chrome/chrome', constants.X_OK);
-    const version = Bun.spawnSync(['/opt/google/chrome/chrome', '--version']);
+    const version = runCommand(['/opt/google/chrome/chrome', '--version']);
     assert.equal(version.exitCode, 0); runtime.chromeVersion = version.stdout.toString().trim();
-    const checkout = Bun.spawnSync(['git', 'rev-parse', 'HEAD']);
+    const checkout = runCommand(['git', 'rev-parse', 'HEAD']);
     assert.equal(checkout.exitCode, 0); runtime.actualCheckoutCommit = checkout.stdout.toString().trim();
     assert(/^[0-9a-f]{40}$/.test(String(runtime.expectedPrHead)), 'exact PR head SHA required');
     assert.equal(runtime.actualCheckoutCommit, runtime.expectedPrHead, 'checkout must be the exact PR head, not the event merge ref');
-    const tree = Bun.spawnSync(['git', 'rev-parse', 'HEAD^{tree}']);
+    const tree = runCommand(['git', 'rev-parse', 'HEAD^{tree}']);
     assert.equal(tree.exitCode, 0); runtime.actualCheckoutTree = tree.stdout.toString().trim();
-    const commit = Bun.spawnSync(['git', 'cat-file', '-p', 'HEAD']);
+    const commit = runCommand(['git', 'cat-file', '-p', 'HEAD']);
     assert.equal(commit.exitCode, 0);
     runtime.actualCheckoutParents = [...commit.stdout.toString().matchAll(/^parent ([0-9a-f]{40})$/gm)].map(match => match[1]);
-    const status = Bun.spawnSync(['git', 'status', '--porcelain']);
+    const status = runCommand(['git', 'status', '--porcelain']);
     assert.equal(status.exitCode, 0); assert.equal(status.stdout.toString().trim(), '', 'tracked or untracked source changes invalidate candidate identity');
     for (const file of ['apps/web/src/components/report/AnswerCheck.tsx', 'apps/web/src/model/askAi.ts',
       'apps/web/scripts/answer-check-browser-check.ts', 'bun.lock']) {
-      sourceHashes[file] = new Bun.CryptoHasher('sha256').update(await readFile(file)).digest('hex');
+      sourceHashes[file] = createHash('sha256').update(await readFile(file)).digest('hex');
     }
     const buildFiles: Record<string, string> = {};
     async function hashBuild(path: string) {
       for (const item of await readdir(path, { withFileTypes: true })) {
         const full = resolve(path, item.name);
         if (item.isDirectory()) await hashBuild(full);
-        else if (item.isFile()) buildFiles[full.slice(ROOT.length + 1)] = new Bun.CryptoHasher('sha256').update(await readFile(full)).digest('hex');
+        else if (item.isFile()) buildFiles[full.slice(ROOT.length + 1)] = createHash('sha256').update(await readFile(full)).digest('hex');
       }
     }
     await hashBuild(ROOT); assert(buildFiles['index.html'], 'production build is required'); runtime.buildSha256 = buildFiles;
-    server = Bun.serve({ hostname: '127.0.0.1', port: 0, async fetch(request) {
+    server = await serveFixture({ hostname: '127.0.0.1', port: 0, async fetch(request) {
       const pathname = decodeURIComponent(new URL(request.url).pathname);
       if (!pathname.startsWith('/fortunetelling/')) return new Response('not found', { status: 404 });
       const relative = pathname.slice('/fortunetelling/'.length) || 'index.html';
       const full = resolve(ROOT, relative);
       if (!full.startsWith(ROOT + sep)) return new Response('not found', { status: 404 });
-      const file = Bun.file(full);
-      return await file.exists() ? new Response(file, { headers: { 'Cache-Control': 'no-store' } }) : new Response('not found', { status: 404 });
+      return fileResponse(full);
     } });
     const origin = `http://127.0.0.1:${server.port}`;
     browser = await chromium.launch({ channel: 'chrome', chromiumSandbox: true, timeout: 15_000 });
@@ -726,7 +727,7 @@ function pngIdentity(bytes: Buffer) {
   assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
   assert.equal(bytes.subarray(12, 16).toString(), 'IHDR');
   return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20), bytes: bytes.length,
-    sha256: new Bun.CryptoHasher('sha256').update(bytes).digest('hex') };
+    sha256: createHash('sha256').update(bytes).digest('hex') };
 }
 
 function visualFontTarget(phase: VisualPhase) {
@@ -903,27 +904,27 @@ async function runVisual() {
   assert.deepEqual(await readdir(VISUAL_OUTPUT), [], 'stale visual output must never be reused');
   const attempts: VisualAttempt[] = [];
   const cases: VisualCase[] = [], screenshots: VisualShot[] = [], errors: string[] = [], cleanupErrors: string[] = [];
-  const runtime: Record<string, unknown> = { bun: Bun.version, platform: process.platform, arch: process.arch,
+  const runtime: Record<string, unknown> = { node: process.versions.node, platform: process.platform, arch: process.arch,
     imageOS: process.env.ImageOS, imageVersion: process.env.ImageVersion, cpuModel: cpus()[0]?.model, logicalCpus: cpus().length,
     expectedPrHead: process.env.ANSWER_HEAD_SHA, eventMergeCommit: process.env.GITHUB_SHA,
     playwright: (createRequire(import.meta.url)('playwright/package.json') as { version: string }).version,
     channel: 'chrome', chromiumSandbox: true, deviceScaleFactor: 1 };
-  let browser: Browser | undefined, server: ReturnType<typeof Bun.serve> | undefined;
+  let browser: Browser | undefined, server: Awaited<ReturnType<typeof serveFixture>> | undefined;
   let timer: ReturnType<typeof setTimeout> | undefined, deadlineCleanup: Promise<void> | undefined;
   let timedOut = false, captureGatePassed = false;
   const outstanding: Promise<unknown>[] = [];
   try {
     assert.notEqual(process.getuid?.(), 0); await access('/opt/google/chrome/chrome', constants.X_OK);
-    const command = (...args: string[]) => { const r = Bun.spawnSync(args); assert.equal(r.exitCode, 0); return r.stdout.toString().trim(); };
+    const command = (...args: string[]) => { const r = runCommand(args); assert.equal(r.exitCode, 0); return r.stdout.toString().trim(); };
     const fontPackage = command('dpkg-query', '-W', '-f=${Package} ${Version} ${Status}', 'fonts-noto-cjk');
     assert(fontPackage.endsWith('install ok installed'));
     const [fontFamily, fontFile] = command('fc-match', '--format', '%{family}\n%{file}\n', 'sans-serif:lang=zh-tw').split('\n');
     assert(fontFamily?.includes('Noto Sans CJK') && fontFile?.startsWith('/usr/share/fonts/opentype/noto/'));
     await access(fontFile, constants.R_OK);
     runtime.cjkFallback = { package: fontPackage, family: fontFamily, file: fontFile,
-      sha256: new Bun.CryptoHasher('sha256').update(await readFile(fontFile)).digest('hex'),
+      sha256: createHash('sha256').update(await readFile(fontFile)).digest('hex'),
       scope: 'Official Ubuntu system fallback prepared after timed cases; not production Google Fonts validation' };
-    const git = (...args: string[]) => { const r = Bun.spawnSync(['git', ...args]); assert.equal(r.exitCode, 0); return r.stdout.toString().trim(); };
+    const git = (...args: string[]) => { const r = runCommand(['git', ...args]); assert.equal(r.exitCode, 0); return r.stdout.toString().trim(); };
     runtime.actualCheckoutCommit = git('rev-parse', 'HEAD'); runtime.actualCheckoutTree = git('rev-parse', 'HEAD^{tree}');
     runtime.actualCheckoutParents = [...git('cat-file', '-p', 'HEAD').matchAll(/^parent ([0-9a-f]{40})$/gm)].map(m => m[1]);
     assert.match(String(runtime.expectedPrHead), /^[0-9a-f]{40}$/); assert.equal(runtime.actualCheckoutCommit, runtime.expectedPrHead);
@@ -941,19 +942,19 @@ async function runVisual() {
       for (const entry of await readdir(path, { withFileTypes: true })) {
         const full = resolve(path, entry.name);
         if (entry.isDirectory()) await hashBuild(full);
-        else { assert(entry.isFile()); build[full.slice(ROOT.length + 1)] = new Bun.CryptoHasher('sha256').update(await readFile(full)).digest('hex'); }
+        else { assert(entry.isFile()); build[full.slice(ROOT.length + 1)] = createHash('sha256').update(await readFile(full)).digest('hex'); }
       }
     }
     await hashBuild(ROOT); assert(build['index.html']); assert.deepEqual(build, timed.runtime.buildSha256);
-    runtime.buildSha256 = build; runtime.timedResultsSha256 = new Bun.CryptoHasher('sha256').update(await readFile(resolve(OUTPUT, 'results.json'))).digest('hex');
+    runtime.buildSha256 = build; runtime.timedResultsSha256 = createHash('sha256').update(await readFile(resolve(OUTPUT, 'results.json'))).digest('hex');
     runtime.sourceHashes = timed.sourceHashes;
-    for (const [file, hash] of Object.entries(timed.sourceHashes)) assert.equal(new Bun.CryptoHasher('sha256').update(await readFile(file)).digest('hex'), hash);
-    server = Bun.serve({ hostname: '127.0.0.1', port: 0, async fetch(request) {
+    for (const [file, hash] of Object.entries(timed.sourceHashes)) assert.equal(createHash('sha256').update(await readFile(file)).digest('hex'), hash);
+    server = await serveFixture({ hostname: '127.0.0.1', port: 0, async fetch(request) {
       const pathname = decodeURIComponent(new URL(request.url).pathname);
       if (!pathname.startsWith('/fortunetelling/')) return new Response('not found', { status: 404 });
       const full = resolve(ROOT, pathname.slice('/fortunetelling/'.length) || 'index.html');
       if (!full.startsWith(ROOT + sep)) return new Response('not found', { status: 404 });
-      const file = Bun.file(full); return await file.exists() ? new Response(file, { headers: { 'Cache-Control': 'no-store' } }) : new Response('not found', { status: 404 });
+      return fileResponse(full);
     } });
     const origin = `http://127.0.0.1:${server.port}`;
     browser = await chromium.launch({ channel: 'chrome', chromiumSandbox: true, timeout: 15_000 });
@@ -1084,6 +1085,6 @@ async function runVisual() {
   }
 }
 
-if (Bun.argv.includes('--self-test')) { selfTest(); visualSelfTest(); }
-else if (Bun.argv.includes('--visual')) await runVisual();
+if (process.argv.includes('--self-test')) { selfTest(); visualSelfTest(); }
+else if (process.argv.includes('--visual')) await runVisual();
 else await run();

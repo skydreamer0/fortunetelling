@@ -1,10 +1,10 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 /**
  * Create a `<profileId>.fortune.json` in the profiles directory (until the web app can export one, M4-02).
  *
- *   bun run add-profile sky --date 1990-05-17 --time 08:30 --gender female --city 台南 [--name 王小明]
- *   bun run add-profile sky --date 1990-05-17 --gender female --city 台南          # time unknown
- *   bun run add-profile sky ... --lat 22.99 --lng 120.22 --tz Asia/Taipei --place "Tainan"   # custom place
+ *   npm run add-profile -- sky --date 1990-05-17 --time 08:30 --gender female --city 台南 [--name 王小明]
+ *   npm run add-profile -- sky --date 1990-05-17 --gender female --city 台南          # time unknown
+ *   npm run add-profile -- sky ... --lat 22.99 --lng 120.22 --tz Asia/Taipei --place "Tainan"   # custom place
  */
 
 import { mkdir, writeFile } from 'node:fs/promises';

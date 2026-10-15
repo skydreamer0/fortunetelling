@@ -1,4 +1,5 @@
-import { expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { expect, test } from 'vitest';
 
 const url = new URL('../src/index.ts', import.meta.url).href;
 const script = `
@@ -19,8 +20,8 @@ console.log(JSON.stringify({hostOffset,result}));
 
 test('#56 actual adapters and source clocks agree across four host TZs without Intl fallback', () => {
   const rows = ['UTC','Asia/Taipei','America/New_York','Pacific/Apia'].map(TZ => {
-    const child = Bun.spawnSync([process.execPath, '--eval', script], { env: { ...process.env, TZ } });
-    expect(child.exitCode, child.stderr.toString()).toBe(0);
+    const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], { env: { ...process.env, TZ } });
+    expect(child.status, child.stderr.toString()).toBe(0);
     return JSON.parse(child.stdout.toString());
   });
   expect(new Set(rows.map(row => row.hostOffset)).size).toBe(4);

@@ -1,9 +1,8 @@
 # Project-Scoped Rules (Fortune Telling Platform)
 
-## ⚡ Runtime & Package Manager
-- **ALWAYS** use **Bun** for all runtime execution, package management, scripting, and testing.
-  - Use `bun install` instead of `npm install`.
-  - Use `bun test` instead of `npm test` or `node --test`.
-  - Use `bun run build` instead of `npm run build`.
-  - Use `bun run dev` instead of `npm run dev`.
-- Do **NOT** use `npm`, `npx`, `yarn`, `pnpm`, or raw `node` commands unless explicitly requested by the user.
+## Runtime & package manager
+- Use Node.js 24 LTS and npm 11 for runtime, package management and scripts.
+- Use `npm ci` with the committed `package-lock.json`; do not regenerate or upgrade unrelated dependencies.
+- Use `npm test` (Vitest), `npm run typecheck`, `npm run build`, and `npm run dev`.
+- MCP runs compiled ESM: `node packages/mcp/dist/bin.js`; build packages before invoking it.
+- Preserve calculation algorithms, fixtures, golden snapshots and locked forecast records during tooling changes.

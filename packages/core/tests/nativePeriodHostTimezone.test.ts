@@ -1,4 +1,5 @@
-import { expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { expect, test } from 'vitest';
 
 const moduleUrl = new URL('../src/period/index.ts', import.meta.url).href;
 const script = `
@@ -17,8 +18,8 @@ console.log(JSON.stringify(result));
 
 test('#55 identical output under four host timezones without Intl fallback', () => {
   const outputs = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'].map(TZ => {
-    const child = Bun.spawnSync([process.execPath, '--eval', script], { env: { ...process.env, TZ } });
-    expect(child.exitCode, child.stderr.toString()).toBe(0);
+    const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], { env: { ...process.env, TZ } });
+    expect(child.status, child.stderr.toString()).toBe(0);
     return JSON.parse(child.stdout.toString());
   });
   for (const output of outputs) expect(output).toEqual(outputs[0]);

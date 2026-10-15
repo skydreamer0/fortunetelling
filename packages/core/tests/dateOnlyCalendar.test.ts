@@ -1,10 +1,12 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { beforeAll, describe, expect, test } from 'vitest';
 
 // Contract: calculators/types.ts says these dates come from the user's input
 // local calendar day; ARCHITECTURE-V2 §§3.1/3.4 and the timeline use profile.date.
 const moduleRoot = new URL('../src/', import.meta.url).href;
 const zones = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'];
 const script = `
+import { createHash } from "node:crypto";
 import { analyze } from ${JSON.stringify(moduleRoot + 'core/analyze.ts')};
 import { createTimeContext } from ${JSON.stringify(moduleRoot + 'time/createTimeContext.ts')};
 import { BirthData } from ${JSON.stringify(moduleRoot + 'core/models/BirthData.ts')};
@@ -23,7 +25,7 @@ const cases = [
 const plain = v => JSON.parse(JSON.stringify(v));
 const value = (components, id) => components.find(c => c.id === id)?.value;
 const volatile = new Set(['generatedAt','computedAt','durationMs','classifiedAt','exportedAt']);
-const hash = v => new Bun.CryptoHasher('sha256').update(JSON.stringify(v, (k,v) => volatile.has(k) ? undefined : v)).digest('hex');
+const hash = v => createHash('sha256').update(JSON.stringify(v, (k,v) => volatile.has(k) ? undefined : v)).digest('hex');
 const capture = fn => { try { fn(); return null; } catch (e) { return e.message; } };
 const out = [];
 for (const [key,date,time,birthplace] of cases) {
@@ -60,8 +62,8 @@ console.log(JSON.stringify(out));
 let results: Record<string, any[]>;
 beforeAll(() => {
   results = Object.fromEntries(zones.map(TZ => {
-    const child = Bun.spawnSync([process.execPath, '--eval', script], { env: { ...process.env, TZ } });
-    expect(child.exitCode, new TextDecoder().decode(child.stderr)).toBe(0);
+    const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], { env: { ...process.env, TZ } });
+    expect(child.status, new TextDecoder().decode(child.stderr)).toBe(0);
     return [TZ, JSON.parse(new TextDecoder().decode(child.stdout).trim())];
   }));
 }, 120000);

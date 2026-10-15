@@ -1,7 +1,7 @@
 /**
  * D2 契約測試：StateSwitchTable（區塊 H② 狀態切換表）。
  */
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   BirthData,

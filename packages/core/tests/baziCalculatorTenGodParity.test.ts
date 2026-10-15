@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { LunarUtil } from 'lunar-javascript';
 import { pillarStats, type BaziDayMaster, type BaziPillars, type FiveElement } from '../src/calculators/bazi/calculator';
 import { BRANCHES, STEMS } from '../src/rules/bazi/relations';

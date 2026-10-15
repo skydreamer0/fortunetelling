@@ -79,7 +79,12 @@ export function initEphemeris(): Promise<void> {
     loading = (async () => {
       const mod = await import('@swisseph/browser');
       const instance = new mod.SwissEphemeris();
-      await instance.init();
+      if (typeof process !== 'undefined' && process.versions?.node && typeof window === 'undefined') {
+        const { initNodeEphemeris } = await import('./ephemerisNode');
+        await initNodeEphemeris(instance);
+      } else {
+        await instance.init();
+      }
       swe = instance;
     })().catch((err) => {
       loading = null; // allow a retry

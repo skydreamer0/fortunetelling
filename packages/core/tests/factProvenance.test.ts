@@ -1,4 +1,7 @@
-import { describe, expect, test, spyOn } from 'bun:test';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+import { describe, expect, test, vi  } from 'vitest';
+const spyOn = vi.spyOn;
 import { createCalculationSpec } from '../src/core/calculationSpec';
 import { createChartSnapshot } from '../src/core/chartSnapshot';
 import { interpretationBytes } from '../src/core/interpretationSpec';

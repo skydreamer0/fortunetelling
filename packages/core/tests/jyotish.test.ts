@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { EPHEMERIS_MOSHIER_WARNING, initEphemeris, planetPositions } from '../src/calculators/astro/index';
 import {
   DASHA_ORDER,

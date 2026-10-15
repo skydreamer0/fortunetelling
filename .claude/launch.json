@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "fortunetelling-dev",
-      "runtimeExecutable": "bun",
+      "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 5173
     }

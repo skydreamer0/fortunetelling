@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { buildBacktestTimeline, runBacktest, type LifeEvent, type TimeContext } from '@fortune/core';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { BacktestResults, LifeEvents } from '../src/components/report/LifeEvents';

@@ -1,4 +1,5 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { resolve } from 'node:path';
 import { createAsyncEphemerisCalculationSpec as createSpec, type AsyncEphemerisCalculationOptions } from '../src/core/asyncEphemerisCalculationSpec';
 import { createCalculationSpec } from '../src/core/calculationSpec';
@@ -76,7 +77,7 @@ describe('ephemeris settings identity, not result identity', () => {
   });
 
   test('invalid async settings reject before WASM initialization in a fresh process', () => {
-    const child = Bun.spawnSync([process.execPath, '-e', `
+    const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', `
       const { buildTimelineAsync } = await import('./core/src/timeline/buildTimeline.ts');
       const { isEphemerisReady } = await import('./core/src/calculators/astro/ephemeris.ts');
       const { createTimeContext } = await import('./core/src/time/index.ts');
@@ -84,8 +85,8 @@ describe('ephemeris settings identity, not result identity', () => {
       try { await buildTimelineAsync(createTimeContext(${JSON.stringify(profile)}), { ...${JSON.stringify(options)}, ephemeris: { jyotish: { node: null } } }); }
       catch { rejected = true; }
       console.log(JSON.stringify({ rejected, ready: isEphemerisReady() }));
-    `], { cwd: resolve(import.meta.dir, '../..'), stdout: 'pipe', stderr: 'pipe' });
-    expect(child.exitCode, new TextDecoder().decode(child.stderr)).toBe(0);
+    `], { cwd: resolve(import.meta.dirname, '../..'), stdio: ['pipe', 'pipe', 'pipe'] });
+    expect(child.status, new TextDecoder().decode(child.stderr)).toBe(0);
     expect(JSON.parse(new TextDecoder().decode(child.stdout).trim().split('\n').at(-1)!)).toEqual({ rejected: true, ready: false });
   }, 60_000);
 

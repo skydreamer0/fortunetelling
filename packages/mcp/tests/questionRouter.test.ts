@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { listQuestionCategories } from '@fortune/core';
 import { CATEGORY_KEYWORDS, routeQuestion } from '../src/questionRouter';
 

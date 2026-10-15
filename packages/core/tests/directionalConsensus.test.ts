@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { aggregateSignals, createSignal, type Signal, type SystemId } from '../src/signals/index';
 import { buildConsensus } from '../src/consensus/buildConsensus';
 import { restrictTimeline, restrictTimelineCell } from '../src/timeline/buildTimeline';

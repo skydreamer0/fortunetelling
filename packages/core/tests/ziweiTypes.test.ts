@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import type { astro } from 'iztro';
 import type { Language } from 'iztro/lib/data/types';
 import { BirthData } from '../src/core/models/BirthData';
@@ -326,7 +326,7 @@ test('all nine actual producer categories preserve the legacy vector and metadat
   "time": "未時",
   "fiveElementsClass": "木三局"
 } satisfies Omit<ZiweiMetadata, 'copyright'>);
-  expect(copyright).toStartWith('copyright © 2023-');
+  expect(copyright).toMatch(/^copyright\ ©\ 2023\-/);
 });
 
 type Astrolabe = ReturnType<typeof astro.bySolar>;

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import fixtures from './fixtures/questionAbstention.v3.json';
 import { answerQuestion, getQuestionCategory, replayQuestionAnswerV2, QUESTION_CATALOG, type SignalProvider } from '../src/questions';
 import archivedCatalog from '../src/questions/catalog.v2.json';

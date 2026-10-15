@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { serveFixture, fileResponse, runCommand } from './node-http';
 /** #100: native chapter/history regression against the real built app, synthetic inputs only. */
 import assert from 'node:assert/strict';
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -152,23 +154,22 @@ async function main() {
   assert(process.env.GITHUB_ACTIONS === 'true' && process.env.REPORT_NAVIGATION_CHECK === '1', 'Only the approved stock-Chrome Actions job may execute this harness; do not set runner flags locally.');
   assert.notEqual(process.getuid?.(), 0, 'Root browser execution refused');
   const expectedHead = process.env.ANSWER_HEAD_SHA;
-  const checkout = Bun.spawnSync(['git', 'rev-parse', 'HEAD']);
+  const checkout = runCommand(['git', 'rev-parse', 'HEAD']);
   assert.equal(checkout.exitCode, 0);
   const head = checkout.stdout.toString().trim();
   assert.match(head, /^[a-f0-9]{40}$/); assert.equal(head, expectedHead, 'Exact PR head required');
-  const status = Bun.spawnSync(['git', 'status', '--porcelain', '--untracked-files=no']);
+  const status = runCommand(['git', 'status', '--porcelain', '--untracked-files=no']);
   assert.equal(status.exitCode, 0); assert.equal(status.stdout.toString().trim(), '', 'Tracked sources changed after checkout');
   await access('/opt/google/chrome/chrome', constants.X_OK);
   const sources: Record<string, string> = {};
-  for (const file of ['apps/web/src/App.tsx', 'apps/web/src/lib/viewHistory.ts', 'apps/web/src/components/report/ReportView.tsx', 'apps/web/scripts/report-navigation-browser-check.ts']) sources[file] = new Bun.CryptoHasher('sha256').update(await readFile(file)).digest('hex');
+  for (const file of ['apps/web/src/App.tsx', 'apps/web/src/lib/viewHistory.ts', 'apps/web/src/components/report/ReportView.tsx', 'apps/web/scripts/report-navigation-browser-check.ts']) sources[file] = createHash('sha256').update(await readFile(file)).digest('hex');
   await mkdir(OUTPUT, { recursive: true });
-  const server = Bun.serve({ hostname: '127.0.0.1', port: 0, async fetch(request) {
+  const server = await serveFixture({ hostname: '127.0.0.1', port: 0, async fetch(request) {
     const pathname = decodeURIComponent(new URL(request.url).pathname);
     if (!pathname.startsWith('/fortunetelling/')) return new Response('not found', { status: 404 });
     const full = resolve(ROOT, pathname.slice('/fortunetelling/'.length) || 'index.html');
     if (!full.startsWith(ROOT + sep)) return new Response('not found', { status: 404 });
-    const file = Bun.file(full);
-    return await file.exists() ? new Response(file, { headers: { 'Cache-Control': 'no-store' } }) : new Response('not found', { status: 404 });
+    return fileResponse(full);
   } });
   let browser: Browser | undefined;
   const evidence: Record<string, unknown> = { head, sources, chromiumSandbox: true, cases: [], passed: false };

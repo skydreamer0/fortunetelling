@@ -1,4 +1,5 @@
-import { expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
+import { expect, test } from 'vitest';
 import type { BaziDayMaster } from '../src/calculators/bazi/calculator';
 import { BirthData } from '../src/core/models/BirthData';
 import { SystemResult } from '../src/core/models/SystemResult';
@@ -119,7 +120,7 @@ test('all seven BaZi producer categories retain the pre-refactor serialized vect
   expect(result.components).toHaveLength(16);
   expect(result.components.filter(component => Object.hasOwn(component, 'meta')).map(component => component.id)).toEqual(['natal']);
   // Captured on master 194c6b01 before edits; excludes nondeterministic timing only.
-  expect(new Bun.CryptoHasher('sha256').update(JSON.stringify({
+  expect(createHash('sha256').update(JSON.stringify({
     components: result.components, meta: result.meta,
   })).digest('hex')).toBe('5d7341deb16c019cce3c12207fc875c4dcfdf72a838d7ddb264858e855b7fa6b');
   expect(result.components[0]).toEqual({

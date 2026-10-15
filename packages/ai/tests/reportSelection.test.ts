@@ -1,4 +1,5 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { analyze, type Report } from '../../core/src/core/analyze';
 import { buildInterpretationPayload, type ReportLike } from '../src/payload';
 import { buildCopyPrompt } from '../src/copyPrompt';
@@ -17,7 +18,7 @@ function expected<K extends keyof typeof recorded>(key: K): (typeof recorded)[K]
 
 let report: Report & ReportLike;
 beforeAll(() => { report=JSON.parse(JSON.stringify(analyze({year:1990,month:6,day:15,hour:23,minute:30,gender:'female',useTrueSolarTime:false,ziHourConvention:'early'},{asOf:'2027-01-15'}))); });
-const sha=(s:string)=>new Bun.CryptoHasher('sha256').update(s).digest('hex');
+const sha=(s:string)=>createHash('sha256').update(s).digest('hex');
 
 describe('Report7 candidate projection with reviewed Payload3 serialization deltas', () => {
   test('200k payload preserves its selected pool and removes dangling conflict references', () => {

@@ -1,4 +1,6 @@
-import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { describe, expect, test } from 'vitest';
 import * as core from '../src/index';
 import { resolveAnalyzeInput } from '../src/core/analyzeInput';
 import { canonicalZoneName } from '../src/time/tzdb/index';
@@ -149,7 +151,7 @@ describe('CalculationSpec v1: analyze-sync natal intent only', () => {
     ]);
     for (const entry of Object.values(versions.dependencies) as any[]) {
       expect(entry.version).toMatch(/^\d+\.\d+\.\d+$/);
-      expect(entry.integrity).toStartWith('sha512-');
+      expect(entry.integrity).toMatch(/^sha512\-/);
     }
     expect(Object.keys(versions.rules).sort()).toEqual(['bazi', 'baziTenGod', 'numerology', 'ziwei', 'ziweiModifiers', 'ziweiTraits']);
     for (const value of Object.values(versions.rules)) expect(value).toMatch(/^fnv1a64-[0-9a-f]{16}$/);
@@ -182,23 +184,22 @@ describe('CalculationSpec v1: analyze-sync natal intent only', () => {
 
 describe('CalculationSpec version and host independence guards', () => {
   test('locked dependency manifest is the exact complete sync calculation closure', async () => {
-    const lockText = await Bun.file(new URL('../../../bun.lock', import.meta.url)).text();
-    // bun.lock is JSONC with trailing commas; this lock contains no comments.
-    const lock = JSON.parse(lockText.replace(/,\s*([}\]])/g, '$1'));
-    const pkg = await Bun.file(new URL('../package.json', import.meta.url)).json();
+    const lockText = readFileSync(new URL('../../../package-lock.json', import.meta.url), 'utf8');
+    const lock = JSON.parse(lockText);
+    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
     expect(pkg.version).toBe(core.VERSION);
-    expect(lock.workspaces['packages/core'].version).toBe(core.VERSION);
+    expect(lock.packages['packages/core'].version).toBe(core.VERSION);
     const versions = createSpec(birth).identity.versions;
     const seen = new Set<string>();
     function visit(name: string) {
       if (seen.has(name)) return;
       seen.add(name);
-      const entry = lock.packages[name];
+      const entry = lock.packages[`node_modules/${name}`];
       expect(entry).toBeDefined();
       expect(versions.dependencies[name]).toEqual({
-        version: entry[0].slice(name.length + 1), integrity: entry.at(-1),
+        version: entry.version, integrity: entry.integrity,
       });
-      for (const dependency of Object.keys(entry[2].dependencies ?? {})) visit(dependency);
+      for (const dependency of Object.keys(entry.dependencies ?? {})) visit(dependency);
     }
     visit('iztro');
     visit('lunar-javascript');
@@ -230,8 +231,8 @@ describe('CalculationSpec version and host independence guards', () => {
     const modulePath = new URL('../src/index.ts', import.meta.url).href;
     const script = `import { createCalculationSpec } from ${JSON.stringify(modulePath)}; console.log(JSON.stringify(createCalculationSpec(${JSON.stringify(input)})));`;
     const results = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'].map(TZ => {
-      const result = Bun.spawnSync([process.execPath, '--eval', script], { env: { ...process.env, TZ } });
-      expect(result.exitCode).toBe(0);
+      const result = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], { env: { ...process.env, TZ } });
+      expect(result.status).toBe(0);
       return result.stdout.toString().trim();
     });
     expect(new Set(results).size).toBe(1);

@@ -1,4 +1,6 @@
-import { expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { transformSync } from 'esbuild';
+import { expect, test } from 'vitest';
 import { HonestyGuard, type HonestyReportInput } from '../src/analysis/HonestyGuard';
 import { HonestyGuard as Legacy } from './fixtures/honestyGuard.before-types';
 import type { Report } from '../src/core/analyze';
@@ -50,10 +52,10 @@ export type Contract = [
 ];
 
 // Frozen source from master b26ec306fe2ac6a487234dbcd5d70d14255480ab.
-// Both guards use Bun's TS module loader. Transpiler + new Function rewrites
+// Both guards use the same Vitest TS module loader. Transpiler + new Function rewrites
 // expressions differently, changing engine-generated TypeError messages.
-const transpiler = new Bun.Transpiler({ loader: 'ts' });
-const BASE_SOURCE = await Bun.file(new URL('./fixtures/honestyGuard.before-types.ts', import.meta.url)).text();
+const transpiler = { transformSync: (source: string) => transformSync(source, { loader: 'ts', format: 'esm', target: 'esnext' }).code };
+const BASE_SOURCE = readFileSync(new URL('./fixtures/honestyGuard.before-types.ts', import.meta.url), 'utf8');
 const baselineJs = transpiler.transformSync(BASE_SOURCE);
 const outcome = (guard: typeof HonestyGuard | typeof Legacy, input: unknown) => {
   try { return { value: guard.auditReport(input as Input) }; }
@@ -132,6 +134,6 @@ test('malformed containers and unusual grain property lookups preserve errors an
 });
 
 test('erasing consumer types leaves the entire executable module byte-identical', async () => {
-  const source = await Bun.file(new URL('../src/analysis/HonestyGuard.ts', import.meta.url)).text();
+  const source = readFileSync(new URL('../src/analysis/HonestyGuard.ts', import.meta.url), 'utf8');
   expect(transpiler.transformSync(source)).toBe(baselineJs);
 });

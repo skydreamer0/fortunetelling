@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import countOnlyDelta from './fixtures/reportGolden.v0.9.1.delta.json';
 import cooperativeDelta from './fixtures/reportGolden.v0.9.0.delta.json';
 import requiredOptionsDelta from './fixtures/reportGolden.v0.8.0.delta.json';
@@ -6,7 +8,7 @@ import dateOnlyDelta from './fixtures/reportGolden.v0.6.4.delta.json';
 import calendarValidationDelta from './fixtures/reportGolden.v0.6.3.delta.json';
 import asOfDelta from './fixtures/reportGolden.v0.6.2.delta.json';
 import evidenceDelta from './fixtures/reportGolden.v0.6.1.delta.json';
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { GOLDEN_PATH, buildGolden } from './fixtures/reportGolden';
 import delta from './fixtures/reportGolden.v0.5.1.delta.json';
@@ -17,8 +19,8 @@ import agreementDelta from './fixtures/reportGolden.v0.6.0.delta.json';
 // Preserve the original V1-16 golden; apply only reviewed literal versioned deltas.
 // No value in the expected result is derived from the current implementation.
 test('analyze()/analyzeCompatibility() JSON matches the preserved golden plus explicit versioned deltas', async () => {
-  const original = await Bun.file(GOLDEN_PATH).text();
-  assert.equal(new Bun.CryptoHasher('sha256').update(original).digest('hex'),
+  const original = readFileSync(GOLDEN_PATH, 'utf8');
+  assert.equal(createHash('sha256').update(original).digest('hex'),
     '07ca1cd3b22f6699115c14d0dfb0a6c78742b445dac6efb4dba6c8ae2ca3b29f', 'Preserve the original v0.5.0 report fixture');
   const recorded = JSON.parse(original) as Record<string, unknown>;
   for (const change of [...delta.changes, ...replayDelta.changes, ...specDelta.changes, ...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes, ...calendarValidationDelta.changes, ...dateOnlyDelta.changes, ...abstentionDelta.changes, ...requiredOptionsDelta.changes, ...cooperativeDelta.changes, ...countOnlyDelta.changes]) {

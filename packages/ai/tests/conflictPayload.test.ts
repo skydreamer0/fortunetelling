@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { aggregateSignals, createSignal, type Signal } from '../../core/src/signals/index';
 import { analyze } from '../../core/src/core/analyze';
 import { buildInterpretationPayload, PAYLOAD_VERSION } from '../src/payload';

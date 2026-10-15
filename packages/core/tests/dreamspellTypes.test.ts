@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { BirthData } from '../src/core/models/BirthData';
 import { SystemResult } from '../src/core/models/SystemResult';
 import { DreamspellEngine } from '../src/engines/DreamspellEngine';

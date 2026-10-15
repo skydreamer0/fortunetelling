@@ -1,4 +1,4 @@
-import { test, expect, describe } from 'bun:test';
+import { test, expect, describe } from 'vitest';
 import {
   kinFromDate, toneOf, sealOf, kinOf, wavespellOf, castleOf, oracleOf,
   analogSeal, antipodeSeal, occultSeal,

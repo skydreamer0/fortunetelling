@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { astro } from 'iztro';
 import * as api from '../src/index';
 import type { NativePeriod } from '../src/period';

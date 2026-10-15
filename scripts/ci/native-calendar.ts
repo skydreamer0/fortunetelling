@@ -1,8 +1,11 @@
+import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 import { appendFileSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { release } from 'node:os';
 import { join, resolve } from 'node:path';
 import { natalCases } from '../../packages/core/tests/fixtures/natalCalendarCases';
-import { verifySummary } from './pipeline';
+import { verifySummary, runTests } from './pipeline';
 
 export const runners = { 'ubuntu-24.04': 'linux', 'windows-2022': 'win32', 'macos-15-intel': 'darwin' } as const;
 export const zones = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'];
@@ -11,13 +14,13 @@ const modes = ['A', 'B', 'interleaved'];
 const files = ['packages/core/tests/natalCalendarMatrix.test.ts', 'packages/core/tests/chartSnapshotHostTimezone.test.ts'];
 const evidenceFiles = ['natal.json', 'snapshots.json'];
 const limit = 64 * 1024 * 1024;
-const hash = (value: string | Uint8Array) => new Bun.CryptoHasher('sha256').update(value).digest('hex');
+const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 function requireEqual(actual: unknown, expected: unknown, label: string): void {
   if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error(`${label}: missing, unexpected or different evidence`);
 }
 function git(...args: string[]): string {
-  const child = Bun.spawnSync(['git', ...args]);
-  if (child.exitCode !== 0) throw new Error(`git ${args[0]} failed`);
+  const child = spawnSync('git', args);
+  if (child.status !== 0) throw new Error(`git ${args[0]} failed`);
   return child.stdout.toString();
 }
 export function lockIdentity(source: string, checkout: string): string {
@@ -27,17 +30,13 @@ export function lockIdentity(source: string, checkout: string): string {
   return hash(source);
 }
 export function strictSummary(output: string): void {
-  verifySummary(output, 2);
-  const passed = [...output.matchAll(/^\s*(\d+) pass\s*$/gm)];
-  if (passed.length !== 1 || Number(passed[0]![1]) !== 12 ||
-      !/Ran 12 tests across 2 files\./.test(output) || /^\s*\d+ (skip|todo)\s*$/m.test(output)) {
-    throw new Error('Native calendar requires exactly 12 passing tests and no skipped/todo tests');
-  }
+  const report = verifySummary(output, 2);
+  if (report.numPassedTests !== 12) throw new Error('Native calendar requires exactly 12 passing tests and no skipped/todo tests');
 }
 export interface Manifest {
   schema: number; status: string; runner: string; platform: string; arch: string;
   sha: string; tree: string; runId: string; attempt: string;
-  bun: string; revision: string; lock: string;
+  node: string; v8: string; lock: string;
   evidence: Record<string, { bytes: number; sha256: string }>;
 }
 export function validateManifest(value: Manifest, runner: string, expected: { sha: string; tree: string; runId: string; attempt: string }): void {
@@ -45,7 +44,7 @@ export function validateManifest(value: Manifest, runner: string, expected: { sh
     [1, 'PASS', runner, runners[runner as keyof typeof runners], 'x64'], `${runner} status/native OS`);
   for (const key of ['sha', 'tree', 'runId', 'attempt'] as const) requireEqual(value[key], expected[key], `${runner} ${key}`);
   if (!/^[a-f0-9]{40}$/.test(value.sha) || !/^[a-f0-9]{40}$/.test(value.tree) || !/^[1-9]\d*$/.test(value.runId) || !/^[1-9]\d*$/.test(value.attempt)) throw new Error('Invalid source/run provenance');
-  if (value.bun !== '1.4.3' || !value.revision || !/^[a-f0-9]{64}$/.test(value.lock)) throw new Error('Missing pinned runtime/lock provenance');
+  if (value.node !== '24.19.0' || !value.v8 || !/^[a-f0-9]{64}$/.test(value.lock)) throw new Error('Missing pinned runtime/lock provenance');
   requireEqual(Object.keys(value.evidence).sort(), [...evidenceFiles].sort(), 'Evidence files');
   for (const entry of Object.values(value.evidence)) if (!Number.isInteger(entry.bytes) || entry.bytes <= 0 || entry.bytes > limit || !/^[a-f0-9]{64}$/.test(entry.sha256)) throw new Error('Invalid evidence size/hash');
 }
@@ -101,22 +100,16 @@ export async function main(command: string, directory: string, runner?: string):
     if (!runner || !(runner in runners)) throw new Error('Unknown native runner');
     mkdirSync(directory, { recursive: true });
     const manifest: Manifest & Record<string, unknown> = { schema: 1, status: 'NOT RUN', runner, platform: process.platform, arch: process.arch,
-      ...expected, bun: Bun.version, revision: Bun.revision, lock: lockIdentity(git('show', 'HEAD:bun.lock'), readFileSync('bun.lock', 'utf8')), evidence: {},
+      ...expected, node: process.versions.node, v8: process.versions.v8, lock: lockIdentity(git('show', 'HEAD:package-lock.json'), readFileSync('package-lock.json', 'utf8')), evidence: {},
       osRelease: release(), imageOS: process.env.ImageOS, imageVersion: process.env.ImageVersion,
       versions: process.versions, files, testCount: 12, fixtures: natalCases, zones,
-      calendarDependencies: Object.fromEntries(['iztro', 'lunar-javascript'].map(name => [name, JSON.parse(readFileSync(Bun.resolveSync(`${name}/package.json`, resolve('packages/core')), 'utf8')).version])),
+      calendarDependencies: Object.fromEntries(['iztro', 'lunar-javascript'].map(name => [name, JSON.parse(readFileSync(createRequire(resolve('packages/core/package.json')).resolve(`${name}/package.json`), 'utf8')).version])),
     };
     const save = () => writeFileSync(join(directory, 'manifest.json'), JSON.stringify(manifest, null, 2));
     save();
     try {
-      const child = Bun.spawn([process.execPath, 'test', ...files.map(file => `./${file}`)], {
-        env: { ...process.env, TZ: 'UTC', NO_COLOR: '1', NATIVE_CALENDAR_OUTPUT: directory }, stdout: 'pipe', stderr: 'pipe',
-      });
-      const [stdout, stderr, code] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]);
-      const log = `${stdout}\n${stderr}`.replace(/\x1b\[[0-9;]*m/g, '');
-      writeFileSync(join(directory, 'tests.log'), log); console.log(log);
-      if (code !== 0) throw new Error(`Native tests exited ${code}`);
-      strictSummary(log);
+      const json = runTests(files, { ...process.env, TZ: 'UTC', NATIVE_CALENDAR_OUTPUT: directory }, directory);
+      strictSummary(json);
       const [natal, snapshots] = evidenceFiles.map(name => readEvidence(directory, name));
       validateInventory(JSON.parse(natal!), JSON.parse(snapshots!));
       for (const name of evidenceFiles) { const bytes = readFileSync(join(directory, name)); manifest.evidence[name] = { bytes: bytes.length, sha256: hash(bytes) }; }
@@ -139,10 +132,10 @@ export async function main(command: string, directory: string, runner?: string):
       });
       validateInventory(JSON.parse(bytes[0]!), JSON.parse(bytes[1]!));
       if (reference) {
-        requireEqual([manifest.bun, manifest.revision, manifest.lock], [reference.manifest.bun, reference.manifest.revision, reference.manifest.lock], `${name} dependency/runtime identity`);
+        requireEqual([manifest.node, manifest.v8, manifest.lock], [reference.manifest.node, reference.manifest.v8, reference.manifest.lock], `${name} dependency/runtime identity`);
         bytes.forEach((value, index) => compareBytes(reference!.bytes[index]!, value, `${name}/${evidenceFiles[index]}`));
       } else reference = { manifest, bytes };
-      report.push(`${name}: PASS; source ${manifest.sha}; tree ${manifest.tree}; Bun ${manifest.bun}; ${JSON.stringify(manifest.evidence)}`);
+      report.push(`${name}: PASS; source ${manifest.sha}; tree ${manifest.tree}; Node ${manifest.node}; ${JSON.stringify(manifest.evidence)}`);
       for (const zone of zones) for (const row of natalCases) report.push(`  ${zone}/${row.id}: A PASS, B PASS, A→B→A PASS; full snapshot bytes and natal probe output equal`);
     }
     console.log(report.join('\n'));

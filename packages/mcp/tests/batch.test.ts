@@ -1,5 +1,5 @@
 /** batch 工具與 get_chart conventions。使用測試樣本 sky（非真人資料）。 */
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { MAX_RESPONSE_CHARS } from '../src/envelope';
 import { MAX_BATCH_CALLS } from '../src/tools/index';
 import { makeFixture } from './helpers';

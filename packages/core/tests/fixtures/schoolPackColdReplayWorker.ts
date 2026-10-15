@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 /** Test-only cold-process probe. Not an archive format or production replay API. */
 import assert from 'node:assert/strict';
 import { createCalculationSpec, type CalculationSpec } from '../../src/core/calculationSpec';
@@ -47,7 +50,7 @@ export type ColdReplayArchive = {
 export function capture(): ColdReplayArchive {
   return {
     format: 'test-only-current-build-cold-reconstruction', producerPid: process.pid,
-    runtime: { version: Bun.version, revision: Bun.revision },
+    runtime: { version: process.versions.node, revision: process.versions.v8 },
     cases: definitions.map(definition => {
       const birth = { ...input, timeKnown: definition.timeKnown };
       const calculationSpec = createCalculationSpec(birth);
@@ -65,7 +68,7 @@ export function capture(): ColdReplayArchive {
 export function reconstruct(archive: ColdReplayArchive) {
   assert.equal(archive.format, 'test-only-current-build-cold-reconstruction');
   assert.notEqual(process.pid, archive.producerPid, 'Producer must have exited before the verifier starts');
-  assert.deepEqual(archive.runtime, { version: Bun.version, revision: Bun.revision }, 'This probe does not support historical runtimes');
+  assert.deepEqual(archive.runtime, { version: process.versions.node, revision: process.versions.v8 }, 'This probe does not support historical runtimes');
   assert.deepEqual(archive.cases.map(item => item.id), definitions.map(item => item.id));
   const results = archive.cases.map((saved, index) => {
     const definition = definitions[index]!;
@@ -92,7 +95,7 @@ export function reconstruct(archive: ColdReplayArchive) {
       assert.throws(() => production.bindFacts(snapshot, interpretation, factStore, saved.context), /owned InterpretationSpec/);
     }
     return { id: saved.id, analysisId: result.analysisId, specHash: snapshot.specHash, snapshotId: snapshot.snapshotId,
-      resultSHA256: new Bun.CryptoHasher('sha256').update(interpretationBytes(result)).digest('hex'),
+      resultSHA256: createHash('sha256').update(interpretationBytes(result)).digest('hex'),
       scope: result.identity.scope, stances: result.assessments.flatMap(item => item.conclusions.map(conclusion => conclusion.stance)),
       unavailable: result.unavailable.map(item => item.ref.system),
       abstained: result.assessments.filter(item => item.status === 'abstain').map(item => item.ref.system) };
@@ -103,13 +106,13 @@ export function reconstruct(archive: ColdReplayArchive) {
 
 if (import.meta.main) {
   try {
-    const [mode, path] = Bun.argv.slice(2);
+    const [mode, path] = process.argv.slice(2);
     if (mode === 'capture' && path) {
       const archive = capture();
-      await Bun.write(path, JSON.stringify(archive));
+      writeFileSync(path, JSON.stringify(archive));
       console.log(JSON.stringify({ producerPid: process.pid, cases: archive.cases.length }));
     } else if (mode === 'reconstruct' && path) {
-      console.log(JSON.stringify(reconstruct(await Bun.file(path).json() as ColdReplayArchive)));
+      console.log(JSON.stringify(reconstruct(JSON.parse(readFileSync(path, 'utf8')) as ColdReplayArchive)));
     } else throw new Error('Expected capture|reconstruct and an archive path');
   } catch (error) {
     console.error(error instanceof Error ? error.stack : String(error));

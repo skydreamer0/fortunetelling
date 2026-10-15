@@ -1,4 +1,5 @@
-import { expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { expect, test } from 'vitest';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -13,8 +14,8 @@ test('subprocess imports preserve spaces, Unicode and URL delimiters in checkout
     writeFileSync(modulePath, 'export const marker = "portable-import";\n');
     const moduleRoot = new URL('./', pathToFileURL(modulePath)).href;
     const script = `import { marker } from ${JSON.stringify(moduleRoot + 'fixture.ts')}; console.log(marker);`;
-    const child = Bun.spawnSync([process.execPath, '--eval', script]);
-    expect(child.exitCode, child.stderr.toString()).toBe(0);
+    const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script]);
+    expect(child.status, child.stderr.toString()).toBe(0);
     expect(child.stdout.toString().trim()).toBe('portable-import');
   } finally {
     rmSync(root, { recursive: true, force: true });

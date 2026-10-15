@@ -1,7 +1,7 @@
 /**
  * 黃金測試：引擎對已知向量的輸出（可覆核的計算正確性）。
  */
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { BirthData, ZiweiEngine, NumerologyEngine } from '../src/index';
 import { reduceNumber, letterValue } from '../src/engines/NumerologyEngine';

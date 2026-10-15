@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { createViewHistory } from '../src/lib/viewHistory';
 
 /** Browser model: fragment navigation pushes null state before popstate. */

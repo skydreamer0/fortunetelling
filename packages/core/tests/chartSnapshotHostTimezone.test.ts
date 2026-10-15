@@ -1,4 +1,6 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import type { ChartSnapshot } from '../src/core/chartSnapshot';
 import { natalCases } from './fixtures/natalCalendarCases';
 import type { ProducedSnapshots, ReloadedSnapshots, SnapshotMode, SnapshotTransfer } from './fixtures/chartSnapshotHostProbe';
@@ -17,18 +19,20 @@ afterAll(async () => {
   if (!process.env.NATIVE_CALENDAR_OUTPUT) return;
   const bytes = new TextEncoder().encode(JSON.stringify({ produced: [...produced], reloaded: [...reloaded] }));
   if (bytes.length > 64 * 1024 * 1024) throw new Error('Snapshot evidence exceeds 64 MiB');
-  await Bun.write(`${process.env.NATIVE_CALENDAR_OUTPUT}/snapshots.json`, bytes);
+  writeFileSync(`${process.env.NATIVE_CALENDAR_OUTPUT}/snapshots.json`, bytes);
 });
 
 function child<T>(TZ: string, expression: string, input?: unknown): T {
-  const script = `import { produceSnapshots, reloadSnapshots } from ${JSON.stringify(probeUrl)};
+  const script = `import { readFileSync } from "node:fs";
+    import { produceSnapshots, reloadSnapshots } from ${JSON.stringify(probeUrl)};
     console.log(JSON.stringify(${expression}));`;
-  const result = Bun.spawnSync([process.execPath, '--eval', script], {
+  const result = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], {
     env: { ...process.env, TZ }, timeout: 60_000,
-    stdin: input === undefined ? 'ignore' : new TextEncoder().encode(JSON.stringify(input)),
+    input: input === undefined ? undefined : JSON.stringify(input),
+    maxBuffer: 64 * 1024 * 1024,
   });
-  expect(result.exitCode, `${TZ}: ${new TextDecoder().decode(result.stderr)}`).toBe(0);
-  expect(result.signalCode ?? null).toBeNull();
+  expect(result.status, `${TZ}: ${new TextDecoder().decode(result.stderr)}`).toBe(0);
+  expect(result.signal ?? null).toBeNull();
   return JSON.parse(new TextDecoder().decode(result.stdout)) as T;
 }
 
@@ -43,7 +47,7 @@ beforeAll(() => {
   // Four additional cold consumers each receive the exact serialized bytes from
   // all four origins through stdin: 4 x 4 host pairs x 8 fixtures x 2 settings.
   for (const TZ of zones) reloaded.set(TZ, child<ReloadedSnapshots>(TZ,
-    'reloadSnapshots(JSON.parse(await Bun.stdin.text()))', transfers));
+    'reloadSnapshots(JSON.parse(readFileSync(0, "utf8")))', transfers));
 }, 180_000);
 
 describe('#54 internal sync snapshot cross-host serialization (not persistence or full acceptance)', () => {

@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { gatesAlong } from '../src/calculators/humanDesign/rules';
 import { bisectTransitRoot, traceGateTransits, TransitResolutionError } from '../src/calculators/humanDesign/transitCrossings';
 const DAY_SECONDS = 86_400;

@@ -1,7 +1,7 @@
 /**
  * 內建時區資料庫（`src/time/tzdb/`）：編譯器、編碼格式、資料完整性、跨環境決定性（D-014）。
  */
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, test } from 'vitest';
 import { createTimeContext } from '../src/time/index';
 import { compileZone, parseTzSource, typeAt } from '../src/time/tzdb/compile';
 import { TZDB_LINKS, TZDB_VERSION, TZDB_ZONES } from '../src/time/tzdb/data';

@@ -47,7 +47,7 @@ export class AiRefusalError extends Error {
 }
 
 export const MISSING_SDK_MESSAGE =
-  '@fortune/ai/client 的 createAnthropicComplete 需要選用依賴 @anthropic-ai/sdk，但目前找不到。請先執行 `bun add @anthropic-ai/sdk`，或改為注入自己的 `client`／`complete`。主線（MCP、複製 prompt）不需要它。';
+  '@fortune/ai/client 的 createAnthropicComplete 需要選用依賴 @anthropic-ai/sdk，但目前找不到。請先執行 `npm install @anthropic-ai/sdk`，或改為注入自己的 `client`／`complete`。主線（MCP、複製 prompt）不需要它。';
 
 async function loadAnthropicClient(options: AnthropicCompleteOptions): Promise<Anthropic> {
   let mod: typeof import('@anthropic-ai/sdk');

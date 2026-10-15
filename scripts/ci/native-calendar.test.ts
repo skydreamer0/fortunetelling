@@ -1,11 +1,17 @@
-import { expect, test } from 'bun:test';
+import { parse as parseYaml } from 'yaml';
+import { expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { natalCases } from '../../packages/core/tests/fixtures/natalCalendarCases';
 import { compareBytes, lockIdentity, runners, strictSummary, validateInventory, validateManifest, zones, type Manifest } from './native-calendar';
 
+
+const report = (counts = [2, 1]) => ({ success: true, numTotalTests: counts.reduce((a, b) => a + b, 0),
+  numPassedTests: counts.reduce((a, b) => a + b, 0), numFailedTests: 0, numPendingTests: 0, numTodoTests: 0,
+  testResults: counts.map((count, index) => ({ name: `file${index}.test.ts`, status: 'passed', assertionResults: Array.from({ length: count }, () => ({ status: 'passed' })) })) });
+
 const expected = { sha: 'a'.repeat(40), tree: 'b'.repeat(40), runId: '123', attempt: '1' };
 const manifest = (): Manifest => ({ schema: 1, status: 'PASS', runner: 'ubuntu-24.04', platform: 'linux', arch: 'x64',
-  ...expected, bun: '1.4.3', revision: 'revision', lock: 'c'.repeat(64),
+  ...expected, node: '24.19.0', v8: 'revision', lock: 'c'.repeat(64),
   evidence: Object.fromEntries(['natal.json', 'snapshots.json'].map(name => [name, { bytes: 100, sha256: 'd'.repeat(64) }])) });
 function inventory() {
   const natal: any[] = [], produced: any[] = [], reloaded: any[] = [];
@@ -30,13 +36,17 @@ test('lock identity permits only exact Git source or CRLF checkout expansion', (
   for (const changed of [source.replace('fixed', 'changed'), source.trimEnd(), source + '\n', source.replace('  ', ' '), source.replace('\n', '\r\r\n')]) expect(() => lockIdentity(source, changed)).toThrow('differs from source blob');
 });
 test('native test completion rejects missing, skipped, todo, failed and partial execution', () => {
-  const clean = ' 12 pass\n 0 fail\nRan 12 tests across 2 files. [1s]';
-  expect(() => strictSummary(clean)).not.toThrow();
-  for (const text of ['', clean.replace('12 pass', '11 pass'), clean.replace('12 tests', '13 tests'), clean.replace('2 files', '1 file'), clean.replace('0 fail', '1 fail'), `${clean}\n1 skip`, `${clean}\n1 todo`, `${clean}\n${clean}`]) expect(() => strictSummary(text)).toThrow();
+  const clean = report([6, 6]);
+  expect(() => strictSummary(JSON.stringify(clean))).not.toThrow();
+  for (const value of [null, report([6, 5]), report([6, 7]), report([12]), { ...clean, numFailedTests: 1 },
+    { ...clean, numPendingTests: 1 }, { ...clean, numTodoTests: 1 }, { ...clean, success: false }]) {
+    expect(() => strictSummary(JSON.stringify(value))).toThrow();
+  }
+  expect(() => strictSummary(JSON.stringify(clean) + JSON.stringify(clean))).toThrow();
 });
 test('manifest requires exact source, run, native OS, pinned runtime, complete bounded artifacts', () => {
   for (const [runner, platform] of Object.entries(runners)) expect(() => validateManifest({ ...manifest(), runner, platform }, runner, expected)).not.toThrow();
-  for (const patch of [{ status: 'NOT RUN' }, { status: 'FAIL' }, { sha: 'e'.repeat(40) }, { tree: 'e'.repeat(40) }, { runId: '124' }, { attempt: '2' }, { platform: 'win32' }, { arch: 'arm64' }, { bun: '1.4.2' }, { revision: '' }, { lock: '' }, { evidence: {} }]) expect(() => validateManifest({ ...manifest(), ...patch }, 'ubuntu-24.04', expected)).toThrow();
+  for (const patch of [{ status: 'NOT RUN' }, { status: 'FAIL' }, { sha: 'e'.repeat(40) }, { tree: 'e'.repeat(40) }, { runId: '124' }, { attempt: '2' }, { platform: 'win32' }, { arch: 'arm64' }, { node: '24.18.0' }, { v8: '' }, { lock: '' }, { evidence: {} }]) expect(() => validateManifest({ ...manifest(), ...patch }, 'ubuntu-24.04', expected)).toThrow();
   const oversized = manifest(); oversized.evidence['natal.json']!.bytes = 64 * 1024 * 1024 + 1;
   expect(() => validateManifest(oversized, 'ubuntu-24.04', expected)).toThrow();
 });
@@ -60,7 +70,7 @@ test('byte comparison rejects changed content with unchanged IDs and even equiva
   for (const value of [original.replace('命宮', '財帛'), `${original}\n`, '']) expect(() => compareBytes(original, value, 'mutation')).toThrow('full bytes differ at byte');
 });
 test('native lanes preserve full/scoped selection, exact matrix, bounded evidence and fail-closed aggregation', () => {
-  const workflow = Bun.YAML.parse(readFileSync('.github/workflows/ci.yml', 'utf8')) as any;
+  const workflow = parseYaml(readFileSync('.github/workflows/ci.yml', 'utf8')) as any;
   const jobs = workflow.jobs, native = jobs.native_calendar, compare = jobs.native_compare;
   expect(native.if).toBe("needs.plan.outputs.mode == 'full'");
   expect(native.strategy.matrix.os).toEqual(Object.keys(runners));

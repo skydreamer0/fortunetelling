@@ -1,4 +1,6 @@
-import { afterEach, describe, expect, spyOn, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
+import { afterEach, describe, expect, test, vi  } from 'vitest';
+const spyOn = vi.spyOn;
 import { analyze, REPORT_SCHEMA_VERSION } from '../src/core/analyze';
 import { resolveCalculationSpec } from '../src/core/calculationSpec';
 import { TimeContextBaZiEngine } from '../src/core/timeContextEngines';
@@ -285,8 +287,8 @@ describe('run-local immutable bazi natal basis', () => {
       const ctx = createTimeContext(r.profile, { dstOverlap: r.spec.identity.settings.time.dstOverlap });
       console.log(JSON.stringify(createBaziNatalBasisProvider(ctx, r.options)(ctx, r.options)));`;
     const outputs = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'].map(TZ => {
-      const result = Bun.spawnSync([process.execPath, '--eval', script], { env: { ...process.env, TZ } });
-      expect(result.exitCode).toBe(0);
+      const result = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], { env: { ...process.env, TZ } });
+      expect(result.status).toBe(0);
       return result.stdout.toString().trim();
     });
     expect(new Set(outputs).size).toBe(1);

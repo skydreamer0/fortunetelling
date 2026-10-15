@@ -1,4 +1,4 @@
-import { test, expect, describe } from 'bun:test';
+import { test, expect, describe } from 'vitest';
 import {
   MING_GUA_YEAR_BOUNDARY,
   fixedOffsetCivilToUtcMs,

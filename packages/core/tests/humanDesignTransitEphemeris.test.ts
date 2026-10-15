@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { initEphemeris, planetPositions } from '../src/calculators/astro/index';
 import { type HdPlanet, type NodeKind } from '../src/calculators/humanDesign/humanDesign';
 import { longitudeToActivation } from '../src/calculators/humanDesign/mandala';

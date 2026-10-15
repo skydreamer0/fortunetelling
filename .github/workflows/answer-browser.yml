@@ -17,7 +17,7 @@ on:
       - 'packages/ai/src/checkAnswer.ts'
       - 'docs/validation/answer-check-19-46.md'
       - 'package.json'
-      - 'bun.lock'
+      - 'package-lock.json'
       - '.github/workflows/answer-browser.yml'
 
 permissions:
@@ -42,35 +42,34 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          bun-version: '1.4.2'
-          no-cache: true
+          node-version: '24.19.0'
 
       - name: Install locked dependencies without lifecycle scripts
-        run: bun install --frozen-lockfile --ignore-scripts
+        run: npm ci --ignore-scripts
 
       - name: Typecheck dedicated browser harness
-        run: bun run --cwd apps/web --bun tsc -p tsconfig.answer-browser.json
+        run: node node_modules/typescript/bin/tsc -p apps/web/tsconfig.answer-browser.json
 
       - name: Check evidence gates and negative mutations without a browser
-        run: bun apps/web/scripts/answer-check-browser-check.ts --self-test
+        run: node --import tsx apps/web/scripts/answer-check-browser-check.ts --self-test
 
       - name: Build the real application
-        run: bun run build
+        run: npm run build
 
       - name: Run cold citation cases in stock sandboxed Chrome
         timeout-minutes: 4
         env:
           ANSWER_BROWSER_CHECK: '1'
           DEBUG: pw:browser
-        run: bun apps/web/scripts/answer-check-browser-check.ts
+        run: node --import tsx apps/web/scripts/answer-check-browser-check.ts
 
       - name: Print bounded evidence even after failure
         if: always()
         run: |
-          bun -e '
+          node --input-type=module -e '
             import { existsSync, readFileSync } from "node:fs";
             const path = "answer-browser-results/results.json";
             console.log(`--- ${path} ---`);
@@ -95,12 +94,12 @@ jobs:
         env:
           ANSWER_BROWSER_CHECK: '1'
           DEBUG: pw:browser
-        run: bun apps/web/scripts/answer-check-browser-check.ts --visual
+        run: node --import tsx apps/web/scripts/answer-check-browser-check.ts --visual
 
       - name: Print visual capture status even after failure
         if: always() && steps.visual.outcome != 'skipped'
         run: |
-          bun -e '
+          node --input-type=module -e '
             import { existsSync, readFileSync } from "node:fs";
             const path = "answer-browser-results/visual/manifest.json";
             if (existsSync(path)) console.log(readFileSync(path, "utf8"));
@@ -131,7 +130,7 @@ jobs:
         env:
           REPORT_NAVIGATION_CHECK: '1'
           DEBUG: pw:browser
-        run: bun apps/web/scripts/report-navigation-browser-check.ts
+        run: node --import tsx apps/web/scripts/report-navigation-browser-check.ts
 
       - name: Retain synthetic navigation evidence
         if: always()

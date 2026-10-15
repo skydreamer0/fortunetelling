@@ -36,10 +36,10 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
-      - name: Setup pinned Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup pinned Node
+        uses: actions/setup-node@v4
         with:
-          bun-version: '1.4.3'
+          node-version: '24.19.0'
 
       - name: Verify successful exact-source acceptance and current master
         id: gate
@@ -56,16 +56,16 @@ jobs:
             -H 'Accept: application/vnd.github+json' \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/heads/master" \
             | jq -er '.object.sha | select(type == "string")')"
-          bun scripts/ci/pages-gate.ts
+          node scripts/ci/pages-gate.ts
 
       - name: Install locked dependencies
-        run: bun install --frozen-lockfile
+        run: npm ci
 
       - name: Build accepted source
-        run: bun run build
+        run: npm run build
 
       - name: Verify rebuilt Pages artifact contract
-        run: bun scripts/ci/assets.ts
+        run: node scripts/ci/assets.ts
 
       - name: Upload immutable same-run Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -93,10 +93,10 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
-      - name: Setup pinned Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Setup pinned Node
+        uses: actions/setup-node@v4
         with:
-          bun-version: '1.4.3'
+          node-version: '24.19.0'
 
       - name: Reject stale master or mismatched artifact immediately before publishing
         env:
@@ -114,7 +114,7 @@ jobs:
             -H 'Accept: application/vnd.github+json' \
             "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/heads/master" \
             | jq -er '.object.sha | select(type == "string")')"
-          bun scripts/ci/pages-gate.ts
+          node scripts/ci/pages-gate.ts
 
       - name: Deploy verified same-run Pages artifact
         id: deployment

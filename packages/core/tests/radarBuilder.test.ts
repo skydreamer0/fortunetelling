@@ -10,7 +10,7 @@
  *
  * 黃金向量：1991-10-05 14:00 女（同 tests/engines.test.js），asOf 顯式傳入（D-014）。
  */
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { BirthData, ScoringRules } from '../src/index';
 import { BaZiEngine } from '../src/engines/BaZiEngine';

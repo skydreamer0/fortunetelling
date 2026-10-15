@@ -1,4 +1,7 @@
-import { describe, expect, test, spyOn } from 'bun:test';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+import { describe, expect, test, vi  } from 'vitest';
+const spyOn = vi.spyOn;
 import { createCalculationSpec } from '../src/core/calculationSpec';
 import { createChartSnapshot } from '../src/core/chartSnapshot';
 import { interpretationBytes } from '../src/core/interpretationSpec';
@@ -24,7 +27,7 @@ describe('owned FactStore to internal interpretation consumer', () => {
   test('resolves real immutable input facts and every conclusion back to original sources', () => {
     const { registry, spec } = setup();
     const result = registry.bindFacts(snapshot, spec(), store, context).run();
-    expect(result.analysisId).toStartWith('ifa1-');
+    expect(result.analysisId).toMatch(/^ifa1\-/);
     expect(result.identity.scope).toBe('synthetic-fact-backed-sync-natal');
     expect(result.identity.factStore).toBe(store); expect(result.identity.snapshot).toBe(snapshot);
     expect(result.identity.context.facts).toEqual(store.facts);
@@ -57,7 +60,7 @@ describe('owned FactStore to internal interpretation consumer', () => {
     const { registry, spec } = setup(); const selection = spec();
     const legacy = registry.bind(snapshot, selection, context).run();
     const result = registry.bindFacts(snapshot, selection, store, context).run();
-    expect(legacy.analysisId).toStartWith('ia1-'); expect(result.analysisId).not.toBe(legacy.analysisId);
+    expect(legacy.analysisId).toMatch(/^ia1\-/); expect(result.analysisId).not.toBe(legacy.analysisId);
     expect(() => registry.validateFacts(legacy, result)).toThrow();
     expect(() => registry.validateFacts(result, legacy as any)).toThrow();
     expect(() => registry.validate(result, result as any)).toThrow();

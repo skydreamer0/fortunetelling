@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { parseQuestion } from '../src/client';
 import { QUESTION_SYSTEM_PROMPT } from '../src/prompts';
 import { questionParseSchema, UNSUPPORTED_CATEGORY } from '../src/schema';

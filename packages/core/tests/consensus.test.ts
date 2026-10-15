@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'vitest';
 import {
   CONSENSUS_SCHEMA_VERSION,
   DEFAULT_HEADLINE_AGREEMENTS,

@@ -1,5 +1,5 @@
 import { astro } from 'iztro';
-import iztroI18n from 'iztro/lib/i18n';
+import iztroI18n from 'iztro/lib/i18n/index.js';
 import type { CalculationSteps } from '../core/calculationSteps';
 
 /** A failed environment check must never become an empty, successfully scanned year. */

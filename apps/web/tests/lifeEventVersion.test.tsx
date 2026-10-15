@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { LifeEvents } from '../src/components/report/LifeEvents';
 import { analyze, type LifeEvent } from '../src/lib/core';

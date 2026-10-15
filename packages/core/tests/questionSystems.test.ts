@@ -2,7 +2,7 @@
  * 問事排名可指定系統（answerQuestion 的 systems）、實驗性系統敏感度、restrictTimeline。
  * 真實案例用測試樣本 sky（1990-05-17 08:30 台南，非真人資料）。
  */
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { createHash } from 'node:crypto';
 import baseline from './fixtures/questionSystems.baseline.json';
 import agreementDelta from './fixtures/questionSystems.v0.6.0.delta.json';

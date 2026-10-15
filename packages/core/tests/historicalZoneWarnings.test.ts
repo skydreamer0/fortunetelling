@@ -5,7 +5,7 @@
  * 不受影響（只用出生日期）：生命靈數、馬雅 Kin、八宅命卦 → 日期取自使用者輸入的當地日曆日，
  * 時區偏移不會改變它，所以不帶警告。現代案例（1995 台南）的 warnings 不得出現新代碼。
  */
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'vitest';
 import { initEphemeris } from '../src/calculators/astro/index';
 import { baziCalculator } from '../src/calculators/bazi/calculator';
 import { HISTORICAL_ZONE_WARNING_TEXT } from '../src/calculators/index';

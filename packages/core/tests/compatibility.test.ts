@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { analyzeCompatibility, COMPATIBILITY_SCHEMA_VERSION, VERSION } from '../src/index';
 import type { AnalyzeInput } from '../src/core/analyze';

@@ -2,7 +2,7 @@
  * 契約測試：ScoringRules 透明計分登錄表。
  * 含審計偏差 2 的回歸：紫微亮度規則必須與 ZiweiEngine 的七級制同源一致。
  */
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { ScoringRules } from '../src/index';
 import { BRIGHTNESS_WEIGHTS, brightnessScore } from '../src/engines/ZiweiEngine';

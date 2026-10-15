@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { LunarUtil } from 'lunar-javascript';
 import type { FiveElement } from '../src/calculators/bazi/calculator';
 import type { Component } from '../src/core/models/SystemResult';

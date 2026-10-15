@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 import { createHash } from 'node:crypto';
 import { createCalculationSpec, buildVersionInfo, chartFingerprint, canonicalStringify,
   VERSION, REPORT_SCHEMA_VERSION } from '../src/index';

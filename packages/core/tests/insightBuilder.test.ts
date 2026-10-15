@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { analyze, HonestyGuard, InsightBuilder, INSIGHT_VERSION } from '../src/index';
 import type { AnalyzeInput } from '../src/core/analyze';

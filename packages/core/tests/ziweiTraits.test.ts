@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { BirthData } from '../src/core/models/BirthData';
@@ -337,7 +337,7 @@ describe('no qualitative judgments (D-028)', () => {
   // characters; trait-table notes describe conventions neutrally and are held to
   // the same list (the traditional 六吉 group is therefore labelled 輔佐類).
   const BANNED = ['壞', '凶', '兇', '吉'];
-  const dir = join(import.meta.dir, '../src/rules/ziwei');
+  const dir = join(import.meta.dirname, '../src/rules/ziwei');
 
   test('rules/ziwei sources contain no qualitative strings', () => {
     const files = readdirSync(dir);

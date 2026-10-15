@@ -1,7 +1,7 @@
 /**
  * 單元測試：HonestyGuard（D1）— lint 分層語言規則與 auditReport 稽核。
  */
-import { test } from 'node:test';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { HonestyGuard, QUALITATIVE_PATTERNS } from '../src/index';
 

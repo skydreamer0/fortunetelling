@@ -1,5 +1,7 @@
+import { createHash } from 'node:crypto';
+import { serveFixture } from './node-http';
 /**
- * GitHub-hosted CI only. Execute with Bun and the runner's stock Google Chrome.
+ * GitHub-hosted CI only. Execute with Node.js and the runner's stock Google Chrome.
  * Real Chrome Cache API + production worker, never an in-memory Cache mock.
  * This synthetic fixture does NOT certify the deployed UI or mobile PWA.
  */
@@ -16,7 +18,7 @@ if (process.env.GITHUB_ACTIONS !== 'true' || process.env.PWA_BROWSER_CHECK !== '
 const output = resolve('pwa-browser-results');
 await mkdir(output, { recursive: true });
 const source = await readFile(new URL('../pwa/sw.js', import.meta.url), 'utf8');
-const sourceSha256 = new Bun.CryptoHasher('sha256').update(source).digest('hex');
+const sourceSha256 = createHash('sha256').update(source).digest('hex');
 const playwrightVersion = (createRequire(import.meta.url)('playwright/package.json') as { version: string }).version;
 const browserChannel = 'chrome';
 const results: object[] = [];
@@ -24,13 +26,13 @@ const diagnostics: object[] = [];
 const scope = '/fortunetelling/';
 const stops = new Set<() => Promise<void>>();
 
-function fixture(mode: 'production' | 'without-ignore-vary') {
+async function fixture(mode: 'production' | 'without-ignore-vary') {
   let revision = 'v1';
   let stopPromise: Promise<void> | undefined;
   const needle = 'ignoreSearch: true, ignoreVary: true';
   assert.equal(source.split(needle).length, 2, 'negative control must mutate exactly one cacheFirst option');
   const template = mode === 'production' ? source : source.replace(needle, 'ignoreSearch: true');
-  const server = Bun.serve({
+  const server = await serveFixture({
     hostname: '127.0.0.1', port: 0,
     fetch(request) {
       const path = new URL(request.url).pathname;
@@ -64,7 +66,7 @@ function fixture(mode: 'production' | 'without-ignore-vary') {
 }
 
 async function check(browser: Browser, mode: 'production' | 'without-ignore-vary') {
-  const host = fixture(mode);
+  const host = await fixture(mode);
   // A fresh nonpersistent context owns all workers/caches for this case.
   const context = await browser.newContext({ serviceWorkers: 'allow' });
   context.setDefaultTimeout(15_000);
@@ -238,7 +240,7 @@ try {
   await writeFile(resolve(output, 'results.json'), JSON.stringify({
     passed, sourceSha256, commit: process.env.GITHUB_SHA ?? null,
     headCommit: process.env.PWA_HEAD_SHA ?? null,
-    bun: Bun.version, playwrightVersion, browserVersion, browserChannel, chromiumSandbox: true,
+    node: process.versions.node, playwrightVersion, browserVersion, browserChannel, chromiumSandbox: true,
     runner: { imageOS: process.env.ImageOS ?? null, imageVersion: process.env.ImageVersion ?? null },
     timedOut, scope: 'synthetic stock Chrome Cache API and production worker only',
     results, diagnostics,

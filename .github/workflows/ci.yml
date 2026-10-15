@@ -24,11 +24,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: '1.4.3'
+          node-version: '24.19.0'
+      - run: npm ci --ignore-scripts
       - id: plan
-        run: bun scripts/ci/pipeline.ts plan
+        run: node --import tsx scripts/ci/pipeline.ts plan
 
   regression:
     name: Full regression ${{ matrix.shard }}
@@ -42,11 +43,11 @@ jobs:
         shard: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: '1.4.3'
-      - run: bun install --frozen-lockfile
-      - run: bun scripts/ci/pipeline.ts run ${{ matrix.shard }}
+          node-version: '24.19.0'
+      - run: npm ci
+      - run: node --import tsx scripts/ci/pipeline.ts run ${{ matrix.shard }}
 
   lightweight:
     name: Scoped documentation and asset regression
@@ -56,11 +57,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: '1.4.3'
-      - run: bun install --frozen-lockfile
-      - run: bun scripts/ci/pipeline.ts run lightweight
+          node-version: '24.19.0'
+      - run: npm ci
+      - run: node --import tsx scripts/ci/pipeline.ts run lightweight
 
   checks:
     name: Typecheck, doctor and build
@@ -69,26 +70,26 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: '1.4.3'
-      - run: bun install --frozen-lockfile
+          node-version: '24.19.0'
+      - run: npm ci
       - name: Typecheck CI controls
-        run: bun run --cwd apps/web --bun tsc -p ../../scripts/ci/tsconfig.json
+        run: node node_modules/typescript/bin/tsc -p scripts/ci/tsconfig.json
       - name: Typecheck core
-        run: bun run --filter @fortune/core typecheck
+        run: npm run typecheck --workspace @fortune/core
       - name: Typecheck web app
-        run: bun run --filter @fortune/web typecheck
+        run: npm run typecheck --workspace @fortune/web
       - name: Typecheck AI package
-        run: bun run --filter @fortune/ai typecheck
+        run: npm run typecheck --workspace @fortune/ai
       - name: Typecheck MCP package
-        run: bun run --filter @fortune/mcp typecheck
+        run: npm run typecheck --workspace @fortune/mcp
       - name: Doctor（MCP 冒煙測試）
-        run: bun run packages/mcp/src/cli/doctor.ts --ci
+        run: node --import tsx packages/mcp/src/cli/doctor.ts --ci
       - name: Build
-        run: bun run build
+        run: npm run build
       - name: Verify built public assets and PWA precache
-        run: bun scripts/ci/assets.ts
+        run: node scripts/ci/assets.ts
 
   native_calendar:
     name: Native calendar (${{ matrix.os }})
@@ -102,11 +103,11 @@ jobs:
         os: [ubuntu-24.04, windows-2022, macos-15-intel]
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: '1.4.3'
-      - run: bun install --frozen-lockfile
-      - run: bun scripts/ci/native-calendar.ts run native-calendar-output ${{ matrix.os }}
+          node-version: '24.19.0'
+      - run: npm ci
+      - run: node --import tsx scripts/ci/native-calendar.ts run native-calendar-output ${{ matrix.os }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -123,14 +124,15 @@ jobs:
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: '1.4.3'
+          node-version: '24.19.0'
+      - run: npm ci --ignore-scripts
       - uses: actions/download-artifact@v4
         with:
           pattern: native-calendar-*-${{ github.run_attempt }}
           path: native-calendar-artifacts
-      - run: bun scripts/ci/native-calendar.ts compare native-calendar-artifacts
+      - run: node --import tsx scripts/ci/native-calendar.ts compare native-calendar-artifacts
 
   test:
     # Preserve the existing required-check display name. Only intentionally
@@ -144,14 +146,15 @@ jobs:
       accepted_sha: ${{ steps.aggregate.outputs.accepted_sha }}
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: '1.4.3'
+          node-version: '24.19.0'
+      - run: npm ci --ignore-scripts
       - id: aggregate
         env:
           MODE: ${{ needs.plan.outputs.mode }}
           RESULTS: '{"plan":"${{ needs.plan.result }}","regression":"${{ needs.regression.result }}","lightweight":"${{ needs.lightweight.result }}","checks":"${{ needs.checks.result }}","native_calendar":"${{ needs.native_calendar.result }}","native_compare":"${{ needs.native_compare.result }}"}'
-        run: bun scripts/ci/pipeline.ts aggregate
+        run: node --import tsx scripts/ci/pipeline.ts aggregate
 
   publish:
     name: Publish accepted master

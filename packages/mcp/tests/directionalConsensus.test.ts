@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { makeFixture } from './helpers';
 
 let fx: Awaited<ReturnType<typeof makeFixture>>;

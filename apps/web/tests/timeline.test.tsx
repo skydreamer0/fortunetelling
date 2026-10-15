@@ -1,4 +1,5 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test, vi  } from 'vitest';
+const mock = vi.fn;
 import { buildConsensus, buildTimeline, cityToBirthplace, createTimeContext, findCity, type Timeline } from '@fortune/core';
 import { isValidElement, type ReactElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';

@@ -1,11 +1,12 @@
-import { expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
+import { expect, test } from 'vitest';
 import { astro } from 'iztro';
-import i18next from 'iztro/lib/i18n';
+import i18next from 'iztro/lib/i18n/index.js';
 import { buildTimeline, buildTimelineCooperatively, createTimeContext, ziweiCalculator,
   TimelineEnvironmentChangedError, ZiweiEngine, BirthData, type BirthProfile, type TimelineOptions } from '../src/index';
 import baseline from './fixtures/cooperativeTimeline.v0.8.0.json';
 
-const sha = (value: unknown) => new Bun.CryptoHasher('sha256').update(JSON.stringify(value)).digest('hex');
+const sha = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const restoreLanguage = (language: string) => { i18next.changeLanguage(language); };
 const setup = (index = 0) => {
   const entry = baseline.records[index];

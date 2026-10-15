@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { GLOSSARY, segmentGlossary } from '../src/lib/glossary';
 import { COMPATIBILITY_STORE_KEY, MAX_RECENT_QUERIES, REPORT_STORE_KEY, createReportStore } from '../src/lib/store';
 import { preferredTheme, THEME_STORE_KEY } from '../src/lib/theme';
@@ -83,7 +83,7 @@ describe('glossary', () => {
 
   test('covers the core Zi Wei, BaZi and timing vocabulary', () => {
     for (const term of ['四化', '命宮', '身宮', '十神', '日主', '大運', '大限', '流年', '喜用神']) {
-      expect(GLOSSARY[term]).toBeString();
+      expect(typeof GLOSSARY[term]).toBe('string');
     }
   });
 });

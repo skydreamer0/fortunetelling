@@ -2,7 +2,7 @@
  * Live smoke test against the Claude API. Runs ONLY when ANTHROPIC_API_KEY is
  * set (never in CI by default). Model override: FORTUNE_AI_MODEL.
  */
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'vitest';
 import { createAnthropicComplete, createMemoryStore, interpret, parseQuestion } from '../src/client';
 import { loadQuestion, loadReport } from './helpers';
 

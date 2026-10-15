@@ -1,4 +1,5 @@
-import { expect, spyOn, test } from 'bun:test';
+import { expect, test, vi  } from 'vitest';
+const spyOn = vi.spyOn;
 import { createBrowserYieldTask } from '../src/model/yieldToBrowser';
 
 async function withScheduler(value: unknown, run: () => Promise<void>) {

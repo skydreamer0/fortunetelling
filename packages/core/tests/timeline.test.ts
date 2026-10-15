@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'bun:test';
-import { resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { describe, expect, test } from 'vitest';
 import type { BirthProfile } from '../src/profile/index';
 import { DOMAINS, SYSTEM_IDS, TRAITS, type SystemId } from '../src/signals/types';
 import { toBand } from '../src/signals/bands';
@@ -61,16 +61,16 @@ describe('buildTimeline (sync, fresh process without initEphemeris)', () => {
   // "not initialised" path is checked in a clean subprocess.
   test('1995-07-16 22:00 male Tainan @ 2026-09-25', async () => {
     const script = `
-      import { createTimeContext } from ${JSON.stringify(resolve(import.meta.dir, '../src/time/index.ts'))};
-      import { buildTimeline } from ${JSON.stringify(resolve(import.meta.dir, '../src/timeline/index.ts'))};
+      import { createTimeContext } from ${JSON.stringify(new URL('../src/time/index.ts', import.meta.url).href)};
+      import { buildTimeline } from ${JSON.stringify(new URL('../src/timeline/index.ts', import.meta.url).href)};
       const ctx = createTimeContext(${JSON.stringify(PROFILE)});
       const t0 = performance.now();
       const tl = buildTimeline(ctx, { asOf: ${JSON.stringify(ASOF)}, useTrueSolarTime: true, ziHourConvention: 'late' });
       const ms = performance.now() - t0;
       process.stdout.write(JSON.stringify({ ms, tl }));
     `;
-    const proc = Bun.spawnSync([process.execPath, '-e', script], { stdout: 'pipe', stderr: 'pipe' });
-    if (proc.exitCode !== 0) throw new Error(proc.stderr.toString());
+    const proc = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', script], { stdio: ['pipe', 'pipe', 'pipe'] });
+    if (proc.status !== 0) throw new Error(proc.stderr.toString());
     const { ms, tl } = JSON.parse(proc.stdout.toString()) as { ms: number; tl: Timeline };
     console.log(`sync buildTimeline (fresh process): ${ms.toFixed(0)} ms`);
 
