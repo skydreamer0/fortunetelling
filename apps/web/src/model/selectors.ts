@@ -4,7 +4,7 @@
  * testable place.
  */
 
-import type { Domain as CoreDomain, TimelineCell } from '@fortune/core';
+import type { Domain as CoreDomain, DreamspellMetadata, TimelineCell, ZiweiMetadata } from '@fortune/core';
 import { HISTORICAL_ZONE_WARNING_TEXT, shortSignalId, directionalVotes, evidenceMatchesContext } from '../lib/core';
 import type { Component, ConsensusSummary, EngineResult, Period, Radar, Report, ScoringRule, Signal, SystemId, Timeline } from './types';
 
@@ -215,7 +215,8 @@ export function ziweiBoard(report: Report): ZiweiBoard | null {
 
   return {
     palaces: views,
-    fiveElementsClass: ziwei?.meta.fiveElementsClass ?? natal.fiveElementsClass ?? '',
+    // Producer contract only: retain legacy nullish fallback and loose-input behavior.
+    fiveElementsClass: (ziwei?.meta.fiveElementsClass as ZiweiMetadata['fiveElementsClass'] | null | undefined) ?? natal.fiveElementsClass ?? '',
     soulMaster: natal.soul ?? '—',
     bodyMaster: natal.body ?? '—',
     bodyPalace: views.find(item => item.isBody)?.name ?? '—',
@@ -271,11 +272,12 @@ export function kin(report: Report) {
   if (!result || !value) return null;
   return {
     kin: value.kin,
-    signature: result.meta.fullSignature ?? value.signature,
+    // These assertions do not validate or normalize metadata from saved reports.
+    signature: (result.meta.fullSignature as DreamspellMetadata['fullSignature'] | null | undefined) ?? value.signature,
     color: value.color,
     tone: first<{ number: number; name: string }>(result, 'tone'),
     seal: first<{ number: number; name: string; color: string }>(result, 'seal'),
-    epoch: result.meta.epoch ?? '',
+    epoch: (result.meta.epoch as DreamspellMetadata['epoch'] | null | undefined) ?? '',
   };
 }
 

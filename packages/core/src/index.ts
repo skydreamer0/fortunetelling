@@ -41,6 +41,8 @@ export {
   DreamspellEngine,
   BaZiEngine,
 } from './engines/index';
+export type { DreamspellMetadata } from './engines/dreamspellTypes';
+export type { ZiweiMetadata } from './engines/ziweiTypes';
 
 // ── Analysis ──
 export { LayerClassifier } from './analysis/LayerClassifier';
