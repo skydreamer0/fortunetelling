@@ -20,6 +20,18 @@
 
 import { getAxisNotes } from './AxisNotes';
 import type { SystemResult, Component } from '../core/models/SystemResult';
+import type { BaziElementsValue } from '../engines/baziTypes';
+import type { ZiweiPalaceValue } from '../engines/ziweiTypes';
+import type { NumerologyDigitCounts } from '../engines/numerologyTypes';
+
+// Keep this consumer opaque even while the shared Component.value is still any.
+// Only the existing engine/category reads below select producer contracts; the
+// assertions do not validate, copy or normalize legacy report payloads.
+type RadarComponentInput = Omit<Component, 'value'> & { value: unknown };
+type RadarResultInput = Pick<SystemResult, 'engineId'> & { components: RadarComponentInput[] };
+type ElementRadarValue = Partial<Pick<BaziElementsValue, 'counts' | 'total'>>;
+type PalaceRadarValue = Pick<ZiweiPalaceValue,
+  'index' | 'name' | 'majorStars' | 'minorStars' | 'adjectiveStars'>;
 
 export interface RadarAxis {
   /** Stable axis key */
@@ -58,7 +70,7 @@ export interface Radar {
  * Five-element axes in canonical order, each bound to its ScoringRules id and
  * the input variable name the rule's formula uses.
  */
-const ELEMENT_AXES: ReadonlyArray<{ key: string; label: string; ruleId: string; countInput: string }> = Object.freeze([
+const ELEMENT_AXES: ReadonlyArray<{ key: string; label: keyof BaziElementsValue['counts']; ruleId: string; countInput: string }> = Object.freeze([
   { key: 'wood', label: '木', ruleId: 'bazi_wood_strength', countInput: 'woodCount' },
   { key: 'fire', label: '火', ruleId: 'bazi_fire_strength', countInput: 'fireCount' },
   { key: 'earth', label: '土', ruleId: 'bazi_earth_strength', countInput: 'earthCount' },
@@ -83,11 +95,12 @@ const round2 = (n: number): number => Math.round(n * 100) / 100;
  *
  * @returns null when the `elements` component is missing/unusable
  */
-export function buildElementBalanceRadar(baziResult: SystemResult): Radar | null {
+export function buildElementBalanceRadar(baziResult: RadarResultInput): Radar | null {
   const component = findComponent(baziResult, 'elements');
-  const counts = component?.value?.counts;
-  const total = component?.value?.total;
-  if (!counts || !(total > 0)) return null;
+  const counts = (component?.value as ElementRadarValue | null | undefined)?.counts;
+  const total = (component?.value as ElementRadarValue | null | undefined)?.total;
+  // Preserve the existing numeric predicate: nullish totals fail it at runtime.
+  if (!counts || !(total! > 0)) return null;
 
   return {
     id: 'bazi_element_balance',
@@ -99,7 +112,7 @@ export function buildElementBalanceRadar(baziResult: SystemResult): Radar | null
       return {
         key,
         label,
-        value: round2((count / total) * 100),
+        value: round2((count / total!) * 100),
         unit: '%',
         ruleId,
         inputs: { [countInput]: count, totalElements: total },
@@ -124,7 +137,7 @@ export function buildElementBalanceRadar(baziResult: SystemResult): Radar | null
  *
  * @returns null when no `palaces` components are present
  */
-export function buildPalaceStrengthRadar(ziweiResult: SystemResult): Radar | null {
+export function buildPalaceStrengthRadar(ziweiResult: RadarResultInput): Radar | null {
   const palaces = findComponents(ziweiResult, 'palaces');
   if (palaces.length === 0) return null;
 
@@ -134,7 +147,7 @@ export function buildPalaceStrengthRadar(ziweiResult: SystemResult): Radar | nul
     title: '紫微十二宮位力量',
     kind: 'radar',
     axes: palaces.map((palace) => {
-      const { index, name, majorStars = [], minorStars = [], adjectiveStars = [] } = palace.value ?? {};
+      const { index, name, majorStars = [], minorStars = [], adjectiveStars = [] } = (palace.value ?? {}) as PalaceRadarValue;
 
       const brightnessScores = majorStars
         .map((star: { brightnessScore: number | null }) => star.brightnessScore)
@@ -175,9 +188,9 @@ export function buildPalaceStrengthRadar(ziweiResult: SystemResult): Radar | nul
  *
  * @returns null when the `digitFrequency` component is missing
  */
-export function buildDigitFrequencyRadar(numerologyResult: SystemResult): Radar | null {
+export function buildDigitFrequencyRadar(numerologyResult: RadarResultInput): Radar | null {
   const component = findComponent(numerologyResult, 'digitFrequency');
-  const counts = component?.value;
+  const counts = component?.value as NumerologyDigitCounts | null | undefined;
   if (!counts) return null;
 
   return {
@@ -210,7 +223,7 @@ export function buildDigitFrequencyRadar(numerologyResult: SystemResult): Radar 
  *
  * @param systemResults - Engine outputs from analyze()
  */
-export function buildRadars(systemResults: SystemResult[]): Radar[] {
+export function buildRadars(systemResults: RadarResultInput[]): Radar[] {
   const results = Array.isArray(systemResults) ? systemResults : [];
   const byEngine = new Map(results.map((result) => [result?.engineId, result]));
 
@@ -243,7 +256,7 @@ export function buildRadars(systemResults: SystemResult[]): Radar[] {
  * All components of a category, tolerant of plain-object SystemResults
  * (e.g. deserialized reports in tests).
  */
-function findComponents(result: SystemResult | { components?: Component[] }, category: string): Component[] {
+function findComponents(result: RadarResultInput | { components?: RadarComponentInput[] }, category: string): RadarComponentInput[] {
   const components = result?.components;
   if (!Array.isArray(components)) return [];
   return components.filter((c) => c.category === category);
@@ -252,6 +265,6 @@ function findComponents(result: SystemResult | { components?: Component[] }, cat
 /**
  * First component of a category, or null.
  */
-function findComponent(result: SystemResult | { components?: Component[] }, category: string): Component | null {
+function findComponent(result: RadarResultInput | { components?: RadarComponentInput[] }, category: string): RadarComponentInput | null {
   return findComponents(result, category)[0] ?? null;
 }
