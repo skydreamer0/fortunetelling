@@ -1,8 +1,8 @@
 /**
  * Uniform response shell (M1-08): every tool answers `{ asOf, versions, caveats, data }`.
  * Caveats tell the model what NOT to over-trust; the size cap keeps "query on demand" honest.
- * The ~500-byte `versions` block is only sent by list_profiles / get_profile; every other tool sends
- * `versionsHash` (same hash, so a changed hash means a different core / catalog / calculator set).
+ * The full `versions` block is included by direct list_profiles / get_profile / compare_bazi_conventions
+ * responses. Other tools default to `versionsHash`; batch does not retain child version blocks.
  */
 
 import { createHash } from 'node:crypto';
@@ -19,7 +19,7 @@ export type Envelope<T = unknown> = {
   asOf: string | null;
   /** Short stable hash of the version block (asOf excluded, it is already in the envelope). */
   versionsHash: string;
-  /** Only present when the tool was asked to include it (list_profiles, get_profile). */
+  /** Present when includeVersions is enabled (profiles and direct BaZi comparison responses). */
   versions?: VersionInfo;
   caveats: Caveat[];
   data: T;

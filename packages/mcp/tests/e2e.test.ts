@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { join } from 'node:path';
+import { readFile, readdir } from 'node:fs/promises';
 import { MCP_SERVER_INSTRUCTIONS } from '@fortune/ai/mcp';
 import { createProfileFile, serializeProfileFile } from '@fortune/core';
 import { makeFixture, SAMPLE_PROFILE } from './helpers';
@@ -137,5 +138,114 @@ describe('stdio server (what Claude Desktop actually talks to)', () => {
     const result: any = await client.callTool({ name: 'get_profile', arguments: { profileId: 'ghost' } });
     expect(result.isError).toBe(true);
     expect(JSON.parse(textOf(result)).error.code).toBe('profile_not_found');
+  });
+});
+
+// Separate store/client: these fixtures cannot change the original list_profiles contract.
+// This is compiled-server protocol acceptance, not a real Claude Desktop session.
+describe('compiled Node stdio BaZi convention comparison', () => {
+  let comparisonFx: Awaited<ReturnType<typeof makeFixture>>;
+  let comparisonClient: Client;
+  const late = { useTrueSolarTime: false, ziHourConvention: 'late' };
+  const early = { useTrueSolarTime: false, ziHourConvention: 'early' };
+  const args = { profileId: 'synthetic-boundary', asOf: '2026-10-15', left: late, right: early };
+  const readStore = async () => {
+    const names = (await readdir(comparisonFx.dir)).sort();
+    return Promise.all(names.map(async name => [name, await readFile(join(comparisonFx.dir, name), 'utf8')]));
+  };
+  let initialStore: Awaited<ReturnType<typeof readStore>>;
+  beforeAll(async () => {
+    comparisonFx = await makeFixture({
+      'synthetic-boundary': { ...SAMPLE_PROFILE, name: 'SYNTHETIC ONLY', time: '23:10' },
+      'synthetic-unknown': { ...SAMPLE_PROFILE, name: 'SYNTHETIC ONLY', time: null, timeAccuracy: 'unknown' },
+    });
+    initialStore = await readStore();
+    comparisonClient = new Client({ name: 'comparison-stdio-acceptance', version: '0.0.0' });
+    await comparisonClient.connect(new StdioClientTransport({
+      command: process.execPath,
+      args: [join(import.meta.dirname, '../dist/bin.js')],
+      env: { ...(process.env as Record<string, string>), ANTHROPIC_API_KEY: '', FORTUNE_PROFILES_DIR: comparisonFx.dir },
+    }));
+  });
+  afterAll(async () => {
+    try { await comparisonClient?.close(); }
+    finally { await comparisonFx?.cleanup(); }
+  });
+  const compare = async (patch: Record<string, unknown> = {}) => {
+    const result = await comparisonClient.callTool({ name: 'compare_bazi_conventions', arguments: { ...args, ...patch } });
+    const text = textOf(result);
+    return { result, text, json: JSON.parse(text) };
+  };
+
+  test('early/late boundary returns differences, effective options, versions and caveats over stdio', async () => {
+    const { result, text, json } = await compare();
+    expect(result.isError).not.toBe(true);
+    expect(json.data.available).toBe(true);
+    expect(json.asOf).toBe(args.asOf);
+    expect(json.data.changedOptions).toEqual(['ziHourConvention']);
+    expect(json.data.left.effectiveOptions).toMatchObject(late);
+    expect(json.data.right.effectiveOptions).toMatchObject(early);
+    expect(json.data.left.natal.pillars.day).not.toBe(json.data.right.natal.pillars.day);
+    expect(json.data.differences.map((difference: any) => difference.field)).toContain('pillars');
+    for (const difference of json.data.differences) {
+      expect(difference.left).toEqual(json.data.left.natal[difference.field]);
+      expect(difference.right).toEqual(json.data.right.natal[difference.field]);
+    }
+    expect(json.versions.coreVersion).toBeTruthy();
+    expect(json.versions.calculators.bazi).toBe(json.data.left.calculatorVersion);
+    expect(json.versions.ephemeris).toBe('not_initialized');
+    expect(json.versionsHash).toMatch(/^[0-9a-f]{12}$/);
+    expect(json.caveats.map((caveat: any) => caveat.code)).toContain('comparison_scope');
+    expect(json.caveats.map((caveat: any) => caveat.code)).toContain('time:zi_hour_convention');
+    for (const privateField of ['SYNTHETIC ONLY', SAMPLE_PROFILE.date, '23:10', SAMPLE_PROFILE.birthplace.label!])
+      expect(text).not.toContain(privateField);
+  });
+
+  test('same settings preserve deterministic equality without losing scope warnings', async () => {
+    const first = await compare({ right: late });
+    const second = await compare({ right: late });
+    expect(first.result.isError).not.toBe(true);
+    expect(first.text).toBe(second.text);
+    expect(first.json.data.available).toBe(true);
+    expect(first.json.data.changedOptions).toEqual([]);
+    expect(first.json.data.differences).toEqual([]);
+    expect(first.json.data.unchangedFields).toEqual(['pillars', 'dayMaster', 'fiveElements', 'tenGods']);
+    expect(first.json.caveats.map((caveat: any) => caveat.code)).toContain('comparison_scope');
+  });
+
+  test('unknown time remains unavailable rather than equal, with full version metadata', async () => {
+    const { result, json } = await compare({ profileId: 'synthetic-unknown' });
+    expect(result.isError).not.toBe(true);
+    expect(json.data.available).toBe(false);
+    expect(json.data.reason).toBe('time_unknown');
+    expect(json.data.left).toBeUndefined();
+    expect(json.data.differences).toBeUndefined();
+    expect(json.versions.coreVersion).toBeTruthy();
+    expect(json.caveats.map((caveat: any) => caveat.code)).toContain('time:time_unknown');
+  });
+
+  test.each([
+    { asOf: '2026-02-30' },
+    { left: { ...late, schoolPack: 'unsupported' } },
+  ])('rejects invalid comparison input over stdio: %j', async patch => {
+    const result = await comparisonClient.callTool({ name: 'compare_bazi_conventions', arguments: { ...args, ...patch } });
+    expect(result.isError).toBe(true);
+    // SDK schema validation precedes our handler and returns a protocol error text, not its JSON envelope.
+    expect(textOf(result)).toContain('MCP error -32602: Input validation error: Invalid arguments for tool compare_bazi_conventions');
+    expect(textOf(result)).not.toContain('\"available\":true');
+  });
+
+  test('a missing profile returns the handler structured error over stdio', async () => {
+    const { result, json } = await compare({ profileId: 'absent-synthetic' });
+    expect(result.isError).toBe(true);
+    expect(json.error.code).toBe('profile_not_found');
+    expect(json.data).toBeUndefined();
+  });
+
+  test('comparison calls leave every profile filename and byte unchanged', async () => {
+    await compare();
+    await compare({ right: late });
+    await compare({ profileId: 'synthetic-unknown' });
+    expect(await readStore()).toEqual(initialStore);
   });
 });
