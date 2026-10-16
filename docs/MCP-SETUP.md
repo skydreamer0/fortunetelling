@@ -62,10 +62,12 @@ npm run add-profile --workspace @fortune/mcp -- sky \
 | `batch` | 把最多 8 個唯讀查詢合成一次往返（`calls: [{ tool, args }]`），依序在行程內執行、共用分析快取；每個結果各自成功或帶結構化錯誤，不可巢狀、不可放 `import_profile` |
 | `import_profile` | 匯入網站匯出的 `.fortune.json`（`content` 全文或 `path` 路徑二選一）。已存在同名 profile 不會覆蓋，要 `overwrite: true`；指紋缺漏或過期會重算並警告 |
 
-成功回應的外殼是 `{ asOf, versionsHash, caveats, data }`，`versions` 為選用欄位；錯誤回應是 `{ error }`（[實作](../packages/mcp/src/envelope.ts)）：
+成功回應的外殼是 `{ asOf, versionsHash, caveats, data }`，`versions` 為選用欄位；工具 handler 的錯誤回應是 `{ error }`（[實作](../packages/mcp/src/envelope.ts)）。透過 stdio 呼叫時，SDK 可能先拒絕不符合工具 schema 的參數，回傳 `isError: true` 與協定錯誤文字；客戶端應先檢查 `isError`，不可假設所有錯誤文字都是 JSON。
+
+版本與警告欄位：
 
 - `versionsHash`：版本區塊（core、calculator、規則目錄版本與 ephemeris 狀態）的 12 碼雜湊，不含 `asOf`。同一輸入同一版本會得到相同結果；雜湊變了代表版本變了。
-- `versions`：完整版本區塊（約 500 bytes）只在 `list_profiles` 與 `get_profile` 回傳，其餘工具只回 `versionsHash` 以節省上下文。
+- `versions`：完整版本區塊（約 500 bytes）在 `list_profiles`、`get_profile` 與 `compare_bazi_conventions` 的直接成功回應中回傳，其餘工具預設只回 `versionsHash` 以節省上下文。`batch` 的子結果不保留完整 `versions`；需要比較工具的版本明細時，請直接呼叫該工具。
 - `caveats`：Claude 不該過度相信的地方——分數未校準、時間邊界、未參與的系統，以及仍標 `experimental` 的 Jyotish。[人類圖已有兩站 38 案交叉驗證](../packages/core/tests/fixtures/validation/humandesign-validation-report.md)，M5-03 起視為已驗證（不再有 `experimental:humanDesign` caveat，可計入高共識）；[吠陀占星已有 30 案獨立對照，但仍缺兩個公開吠陀計算器 ≥ 20 案](../packages/core/tests/fixtures/validation/jyotish-validation-report.md)，[experimental 標記](../packages/core/src/portable/versions.ts)仍保留。計算結果對照不代表預測有效性已驗證。
 - 回應太大時不會截斷，而是回 `response_too_large` 並提示縮小範圍。
 
