@@ -3,6 +3,19 @@
 import { analyze, VERSION, type AnalyzeInput, type Report } from './analyze';
 import type { BirthData } from './models/BirthData';
 import type { Component, SystemResult } from './models/SystemResult';
+import type { BaziElementsValue } from '../engines/baziTypes';
+import type { NumerologyNumberValue } from '../engines/numerologyTypes';
+import type { MingGuaValue, MingGuaDirectionsValue } from '../engines/mingGuaTypes';
+
+// Opaque local report view; exact category reads below use existing producer contracts.
+// These type-only projections preserve legacy values without runtime validation.
+type ComparisonComponent = Omit<Component, 'value'> & { value: unknown };
+type ComparisonEngine = Pick<SystemResult, 'engineId'> & { components: ComparisonComponent[] };
+type ComparisonReport = Pick<Report, 'input'> & { engines: ComparisonEngine[] };
+type ComparisonElements = Partial<Pick<BaziElementsValue, 'counts' | 'total'>>;
+type ComparisonLifePath = Pick<NumerologyNumberValue, 'number'>;
+type ComparisonGua = Pick<MingGuaValue, 'group' | 'name' | 'groupName'>;
+type ComparisonDirections = Partial<Pick<MingGuaDirectionsValue, 'auspicious'>>;
 
 export const COMPATIBILITY_SCHEMA_VERSION = 1;
 
@@ -13,11 +26,11 @@ const NUMBER_THEMES: Readonly<Record<string, string>> = Object.freeze({
   11: '直覺與啟發', 22: '願景與建構', 33: '關懷與傳遞',
 });
 
-function engine(report: Report, id: string): SystemResult | undefined {
+function engine(report: ComparisonReport, id: string): ComparisonEngine | undefined {
   return report.engines.find(item => item.engineId === id);
 }
 
-function component(report: Report, engineId: string, category: string): Component | undefined {
+function component(report: ComparisonReport, engineId: string, category: string): ComparisonComponent | undefined {
   return engine(report, engineId)?.components.find(item => item.category === category);
 }
 
@@ -25,13 +38,13 @@ function clamp(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value * 10) / 10));
 }
 
-function shares(report: Report): Record<string, number> | null {
+function shares(report: ComparisonReport): Record<string, number> | null {
   const elements = component(report, 'bazi', 'elements');
-  if (!elements?.value?.counts || !elements.value.total) return null;
-  return Object.fromEntries(ELEMENTS.map(element => [element, elements.value.counts[element] / elements.value.total * 100]));
+  if (!(elements?.value as ComparisonElements | null | undefined)?.counts || !(elements!.value as ComparisonElements).total!) return null;
+  return Object.fromEntries(ELEMENTS.map(element => [element, (elements!.value as ComparisonElements).counts![element as keyof BaziElementsValue['counts']] / (elements!.value as ComparisonElements).total! * 100]));
 }
 
-function buildElementComparison(first: Report, second: Report) {
+function buildElementComparison(first: ComparisonReport, second: ComparisonReport) {
   const a = shares(first);
   const b = shares(second);
   if (!a || !b) {
@@ -73,12 +86,12 @@ function buildElementComparison(first: Report, second: Report) {
   };
 }
 
-function buildNumerology(first: Report, second: Report) {
+function buildNumerology(first: ComparisonReport, second: ComparisonReport) {
   const firstPath = component(first, 'numerology', 'lifePath');
   const secondPath = component(second, 'numerology', 'lifePath');
   if (!firstPath || !secondPath) return { available: false as const };
-  const a: number = firstPath.value.number;
-  const b: number = secondPath.value.number;
+  const a: number = (firstPath.value as ComparisonLifePath).number;
+  const b: number = (secondPath.value as ComparisonLifePath).number;
   const distance = Math.abs(a - b);
   const dynamic = a === b ? '同頻' : distance <= 2 ? '鄰近節奏' : '差異互補';
   return {
@@ -94,32 +107,32 @@ function buildNumerology(first: Report, second: Report) {
   };
 }
 
-function buildMingGua(first: Report, second: Report) {
+function buildMingGua(first: ComparisonReport, second: ComparisonReport) {
   const firstGua = component(first, 'minggua', 'mingGua');
   const secondGua = component(second, 'minggua', 'mingGua');
   const firstDirections = component(first, 'minggua', 'directions');
   const secondDirections = component(second, 'minggua', 'directions');
   if (!firstGua || !secondGua) return { available: false as const };
-  const sameGroup = firstGua.value.group === secondGua.value.group;
-  const firstAuspicious = new Set(Object.values((firstDirections?.value?.auspicious ?? {}) as Record<string, { zh: string }>).map(item => item.zh));
-  const secondAuspicious = new Set(Object.values((secondDirections?.value?.auspicious ?? {}) as Record<string, { zh: string }>).map(item => item.zh));
+  const sameGroup = (firstGua.value as ComparisonGua).group === (secondGua.value as ComparisonGua).group;
+  const firstAuspicious = new Set(Object.values((firstDirections?.value as ComparisonDirections | null | undefined)?.auspicious ?? {}).map(item => item.zh));
+  const secondAuspicious = new Set(Object.values((secondDirections?.value as ComparisonDirections | null | undefined)?.auspicious ?? {}).map(item => item.zh));
   const sharedDirections = [...firstAuspicious].filter(direction => secondAuspicious.has(direction));
   return {
     available: true as const,
-    first: { name: firstGua.value.name, group: firstGua.value.groupName },
-    second: { name: secondGua.value.name, group: secondGua.value.groupName },
+    first: { name: (firstGua.value as ComparisonGua).name, group: (firstGua.value as ComparisonGua).groupName },
+    second: { name: (secondGua.value as ComparisonGua).name, group: (secondGua.value as ComparisonGua).groupName },
     sameGroup,
     sharedDirections,
     text: sameGroup
-      ? `兩人同屬${firstGua.value.groupName}，空間偏好較容易找到共同方向${sharedDirections.length ? `（${sharedDirections.join('、')}）` : ''}。`
-      : `兩人分屬${firstGua.value.groupName}與${secondGua.value.groupName}；可用各自工作／休息區域調整，不必把方位差異解讀成關係不合。`,
+      ? `兩人同屬${(firstGua.value as ComparisonGua).groupName}，空間偏好較容易找到共同方向${sharedDirections.length ? `（${sharedDirections.join('、')}）` : ''}。`
+      : `兩人分屬${(firstGua.value as ComparisonGua).groupName}與${(secondGua.value as ComparisonGua).groupName}；可用各自工作／休息區域調整，不必把方位差異解讀成關係不合。`,
     limitation: '八宅分組只作空間偏好參考，不是關係品質評分。',
   };
 }
 
-function personSummary(report: Report, label: string) {
-  const lifePath: number | null = component(report, 'numerology', 'lifePath')?.value?.number ?? null;
-  const gua = component(report, 'minggua', 'mingGua')?.value ?? null;
+function personSummary(report: ComparisonReport, label: string) {
+  const lifePath: number | null = (component(report, 'numerology', 'lifePath')?.value as ComparisonLifePath | null | undefined)?.number ?? null;
+  const gua = (component(report, 'minggua', 'mingGua')?.value as ComparisonGua | null | undefined) ?? null;
   return {
     label,
     name: report.input.name || label,
