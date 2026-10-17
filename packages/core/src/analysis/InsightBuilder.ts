@@ -5,6 +5,21 @@
 
 import type { Component, SystemResultLike } from '../core/models/SystemResult';
 import type { Radar } from './RadarBuilder';
+import type { BaziNatalValue, BaziElementsValue, BaziTenGodsContextValue, BaziTenGodsContextGroup, BaziDaYunValue } from '../engines/baziTypes';
+import type { BaziAnnual } from '../calculators/bazi/calculator';
+import type { ZiweiPalaceValue, ZiweiDaXianValue, ZiweiXiaoXianValue, ZiweiFlyingStarsValue } from '../engines/ziweiTypes';
+import type { NumerologyNumberValue, NumerologyPersonalYearValue } from '../engines/numerologyTypes';
+import type { MingGuaDirectionsValue } from '../engines/mingGuaTypes';
+// Opaque local inputs keep the shared legacy any out of these consumers.
+// Category-specific producer projections below are erased trust boundaries,
+// not validators: sparse and malformed legacy runtime behavior is preserved.
+type ConsumerComponent = Omit<Component, 'value'> & { value: unknown };
+type ConsumerEngine = Omit<SystemResultLike, 'components'> & { components?: ConsumerComponent[] };
+
+type ContextRead = Partial<Pick<BaziTenGodsContextValue, 'groups'>>;
+type PalaceRead = Partial<Pick<ZiweiPalaceValue, 'name' | 'index' | 'majorStars'>>;
+type ElementsRead = Partial<Pick<BaziElementsValue, 'counts'>> & Pick<BaziElementsValue, 'limitation'>;
+type DirectionsRead = Partial<Pick<MingGuaDirectionsValue, 'auspicious'>>;
 
 export const INSIGHT_VERSION = 2;
 
@@ -15,7 +30,7 @@ export interface InsightSource {
   name: string;
 }
 
-type Engines = SystemResultLike[] | null | undefined;
+type Engines = ConsumerEngine[] | null | undefined;
 
 const DOMAIN_DEFINITIONS = Object.freeze([
   { id: 'career', title: '事業', palace: '官祿', tenGods: ['官殺', '食傷'], focus: '責任結構與輸出方式' },
@@ -36,15 +51,15 @@ const TAI_SUI_PAIRS = Object.freeze({
   六合: ['子丑', '寅亥', '卯戌', '辰酉', '巳申', '午未'],
 });
 
-function engineById(engines: Engines, id: string): SystemResultLike | undefined {
+function engineById(engines: Engines, id: string): ConsumerEngine | undefined {
   return (engines ?? []).find(engine => engine.engineId === id);
 }
 
-function component(engine: SystemResultLike | undefined, idOrCategory: string): Component | undefined {
+function component(engine: ConsumerEngine | undefined, idOrCategory: string): ConsumerComponent | undefined {
   return engine?.components?.find(item => item.id === idOrCategory || item.category === idOrCategory);
 }
 
-function source(system: string, item: Component | undefined): InsightSource | null {
+function source(system: string, item: ConsumerComponent | undefined): InsightSource | null {
   return item ? { system, componentId: item.id, name: item.name } : null;
 }
 
@@ -87,22 +102,22 @@ function buildDomains(engines: Engines, radars: Radar[] | null | undefined) {
   const palaceComponents = ziwei?.components?.filter(item => item.category === 'palaces') ?? [];
   const palaceRadar = (radars ?? []).find(radar => radar.id === 'ziwei_palace_strength');
   const context = component(bazi, 'tenGodsContext');
-  const groups = context?.value?.groups ?? [];
-  const currentDaXian = ziwei?.components?.find(item => item.category === 'daXian' && item.value?.isCurrent);
+  const groups = (context?.value as ContextRead | null | undefined)?.groups ?? [];
+  const currentDaXian = ziwei?.components?.find(item => item.category === 'daXian' && (item.value as Pick<ZiweiDaXianValue, 'isCurrent'> | null | undefined)?.isCurrent);
 
   return DOMAIN_DEFINITIONS.map(definition => {
-    const palace = palaceComponents.find(item => item.value?.name === definition.palace);
+    const palace = palaceComponents.find(item => (item.value as PalaceRead | null | undefined)?.name === definition.palace);
     const axis = palaceRadar?.axes?.find(item => item.label === definition.palace);
     const relatedGroups = definition.tenGods
-      .map(name => groups.find((group: any) => group.group === name))
-      .filter(Boolean);
+      .map(name => groups.find((group) => group.group === name))
+      .filter(Boolean) as BaziTenGodsContextGroup[];
     const metrics: { label: string; value: number; unit: string }[] = [];
     if (axis) metrics.push({ label: `${definition.palace}宮力量`, value: Math.round(axis.value), unit: '分' });
     for (const group of relatedGroups) {
       metrics.push({ label: group.group, value: Math.round(group.share * 100), unit: '%結構占比' });
     }
 
-    const stars: string[] = palace?.value?.majorStars?.map((star: { name: string }) => star.name) ?? [];
+    const stars: string[] = (palace?.value as PalaceRead | null | undefined)?.majorStars?.map((star: { name: string }) => star.name) ?? [];
     const starText = stars.length ? `主星為${stars.join('、')}` : '本宮無主星，需連同對宮閱讀';
     const structureText = relatedGroups.length
       ? relatedGroups.map(group => `${group.group}${Math.round(group.share * 100)}%`).join('、')
@@ -122,7 +137,7 @@ function buildDomains(engines: Engines, radars: Radar[] | null | undefined) {
       metrics,
       insight: parts.join('；') + '。',
       stage: currentDaXian
-        ? `目前大限落在${currentDaXian.value.palaceName}宮（虛歲 ${currentDaXian.value.range.join('–')}），可將它視為這一階段的背景重心。`
+        ? `目前大限落在${(currentDaXian.value as ZiweiDaXianValue).palaceName}宮（虛歲 ${(currentDaXian.value as ZiweiDaXianValue).range.join('–')}），可將它視為這一階段的背景重心。`
         : '',
       sources: uniqueSources([
         source('ziwei', palace),
@@ -143,22 +158,22 @@ function buildAnnual(engines: Engines, asOf: unknown) {
   const numerology = engineById(engines, 'numerology');
   const natal = component(bazi, 'natal');
   const liuNian = component(bazi, 'liuNian');
-  const taiSui = describeTaiSui(natal?.value?.year, liuNian?.value?.ganZhi);
-  const currentDaYun = bazi?.components?.find(item => item.category === 'daYun' && item.value?.isCurrent);
+  const taiSui = describeTaiSui((natal?.value as BaziNatalValue | null | undefined)?.year, (liuNian?.value as BaziAnnual | null | undefined)?.ganZhi);
+  const currentDaYun = bazi?.components?.find(item => item.category === 'daYun' && (item.value as Pick<BaziDaYunValue, 'isCurrent'> | null | undefined)?.isCurrent);
   const flyingStars = component(ziwei, 'flyingStars');
   const xiaoXian = component(ziwei, 'xiaoXian');
-  const currentDaXian = ziwei?.components?.find(item => item.category === 'daXian' && item.value?.isCurrent);
+  const currentDaXian = ziwei?.components?.find(item => item.category === 'daXian' && (item.value as Pick<ZiweiDaXianValue, 'isCurrent'> | null | undefined)?.isCurrent);
   const personalYear = component(numerology, 'personalYear');
   const palaces = ziwei?.components?.filter(item => item.category === 'palaces') ?? [];
-  const yearlyPalace = palaces.find(item => item.value?.index === flyingStars?.value?.palaceIndex);
+  const yearlyPalace = palaces.find(item => (item.value as PalaceRead | null | undefined)?.index === (flyingStars?.value as ZiweiFlyingStarsValue | null | undefined)?.palaceIndex);
   const themes: { id: string; title: string; text: string; taiSui?: ReturnType<typeof describeTaiSui>; sources: InsightSource[] }[] = [];
 
   if (liuNian || personalYear) {
     const fragments: string[] = [];
-    if (liuNian) fragments.push(`八字流年為${liuNian.value.ganZhi}`);
+    if (liuNian) fragments.push(`八字流年為${(liuNian.value as BaziAnnual).ganZhi}`);
     if (taiSui) fragments.push(`${taiSui.description}；這裡只比對年支，不延伸為吉凶判定`);
     if (personalYear) {
-      const number = personalYear.value.number;
+      const number = (personalYear.value as NumerologyPersonalYearValue).number;
       fragments.push(`生命靈數走個人年 ${number}，主題偏向${PERSONAL_YEAR_THEMES[number] ?? '年度整理'}`);
     }
     themes.push({
@@ -172,22 +187,22 @@ function buildAnnual(engines: Engines, asOf: unknown) {
 
   if (flyingStars) {
     const labels = ['祿', '權', '科', '忌'];
-    const transforms = flyingStars.value.mutagen
+    const transforms = (flyingStars.value as ZiweiFlyingStarsValue).mutagen
       .map((star: string, index: number) => `${star}化${labels[index]}`)
       .join('、');
     themes.push({
       id: 'year-transforms',
       title: '流年四化',
-      text: `${year} 年四化為${transforms}${yearlyPalace ? `，流年盤定位在${yearlyPalace.value.name}宮` : ''}；適合用來追蹤今年注意力落點。`,
+      text: `${year} 年四化為${transforms}${yearlyPalace ? `，流年盤定位在${(yearlyPalace.value as ZiweiPalaceValue).name}宮` : ''}；適合用來追蹤今年注意力落點。`,
       sources: uniqueSources([source('ziwei', flyingStars), source('ziwei', yearlyPalace)]),
     });
   }
 
   if (currentDaYun || currentDaXian || xiaoXian) {
     const fragments: string[] = [];
-    if (currentDaYun) fragments.push(`八字在${currentDaYun.value.ganZhi}大運（${currentDaYun.value.startYear}–${currentDaYun.value.endYear}）`);
-    if (currentDaXian) fragments.push(`紫微大限落${currentDaXian.value.palaceName}宮`);
-    if (xiaoXian) fragments.push(`本年小限落第 ${xiaoXian.value.palaceIndex + 1} 宮位`);
+    if (currentDaYun) fragments.push(`八字在${(currentDaYun.value as BaziDaYunValue).ganZhi}大運（${(currentDaYun.value as BaziDaYunValue).startYear}–${(currentDaYun.value as BaziDaYunValue).endYear}）`);
+    if (currentDaXian) fragments.push(`紫微大限落${(currentDaXian.value as ZiweiDaXianValue).palaceName}宮`);
+    if (xiaoXian) fragments.push(`本年小限落第 ${(xiaoXian.value as ZiweiXiaoXianValue).palaceIndex + 1} 宮位`);
     themes.push({
       id: 'stage-background',
       title: '階段背景',
@@ -231,8 +246,8 @@ function buildGuidance(engines: Engines) {
   const personalYear = component(numerology, 'personalYear');
   let balance: BalanceSuggestion | null = null;
 
-  if (elements?.value?.counts) {
-    const counts = Object.entries(elements.value.counts as Record<string, number>);
+  if ((elements?.value as ElementsRead | null | undefined)?.counts) {
+    const counts = Object.entries((elements!.value as ElementsRead).counts!);
     const minimum = Math.min(...counts.map(([, count]) => count));
     const leastFrequent = counts.filter(([, count]) => count === minimum).map(([element]) => element);
     const element = leastFrequent[0];
@@ -248,19 +263,21 @@ function buildGuidance(engines: Engines) {
       habit: '',
       text: `${countText}。此處僅描述出現次數，未判定旺衰或喜忌，不能據此提出補缺建議。`,
       source: source('bazi', elements),
-      limitation: elements.value.limitation,
+      limitation: (elements!.value as ElementsRead).limitation,
     };
   }
 
-  const auspicious = Object.entries((directions?.value?.auspicious ?? {}) as Record<string, { code: string; zh: string }>).map(([name, value]) => ({
+  const auspicious = Object.entries((directions?.value as DirectionsRead | null | undefined)?.auspicious ?? {}).map(([name, value]) => ({
     name,
     code: value.code,
     direction: value.zh,
   }));
+  // The built-in finite-number filter rejects undefined without coercion.
+  // Its predicate signature changes only inference, not the callback or calls.
   const numbers = [...new Set([
-    lifePath?.value?.number,
-    personalYear?.value?.number,
-  ].filter(Number.isFinite))];
+    (lifePath?.value as NumerologyNumberValue | null | undefined)?.number,
+    (personalYear?.value as NumerologyPersonalYearValue | null | undefined)?.number,
+  ].filter(Number.isFinite as (value: number | undefined) => value is number))];
 
   return {
     balance,
