@@ -10,13 +10,28 @@
 
 import type { Component, SystemResultLike } from '../core/models/SystemResult';
 
+import type { BaziElementsValue } from '../engines/baziTypes';
+import type { BaziDayMaster } from '../calculators/bazi/calculator';
+import type { SerializedStar, ZiweiPalaceValue, ZiweiSoulVsBodyValue, ZiweiSanFangSiZhengValue } from '../engines/ziweiTypes';
+import type { NumerologyNumberValue } from '../engines/numerologyTypes';
+// Keep component lookup opaque; only the existing category reads select
+// producer fields. These erased projections do not validate or normalize
+// legacy payloads, change fallbacks, or cache observable property reads.
+type ConsumerComponent = Omit<Component, 'value'> & { value: unknown };
+type ConsumerEngine = Omit<SystemResultLike, 'components'> & { components?: ConsumerComponent[] };
+
+type StarRead = Partial<Pick<SerializedStar, 'name' | 'brightnessScore'>>;
+type PalaceRead = Partial<Pick<ZiweiPalaceValue, 'name' | 'index' | 'isBodyPalace' | 'majorStars'>>;
+type SoulBodyRead = Partial<Pick<ZiweiSoulVsBodyValue, 'soul' | 'body' | 'samePalace'>>;
+type SanFangRead = Partial<Pick<ZiweiSanFangSiZhengValue, 'anchor' | 'opposite'>>;
+type ElementsRead = Partial<Pick<BaziElementsValue, 'counts' | 'total'>>;
 /** Version of the summary payload shape and wording rules. */
 export const SUMMARY_VERSION = 1;
 
 /** Engine lookup result: absent when that engine did not run. */
-type EngineLike = SystemResultLike | undefined;
+type EngineLike = ConsumerEngine | undefined;
 
-const ELEMENT_ORDER = Object.freeze(['木', '火', '土', '金', '水']);
+const ELEMENT_ORDER: ReadonlyArray<keyof BaziElementsValue['counts']> = Object.freeze(['木', '火', '土', '金', '水']);
 
 const DAY_MASTER_TRAITS: Readonly<Record<string, string>> = Object.freeze({
   木: '重視生長與延展，通常會先看事情如何向前推進',
@@ -80,18 +95,18 @@ export interface Summary {
 }
 
 /** Return every component in a category, tolerant of serialized results. */
-function componentsByCategory(engine: EngineLike, category: string): Component[] {
+function componentsByCategory(engine: EngineLike, category: string): ConsumerComponent[] {
   if (!Array.isArray(engine?.components)) return [];
   return engine.components.filter(component => component?.category === category);
 }
 
 /** Return the first component in a category. */
-function componentByCategory(engine: EngineLike, category: string): Component | null {
+function componentByCategory(engine: EngineLike, category: string): ConsumerComponent | null {
   return componentsByCategory(engine, category)[0] ?? null;
 }
 
 /** Build the small, stable source reference stored beside every sentence. */
-function sourceRef(engine: EngineLike, component: Component): SummarySource {
+function sourceRef(engine: EngineLike, component: ConsumerComponent): SummarySource {
   // Only called once a component was found, so the engine is present.
   return {
     engineId: engine!.engineId,
@@ -113,12 +128,13 @@ function uniqueSources(sources: SummarySource[]): SummarySource[] {
 }
 
 /** Prefer brighter stars, then retain source order for stars without scores. */
-function featuredStars(stars: any): any[] {
+function featuredStars(stars: unknown) {
   if (!Array.isArray(stars)) return [];
-  return stars
-    .filter((star: any) => typeof star?.name === 'string' && star.name.length > 0)
-    .map((star: any, index: number) => ({ ...star, _sourceIndex: index }))
-    .sort((a: any, b: any) => {
+  // Array.isArray otherwise exposes any[]; keep the original filter and spread.
+  return (stars as StarRead[])
+    .filter((star): star is StarRead & { name: string } => typeof star?.name === 'string' && star.name.length > 0)
+    .map((star, index: number) => ({ ...star, _sourceIndex: index }))
+    .sort((a, b) => {
       const scoreA = typeof a.brightnessScore === 'number' ? a.brightnessScore : -1;
       const scoreB = typeof b.brightnessScore === 'number' ? b.brightnessScore : -1;
       return scoreB - scoreA || a._sourceIndex - b._sourceIndex;
@@ -133,8 +149,8 @@ function starTraitPhrase(stars: { name: string }[]): string {
 
 function buildDayMasterSentence(engine: EngineLike): SummarySentence | null {
   const component = componentByCategory(engine, 'dayMaster');
-  const { stem, element, yinYang } = component?.value ?? {};
-  const trait = DAY_MASTER_TRAITS[element];
+  const { stem, element, yinYang } = (component?.value as Partial<BaziDayMaster> | null | undefined) ?? {};
+  const trait = DAY_MASTER_TRAITS[element!];
   if (!component || !stem || !element || !trait) return null;
 
   const expression = yinYang === '陰'
@@ -154,20 +170,20 @@ function buildDayMasterSentence(engine: EngineLike): SummarySentence | null {
 function fallbackPalaceFacet(
   engine: EngineLike,
   name: string,
-  predicate: (facet: any) => boolean = () => false,
-): { component: Component; facet: any } | null {
+  predicate: (facet: PalaceRead | null | undefined) => boolean = () => false,
+): { component: ConsumerComponent; facet: PalaceRead | null | undefined } | null {
   const component = componentsByCategory(engine, 'palaces')
-    .find(item => item?.value?.name === name || predicate(item?.value));
+    .find(item => (item?.value as PalaceRead | null | undefined)?.name === name || predicate(item?.value as PalaceRead | null | undefined));
   if (!component) return null;
-  return { component, facet: component.value };
+  return { component, facet: component.value as PalaceRead | null | undefined };
 }
 
 function buildZiweiSentence(engine: EngineLike): SummarySentence | null {
   const soulVsBody = componentByCategory(engine, 'soulVsBody');
   const soulFallback = fallbackPalaceFacet(engine, '命宮');
   const bodyFallback = fallbackPalaceFacet(engine, '', palace => palace?.isBodyPalace === true);
-  const soul = soulVsBody?.value?.soul ?? soulFallback?.facet ?? null;
-  const body = soulVsBody?.value?.body ?? bodyFallback?.facet ?? null;
+  const soul = (soulVsBody?.value as SoulBodyRead | null | undefined)?.soul ?? soulFallback?.facet ?? null;
+  const body = (soulVsBody?.value as SoulBodyRead | null | undefined)?.body ?? bodyFallback?.facet ?? null;
   if (!soul) return null;
 
   const directStars = featuredStars(soul.majorStars);
@@ -184,19 +200,19 @@ function buildZiweiSentence(engine: EngineLike): SummarySentence | null {
     text = `紫微命宮見${names}，這組星曜為外在氣質添上${traits || '一組可供觀察的行動線索'}`;
   } else {
     const sanFang = componentsByCategory(engine, 'sanFangSiZheng')
-      .find(component => component?.value?.anchor === '命宮');
-    const opposite = sanFang?.value?.opposite;
+      .find(component => (component?.value as SanFangRead | null | undefined)?.anchor === '命宮');
+    const opposite = (sanFang?.value as SanFangRead | null | undefined)?.opposite;
     const borrowedStars = featuredStars(opposite?.majorStars);
     if (borrowedStars.length === 0) return null;
 
     const names = borrowedStars.map(star => star.name).join('、');
     const traits = starTraitPhrase(borrowedStars);
-    text = `紫微命宮本身無主星，這裡改以對宮${opposite.name ?? ''}的${names}作為參考，呈現${traits || '可供觀察的性格線索'}；這是借宮閱讀，不等同命宮直接坐星`;
+    text = `紫微命宮本身無主星，這裡改以對宮${opposite!.name ?? ''}的${names}作為參考，呈現${traits || '可供觀察的性格線索'}；這是借宮閱讀，不等同命宮直接坐星`;
     sources.push(sourceRef(engine, sanFang!));
   }
 
   if (body) {
-    const samePalace = soulVsBody?.value?.samePalace === true || soul.index === body.index;
+    const samePalace = (soulVsBody?.value as SoulBodyRead | null | undefined)?.samePalace === true || soul.index === body.index;
     const bodyStars = featuredStars(body.majorStars);
     if (samePalace) {
       text += '。命身同宮時，內在設定與實際投入的方向通常較一致';
@@ -217,11 +233,11 @@ function buildZiweiSentence(engine: EngineLike): SummarySentence | null {
 
 function buildLifePathSentence(engine: EngineLike): SummarySentence | null {
   const component = componentByCategory(engine, 'lifePath');
-  const number = component?.value?.number;
-  const trait = LIFE_PATH_TRAITS[number];
+  const number = (component?.value as NumerologyNumberValue | null | undefined)?.number;
+  const trait = LIFE_PATH_TRAITS[number!];
   if (!component || !trait) return null;
 
-  const masterNote = component.value.isMaster ? '，也是主數，通常會放大這項主題的要求與潛力' : '';
+  const masterNote = (component.value as NumerologyNumberValue).isMaster ? '，也是主數，通常會放大這項主題的要求與潛力' : '';
   return {
     id: 'numerology_life_path',
     text: `生命靈數 ${number} 把人生主題拉向${trait}${masterNote}；它適合當作反覆核對的成長方向，而不是單一性格標籤。`,
@@ -236,7 +252,7 @@ function percentage(count: number, total: number): number {
 
 function buildElementDistributionSentence(engine: EngineLike): SummarySentence | null {
   const component = componentByCategory(engine, 'elements');
-  const rawCounts = component?.value?.counts;
+  const rawCounts = (component?.value as ElementsRead | null | undefined)?.counts;
   if (!component || !rawCounts || typeof rawCounts !== 'object') return null;
 
   const counts = ELEMENT_ORDER.map(element => ({
@@ -244,8 +260,8 @@ function buildElementDistributionSentence(engine: EngineLike): SummarySentence |
     count: Number.isFinite(rawCounts[element]) ? rawCounts[element] : 0,
   }));
   const computedTotal = counts.reduce((sum, item) => sum + item.count, 0);
-  const total = Number.isFinite(component.value.total) && component.value.total > 0
-    ? component.value.total
+  const total = Number.isFinite((component.value as ElementsRead).total!) && (component.value as ElementsRead).total! > 0
+    ? (component.value as ElementsRead).total!
     : computedTotal;
   if (!(total > 0)) return null;
 
@@ -271,7 +287,7 @@ function buildElementDistributionSentence(engine: EngineLike): SummarySentence |
  * Missing systems are skipped without inventing replacement content.
  */
 export class SummaryBuilder {
-  static build(systemResults: SystemResultLike[]): Summary {
+  static build(systemResults: ConsumerEngine[]): Summary {
     const engines = Array.isArray(systemResults) ? systemResults.filter(Boolean) : [];
     const byId = new Map(engines.map(engine => [engine.engineId, engine]));
 
