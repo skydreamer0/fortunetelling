@@ -9,8 +9,8 @@ const report = (counts = [2, 1]) => ({ success: true, numTotalTests: counts.redu
   numPassedTests: counts.reduce((a, b) => a + b, 0), numFailedTests: 0, numPendingTests: 0, numTodoTests: 0,
   testResults: counts.map((count, index) => ({ name: `file${index}.test.ts`, status: 'passed', assertionResults: Array.from({ length: count }, () => ({ status: 'passed' })) })) });
 
-const expected = { sha: 'a'.repeat(40), tree: 'b'.repeat(40), runId: '123', attempt: '1' };
-const manifest = (): Manifest => ({ schema: 1, status: 'PASS', runner: 'ubuntu-24.04', platform: 'linux', arch: 'x64',
+const expected = { repository: 'owner/repo', workflow: '.github/workflows/ci.yml', headSha: 'a'.repeat(40), baseSha: 'b'.repeat(40), sha: 'a'.repeat(40), tree: 'b'.repeat(40), runId: '123', attempt: '1' };
+const manifest = (): Manifest => ({ schema: 2, status: 'PASS', runner: 'ubuntu-24.04', platform: 'linux', arch: 'x64',
   ...expected, node: '24.19.0', v8: 'revision', lock: 'c'.repeat(64),
   evidence: Object.fromEntries(['natal.json', 'snapshots.json'].map(name => [name, { bytes: 100, sha256: 'd'.repeat(64) }])) });
 function inventory() {
@@ -46,7 +46,7 @@ test('native test completion rejects missing, skipped, todo, failed and partial 
 });
 test('manifest requires exact source, run, native OS, pinned runtime, complete bounded artifacts', () => {
   for (const [runner, platform] of Object.entries(runners)) expect(() => validateManifest({ ...manifest(), runner, platform }, runner, expected)).not.toThrow();
-  for (const patch of [{ status: 'NOT RUN' }, { status: 'FAIL' }, { sha: 'e'.repeat(40) }, { tree: 'e'.repeat(40) }, { runId: '124' }, { attempt: '2' }, { platform: 'win32' }, { arch: 'arm64' }, { node: '24.18.0' }, { v8: '' }, { lock: '' }, { evidence: {} }]) expect(() => validateManifest({ ...manifest(), ...patch }, 'ubuntu-24.04', expected)).toThrow();
+  for (const patch of [{ repository: 'other/repo' }, { workflow: 'wrong.yml' }, { headSha: 'f'.repeat(40) }, { baseSha: 'f'.repeat(40) }, { status: 'NOT RUN' }, { status: 'FAIL' }, { sha: 'e'.repeat(40) }, { tree: 'e'.repeat(40) }, { runId: '124' }, { attempt: '2' }, { platform: 'win32' }, { arch: 'arm64' }, { node: '24.18.0' }, { v8: '' }, { lock: '' }, { evidence: {} }]) expect(() => validateManifest({ ...manifest(), ...patch }, 'ubuntu-24.04', expected)).toThrow();
   const oversized = manifest(); oversized.evidence['natal.json']!.bytes = 64 * 1024 * 1024 + 1;
   expect(() => validateManifest(oversized, 'ubuntu-24.04', expected)).toThrow();
 });
@@ -84,7 +84,14 @@ test('native lanes preserve full/scoped selection, exact matrix, bounded evidenc
   expect(upload.with.name).toBe('native-calendar-${{ matrix.os }}-${{ github.run_attempt }}');
   expect(compare.needs).toEqual(['plan', 'native_calendar']);
   expect(compare.if).toBe("${{ always() && needs.plan.outputs.mode == 'full' }}");
-  expect(compare.steps.find((step: any) => step.uses === 'actions/download-artifact@v4').with.pattern).toBe('native-calendar-*-${{ github.run_attempt }}');
+  expect(compare.permissions).toEqual({ contents: 'read', actions: 'read' });
+  const download = compare.steps.find((step: any) => step.uses === 'actions/download-artifact@v4');
+  expect(download.with['artifact-ids']).toBe('${{ steps.native_artifacts.outputs.artifact_ids }}');
+  expect(download.with.pattern).toBeUndefined();
+  expect(download.with['github-token']).toBe('${{ github.token }}');
+  expect(download.with.repository).toBe('${{ github.repository }}');
+  expect(download.with['run-id']).toBe('${{ github.run_id }}');
+  expect(compare.steps.find((step: any) => step.id === 'native_artifacts').env.GH_TOKEN).toBe('${{ github.token }}');
   const aggregate = jobs.test.steps.find((step: any) => step.id === 'aggregate');
   for (const name of ['native_calendar', 'native_compare']) expect(aggregate.env.RESULTS).toContain(`"${name}":"\${{ needs.${name}.result }}"`);
 });

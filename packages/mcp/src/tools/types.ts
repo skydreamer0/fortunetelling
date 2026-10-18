@@ -20,3 +20,13 @@ export type ToolDef<S extends z.ZodRawShape = z.ZodRawShape> = {
 export function defineTool<S extends z.ZodRawShape>(tool: ToolDef<S>): ToolDef<S> {
   return tool;
 }
+
+/** Heterogeneous registry view: input remains a Zod shape; arguments cannot be
+ * supplied to an erased handler without passing the matching schema first.
+ * This is type erasure only, not a runtime wrapper or a second validator. */
+export type RegisteredTool = {
+  name: string;
+  description: string;
+  input: z.ZodRawShape;
+  handler: (args: never, ctx: ToolContext) => Promise<Envelope>;
+};

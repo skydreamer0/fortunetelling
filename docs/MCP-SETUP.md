@@ -161,3 +161,11 @@ npm run doctor
 會檢查：profile 目錄與檔案格式、MCP server 是否真的能啟動（隔離的暫存 profile，不動你的資料）、工具是否齊全、回應外殼與錯誤格式、Claude 桌面版設定檔（含 Windows Microsoft Store 版的位置、`command` 是否存在、路徑的反斜線有沒有被吃掉）。有 ✗ 時結束碼為 1，`!` 只是警告。
 
 CI 使用 `npm run doctor -- --ci`：略過只存在你電腦上的項目，其餘照跑。
+
+### Consumer types and response baseline responsibilities
+
+See [MCP response contracts](MCP-RESPONSE-CONTRACTS.md) for the opaque chart boundary,
+Zod-validated heterogeneous tool dispatch, and the distinction between preserved
+historical digest comparisons and complete current synthetic-response contracts.
+The latter retain years, selection, sensitivity and unknown fields; neither kind
+of test demonstrates predictive validity or recovered historical full-payload replay.

@@ -5,12 +5,12 @@ import { importProfileTools } from './importProfile';
 import { profileTools } from './profiles';
 import { questionTools } from './questions';
 import { signalTools } from './signals';
-import { defineTool, type ToolContext, type ToolDef } from './types';
+import { defineTool, type ToolContext, type RegisteredTool } from './types';
 import { z } from 'zod';
 import { MAX_RESPONSE_CHARS, ok, render, renderError, type Caveat } from '../envelope';
 import { ToolError } from '../errors';
 
-const BASE_TOOLS: readonly ToolDef<any>[] = [...profileTools, ...chartTools, ...comparisonTools, ...signalTools, ...questionTools, ...answerCheckTools, ...importProfileTools];
+const BASE_TOOLS: readonly RegisteredTool[] = [...profileTools, ...chartTools, ...comparisonTools, ...signalTools, ...questionTools, ...answerCheckTools, ...importProfileTools];
 
 /** batch 一次最多幾個呼叫。 */
 export const MAX_BATCH_CALLS = 8;
@@ -82,7 +82,7 @@ const batchTool = defineTool({
   },
 });
 
-export const TOOLS: readonly ToolDef<any>[] = [...BASE_TOOLS, batchTool];
+export const TOOLS: readonly RegisteredTool[] = [...BASE_TOOLS, batchTool];
 
 export type ToolResponse = { text: string; isError: boolean };
 
@@ -95,7 +95,8 @@ export async function callTool(name: string, rawArgs: unknown, ctx: ToolContext)
     if (!parsed.success) {
       throw new ToolError('invalid_args', parsed.error.issues.map(i => `${i.path.join('.') || '(args)'}: ${i.message}`).join('; '));
     }
-    return { text: render(await tool.handler(parsed.data, ctx)), isError: false };
+    // The only erased-handler bridge: the same tool.input has just parsed successfully.
+    return { text: render(await tool.handler(parsed.data as never, ctx)), isError: false };
   } catch (error) {
     return { text: renderError(error), isError: true };
   }

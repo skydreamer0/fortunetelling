@@ -118,6 +118,9 @@ jobs:
 
   native_compare:
     name: Native calendar cross-OS equality
+    permissions:
+      contents: read
+      actions: read
     needs: [plan, native_calendar]
     if: ${{ always() && needs.plan.outputs.mode == 'full' }}
     runs-on: ubuntu-24.04
@@ -128,9 +131,17 @@ jobs:
         with:
           node-version: '24.19.0'
       - run: npm ci --ignore-scripts
+      - name: Select exact successful native artifacts
+        id: native_artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node --import tsx scripts/ci/native-artifacts.ts
       - uses: actions/download-artifact@v4
         with:
-          pattern: native-calendar-*-${{ github.run_attempt }}
+          artifact-ids: ${{ steps.native_artifacts.outputs.artifact_ids }}
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
           path: native-calendar-artifacts
       - run: node --import tsx scripts/ci/native-calendar.ts compare native-calendar-artifacts
 

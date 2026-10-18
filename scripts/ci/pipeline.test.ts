@@ -114,7 +114,8 @@ test('workflow wires stable acceptance to all required lanes and trusted master 
   for (const id of ['plan', 'regression', 'lightweight', 'checks', 'native_calendar', 'native_compare', 'test']) {
     const setup = jobs[id].steps.find((step: any) => step.uses === 'actions/setup-node@v4');
     expect(setup.with['node-version']).toBe('24.19.0');
-    expect(jobs[id].permissions).toBeUndefined();
+    if (id === 'native_compare') expect(jobs[id].permissions).toEqual({ contents: 'read', actions: 'read' });
+    else expect(jobs[id].permissions).toBeUndefined();
   }
   const checks = jobs.checks.steps.map((step: any) => step.run).filter(Boolean);
   for (const command of ['npm run typecheck --workspace @fortune/core', 'npm run typecheck --workspace @fortune/web', 'npm run typecheck --workspace @fortune/ai', 'npm run typecheck --workspace @fortune/mcp', 'node --import tsx packages/mcp/src/cli/doctor.ts --ci', 'npm run build', 'node scripts/ci/assets.ts']) expect(checks).toContain(command);
