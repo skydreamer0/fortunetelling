@@ -10,6 +10,23 @@ npm ci
 
 ## 2. 建立 profile
 
+### 網站下載檔的版本相容性
+
+有記錄計算設定的報告會下載 **Profile2**，需本機 MCP 搭配 **Core 0.10.0 或以上**；舊版 MCP 會拒絕新格式，網站不能偵測本機版本。Profile2 保留真太陽時與子時設定，不會為相容舊 MCP 默降為 Profile1。
+
+既有安裝請先備份 profiles 與本機修改，再更新**專案來源**至支援 Profile2 的版本（乾淨的 Git checkout 可依專案更新流程取得該版本；有本機修改時先處理修改，不要強制覆寫）。之後在專案根目錄執行：
+
+```bash
+npm ci
+npm run build:packages
+node --input-type=module -e "import { VERSION } from '@fortune/core'; console.log(VERSION)"
+npm run doctor
+```
+
+`npm ci` 安裝目前 checkout 的依賴並執行其 prepare，不會把舊程式來源升級到新版本。確認版本指令印出 0.10.0 或以上且 doctor 檢查通過，再完全結束並重開 Claude 桌面版與其他正在執行的 MCP 程序，讓它載入新版程式，才匯入新檔。保留既有 profile 備份；不要直接覆蓋或手改版本號／刪除 settings 以繞過版本檢查。
+
+新版 MCP 仍讀取 Profile1，明示採用舊版真太陽時／晚子時預設；沒有記錄設定的舊報告仍下載 Profile1。這不代表舊版 MCP 能讀 Profile2，也不保證不同歷史引擎產生完全相同結果。
+
 profile 是 profiles 目錄下的 `<profileId>.fortune.json`（預設 `~/.fortune/profiles/`，可用環境變數 `FORTUNE_PROFILES_DIR` 改）。網站報告的「用 Claude 桌面版討論」入口已可下載 `.fortune.json`（[M4-02 實作](../apps/web/src/components/report/McpEntry.tsx)）；下載後可自行放進 profiles 目錄，或在對話裡請 Claude 用 `import_profile` 讀取本機檔案路徑。若改用全文 `content` 匯入，先閱讀下方隱私說明。沒有檔案時可用指令建立：
 
 ```bash

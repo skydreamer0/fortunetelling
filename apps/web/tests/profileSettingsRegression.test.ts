@@ -8,5 +8,6 @@ test('non-default Web report download must retain its clock/zi choices for MCP',
   const download=buildProfileDownload(report,'sky');
   if(!download.ok) throw new Error(download.error);
   const file=JSON.parse(download.text);
+  expect(file.schemaVersion).toBe(2);
   expect(file.settings).toEqual({useTrueSolarTime:false,ziHourConvention:'early'});
 });
