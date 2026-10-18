@@ -1,6 +1,6 @@
 import { describe, expect, test, vi  } from 'vitest';
 const mock = vi.fn;
-import { buildConsensus, buildTimeline, cityToBirthplace, createTimeContext, findCity, type Timeline } from '@fortune/core';
+import { analyze as analyzeLegacy, buildConsensus, buildTimeline, cityToBirthplace, createTimeContext, findCity, type Timeline } from '@fortune/core';
 import { isValidElement, type ReactElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { BirthForm, formToInput, type BirthFormState } from '../src/components/input/BirthForm';
@@ -29,7 +29,7 @@ const INPUT: BirthInput = {
   gender: 'male', calendarType: 'solar', cityId: 'tainan', timeAccuracy: 'exact',
 };
 // Report v4 起 analyze() 自帶 timeline、v5 起自帶 consensus；這裡明確移除 v4/v5 欄位來模擬舊報告（例如最近查詢裡存的舊結果）。
-const { timeline: _timeline, timeContext: _timeContext, signals: _signals, consensus: _consensus, ...v3Fields } = analyze(INPUT);
+const { timeline: _timeline, timeContext: _timeContext, signals: _signals, consensus: _consensus, ...v3Fields } = analyzeLegacy(INPUT) as unknown as Report;
 const v3: Report = { ...v3Fields, schemaVersion: 3 };
 const v4: Report = { ...v3, input: { ...v3.input, cityId: 'tainan' }, asOf: ASOF, schemaVersion: 4, timeline };
 const consensus = buildConsensus(timeline);
@@ -298,10 +298,21 @@ describe('consensus (Report v5)', () => {
     expect(html.match(/data-key="year:/g)).toHaveLength(50);
   });
 
-  test('the live Report7 renders the consensus block', () => {
-    const report = analyze(INPUT);
-    expect(report.schemaVersion).toBe(7);
+  test.each([
+    ['legacy Core Report7', 7, () => analyzeLegacy(INPUT) as unknown as Report],
+    ['live Web Report8', 8, () => analyze(INPUT)],
+  ] as const)('%s renders the consensus block', (_label, schemaVersion, create) => {
+    const report = create();
+    expect(report.schemaVersion).toBe(schemaVersion);
     expect(selectConsensus(report)).not.toBeNull();
+    expect(renderToStaticMarkup(<TimelineChapter report={report} />)).toContain('共識與分歧');
+    if (schemaVersion === 7) {
+      expect(report).not.toHaveProperty('replay');
+      expect(report).not.toHaveProperty('calculation');
+    } else {
+      expect(report.calculation?.scope).toBe('analyze-sync-natal');
+      expect(report.replay).toBeDefined();
+    }
   });
 });
 
