@@ -9,7 +9,7 @@
  * 這些口徑沿用 MCP 的既有 core 預設政策；Timeline 明傳真太陽時／晚子，其他 calculator 仍用原預設。
  */
 
-import type { TimeContext } from '@fortune/core';
+import type { TimeContext, baziCalculator, ziweiCalculator, jyotishCalculator, humanDesignCalculator } from '@fortune/core';
 
 export const NOT_RECORDED = '未明確記錄';
 
@@ -32,13 +32,19 @@ function commonItems(ctx: Pick<TimeContext, 'profile'>): Record<string, string> 
   };
 }
 
-type Chart = Record<string, any> | null | undefined;
+// Opaque consumer boundary. The system-selected leaf uses its existing producer
+// contract; assertions do not add validation/coercion or change legacy behavior.
+type Chart = object | null | undefined;
+type BaziChart = ReturnType<typeof baziCalculator.calculate>['chart'];
+type ZiweiChart = ReturnType<typeof ziweiCalculator.calculate>['chart'];
+type JyotishChart = ReturnType<typeof jyotishCalculator.calculate>['chart'];
+type HumanDesignChart = ReturnType<typeof humanDesignCalculator.calculate>['chart'];
 
 export function conventionsFor(system: string, chart: Chart, ctx: Pick<TimeContext, 'profile'>): Conventions {
   const common = commonItems(ctx);
   switch (system) {
     case 'bazi': {
-      const c = chart?.conventions as { useTrueSolarTime?: boolean; ziHourConvention?: string; clock?: { basis?: string }; yearMonthBasis?: string } | undefined;
+      const c = (chart as Partial<Pick<BaziChart, 'conventions'>> | null | undefined)?.conventions;
       const zi = c?.ziHourConvention === 'late' ? '晚子時（子正換日，00:00 換日，23:00 仍屬當日；lunar-javascript sect=2）' : c?.ziHourConvention === 'early' ? '早子時（子初換日，23:00 起算隔日；sect=1）' : NOT_RECORDED;
       return {
         items: {
@@ -55,7 +61,7 @@ export function conventionsFor(system: string, chart: Chart, ctx: Pick<TimeConte
       };
     }
     case 'ziwei': {
-      const t = chart?.time as { basis?: string; ziHourConvention?: string } | null | undefined;
+      const t = (chart as Partial<Pick<ZiweiChart, 'time'>> | null | undefined)?.time;
       const zi =
         t?.ziHourConvention === 'splitMidnight'
           ? '分早晚子（23:00–24:00 為晚子時，仍用當日，iztro timeIndex 12；00:00–01:00 為早子時）'
@@ -76,7 +82,7 @@ export function conventionsFor(system: string, chart: Chart, ctx: Pick<TimeConte
       };
     }
     case 'jyotish': {
-      const s = chart?.settings as { ayanamsa?: string; node?: string; dashaYearDays?: number; houseSystem?: string } | undefined;
+      const s = (chart as Partial<Pick<JyotishChart, 'settings'>> | null | undefined)?.settings;
       return {
         items: {
           zodiac: s?.ayanamsa ? `恆星黃道，歲差 ${s.ayanamsa === 'lahiri' ? 'Lahiri（Chitrapaksha）' : s.ayanamsa}（採含章動的真值）` : NOT_RECORDED,
@@ -93,7 +99,7 @@ export function conventionsFor(system: string, chart: Chart, ctx: Pick<TimeConte
       };
     }
     case 'humanDesign': {
-      const node = chart?.node as string | undefined;
+      const node = (chart as Partial<Pick<HumanDesignChart, 'node'>> | null | undefined)?.node;
       return {
         items: {
           node: node === 'true' ? '南北交點用真交點（true node）' : node === 'mean' ? '南北交點用平交點（mean node）' : NOT_RECORDED,
