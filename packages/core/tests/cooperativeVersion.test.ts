@@ -18,7 +18,10 @@ test('0.9.0 retains existing runtime exports and explicitly lists additive APIs'
     // #57: additive period adapters. Keep the original fixture and exact set check.
     'ziweiDecadeNativePeriod', 'ziweiYearlyNativePeriod', 'ziweiMonthlyNativePeriod',
     // #56: source adapters only; preserve the historical inventory and exact set.
-    'baziAnnualNativePeriod', 'baziMonthlyNativePeriod', 'baziLuckCycleNativePeriod'].sort());
+    'baziAnnualNativePeriod', 'baziMonthlyNativePeriod', 'baziLuckCycleNativePeriod',
+    // #15/#59/#60: explicit opt-in observation APIs; retain the historical inventory.
+    'OBSERVATION_SPLITS', 'auditObservationDataset', 'countObservationUnits',
+    'migrateLifeEventV1', 'readLifeObservationV2', 'restoreLifeEventV1'].sort());
   expect(typeof core.ResolvedBirthData).toBe('function');
   for (const helper of ['calculateZiweiSteps', 'decadeSequenceSteps', 'yearlySequenceSteps', 'monthlySequenceSteps']) {
     expect(helper in core).toBe(false);
