@@ -1,0 +1,67 @@
+{
+  "edition": "Hong Kong Observatory Almanac 2025",
+  "checkedOn": "2026-10-18",
+  "method": "Downloaded official monthly PDFs and visually inspected the Solar Terms column on page 1 of each PDF.",
+  "sources": [
+    {
+      "month": "01",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal01.pdf",
+      "sha256": "f10c9fb6895c3079f86db52cde8df8a8d7efae218a4c3bb73d7e174d32372288"
+    },
+    {
+      "month": "02",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal02.pdf",
+      "sha256": "b1a13e82eb4013fbae7f780ad1f3fddf93fb5e4b5862d6a59d8334a60a35d093"
+    },
+    {
+      "month": "03",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal03.pdf",
+      "sha256": "aa5d300f801bebc37034e62dd6a3a4e481c56834d3ca2681ac90e82f1ad3daf7"
+    },
+    {
+      "month": "04",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal04.pdf",
+      "sha256": "4f0719d20b674e56b211de9e6d832e455e40bfa89d9bdaa2f2ce2c05f5e82f7a"
+    },
+    {
+      "month": "05",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal05.pdf",
+      "sha256": "73cb340fdd7c776daba5b4b916361c107598eae3aa6cf95508f560763e1191d2"
+    },
+    {
+      "month": "06",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal06.pdf",
+      "sha256": "c245f41da49d8b7efc861e26a9ccd9fcc74cee2a15297af4ba142b958a622d05"
+    },
+    {
+      "month": "07",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal07.pdf",
+      "sha256": "7a5285c7ee7ab3158e7bdcd0a6d72e234e197cb21e0566a42ee240db3d2ffdd1"
+    },
+    {
+      "month": "08",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal08.pdf",
+      "sha256": "91c2511d680c077ca3b2d8c32404325d6471faab9f15133d0b2a278f6d803a12"
+    },
+    {
+      "month": "09",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal09.pdf",
+      "sha256": "efb1c84e730d1c2b18dcb611544c3bea6b654cc77a2f7b2f49bde87c8f102796"
+    },
+    {
+      "month": "10",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal10.pdf",
+      "sha256": "11523b4640ecdefcfdf6153bf73da7bca307f6ac2c17c143f8197d9fb2c44eca"
+    },
+    {
+      "month": "11",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal11.pdf",
+      "sha256": "f44d9437e8359535b1550c1ac2de9f55075fc6af222c4944eec489ea95ea3ee1"
+    },
+    {
+      "month": "12",
+      "url": "https://www.hko.gov.hk/en/gts/astron2025/files/2025cal12.pdf",
+      "sha256": "706f79786aca135b6ac7d0a4cc5d1088001f2abb619e1a47c318d59fe37293a7"
+    }
+  ]
+}
