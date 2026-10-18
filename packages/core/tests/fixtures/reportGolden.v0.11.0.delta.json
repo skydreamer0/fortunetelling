@@ -1,0 +1,124 @@
+{
+  "version": "0.11.0",
+  "issue": "https://github.com/skydreamer0/fortunetelling/issues/51",
+  "reason": "Opt-in Report8 replay APIs; legacy analyze/Report7 and compatibility output change only core version. Prior fixtures are unchanged.",
+  "changes": [
+    {
+      "path": [
+        "reports",
+        "taipei-female-1991",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "reports",
+        "legacy-coords-male-1986",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "reports",
+        "tainan-male-1978",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "reports",
+        "new-york-female-1985",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "reports",
+        "late-zi-2330-early-civil",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "reports",
+        "time-unknown",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "reports",
+        "lunar-input",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "reports",
+        "near-lichun-1990",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "reports",
+        "dst-1974-taipei",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "reports",
+        "default-birthplace-no-name",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-1991-1986",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "compatibility",
+        "pair-ny-unknown",
+        "version"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    }
+  ]
+}

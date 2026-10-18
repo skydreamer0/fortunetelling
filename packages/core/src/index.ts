@@ -100,3 +100,6 @@ export { initEphemeris, isEphemerisReady } from './calculators/astro/index';
 export { jyotishCalculator } from './calculators/jyotish/calculator';
 export { humanDesignCalculator } from './calculators/humanDesign/calculator';
 export * from './export/index';
+
+export { analyzeReplayReport, createReportReplaySession, REPLAY_REPORT_SCHEMA_VERSION } from './core/reportReplay';
+export type { ReplayReport, ReportCalculation } from './core/reportReplay';

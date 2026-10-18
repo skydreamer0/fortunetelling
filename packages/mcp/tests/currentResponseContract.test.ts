@@ -1,3 +1,4 @@
+import reportReplayDelta from './fixtures/currentResponse.v0.11.0.delta.json';
 import settingsDelta from './fixtures/currentResponse.v0.10.0.delta.json';
 import { afterAll, beforeAll, expect, test } from 'vitest';
 import contract from './fixtures/currentResponse.contract.json';
@@ -12,8 +13,10 @@ for (const row of contract.cases) {
   test(`complete current response: ${row.id}`, async () => {
     const reply = await fx.call(row.tool, row.args);
     expect(reply.isError).toBe(false);
-    const delta = settingsDelta.cases.find(candidate => candidate.id === row.id)!;
-    expect(delta.before).toEqual(row.digests);
+    const previous = settingsDelta.cases.find(candidate => candidate.id === row.id)!;
+    expect(previous.before).toEqual(row.digests);
+    const delta = reportReplayDelta.cases.find(candidate => candidate.id === row.id)!;
+    expect(delta.before).toEqual(previous.after);
     expect(delta.after.data).toBe(row.digests.data);
     expect(delta.after.caveats).toBe(row.digests.caveats);
     expect(reply.json.calculation).toEqual(delta.calculation);

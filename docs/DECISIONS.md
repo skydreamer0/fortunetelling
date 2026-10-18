@@ -896,3 +896,17 @@ MCP source slots retain D-043 current-generation ownership, check specHash befor
 Full current MCP response contracts preserve all data/caveat digests; a new versioned delta records only the version/envelope additions, without changing the previous fixture. Existing report goldens receive exactly thirteen version-string deltas. Export2 adds manifest metadata and chart.json calculation; the original profile/signals/timeline/consensus/README hashes remain fixed for the v1 baseline. Compact question payloads retain the 4 KiB prior-content budget plus at most 320 bytes for the explicit calculation envelope; total test ceiling is 4416 bytes. No payload field is removed to meet the budget.
 
 Acceptance remains bounded: #52's portable choices/default disclosure and D-043 checks are implemented. #51/#26 remain open for Report8/Web Question/Backtest full-entry identity, a persistent store/cache/migrations, historical-version replay, async ephemeris identity and the remaining calendar/oracle matrix. The old default-only and internal snapshot work is not claimed again. No account/database or Next.js work (#22/#23), merge, package publish or deployment is part of this change.
+
+### D-076: opt-in Web Report8 current-build snapshot replay (#26/#51)
+
+Web creates Report8 through `analyzeReplayReport`; ordinary core analyze keeps Report7.
+One owned sync snapshot feeds the report and actual Question/citation/cooperative
+lookup/LifeEvents projections. JSON reload reconstructs and verifies current full
+spec/snapshot plus consumed report input/context/timeline/signals; malformed new
+reports fail closed instead of falling back. Old reports retain recorded-options
+behavior and are never backfilled with identity. Core0.11 / Profile2 / Export2;
+async systems remain explicitly excluded. Full replay contains personal birth data,
+not anonymized hashes; it is not added to redacted export or AI payloads. No database,
+historical engine execution or persistent-cache migration is implied. See
+[contract and original-AC matrix](contracts/web-report-replay.md). Parent issues
+remain open; this package is stacked on unmerged Draft151 without merging it.
