@@ -21,8 +21,27 @@
 
 import { HonestyGuard } from './HonestyGuard';
 import { getAxisNotes } from './AxisNotes';
-import type { SystemResult } from '../core/models/SystemResult';
 import type { Radar } from './RadarBuilder';
+import type { Component, SystemResultLike } from '../core/models/SystemResult';
+import type { BaziElementsValue, BaziDaYunValue } from '../engines/baziTypes';
+import type { SerializedStar, ZiweiPalaceValue, ZiweiDaXianValue, ZiweiXiaoXianValue } from '../engines/ziweiTypes';
+
+// Entry/lookup payloads remain opaque. The category-specific producer views
+// below are erased trust projections, not validation of legacy runtime data.
+type EvolutionComponent = Omit<Component, 'value'> & { value: unknown };
+type EvolutionEngine = Omit<SystemResultLike, 'components'> & { components?: EvolutionComponent[] };
+type PalaceComponent = { value?: unknown } | Record<string, unknown>;
+type ElementsRead = Partial<Pick<BaziElementsValue, 'counts' | 'total'>>;
+type DaYunRead = Pick<BaziDaYunValue, 'index' | 'ganZhi' | 'startYear' | 'endYear' | 'startAge' | 'isCurrent'>;
+type DaXianRead = Pick<ZiweiDaXianValue, 'index' | 'range' | 'mutagen' | 'heavenlyStem' | 'earthlyBranch' | 'palaceName' | 'isCurrent'>;
+type XiaoXianRead = Pick<ZiweiXiaoXianValue, 'nominalAge' | 'asOf'>;
+type StarRead = Partial<Pick<SerializedStar, 'name' | 'brightnessScore'>>;
+type PalaceRead = Partial<Pick<ZiweiPalaceValue, 'index' | 'name'>> & {
+  majorStars?: StarRead[];
+  minorStars?: StarRead[];
+  adjectiveStars?: StarRead[];
+};
+type DaXianRadarRead = Pick<ZiweiDaXianValue, 'index'> & Partial<Pick<ZiweiDaXianValue, 'mutagen'>>;
 
 export interface Period {
   system: 'bazi' | 'ziwei';
@@ -79,7 +98,7 @@ function lintedL1(text: string): string {
   return text;
 }
 
-function findComponents(result: SystemResult | { components?: Record<string, any>[] }, category: string): Record<string, any>[] {
+function findComponents(result: EvolutionEngine, category: string): EvolutionComponent[] {
   const components = result?.components;
   if (!Array.isArray(components)) return [];
   return components.filter((c) => c.category === category);
@@ -137,20 +156,20 @@ export function buildDaYunElementRadar(natalCounts: Record<string, number>, nata
   };
 }
 
-function buildBaziPeriods(baziResult: SystemResult): Period[] {
+function buildBaziPeriods(baziResult: EvolutionEngine): Period[] {
   const elements = findComponents(baziResult, 'elements')[0];
-  const natalCounts = elements?.value?.counts;
-  const natalTotal = elements?.value?.total;
-  if (!natalCounts || !(natalTotal > 0)) return [];
+  const natalCounts = (elements?.value as ElementsRead | null | undefined)?.counts;
+  const natalTotal = (elements?.value as ElementsRead | null | undefined)?.total;
+  if (!natalCounts || !(natalTotal! > 0)) return [];
 
   const daYunSteps = findComponents(baziResult, 'daYun')
-    .map((c) => c.value)
+    .map((c) => c.value as DaYunRead)
     .filter((v) => v && typeof v.ganZhi === 'string')
     .sort((a, b) => a.index - b.index);
 
   return daYunSteps.map((step) => {
     const label = `${step.startYear}–${step.endYear} ${step.ganZhi}大運`;
-    const radar = buildDaYunElementRadar(natalCounts, natalTotal, step);
+    const radar = buildDaYunElementRadar(natalCounts, natalTotal!, step);
     const { top, low } = topAndLow(radar);
     return {
       system: 'bazi',
@@ -175,7 +194,7 @@ function buildBaziPeriods(baziResult: SystemResult): Period[] {
  *
  * @param palaceComponents - ziwei `palaces` components
  */
-export function buildDaXianPalaceRadar(palaceComponents: Record<string, any>[], daXianValue: { index: number; mutagen: string[] }, title: string): Radar {
+export function buildDaXianPalaceRadar(palaceComponents: PalaceComponent[], daXianValue: DaXianRadarRead, title: string): Radar {
   const mutagenStars = new Set(daXianValue.mutagen ?? []);
 
   return {
@@ -184,10 +203,10 @@ export function buildDaXianPalaceRadar(palaceComponents: Record<string, any>[], 
     title,
     kind: 'radar',
     axes: palaceComponents.map((palace) => {
-      const { index, name, majorStars = [], minorStars = [], adjectiveStars = [] } = palace.value ?? {};
+      const { index, name, majorStars = [], minorStars = [], adjectiveStars = [] } = (palace.value ?? {}) as PalaceRead;
 
       const brightnessScores = majorStars
-        .map((star: { brightnessScore: number | null }) => star.brightnessScore)
+        .map((star) => star.brightnessScore)
         .filter((score: unknown): score is number => typeof score === 'number');
       const mainStarBrightness = brightnessScores.length > 0
         ? round2(Math.max(...brightnessScores) * 100)
@@ -196,7 +215,7 @@ export function buildDaXianPalaceRadar(palaceComponents: Record<string, any>[], 
       const auxiliaryStarCount = minorStars.length;
 
       const hasDecadalMutagen = [...majorStars, ...minorStars, ...adjectiveStars]
-        .some((star) => mutagenStars.has(star.name));
+        .some((star) => mutagenStars.has(star.name!));
       const fourTransformBonus = hasDecadalMutagen ? 100 : 0;
 
       const value = round2(
@@ -207,12 +226,12 @@ export function buildDaXianPalaceRadar(palaceComponents: Record<string, any>[], 
 
       return {
         key: `palace_${index}`,
-        label: name,
+        label: name!,
         value,
         unit: '分',
         ruleId: 'ziwei_palace_strength',
         inputs: { mainStarBrightness, auxiliaryStarCount, fourTransformBonus },
-        ...getAxisNotes('ziwei_palace_strength', name),
+        ...getAxisNotes('ziwei_palace_strength', name!),
       };
     }),
   };
@@ -222,24 +241,24 @@ export function buildDaXianPalaceRadar(palaceComponents: Record<string, any>[], 
  * 推導出生年：優先用 bazi 大運（startYear − startAge + 1，虛歲口徑），
  * 其次用 ziwei 小限（asOf 年 − 虛歲 + 1）。推不出時回傳 null。
  */
-function deriveBirthYear(baziResult: SystemResult | null, ziweiResult: SystemResult | null): number | null {
-  const daYun = baziResult ? findComponents(baziResult, 'daYun')[0]?.value : null;
+function deriveBirthYear(baziResult: EvolutionEngine | null, ziweiResult: EvolutionEngine | null): number | null {
+  const daYun = baziResult ? findComponents(baziResult, 'daYun')[0]?.value as Pick<DaYunRead, 'startYear' | 'startAge'> | null | undefined : null;
   if (daYun && Number.isFinite(daYun.startYear) && Number.isFinite(daYun.startAge)) {
     return daYun.startYear - daYun.startAge + 1;
   }
-  const xiaoXian = ziweiResult ? findComponents(ziweiResult, 'xiaoXian')[0]?.value : null;
+  const xiaoXian = ziweiResult ? findComponents(ziweiResult, 'xiaoXian')[0]?.value as XiaoXianRead | null | undefined : null;
   if (xiaoXian && Number.isFinite(xiaoXian.nominalAge) && typeof xiaoXian.asOf === 'string') {
-    return Number(xiaoXian.asOf.slice(0, 4)) - xiaoXian.nominalAge + 1;
+    return Number(xiaoXian.asOf.slice(0, 4)) - xiaoXian.nominalAge! + 1;
   }
   return null;
 }
 
-function buildZiweiPeriods(ziweiResult: SystemResult, birthYear: number | null): Period[] {
+function buildZiweiPeriods(ziweiResult: EvolutionEngine, birthYear: number | null): Period[] {
   const palaces = findComponents(ziweiResult, 'palaces');
   if (palaces.length === 0 || birthYear == null) return [];
 
   const daXianSteps = findComponents(ziweiResult, 'daXian')
-    .map((c) => c.value)
+    .map((c) => c.value as DaXianRead)
     .filter((v) => v && Array.isArray(v.range))
     .sort((a, b) => a.range[0] - b.range[0]);
 
@@ -283,7 +302,7 @@ export class EvolutionCalculator {
    * @param systemResults - Engine outputs from analyze()
    * @param options.asOf - (default null) 評估基準日（僅用於敘事中標註當前時期）
    */
-  static calculate(systemResults: SystemResult[], { asOf = null }: { asOf?: string | null } = {}): { periods: Period[]; narrative: string } {
+  static calculate(systemResults: EvolutionEngine[], { asOf = null }: { asOf?: string | null } = {}): { periods: Period[]; narrative: string } {
     const results = Array.isArray(systemResults) ? systemResults : [];
     const byEngine = new Map(results.map((result) => [result?.engineId, result]));
     const bazi = byEngine.get('bazi') ?? null;
