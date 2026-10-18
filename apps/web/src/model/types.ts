@@ -6,7 +6,7 @@
  * Every v4/v5 field is optional so older reports still type-check and render.
  */
 
-import type { ConsensusSummary, Signal, Timeline, TimeAccuracy } from '@fortune/core';
+import type { ConsensusSummary, Signal, SystemResult, Timeline, TimeAccuracy } from '@fortune/core';
 
 export type { ConsensusSummary, Signal, Timeline, TimeAccuracy };
 
@@ -49,7 +49,8 @@ export interface EngineResult {
   engineId: string;
   engineName: string;
   components: Component[];
-  meta: Record<string, any>;
+  /** Same opaque metadata boundary as core; consumers select their engine's contract. */
+  meta: SystemResult['meta'];
   errors: string[];
 }
 
