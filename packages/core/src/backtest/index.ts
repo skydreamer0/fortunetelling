@@ -9,3 +9,7 @@ export type { BacktestDomainScores, BacktestYearCell, BacktestTimeline, Backtest
 export * from './runBacktest';
 export * from './proposeWeights';
 export { hashString, mulberry32, seededShuffle } from './prng';
+// Explicit research-only v2 APIs; legacy validators/runners do not upgrade inputs.
+export { readLifeObservationV2, migrateLifeEventV1, restoreLifeEventV1 } from './observationsV2';
+export type { LifeObservationV2, ObservationStatus, ObservationLabel, ObservationJsonValue } from './observationsV2';
+export * from './observationDataset';
