@@ -6,6 +6,7 @@ import { release } from 'node:os';
 import { join, resolve } from 'node:path';
 import { natalCases } from '../../packages/core/tests/fixtures/natalCalendarCases';
 import { verifySummary, runTests } from './pipeline';
+import { sourceIdentity, type SourceIdentity, type SelectedArtifact } from './native-artifacts';
 
 export const runners = { 'ubuntu-24.04': 'linux', 'windows-2022': 'win32', 'macos-15-intel': 'darwin' } as const;
 export const zones = ['UTC', 'Asia/Taipei', 'America/New_York', 'Pacific/Apia'];
@@ -33,16 +34,16 @@ export function strictSummary(output: string): void {
   const report = verifySummary(output, 2);
   if (report.numPassedTests !== 12) throw new Error('Native calendar requires exactly 12 passing tests and no skipped/todo tests');
 }
-export interface Manifest {
+export interface Manifest extends SourceIdentity {
   schema: number; status: string; runner: string; platform: string; arch: string;
   sha: string; tree: string; runId: string; attempt: string;
   node: string; v8: string; lock: string;
   evidence: Record<string, { bytes: number; sha256: string }>;
 }
-export function validateManifest(value: Manifest, runner: string, expected: { sha: string; tree: string; runId: string; attempt: string }): void {
+export function validateManifest(value: Manifest, runner: string, expected: SourceIdentity & { sha: string; tree: string; runId: string; attempt: string }): void {
   requireEqual([value.schema, value.status, value.runner, value.platform, value.arch],
-    [1, 'PASS', runner, runners[runner as keyof typeof runners], 'x64'], `${runner} status/native OS`);
-  for (const key of ['sha', 'tree', 'runId', 'attempt'] as const) requireEqual(value[key], expected[key], `${runner} ${key}`);
+    [2, 'PASS', runner, runners[runner as keyof typeof runners], 'x64'], `${runner} status/native OS`);
+  for (const key of ['sha', 'tree', 'runId', 'attempt', 'repository', 'workflow', 'headSha', 'baseSha'] as const) requireEqual(value[key], expected[key], `${runner} ${key}`);
   if (!/^[a-f0-9]{40}$/.test(value.sha) || !/^[a-f0-9]{40}$/.test(value.tree) || !/^[1-9]\d*$/.test(value.runId) || !/^[1-9]\d*$/.test(value.attempt)) throw new Error('Invalid source/run provenance');
   if (value.node !== '24.19.0' || !value.v8 || !/^[a-f0-9]{64}$/.test(value.lock)) throw new Error('Missing pinned runtime/lock provenance');
   requireEqual(Object.keys(value.evidence).sort(), [...evidenceFiles].sort(), 'Evidence files');
@@ -94,12 +95,12 @@ export function compareBytes(reference: string, candidate: string, label: string
 }
 export async function main(command: string, directory: string, runner?: string): Promise<void> {
   directory = resolve(directory);
-  const expected = { sha: git('rev-parse', 'HEAD').trim(), tree: git('rev-parse', 'HEAD^{tree}').trim(), runId: process.env.GITHUB_RUN_ID ?? '', attempt: process.env.GITHUB_RUN_ATTEMPT ?? '' };
+  const expected = { ...sourceIdentity(process.env, JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH ?? '', 'utf8'))), sha: git('rev-parse', 'HEAD').trim(), tree: git('rev-parse', 'HEAD^{tree}').trim(), runId: process.env.GITHUB_RUN_ID ?? '', attempt: process.env.GITHUB_RUN_ATTEMPT ?? '' };
   if (expected.sha !== process.env.GITHUB_SHA) throw new Error('Checkout must match the exact workflow SHA');
   if (command === 'run') {
     if (!runner || !(runner in runners)) throw new Error('Unknown native runner');
     mkdirSync(directory, { recursive: true });
-    const manifest: Manifest & Record<string, unknown> = { schema: 1, status: 'NOT RUN', runner, platform: process.platform, arch: process.arch,
+    const manifest: Manifest & Record<string, unknown> = { schema: 2, status: 'NOT RUN', runner, platform: process.platform, arch: process.arch,
       ...expected, node: process.versions.node, v8: process.versions.v8, lock: lockIdentity(git('show', 'HEAD:package-lock.json'), readFileSync('package-lock.json', 'utf8')), evidence: {},
       osRelease: release(), imageOS: process.env.ImageOS, imageVersion: process.env.ImageVersion,
       versions: process.versions, files, testCount: 12, fixtures: natalCases, zones,
@@ -118,13 +119,21 @@ export async function main(command: string, directory: string, runner?: string):
     } catch (error) { manifest.status = 'FAIL'; manifest.error = String(error); save(); throw error; }
   } else if (command === 'compare') {
     const names = Object.keys(runners);
-    requireEqual(readdirSync(directory).sort(), names.map(name => `native-calendar-${name}-${expected.attempt}`).sort(), 'Native artifact inventory');
+    const selection = JSON.parse(readFileSync('native-artifact-selection.json', 'utf8')) as { context: SourceIdentity & { runId: string; attempt: string }; selected: SelectedArtifact[] };
+    const { sha: _sha, tree: _tree, ...context } = expected;
+    requireEqual(selection.context, context, 'Selected source context');
+    requireEqual(selection.selected.map(row => row.runner), names, 'Selected native OS inventory');
+    for (const row of selection.selected) {
+      if (!/^[1-9]\d*$/.test(row.attempt) || Number(row.attempt) > Number(expected.attempt) || row.name !== `native-calendar-${row.runner}-${row.attempt}` || !Number.isSafeInteger(row.id) || row.id <= 0) throw new Error('Invalid selected artifact');
+    }
+    requireEqual(readdirSync(directory).sort(), selection.selected.map(row => row.name).sort(), 'Native artifact inventory');
     let reference: { manifest: Manifest; bytes: string[] } | undefined;
     const report: string[] = [];
     for (const name of names) {
-      const path = join(directory, `native-calendar-${name}-${expected.attempt}`);
+      const selected = selection.selected.find(row => row.runner === name)!;
+      const path = join(directory, selected.name);
       const manifest = JSON.parse(readEvidence(path, 'manifest.json')) as Manifest;
-      validateManifest(manifest, name, expected);
+      validateManifest(manifest, name, { ...expected, attempt: selected.attempt });
       const bytes = evidenceFiles.map(file => {
         const value = readEvidence(path, file);
         requireEqual({ bytes: Buffer.byteLength(value), sha256: hash(value) }, manifest.evidence[file], `${name}/${file} integrity`);
