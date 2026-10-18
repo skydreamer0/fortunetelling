@@ -194,7 +194,7 @@ export const questionTools = [
       const caveats = caveatsFor(analysis, sel);
       if (!getQuestionCategory(category)) {
         const answer = answerQuestion({ category, range }, () => []);
-        return ok({ asOf, caveats, data: { ...compactAnswer(answer), unsupported: true as const,
+        return ok({ calculation: analysis.calculation, asOf, caveats, data: { ...compactAnswer(answer), unsupported: true as const,
           questionContext: { category, range, ...(systems ? { systems } : {}), ...(verifiedOnly !== undefined ? { verifiedOnly } : {}) },
           categoryResolvedFrom, rangeResolvedFrom, ...systemsFields(sel), ...(detail ? { conventions: answer.conventions } : { conventionsOmitted: true as const }), availableCategories } });
       }
@@ -226,7 +226,7 @@ export const questionTools = [
         experimentalSensitivity: sensitivity ? sensitivityOut(sensitivity) : null,
       };
       const body = detail ? slimAnswer(answer, true, analysis.shortIds) : compactAnswer(answer, analysis.shortIds);
-      return ok({ asOf, caveats, data: { ...body, ...extra } });
+      return ok({ calculation: analysis.calculation, asOf, caveats, data: { ...body, ...extra } });
     },
   }),
   defineTool({

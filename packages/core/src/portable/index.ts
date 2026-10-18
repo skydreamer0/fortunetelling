@@ -7,10 +7,12 @@ export {
   PROFILE_ID_RE,
   isValidProfileId,
   chartFingerprint,
-  createProfileFile,
+  createProfileFile, createProfileFileV2, migrateProfileFile, profileSettings, validateProfileSettings, DEFAULT_PROFILE_SETTINGS,
   serializeProfileFile,
   parseProfileFile,
 } from './profileFile';
-export type { ProfileFileV1, ParseProfileFileResult } from './profileFile';
+export type { ProfileFileV1, ProfileFileV2, ProfileFile, ProfileCalculationSettings, ParseProfileFileResult } from './profileFile';
 export { buildVersionInfo, EXPERIMENTAL_SYSTEMS } from './versions';
 export type { VersionInfo, EphemerisState } from './versions';
+
+export { createProfileCalculation, profileAnalyzeInput, analyzeProfileFile } from './profileCalculation';

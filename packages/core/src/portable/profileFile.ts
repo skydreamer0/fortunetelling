@@ -14,7 +14,7 @@ import { fnv1a64Hex } from '../signals/signalId';
 import { canonicalStringify } from './canonical';
 
 export const PROFILE_FILE_FORMAT = 'fortune.profile' as const;
-export const PROFILE_SCHEMA_VERSION = 1 as const;
+export const PROFILE_SCHEMA_VERSION = 2 as const;
 export const PROFILE_FILE_EXTENSION = '.fortune.json';
 
 /** Lowercase letters, digits, `-` and `_`; 1–32 chars; starts with a letter or digit. */
@@ -22,14 +22,66 @@ export const PROFILE_ID_RE = /^[a-z0-9][a-z0-9_-]{0,31}$/;
 
 export type ProfileFileV1 = {
   format: typeof PROFILE_FILE_FORMAT;
-  schemaVersion: typeof PROFILE_SCHEMA_VERSION;
+  schemaVersion: 1;
   profileId: string;
   chartFingerprint: string;
   profile: BirthProfile;
 };
 
+/** Version 2 records the two supported portable time choices explicitly. */
+export type ProfileCalculationSettings = Readonly<{
+  useTrueSolarTime: boolean;
+  ziHourConvention: 'late' | 'early';
+}>;
+export type ProfileFileV2 = Omit<ProfileFileV1, 'schemaVersion'> & {
+  schemaVersion: 2;
+  settings: ProfileCalculationSettings;
+};
+export type ProfileFile = ProfileFileV1 | ProfileFileV2;
+export const DEFAULT_PROFILE_SETTINGS: ProfileCalculationSettings = Object.freeze({
+  useTrueSolarTime: true, ziHourConvention: 'late',
+});
+
+export function validateProfileSettings(value: unknown): ProfileCalculationSettings {
+  if (!value || typeof value !== 'object' || Array.isArray(value) ||
+      (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) ||
+      !Object.hasOwn(value, 'useTrueSolarTime') || !Object.hasOwn(value, 'ziHourConvention') ||
+      Reflect.ownKeys(value).some(key => key !== 'useTrueSolarTime' && key !== 'ziHourConvention')) {
+    throw new Error('settings must contain exactly useTrueSolarTime and ziHourConvention');
+  }
+  const clock = Object.getOwnPropertyDescriptor(value, 'useTrueSolarTime')!;
+  const convention = Object.getOwnPropertyDescriptor(value, 'ziHourConvention')!;
+  if (!('value' in clock) || !('value' in convention)) throw new Error('settings must be plain data, not accessors');
+  const useTrueSolarTime: unknown = clock.value;
+  const ziHourConvention: unknown = convention.value;
+  if (typeof useTrueSolarTime !== 'boolean' || (ziHourConvention !== 'late' && ziHourConvention !== 'early')) {
+    throw new Error("settings require boolean useTrueSolarTime and ziHourConvention 'late' or 'early'");
+  }
+  return Object.freeze({ useTrueSolarTime, ziHourConvention });
+}
+
+/** v1 remains readable without rewriting it; the provenance is explicit to consumers. */
+export function profileSettings(file: ProfileFile) {
+  if (file.schemaVersion !== 1 && file.schemaVersion !== 2) throw new Error('Unsupported profile schemaVersion');
+  return Object.freeze({
+    source: file.schemaVersion === 1 ? 'profile-v1-defaults' as const : 'profile-v2-explicit' as const,
+    settings: file.schemaVersion === 1 ? DEFAULT_PROFILE_SETTINGS : validateProfileSettings(file.settings),
+  });
+}
+
+export function createProfileFileV2(profileId: string, profile: unknown, settings: ProfileCalculationSettings): ProfileFileV2 {
+  return { ...createProfileFile(profileId, profile), schemaVersion: 2, settings: validateProfileSettings(settings) };
+}
+
+/** Explicit migration, never an in-place rewrite or historical snapshot migration. */
+export function migrateProfileFile(file: ProfileFile): ProfileFileV2 {
+  const parsed = parseProfileFile(file);
+  if (!parsed.ok) throw new Error(`invalid profile: ${parsed.errors.join('; ')}`);
+  return createProfileFileV2(parsed.file.profileId, parsed.file.profile, profileSettings(parsed.file).settings);
+}
+
 export type ParseProfileFileResult =
-  | { ok: true; file: ProfileFileV1; warnings: string[] }
+  | { ok: true; file: ProfileFile; warnings: string[] }
   | { ok: false; errors: string[] };
 
 export function isValidProfileId(id: unknown): id is string {
@@ -62,7 +114,7 @@ export function createProfileFile(profileId: string, profile: unknown): ProfileF
   if (!checked.ok) throw new Error(`invalid profile: ${checked.errors.join('; ')}`);
   return {
     format: PROFILE_FILE_FORMAT,
-    schemaVersion: PROFILE_SCHEMA_VERSION,
+    schemaVersion: 1,
     profileId,
     chartFingerprint: chartFingerprint(checked.profile),
     profile: checked.profile,
@@ -70,7 +122,7 @@ export function createProfileFile(profileId: string, profile: unknown): ProfileF
 }
 
 /** Canonical text of a profile file (what the web downloads and the MCP reads). */
-export function serializeProfileFile(file: ProfileFileV1): string {
+export function serializeProfileFile(file: ProfileFile): string {
   return `${canonicalStringify(file)}\n`;
 }
 
@@ -92,10 +144,17 @@ export function parseProfileFile(input: unknown): ParseProfileFileResult {
 
   const errors: string[] = [];
   if (obj.format !== PROFILE_FILE_FORMAT) errors.push(`format must be '${PROFILE_FILE_FORMAT}'`);
-  if (obj.schemaVersion !== PROFILE_SCHEMA_VERSION) {
+  if (obj.schemaVersion !== 1 && obj.schemaVersion !== 2) {
     errors.push(`unsupported schemaVersion ${JSON.stringify(obj.schemaVersion)} (this build reads ${PROFILE_SCHEMA_VERSION})`);
   }
   if (!isValidProfileId(obj.profileId)) errors.push(`profileId must match ${PROFILE_ID_RE}`);
+  let settings: ProfileCalculationSettings | undefined;
+  if (obj.schemaVersion === 2) {
+    try { settings = validateProfileSettings(obj.settings); }
+    catch (error) { errors.push(error instanceof Error ? error.message : 'invalid settings'); }
+  } else if (Object.hasOwn(obj, 'settings')) {
+    errors.push('Profile v1 cannot carry settings; use schemaVersion 2');
+  }
   const checked = validateBirthProfile(obj.profile);
   if (!checked.ok) errors.push(...checked.errors.map(e => `profile: ${e}`));
   if (errors.length > 0 || !checked.ok) return { ok: false, errors };
@@ -107,15 +166,47 @@ export function parseProfileFile(input: unknown): ParseProfileFileResult {
   } else if (obj.chartFingerprint !== fingerprint) {
     warnings.push(`chartFingerprint did not match the profile (file ${JSON.stringify(obj.chartFingerprint)}); recomputed as ${fingerprint}`);
   }
-  return {
-    ok: true,
-    warnings,
-    file: {
-      format: PROFILE_FILE_FORMAT,
-      schemaVersion: PROFILE_SCHEMA_VERSION,
-      profileId: obj.profileId as string,
-      chartFingerprint: fingerprint,
-      profile: checked.profile,
-    },
+  const common = {
+    format: PROFILE_FILE_FORMAT,
+    profileId: obj.profileId as string,
+    chartFingerprint: fingerprint,
+    profile: checked.profile,
   };
+  const file: ProfileFile = obj.schemaVersion === 2 && settings
+    ? { ...common, schemaVersion: 2, settings }
+    : { ...common, schemaVersion: 1 };
+  return { ok: true, warnings, file };
+}
+
+/** Internal ownership boundary for new calculation/export APIs, not a change to legacy parsing. */
+export function ownProfileFile(value: unknown): ProfileFile {
+  const ancestors = new Set<object>();
+  function copy(item: unknown): unknown {
+    if (item === null || typeof item === 'string' || typeof item === 'boolean') return item;
+    if (typeof item === 'number' && Number.isFinite(item)) return item;
+    if (typeof item !== 'object' || item === null) throw new Error('Profile calculation requires plain JSON data');
+    if (ancestors.has(item)) throw new Error('Profile calculation rejects cyclic data');
+    if (Object.getPrototypeOf(item) !== Object.prototype && Object.getPrototypeOf(item) !== null && !Array.isArray(item)) {
+      throw new Error('Profile calculation requires plain own data');
+    }
+    ancestors.add(item);
+    const out: Record<string, unknown> | unknown[] = Array.isArray(item) ? [] : {};
+    for (const key of Reflect.ownKeys(item)) {
+      if (Array.isArray(item) && key === 'length') continue;
+      const descriptor = Object.getOwnPropertyDescriptor(item, key)!;
+      if (typeof key !== 'string' || !descriptor.enumerable || !('value' in descriptor)) {
+        throw new Error('Profile calculation rejects accessors and hidden data');
+      }
+      if (Array.isArray(item) && (!/^(0|[1-9]\d*)$/.test(key) || Number(key) >= item.length)) {
+        throw new Error('Profile calculation requires plain JSON arrays');
+      }
+      Object.defineProperty(out, key, { value: copy(descriptor.value), enumerable: true, writable: true, configurable: true });
+    }
+    if (Array.isArray(item) && Object.keys(out).length !== item.length) throw new Error('Profile calculation rejects sparse arrays');
+    ancestors.delete(item);
+    return out;
+  }
+  const parsed = parseProfileFile(copy(value));
+  if (!parsed.ok) throw new Error(`invalid profile: ${parsed.errors.join('; ')}`);
+  return parsed.file;
 }

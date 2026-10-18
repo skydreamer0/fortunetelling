@@ -226,7 +226,7 @@ export const signalTools = [
         .sort((x, y) => y.intensity - x.intensity || cmp(x.id, y.id));
       const page = rows.slice(offset, offset + limit);
       const next = offset + limit < rows.length ? encodeCursor(offset + limit) : null;
-      return ok({ asOf: analysis.asOf, data: { signals: page.map(x => slim(x, analysis.shortIds)), nextCursor: next, total: rows.length }, caveats: caveatsFor(analysis) });
+      return ok({ calculation: analysis.calculation, asOf: analysis.asOf, data: { signals: page.map(x => slim(x, analysis.shortIds)), nextCursor: next, total: rows.length }, caveats: caveatsFor(analysis) });
     },
   }),
   defineTool({
@@ -245,7 +245,7 @@ export const signalTools = [
       if (!('signal' in r)) {
         throw new ToolError('unknown_signal', `No signal '${args.signalId}' for this profile and asOf`, r.status === 'invalid' ? "Ids look like 'sig_' + 8 to 16 hex digits (short id or full id); use list_signals to find valid ids." : 'Use list_signals to find valid ids; ids depend on profile and asOf.');
       }
-      return ok({ asOf: analysis.asOf, data: { signal: r.signal, shortId: analysis.shortIds([r.signal.id])[0] }, caveats: caveatsFor(analysis) });
+      return ok({ calculation: analysis.calculation, asOf: analysis.asOf, data: { signal: r.signal, shortId: analysis.shortIds([r.signal.id])[0] }, caveats: caveatsFor(analysis) });
     },
   }),
   defineTool({
@@ -312,7 +312,7 @@ export const signalTools = [
       const yearsOut = args.detail
         ? { yearsFormat: 'cells' as const, years: yearCells.map(c => slimCell(c, args.domain, args.detail, sh)) }
         : { yearsFormat: 'table' as const, yearTable: yearTable(yearCells, args.domain, sh) };
-      return ok({
+      return ok({ calculation: analysis.calculation,
         asOf: analysis.asOf,
         data: { systems: tl.systems, skippedSystems: tl.skippedSystems, thresholds: tl.thresholds,
           agreementSemantics: 'nonexperimental-directional-v1', ...systemsFields(sel), ...yearsOut, ...monthsOut, monthsRange: args.months ?? null },
@@ -339,7 +339,7 @@ export const signalTools = [
       }));
       const agreements = filterYears(c.headlines.agreements, args.range).map(a => agreementOut(a, args.detail, sh));
       const conflictCount = filterYears(c.headlines.conflicts, args.range).length;
-      return ok({
+      return ok({ calculation: analysis.calculation,
         asOf: analysis.asOf,
         data: {
           systems: c.systems,
@@ -365,7 +365,7 @@ export const signalTools = [
     async handler(args, { analyzer }) {
       const analysis = await analyzer.get(args.profileId, args.asOf);
       const conflicts = filterYears(analysis.consensus.headlines.conflicts, args.range).map(c => conflictOut(c, analysis.shortIds));
-      return ok({ asOf: analysis.asOf, data: { conflicts, total: conflicts.length }, caveats: caveatsFor(analysis) });
+      return ok({ calculation: analysis.calculation, asOf: analysis.asOf, data: { conflicts, total: conflicts.length }, caveats: caveatsFor(analysis) });
     },
   }),
 ];

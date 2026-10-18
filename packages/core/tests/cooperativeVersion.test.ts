@@ -19,6 +19,8 @@ test('0.9.0 retains existing runtime exports and explicitly lists additive APIs'
     'ziweiDecadeNativePeriod', 'ziweiYearlyNativePeriod', 'ziweiMonthlyNativePeriod',
     // #56: source adapters only; preserve the historical inventory and exact set.
     'baziAnnualNativePeriod', 'baziMonthlyNativePeriod', 'baziLuckCycleNativePeriod',
+    'createProfileFileV2', 'migrateProfileFile', 'profileSettings', 'validateProfileSettings',
+    'DEFAULT_PROFILE_SETTINGS', 'createProfileCalculation', 'profileAnalyzeInput', 'analyzeProfileFile',
     // #15/#59/#60: explicit opt-in observation APIs; retain the historical inventory.
     'OBSERVATION_SPLITS', 'auditObservationDataset', 'countObservationUnits',
     'migrateLifeEventV1', 'readLifeObservationV2', 'restoreLifeEventV1'].sort());
@@ -29,10 +31,10 @@ test('0.9.0 retains existing runtime exports and explicitly lists additive APIs'
 });
 
 test('0.9.1 retains the CalculationSpec core-only version delta and its derived hash', () => {
-  expect(VERSION).toBe('0.9.1'); expect(REPORT_SCHEMA_VERSION).toBe(7);
+  expect(VERSION).toBe('0.10.0'); expect(REPORT_SCHEMA_VERSION).toBe(7);
   const current = createCalculationSpec(old.input as Parameters<typeof createCalculationSpec>[0]);
   const expectedIdentity = structuredClone(old.spec.identity);
-  expectedIdentity.versions.core = '0.9.1'; // Explicit new expected value, not removed from comparison.
+  expectedIdentity.versions.core = '0.10.0'; // Explicit new expected value, not removed from comparison.
   expect(current.identity).toEqual(expectedIdentity as any);
   expect(current.source as unknown).toEqual(old.spec.source);
   expect(old.spec.schemaVersion).toBe(current.schemaVersion);
@@ -43,9 +45,9 @@ test('0.9.1 retains the CalculationSpec core-only version delta and its derived 
     birthplace: old.input.birthplace })).toBe(old.profileFingerprint);
 });
 
-test('MCP version-hash input has an explicit core-only release delta; no schema/catalog/calculator changes', () => {
+test('MCP version-hash input has an explicit explicit core and Profile2 delta; no report/catalog/calculator changes', () => {
   const current = buildVersionInfo({ asOf: old.versions.asOf, ephemeris: 'not_initialized' });
-  expect(current as unknown).toEqual({ ...old.versions, coreVersion: '0.9.1' });
+  expect(current as unknown).toEqual({ ...old.versions, coreVersion: '0.10.0', profileSchemaVersion: 2 });
   const hash = (versions: typeof current) => {
     const { asOf: _asOf, ...rest } = versions;
     return createHash('sha256').update(canonicalStringify(rest)).digest('hex').slice(0, 12);

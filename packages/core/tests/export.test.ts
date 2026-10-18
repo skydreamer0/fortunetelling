@@ -1,3 +1,4 @@
+import settingsDelta from './fixtures/export.v0.10.0.delta.json';
 import { createHash } from 'node:crypto';
 import countOnlyDelta from './fixtures/export.v0.9.1.delta.json';
 import cooperativeDelta from './fixtures/export.v0.9.0.delta.json';
@@ -81,13 +82,13 @@ describe('buildExportBundle', () => {
   test('manifest 版本欄位齊全', async () => {
     const { manifest } = await buildExportBundle(file, { preset: 'local-full', asOf: ASOF });
     expect(manifest.format).toBe('fortune.export');
-    expect(manifest.exportSchemaVersion).toBe(1);
+    expect(manifest.exportSchemaVersion).toBe(2);
     expect(manifest.asOf).toBe(ASOF);
     expect(manifest.redacted).toBe(false);
     expect(manifest.chartFingerprint).toBe(file.chartFingerprint);
     const v = manifest.versions;
     expect(v.coreVersion).toBeTruthy();
-    expect(v.profileSchemaVersion).toBe(1);
+    expect(v.profileSchemaVersion).toBe(2);
     expect(Object.keys(v.catalogs).length).toBeGreaterThan(0);
     expect(Object.keys(v.calculators).length).toBe(7);
     expect(manifest.ephemeris.mode).toBe('moshier');
@@ -131,7 +132,7 @@ describe('golden', () => {
     const recorded = JSON.parse(original);
     expect(recorded.versions.coreVersion).toBe('0.5.0');
     recorded.versions.coreVersion = '0.5.3';
-    for (const change of [...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes, ...calendarValidationDelta.changes, ...dateOnlyDelta.changes, ...abstentionDelta.changes, ...requiredOptionsDelta.changes, ...cooperativeDelta.changes, ...countOnlyDelta.changes]) {
+    for (const change of [...agreementDelta.changes, ...evidenceDelta.changes, ...asOfDelta.changes, ...calendarValidationDelta.changes, ...dateOnlyDelta.changes, ...abstentionDelta.changes, ...requiredOptionsDelta.changes, ...cooperativeDelta.changes, ...countOnlyDelta.changes, ...settingsDelta.changes]) {
       let parent = recorded;
       for (const key of change.path.slice(0, -1)) {
         expect(parent[key]).toBeDefined();

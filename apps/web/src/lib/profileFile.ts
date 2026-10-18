@@ -5,8 +5,8 @@
  */
 
 import {
-  PROFILE_FILE_EXTENSION, chartFingerprint, createProfileFile, isValidProfileId, serializeProfileFile,
-  type BirthProfile,
+  PROFILE_FILE_EXTENSION, chartFingerprint, createProfileFile, createProfileFileV2, isValidProfileId, serializeProfileFile,
+  validateProfileSettings, type BirthProfile,
 } from './core';
 import type { Report } from '../model/types';
 
@@ -62,7 +62,14 @@ export function buildProfileDownload(report: ProfileSource, profileId: string): 
   const error = profileIdError(profileId);
   if (error) return { ok: false, error };
   try {
-    const file = createProfileFile(profileId, profileOfReport(report));
+    const conventions = report.timeContext?.conventions;
+    // A legacy report without recorded settings remains v1; never invent its choices.
+    const file = conventions === undefined
+      ? createProfileFile(profileId, profileOfReport(report))
+      : createProfileFileV2(profileId, profileOfReport(report), validateProfileSettings({
+          useTrueSolarTime: conventions && typeof conventions === 'object' && 'useTrueSolarTime' in conventions ? conventions.useTrueSolarTime : undefined,
+          ziHourConvention: conventions && typeof conventions === 'object' && 'ziHourConvention' in conventions ? conventions.ziHourConvention : undefined,
+        }));
     return {
       ok: true,
       filename: `${profileId}${PROFILE_FILE_EXTENSION}`,

@@ -58,6 +58,9 @@ function assertBaselineAttribution(json: any) {
 function stripNew(json: any) {
   const copy = JSON.parse(JSON.stringify(json));
   for (const k of NEW_FIELDS) delete copy.data[k];
+  // Profile2's additive envelope is separately checked byte-for-byte by currentResponseContract.
+  // This historical projection intentionally retains its original, narrower baseline semantics.
+  delete copy.calculation;
   copy.caveats = copy.caveats.filter((c: any) => c.code !== 'experimental_sensitive');
   return copy;
 }
@@ -235,11 +238,16 @@ describe('answer_question 精簡回傳', () => {
     expect(json.data.ranking).toEqual(JSON.parse(JSON.stringify(direct.ranking)));
   }, 120_000);
 
-  test('典型 12 個月回應 < 4 KB（每個類別）', async () => {
+  test('典型 12 個月原回應 < 4 KB，加上有界 calculation metadata < 320 bytes（每個類別）', async () => {
     for (const c of listQuestionCategories()) {
       const { text, isError } = await fx.call('answer_question', { profileId: 'sky', category: c.id, range: RANGE, asOf: ASOF });
       expect(isError).toBe(false);
-      expect(Buffer.byteLength(text, 'utf8')).toBeLessThan(4096);
+      const response = JSON.parse(text);
+      const { calculation, ...legacyPayload } = response;
+      expect(calculation).toEqual((await fx.ctx.analyzer.get('sky', ASOF)).calculation);
+      expect(Buffer.byteLength(JSON.stringify(legacyPayload), 'utf8')).toBeLessThan(4096);
+      expect(Buffer.byteLength(JSON.stringify(calculation), 'utf8')).toBeLessThan(300);
+      expect(Buffer.byteLength(text, 'utf8')).toBeLessThan(4416);
     }
     const full = (await aq({ detail: true })).text;
     console.log('answer_question bytes: compact', Buffer.byteLength((await aq()).text), 'detail', Buffer.byteLength(full));

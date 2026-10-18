@@ -31,7 +31,7 @@ export type { SignalIdResolution } from '@fortune/core';
 
 // M4-02: `.fortune.json` profile file (shared with the local MCP server).
 export {
-  PROFILE_FILE_EXTENSION, PROFILE_ID_RE, chartFingerprint, createProfileFile, isValidProfileId, serializeProfileFile,
+  PROFILE_FILE_EXTENSION, PROFILE_ID_RE, chartFingerprint, createProfileFile, createProfileFileV2, validateProfileSettings, isValidProfileId, serializeProfileFile,
 } from '@fortune/core';
 export type { BirthProfile } from '@fortune/core';
 

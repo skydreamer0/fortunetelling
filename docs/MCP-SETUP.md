@@ -93,7 +93,7 @@ npm run add-profile --workspace @fortune/mcp -- sky \
 
 - `get_timeline` 預設把年度區塊改成精簡表（`yearsFormat: "table"`，欄位在 `yearTable.columns`）：每年每領域一列 `[year, domain, score, band, consensus, highConsensus, hasConflict, systems, topSignalIds, topSignalIdsTotal]`。`systems` 是該領域有訊號的系統（各系統分數與筆數需要 `detail: true`），`topSignalIds` 只列前 3 個短編號、`topSignalIdsTotal` 是完整筆數。sky 範例（`asOf` 2026-09-30）預設回應由約 21,000 字降到約 6,700 字。**行為變更**：舊的 `years[]` 巢狀 cell 現在要帶 `detail: true` 才會回（此時 `yearsFormat: "cells"`，含 `perSystem` 與完整 id 清單）；`months`、`domain`、`systems`、`verifiedOnly`、`monthsFormat`、`range` 語意不變。
 - `get_consensus` 很長的訊號清單（`signalIds`）預設只保留前 5 筆，旁邊的 `…Total` 欄位是完整筆數；`get_consensus` 因為編號縮短由約 4,300 字降到約 3,900 字，結構不變（年度 `highConsensus` 與 `headlines.agreements` 有重疊，但兩者用途不同，保留）。帶 `detail: true` 取得完整清單；單一訊號用 `get_signal`。逐月 cell／`monthTable` 的訊號清單同樣預設前 5 筆。
-- `answer_question` 預設是精簡版（典型 12 個月約 3.3～3.7 KB，目標 < 4 KB）：
+- `answer_question` 預設是精簡版（既有內容維持 < 4 KB；0.10.0 加上有界的 calculation 識別與設定來源，典型 12 個月全回應 < 4.4 KB）：
   - `top`：前 3 名，每名 `{ rank, month, score, band, highConsensus, domains, signalIds, oneLine }`。`domains` 是每個領域一行摘要（例：「財運 54.1：活躍61.1／支撐54.2／風險7／共識2」，數字取小數 1 位）；`signalIds` 最多 3 個（支撐最強 2 個＋風險最強 1 個，不足依序補），都能用 `get_signal` 查到；`oneLine` 是程式以固定模板產生的一句話理由（不經 LLM）。
   - `ranking`：每個月一列 `[月份, 分數, band]`（`rankingColumns` 說明欄位），不截斷。
   - `detail: true` 回完整結構（`domainScores`、`supportSignals`、`riskSignals`、全部 id、`conventions`）；排名與分數與精簡版完全相同。
@@ -169,3 +169,21 @@ Zod-validated heterogeneous tool dispatch, and the distinction between preserved
 historical digest comparisons and complete current synthetic-response contracts.
 The latter retain years, selection, sensitivity and unknown fields; neither kind
 of test demonstrates predictive validity or recovered historical full-payload replay.
+
+
+### Profile v2 與計算重播（core 0.10.0）
+
+網站下載的 `.fortune.json` 現在以 schemaVersion 2 保留已記錄的 `settings: { useTrueSolarTime, ziHourConvention }`。
+子時只接受 canonical `late`／`early`；紫微由 core 明確映射，未知欄位與漏值拒絕，不猜選項。
+Profile v1 繼續可讀且不會自動改寫；`createProfileFile` 仍產生 v1，新增 `createProfileFileV2` 和明確的 `migrateProfileFile`。
+v1 依歷史政策採 trueSolar／late，get_profile 的 calculationSettings 及分析回應的 calculation.settingsSource 明示 profile-v1-defaults。
+
+單一 profile 分析的 get_chart、get_timeline、get_consensus、訊號、answer_question 與 answer_check 回應帶 calculation。
+其 specHash／snapshotId 只識別 `analyze-sync-natal` 五套同步本命，excludedSystems 明列 jyotish／humanDesign。
+非預設 Profile2 設定用於主盤、時間軸與逐年問事訊號；不再只改時間軸卻讓 get_chart 偷用預設。
+非本命比較工具不冒用這份 identity。完整 identity 包含姓名依賴的生命靈數輸入；短 hash 不具匿名化或密碼學保證。
+快取每次仍先讀檔驗證，specHash 命中後再比完整來源、警告、asOf 和 calculation identity，保留 D-043 的世代擁有權。
+
+Export schema 2 的 manifest／chart.json 帶同一 scoped calculation，profile.json 保留 v1 或 v2 原版本與有效設定。
+分享去識別版本不輸出完整 snapshot／identity，但其 hash 仍可關聯，不能當匿名資料。
+這不是跨版本歷史報告重播，也不是 async 星曆快照、持久化資料庫或 Web 全入口 Report8 遷移。

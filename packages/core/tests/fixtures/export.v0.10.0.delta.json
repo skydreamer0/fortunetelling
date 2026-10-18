@@ -1,0 +1,32 @@
+{
+  "version": "0.10.0",
+  "issue": "https://github.com/skydreamer0/fortunetelling/issues/52",
+  "reason": "Core/Profile2 version metadata and chart.json scoped sync calculation envelope. Original export golden, profile/signals/timeline/consensus/readme hashes unchanged. Export2 manifest adds calculation; manifest is not hashed by itself.",
+  "changes": [
+    {
+      "path": [
+        "versions",
+        "coreVersion"
+      ],
+      "before": "0.9.1",
+      "after": "0.10.0"
+    },
+    {
+      "path": [
+        "versions",
+        "profileSchemaVersion"
+      ],
+      "before": 1,
+      "after": 2
+    },
+    {
+      "path": [
+        "files",
+        "chart.json",
+        "hash"
+      ],
+      "before": "836bc01639308290",
+      "after": "385e875b2a18ee16"
+    }
+  ]
+}

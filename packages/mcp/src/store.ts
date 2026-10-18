@@ -12,7 +12,7 @@ import {
   isValidProfileId,
   parseProfileFile,
   serializeProfileFile,
-  type ProfileFileV1,
+  type ProfileFile,
 } from '@fortune/core';
 import { ToolError } from './errors';
 
@@ -58,7 +58,7 @@ export class ProfileStore {
    * Write a profile file. Never replaces an existing profile unless `overwrite` is true
    * (`wx` flag, so a concurrent write cannot slip through). Returns the previous fingerprint when replaced.
    */
-  async put(file: ProfileFileV1, options: { overwrite?: boolean } = {}): Promise<{ replacedFingerprint: string | null }> {
+  async put(file: ProfileFile, options: { overwrite?: boolean } = {}): Promise<{ replacedFingerprint: string | null }> {
     if (!isValidProfileId(file.profileId)) {
       throw new ToolError('invalid_args', `profileId ${JSON.stringify(file.profileId)} is not a valid id`);
     }
@@ -88,7 +88,7 @@ export class ProfileStore {
     return { replacedFingerprint };
   }
 
-  async get(profileId: string): Promise<{ file: ProfileFileV1; warnings: string[] }> {
+  async get(profileId: string): Promise<{ file: ProfileFile; warnings: string[] }> {
     if (!isValidProfileId(profileId)) {
       throw new ToolError('invalid_args', `profileId ${JSON.stringify(profileId)} is not a valid id`, 'Use list_profiles to see valid ids.');
     }
