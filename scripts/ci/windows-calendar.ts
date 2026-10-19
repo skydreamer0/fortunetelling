@@ -8,7 +8,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const statePath = join(process.env.RUNNER_TEMP!, 'fortune-windows-calendar.json');
 const suites = [
-  ['baziNatalBasis', 14, '553dd05c7674419061462577fcd94a2cb147d2f7'],
+  // #156 reviewed producer-contract test adaptation; all 14 assertions retained.
+  ['baziNatalBasis', 14, 'f696529e3aee16995fb72c83451a6a9bf1a551bc'],
   ['calculationSpec', 19, 'dd86ed6ffe62e65f8788e00c8c3dd7f185add241'],
   ['calendarHostTimezone', 7, '0b32fe7783d65b8468de77a1d2dfa085a14c5a09'],
   ['dateOnlyCalendar', 8, '4f6548f1597bc8469adc4c57e81a135d57f65aec'],
