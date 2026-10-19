@@ -43,6 +43,10 @@ export {
 } from './engines/index';
 export type { DreamspellMetadata } from './engines/dreamspellTypes';
 export type { ZiweiMetadata } from './engines/ziweiTypes';
+// Producer views used by legacy Web projections; these are not runtime validators.
+export type { BaziComponent, BaziNatalValue, BaziTenGodsContextValue } from './engines/baziTypes';
+export type { SerializedStar, ZiweiPalaceValue, ZiweiDaXianValue, ZiweiSoulVsBodyValue, ZiweiSanFangSiZhengValue } from './engines/ziweiTypes';
+export type { MingGuaValue } from './engines/mingGuaTypes';
 
 // ── Analysis ──
 export { LayerClassifier } from './analysis/LayerClassifier';

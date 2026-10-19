@@ -1,3 +1,4 @@
+import type { BaziNatalValue } from '@fortune/core';
 /** 附 方法 — layers, honesty audit and calculation conventions, collapsed by default. */
 
 import { SYSTEM_NAMES } from '../../model/selectors';
@@ -7,7 +8,7 @@ import { Section } from '../ui/primitives';
 export function Method({ report }: { report: Report }) {
   const layers = report.layers;
   const bazi = report.engines.find(item => item.engineId === 'bazi');
-  const convention = bazi?.components.find(item => item.category === 'natal')?.value?.convention;
+  const convention = (bazi?.components.find(item => item.category === 'natal')?.value as BaziNatalValue | null | undefined)?.convention;
   return (
     <Section id="ch-method" index="附" title="方法" lede="報告怎麼算、用什麼語氣說話，以及目前的已知限制。">
       <div className="method">

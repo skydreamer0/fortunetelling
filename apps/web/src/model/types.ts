@@ -38,7 +38,7 @@ export interface BirthInput {
   timeAccuracy?: TimeAccuracy;
 }
 
-export interface Component<V = any> {
+export interface Component<V = unknown> {
   id: string;
   name: string;
   category: string;
