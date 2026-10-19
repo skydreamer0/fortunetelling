@@ -72,7 +72,7 @@ test('explicit clearProfile and clearAll remain destructive even with unknown ve
   expect(s.store.clearAll()).toBe(true);
   expect(s.values.has(LIFE_EVENTS_STORE_KEY)).toBe(false);
 });
-test('numeric 1, legacy migration, replace, and corrupt/missing storage retain v1 behavior', () => {
+test('numeric 1 and legacy migration remain supported; corrupt storage now fails closed', () => {
   const s = setup({ old: { events: [{ ...event, schemaVersion: 1 }] } });
   expect(s.store.hasUnsupportedVersion('old')).toBe(false);
   expect(s.store.migrate('old', 'new')).toBe(true);
@@ -84,8 +84,9 @@ test('numeric 1, legacy migration, replace, and corrupt/missing storage retain v
     s.values.set(LIFE_EVENTS_STORE_KEY, raw);
     expect(s.store.list('new')).toEqual([]);
     expect(s.store.hasUnsupportedVersion('new')).toBe(false);
-    expect(s.store.upsert('new', event)).toBe(true);
-    expect(s.store.list('new')).toEqual([event]);
+    expect(s.store.upsert('new', event)).toBe(false);
+    expect(s.values.get(LIFE_EVENTS_STORE_KEY)).toBe(raw);
+    expect(s.store.list('new')).toEqual([]);
   }
 });
 test('failed storage writes still return false, unsupported writes do not even invoke a throwing setter', () => {
@@ -111,4 +112,14 @@ test('panel visibly warns for unsupported current or legacy-key records; renderi
     expect(s.values.get(LIFE_EVENTS_STORE_KEY)).toBe(s.initial);
     expect(s.writes()).toBe(0);
   }
+});
+
+test('blocked automatic migration is visible and preserves both raw profiles', () => {
+  const report = analyze({ name: 'Synthetic migration', timeKnown: true, year: 1995, month: 7, day: 16, hour: 22, minute: 0, gender: 'male', calendarType: 'solar', cityId: 'tainan', timeAccuracy: 'exact' });
+  const old = legacyProfileKeyOf(report.input), current = profileKeyOf(report);
+  const s = setup({ [old]: { events: [event], metadata: { keep: 'source' } }, [current]: { events: [], metadata: { keep: 'target' } } });
+  const html = renderToStaticMarkup(<LifeEvents report={report} store={s.store} />);
+  expect(html).toContain('舊識別碼的事件尚未安全搬移');
+  expect(s.values.get(LIFE_EVENTS_STORE_KEY)).toBe(s.initial);
+  expect(s.writes()).toBe(0);
 });
