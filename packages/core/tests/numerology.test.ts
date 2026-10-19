@@ -1,3 +1,5 @@
+import { producerValue } from './helpers/producerComponents';
+import { producerCategory } from './helpers/producerComponents';
 /**
  * 黃金測試：生命靈數純函式（calculators/numerology）與 NumerologyEngine 新增部件。
  * 所有向量皆手算於註解中；凡涉及年份者皆顯式傳入（D-014）。
@@ -93,17 +95,17 @@ test('個人流年 2026–2028（1995-07-16）', () => {
 test('NumerologyEngine 新增部件（asOf 2026-07-11）', () => {
   const birth = new BirthData({ year: 1995, month: 7, day: 16, hour: 12, gender: 'male', name: 'Test Person' });
   const res = new NumerologyEngine({ asOf: '2026-07-11' }).run(birth);
-  expect(res.byCategory('birthdayNumber')[0].value).toEqual({ number: 7, isMaster: false });
-  expect(res.byCategory('attitude')[0].value).toEqual({ number: 5, isMaster: false });
-  expect(res.byCategory('pinnacles').map(c => c.id)).toEqual(['pinnacle_1', 'pinnacle_2', 'pinnacle_3', 'pinnacle_4']);
-  expect(res.byCategory('pinnacles').map(c => c.value.number)).toEqual([5, 4, 9, 4]);
-  expect(res.byCategory('challenges').map(c => c.value.number)).toEqual([0, 1, 1, 1]);
-  const py = res.byCategory('personalYears')[0].value;
+  expect(producerCategory(res, 'numerology', 'birthdayNumber')[0].value).toEqual({ number: 7, isMaster: false });
+  expect(producerCategory(res, 'numerology', 'attitude')[0].value).toEqual({ number: 5, isMaster: false });
+  expect(producerCategory(res, 'numerology', 'pinnacles').map(c => c.id)).toEqual(['pinnacle_1', 'pinnacle_2', 'pinnacle_3', 'pinnacle_4']);
+  expect(producerCategory(res, 'numerology', 'pinnacles').map(c => c.value.number)).toEqual([5, 4, 9, 4]);
+  expect(producerCategory(res, 'numerology', 'challenges').map(c => c.value.number)).toEqual([0, 1, 1, 1]);
+  const py = producerCategory(res, 'numerology', 'personalYears')[0].value;
   expect(py.fromYear).toBe(2026);
   expect(Object.keys(py.years)).toHaveLength(9);
   expect([py.years[2026], py.years[2027], py.years[2028]]).toEqual([6, 7, 8]);
   // consistent with the pre-existing single-year component
-  expect(res.byCategory('personalYear')[0].value).toEqual({ number: 6, year: 2026 });
+  expect(producerCategory(res, 'numerology', 'personalYear')[0].value).toEqual({ number: 6, year: 2026 });
   // pre-existing components come first, unchanged in order
   expect(res.components.slice(0, 7).map(c => c.id)).toEqual([
     'life_path', 'expression', 'soul_urge', 'personality', 'digit_frequency', 'personal_year', 'personal_month',
@@ -134,7 +136,7 @@ test('personal year/month use the UTC date of asOf, independent of host timezone
     { asOf: '2027-01-01' },
   );
   const numerology = report.engines.find((e: { engineId: string }) => e.engineId === 'numerology');
-  const value = (id: string) => numerology!.components.find((c: { id: string }) => c.id === id)!.value;
+  const value = <I extends 'personal_year' | 'personal_month' | 'personal_years'>(id: I) => producerValue(numerology!, 'numerology', id);
   expect(value('personal_year').year).toBe(2027);
   expect(value('personal_month')).toMatchObject({ year: 2027, month: 1 });
   expect(value('personal_years').fromYear).toBe(2027);

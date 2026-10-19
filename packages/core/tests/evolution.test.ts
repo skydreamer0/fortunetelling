@@ -1,3 +1,4 @@
+import { producerComponents, numericInputs } from './helpers/producerComponents';
 /**
  * D4 契約測試：EvolutionCalculator（區塊 H③ 時期演化）。
  */
@@ -24,7 +25,7 @@ function calculateFull() {
 
 test('periods 數量：bazi = 大運步數（10）、ziwei = 12 大限', () => {
   const { bazi, evolution } = calculateFull();
-  const daYunCount = bazi.components.filter(c => c.category === 'daYun').length;
+  const daYunCount = producerComponents(bazi, 'bazi').filter(c => c.category === 'daYun').length;
 
   assert.equal(evolution.periods.filter(p => p.system === 'bazi').length, daYunCount);
   assert.equal(daYunCount, 10);
@@ -66,14 +67,14 @@ test('每個 Period.radar 軸的 ruleId 可被 ScoringRules 解析、inputs 可�
       assert.ok(axis.assets.length > 0 && axis.liabilities.length > 0);
 
       if (period.system === 'bazi') {
-        const { natalCount, stemOverlay, branchOverlay, natalTotal, overlayTotal } = axis.inputs;
+        const { natalCount, stemOverlay, branchOverlay, natalTotal, overlayTotal } = numericInputs(axis.inputs, ['natalCount', 'stemOverlay', 'branchOverlay', 'natalTotal', 'overlayTotal']);
         const expected = Math.round(
           ((natalCount + stemOverlay + branchOverlay) / (natalTotal + overlayTotal)) * 100 * 100,
         ) / 100;
         assert.equal(axis.value, expected, `${period.label}/${axis.label} 軸值與公式重算不符`);
         assert.equal(overlayTotal, 5);
       } else {
-        const { mainStarBrightness, auxiliaryStarCount, fourTransformBonus } = axis.inputs;
+        const { mainStarBrightness, auxiliaryStarCount, fourTransformBonus } = numericInputs(axis.inputs, ['mainStarBrightness', 'auxiliaryStarCount', 'fourTransformBonus']);
         const expected = Math.round(
           (mainStarBrightness * 0.6 + Math.min(auxiliaryStarCount * 10, 100) * 0.2 + fourTransformBonus * 0.2) * 100,
         ) / 100;
@@ -91,18 +92,18 @@ test('每個 Period.radar 軸的 ruleId 可被 ScoringRules 解析、inputs 可�
 
 test('單調性 sanity：任一步大運疊加後，該干支對應五行的軸值 ≥ 本命同軸值', () => {
   const { bazi, evolution } = calculateFull();
-  const natal = bazi.components.find(c => c.category === 'elements')!.value;
-  const stemBranchElements: Record<string, string> = {
+  const natal = producerComponents(bazi, 'bazi').find(c => c.category === 'elements')!.value;
+  const stemBranchElements: Record<string, keyof typeof natal.counts> = {
     甲: '木', 乙: '木', 丙: '火', 丁: '火', 戊: '土', 己: '土', 庚: '金', 辛: '金', 壬: '水', 癸: '水',
     寅: '木', 卯: '木', 巳: '火', 午: '火', 辰: '土', 戌: '土', 丑: '土', 未: '土', 申: '金', 酉: '金', 亥: '水', 子: '水',
   };
   const daYunByIndex = new Map(
-    bazi.components.filter(c => c.category === 'daYun').map(c => [c.value.index, c.value]),
+    producerComponents(bazi, 'bazi').filter(c => c.category === 'daYun').map(c => [c.value.index, c.value]),
   );
 
   for (const period of evolution.periods.filter(p => p.system === 'bazi')) {
     const index = Number(period.radar.id.replace('bazi_element_balance_dayun_', ''));
-    const { ganZhi } = daYunByIndex.get(index);
+    const { ganZhi } = daYunByIndex.get(index)!;
     for (const char of ganZhi) {
       const element = stemBranchElements[char];
       const axis = period.radar.axes.find(a => a.label === element);
@@ -119,7 +120,7 @@ test('紫微：四化加成使用該大限 mutagen（至少一步的加成分佈
 
   // 生年四化的加成分佈（哪些宮拿到 100）
   const birthBonusByPalace = new Map();
-  for (const palace of ziwei.components.filter(c => c.category === 'palaces')) {
+  for (const palace of producerComponents(ziwei, 'ziwei').filter(c => c.category === 'palaces')) {
     const stars = [...palace.value.majorStars, ...palace.value.minorStars, ...(palace.value.adjectiveStars ?? [])];
     birthBonusByPalace.set(palace.value.name, stars.some(s => s.mutagen) ? 100 : 0);
   }

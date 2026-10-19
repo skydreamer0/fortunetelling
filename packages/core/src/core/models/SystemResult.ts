@@ -27,8 +27,8 @@ export interface Component {
   name: string;
   /** Classification key (maps to a layer rule) */
   category: string;
-  /** The payload (any shape the engine needs) */
-  value: any;
+  /** Opaque engine payload. Select the existing producer contract before reading fields. */
+  value: unknown;
   /** Optional engine-specific metadata; narrow its shape before reading fields. */
   meta?: unknown;
 }

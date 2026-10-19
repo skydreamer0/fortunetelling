@@ -1,3 +1,4 @@
+import { producerValue } from './helpers/producerComponents';
 /**
  * Report Schema v4（V1-14, D-032）：timeContext／signals／timeline 與
  * 八字／紫微改用 TimeContext 後的黃金行為變更。
@@ -27,7 +28,7 @@ const SLOW = { timeout: 60_000 };
 const engine = (report: Report, id: string) => report.engines.find(e => e.engineId === id)!;
 const comp = (report: Report, engineId: string, id: string) => engine(report, engineId).components.find(c => c.id === id)?.value;
 const natal = (report: Report) => {
-  const { convention: _c, ...p } = comp(report, 'bazi', 'natal');
+  const { convention: _c, ...p } = producerValue(engine(report, 'bazi'), 'bazi', 'natal');
   return p;
 };
 
@@ -53,11 +54,11 @@ test('Taipei 2026-02-15 13:03 → 真太陽時 12:55 → 時柱 壬午（民用�
   const report = analyze(input, { asOf: AS_OF });
   assert.equal(report.timeContext.solar!.trueSolarIso, '2026-02-15T12:55:07');
   assert.deepEqual(natal(report), { year: '丙午', month: '庚寅', day: '庚申', time: '壬午' });
-  assert.equal(comp(report, 'bazi', 'natal').convention.trueSolarTime, true);
+  assert.equal(producerValue(engine(report, 'bazi'), 'bazi', 'natal').convention.trueSolarTime, true);
 
   const civil = analyze({ ...input, useTrueSolarTime: false }, { asOf: AS_OF });
   assert.equal(natal(civil).time, '癸未');
-  assert.equal(comp(civil, 'bazi', 'natal').convention.trueSolarTime, false);
+  assert.equal(producerValue(engine(civil, 'bazi'), 'bazi', 'natal').convention.trueSolarTime, false);
 });
 
 test('23:30 出生：紫微用晚子（timeIndex 12），v3 誤用同日早子', SLOW, () => {
@@ -103,7 +104,7 @@ test('New York 2026-03-05 12:00（驚蟄 13:59Z 之後）→ 月柱 辛卯（v3 
   assert.equal(tc.engineWallClockPillars.month, '庚寅');
   assert.deepEqual(tc.overriddenFields, ['month']);
   // 大運 follow the corrected month pillar (丙午 陽年男 → 順：壬辰 …)
-  assert.equal(comp(report, 'bazi', 'daYun_1').ganZhi, '壬辰');
+  assert.equal(producerValue(engine(report, 'bazi'), 'bazi', 'daYun_1').ganZhi, '壬辰');
   assert.deepEqual(engine(report, 'bazi').errors, []);
 });
 

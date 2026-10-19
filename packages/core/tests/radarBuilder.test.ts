@@ -1,3 +1,4 @@
+import { producerCategory, numericInputs } from './helpers/producerComponents';
 /**
  * 契約測試：RadarBuilder（任務 C1）。
  *
@@ -80,15 +81,15 @@ test('五行雷達：軸值總和 ≈ 100、單位 %、inputs 對應引擎實際
   const sum = radar!.axes.reduce((acc, axis) => acc + axis.value, 0);
   assert.ok(Math.abs(sum - 100) < 0.1, `五行軸值總和 ${sum} 偏離 100`);
 
-  const elements = results[0].byCategory('elements')[0].value;
+  const elements = producerCategory(results[0], 'bazi', 'elements')[0].value;
   const inputKeys: Record<string, string> = { 木: 'woodCount', 火: 'fireCount', 土: 'earthCount', 金: 'metalCount', 水: 'waterCount' };
   for (const axis of radar!.axes) {
     assert.equal(axis.unit, '%');
     const countKey = inputKeys[axis.label];
-    assert.equal(axis.inputs[countKey], elements.counts[axis.label], `${axis.label} 代入值不符`);
+    assert.equal(axis.inputs[countKey], elements.counts[axis.label as keyof typeof elements.counts], `${axis.label} 代入值不符`);
     assert.equal(axis.inputs.totalElements, elements.total);
     // 軸值可由 inputs 依規則公式覆核
-    const expected = Math.round((elements.counts[axis.label] / elements.total) * 100 * 100) / 100;
+    const expected = Math.round((elements.counts[axis.label as keyof typeof elements.counts] / elements.total) * 100 * 100) / 100;
     assert.equal(axis.value, expected);
   }
 });
@@ -101,7 +102,7 @@ test('宮強雷達：12 軸、單位分、軸值可由 inputs 依公式覆核', 
   for (const axis of radar!.axes) {
     assert.equal(axis.unit, '分');
     assert.equal(axis.ruleId, 'ziwei_palace_strength');
-    const { mainStarBrightness, auxiliaryStarCount, fourTransformBonus } = axis.inputs;
+    const { mainStarBrightness, auxiliaryStarCount, fourTransformBonus } = numericInputs(axis.inputs, ['mainStarBrightness', 'auxiliaryStarCount', 'fourTransformBonus']);
     assert.ok(mainStarBrightness >= 0 && mainStarBrightness <= 100);
     assert.ok(Number.isInteger(auxiliaryStarCount) && auxiliaryStarCount >= 0);
     // 四化加成：宮內含生年四化星 → 100，否則 0

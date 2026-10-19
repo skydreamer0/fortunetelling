@@ -1,3 +1,4 @@
+import { numericInputs } from './helpers/producerComponents';
 /** Issue #21: opaque Evolution inputs, unchanged sparse-data/runtime semantics. */
 import assert from 'node:assert/strict';
 import { expectTypeOf, test } from 'vitest';
@@ -95,7 +96,7 @@ test('Ziwei range sorting, virtual-age conversion, mutagen narratives and curren
 test('palace brightness, minor-star cap and all three mutagen sources retain the formula', () => {
   for (const stars of ['majorStars', 'minorStars', 'adjectiveStars']) {
     const r = buildDaXianPalaceRadar([palace({ majorStars: [{ brightnessScore: 0.33333 }], minorStars: Array.from({ length: 12 }, () => ({})), [stars]: [{ name: '化星', brightnessScore: 0.33333 }] })], { index: 7, mutagen: ['化星'] }, 'title');
-    const inputs = r.axes[0].inputs;
+    const inputs = numericInputs(r.axes[0].inputs, ['mainStarBrightness', 'auxiliaryStarCount', 'fourTransformBonus']);
     assert.equal(inputs.fourTransformBonus, 100);
     assert.equal(r.axes[0].value, Math.round((inputs.mainStarBrightness * 0.6 + Math.min(inputs.auxiliaryStarCount * 10, 100) * 0.2 + 20) * 100) / 100);
   }
