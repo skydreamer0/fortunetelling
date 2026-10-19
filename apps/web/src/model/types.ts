@@ -38,7 +38,7 @@ export interface BirthInput {
   timeAccuracy?: TimeAccuracy;
 }
 
-export interface Component<V = any> {
+export interface Component<V = unknown> {
   id: string;
   name: string;
   category: string;
@@ -157,6 +157,9 @@ export interface LayerDefinition {
 }
 
 export interface Report {
+  /** Report8 scoped current-build replay; older reports have neither field. */
+  calculation?: import('@fortune/core').ReportCalculation;
+  replay?: import('@fortune/core').ReplayReport['replay'];
   version: string;
   /** 3 = legacy engines report; 4 adds `timeline`, `timeContext`, `signals`; 5 adds `consensus`. */
   schemaVersion: 3 | 4 | 5 | number;

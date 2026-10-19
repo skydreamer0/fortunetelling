@@ -1,6 +1,7 @@
 import { parse as parseYaml } from 'yaml';
 import { expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { transformSync } from 'esbuild';
 import { natalCases } from '../../packages/core/tests/fixtures/natalCalendarCases';
 import { compareBytes, lockIdentity, runners, strictSummary, validateInventory, validateManifest, zones, type Manifest } from './native-calendar';
 
@@ -94,4 +95,40 @@ test('native lanes preserve full/scoped selection, exact matrix, bounded evidenc
   expect(compare.steps.find((step: any) => step.id === 'native_artifacts').env.GH_TOKEN).toBe('${{ github.token }}');
   const aggregate = jobs.test.steps.find((step: any) => step.id === 'aggregate');
   for (const name of ['native_calendar', 'native_compare']) expect(aggregate.env.RESULTS).toContain(`"${name}":"\${{ needs.${name}.result }}"`);
+});
+
+test('natal setup registers 12 serial per-process budgets and still fails a broken process', () => {
+  // Inspect the actual harness registration, not a duplicated scheduling helper.
+  // Mock only process execution; calendar correctness is tested by the real matrix.
+  const url = new URL('../../packages/core/tests/natalCalendarMatrix.test.ts', import.meta.url);
+  const hooks: { run: () => void; timeout: number }[] = [];
+  const calls: { args: string[]; options: { env: Record<string, string>; timeout: number; maxBuffer: number } }[] = [];
+  let status = 0;
+  const code = transformSync(readFileSync(url, 'utf8'), { loader: 'ts', format: 'cjs',
+    define: { 'import.meta.url': JSON.stringify(url.href) } }).code;
+  const requireMock = (id: string) => {
+    if (id === 'vitest') return { beforeAll: (run: () => void, timeout: number) => hooks.push({ run, timeout }),
+      afterAll: () => {}, describe: () => {}, expect };
+    if (id === 'node:fs') return { writeFileSync: () => {} };
+    if (id === 'node:child_process') return { spawnSync: (_exec: string, args: string[], options: typeof calls[number]['options']) => {
+      calls.push({ args, options });
+      return { status, stderr: Buffer.from('probe failed'), stdout: Buffer.from('{}') };
+    } };
+    if (id === './fixtures/natalCalendarCases') return {};
+    throw new Error(`Unexpected harness import: ${id}`);
+  };
+  new Function('require', code)(requireMock);
+  expect(hooks).toHaveLength(12);
+  expect(hooks.map(hook => hook.timeout)).toEqual(Array(12).fill(60_000));
+  for (const hook of hooks) hook.run();
+  expect(calls).toHaveLength(12);
+  expect(calls.map(call => call.options.env.TZ)).toEqual(zones.flatMap(zone => [zone, zone, zone]));
+  for (const [index, call] of calls.entries()) {
+    expect(call.args).toContain('--input-type=module');
+    expect(call.args.at(-1)).toContain(`runNatalCalendarProbe(${JSON.stringify(['A', 'B', 'interleaved'][index % 3])})`);
+    expect(call.options.timeout).toBe(60_000);
+    expect(call.options.maxBuffer).toBe(64 * 1024 * 1024);
+  }
+  status = 1;
+  expect(() => hooks[0]!.run()).toThrow('probe failed');
 });

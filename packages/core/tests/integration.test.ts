@@ -1,3 +1,5 @@
+import type { NumerologyNumberValue } from '../src/engines/numerologyTypes';
+import type { BaziNatalValue } from '../src/engines/baziTypes';
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { analyze } from '../src/index';
@@ -158,7 +160,7 @@ test('public analyze contract holds for golden and sourced celebrity charts', SL
 
     assert.equal(expected.lifePath, independentLifePath(fixture.input), fixture.id);
     assert.equal(
-      engineComponent(report, 'numerology', 'lifePath')?.value.number,
+      (engineComponent(report, 'numerology', 'lifePath')?.value as NumerologyNumberValue | undefined)?.number,
       expected.lifePath,
       fixture.id,
     );
@@ -176,7 +178,7 @@ test('public analyze contract holds for golden and sourced celebrity charts', SL
     // stay in 辰/未). The celebrity vectors now carry their real birthplace and their
     // hour pillar moves to 酉 under true solar time — see the fixture comments.
     if (expected.baziNatal) {
-      const { convention: _convention, ...natal } = engineComponent(report, 'bazi', 'natal')!.value;
+      const { convention: _convention, ...natal } = engineComponent(report, 'bazi', 'natal')!.value as BaziNatalValue;
       assert.deepEqual(natal, expected.baziNatal, fixture.id);
     }
   }

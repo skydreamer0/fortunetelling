@@ -18,17 +18,19 @@ afterAll(async () => {
   writeFileSync(`${process.env.NATIVE_CALENDAR_OUTPUT}/natal.json`, bytes);
 });
 
-beforeAll(() => {
-  // Serial, fresh Node processes; no global TZ mutation or process reuse between
-  // A-only, B-only and interleaved calculations. Keep file URLs intact on Windows.
-  for (const TZ of zones) for (const mode of modes) {
+// Each fresh process gets its own setup budget. A single aggregate hook made
+// twelve healthy processes fail after 180 seconds on GitHub-hosted Intel macOS,
+// skipping all assertions even though every process finished within 60 seconds.
+// Hooks remain serial; no global TZ mutation, process reuse or extra concurrency.
+for (const TZ of zones) for (const mode of modes) {
+  beforeAll(function collectNatalProcess() {
     const script = `import { runNatalCalendarProbe } from ${JSON.stringify(probeUrl)};
       console.log(JSON.stringify(runNatalCalendarProbe(${JSON.stringify(mode)})));`;
     const child = spawnSync(process.execPath, ['--import', 'tsx', '--input-type=module', '--eval', script], { env: { ...process.env, TZ }, timeout: 60_000, maxBuffer: 64 * 1024 * 1024 });
     expect(child.status, `${TZ}/${mode}: ${new TextDecoder().decode(child.stderr)}`).toBe(0);
     results.set(`${TZ}/${mode}`, JSON.parse(new TextDecoder().decode(child.stdout)) as ProbeResult);
-  }
-}, 180_000);
+  }, 60_000);
+}
 
 describe('#54 source-backed natal calendar slice (not complete ChartSnapshot acceptance)', () => {
   test('HKO/CWA fixed leap-sixth-month and month-end facts hold in conversions and both local contexts', () => {

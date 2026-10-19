@@ -1,3 +1,4 @@
+import type { BaziDaYunValue } from '../engines/baziTypes';
 /**
  * @fileoverview TimeContext-aware 八字 / 紫微 engines for `analyze()` (Report v4, D-032).
  *
@@ -134,7 +135,7 @@ export class TimeContextBaZiEngine extends BaZiEngine {
         c.value = replacement.value;
         if (replacement.meta) c.meta = replacement.meta;
       } else if (c.category === 'daYun') {
-        const i: number = c.value.index;
+        const i: number = (c.value as BaziDaYunValue).index;
         const startYear = startYear0 + (i - 1) * 10;
         const stepStart = `${startYear}${startSolarStr.substring(4)}`;
         const stepEnd = `${startYear0 + i * 10}${startSolarStr.substring(4)}`;

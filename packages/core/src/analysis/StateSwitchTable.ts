@@ -25,6 +25,10 @@
  * @module analysis/StateSwitchTable
  */
 
+// These type-only views describe the existing category dispatch below. They are
+// not runtime validators: preserve loose values, accessor order and coercion.
+import type { ZiweiSoulVsBodyValue, ZiweiSanFangSiZhengValue } from '../engines/ziweiTypes';
+import type { BaziTenGodsContextValue } from '../engines/baziTypes';
 import { HonestyGuard } from './HonestyGuard';
 import type { LayerClassification, ClassifiedComponent } from './LayerClassifier';
 
@@ -138,7 +142,7 @@ function toSource(component: ClassifiedComponent): { system: string; componentId
  * soulVsBody 部件 → 各情境的 expression。
  */
 function soulVsBodyExpression(component: ClassifiedComponent, scenarioId: ScenarioId, scenarioName: string): string | null {
-  const { samePalace, soul, body } = component.value ?? {};
+  const { samePalace, soul, body } = (component.value as Partial<ZiweiSoulVsBodyValue> | null | undefined) ?? {};
   if (!soul || !body) return null;
   const soulStars = starsLabel(soul);
   const bodyStars = starsLabel(body);
@@ -160,11 +164,11 @@ function soulVsBodyExpression(component: ClassifiedComponent, scenarioId: Scenar
  * sanFangSiZheng 部件 → 各情境的 expression。
  */
 function sanFangExpression(component: ClassifiedComponent, scenarioId: ScenarioId, scenarioName: string): string | null {
-  const { anchor, target, opposite, wealth, career } = component.value ?? {};
+  const { anchor, target, opposite, wealth, career } = (component.value as Partial<ZiweiSanFangSiZhengValue> | null | undefined) ?? {};
   if (!anchor || !target) return null;
 
   if (scenarioId === 'conflict') {
-    const surround = [opposite, wealth, career].filter(Boolean).map(facet => facet.name).join('、');
+    const surround = [opposite, wealth, career].filter(Boolean).map(facet => facet!.name).join('、');
     return `在${scenarioName}情境下，你會傾向調用${anchor}三方四正（會照 ${surround}）的組合來回應張力，常見同時被對宮視角牽動。`;
   }
   if (scenarioId === 'workplace') {
@@ -181,7 +185,7 @@ function sanFangExpression(component: ClassifiedComponent, scenarioId: ScenarioI
  */
 function tenGodsCells(component: ClassifiedComponent, scenarioId: ScenarioId, scenarioName: string): Cell[] {
   const cells: Cell[] = [];
-  for (const group of component.value?.groups ?? []) {
+  for (const group of (component.value as Partial<BaziTenGodsContextValue> | null | undefined)?.groups ?? []) {
     if (!group || group.count <= 0) continue;
     const scenarioIds = TEN_GOD_GROUP_SCENARIO_MAP[group.group] ?? [];
     if (!scenarioIds.includes(scenarioId)) continue;

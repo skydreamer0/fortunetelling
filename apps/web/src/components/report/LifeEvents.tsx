@@ -10,12 +10,13 @@
  * claims predictive validity.
  */
 
+import { createLifeEventSession } from '../../lib/lifeEventSession';
 import { useMemo, useState, type FormEvent } from 'react';
 import {
   runBacktest, suggestedDomains, validateLifeEvent,
   type BacktestTimeline, type LifeEvent, type LifeEventCategory,
 } from '../../lib/core';
-import { cleanEvents, createLifeEventStore, legacyProfileKeyOf, profileKeyOf, type LifeEventStore } from '../../lib/lifeEvents';
+import { createLifeEventStore, legacyProfileKeyOf, profileKeyOf, type LifeEventStore } from '../../lib/lifeEvents';
 import {
   CATEGORY_OPTIONS, DOMAIN_OPTIONS, INSUFFICIENT_LABEL, buildReportBacktestTimeline, canBacktest, selectBacktestView, selectEventList,
   type BacktestRowView, type BacktestView,
@@ -105,14 +106,18 @@ export function BacktestResults({ view }: { view: BacktestView }) {
   );
 }
 
-export function LifeEvents({ report, store: injected }: { report: Report; store?: LifeEventStore }) {
+export function LifeEvents(props: { report: Report; store?: LifeEventStore }) {
+  return <LifeEventsPanel key={profileKeyOf(props.report)} {...props} />;
+}
+
+function LifeEventsPanel({ report, store: injected }: { report: Report; store?: LifeEventStore }) {
   const store = useMemo(() => injected ?? createLifeEventStore(), [injected]);
   const profileKey = useMemo(() => profileKeyOf(report), [report]);
-  const [events, setEvents] = useState<LifeEvent[]>(() => {
-    // M4-02: events saved under the old name-based key move to the fingerprint key (idempotent).
+  const session = useMemo(() => {
     store.migrate(legacyProfileKeyOf(report.input), profileKey);
-    return store.list(profileKey);
-  });
+    return createLifeEventSession(store, profileKey);
+  }, [store, profileKey]);
+  const [events, setEvents] = useState<LifeEvent[]>(() => session.list());
   const [form, setForm] = useState<FormState>(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [computed, setComputed] = useState<{ report: Report; timeline: BacktestTimeline } | null>(null);
@@ -129,7 +134,7 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
   const view = result ? selectBacktestView(result) : null;
   const list = selectEventList(events);
 
-  const refresh = () => setEvents(store.list(profileKey));
+  const refresh = () => setEvents(session.list());
 
   function submit(event: FormEvent) {
     event.preventDefault();
@@ -146,14 +151,13 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
       setError(!/^\d{4}-\d{2}$/.test(form.month) ? '請填年月。' : form.domains.length === 0 ? '請至少勾選一個領域。' : '資料不完整。');
       return;
     }
-    if (store.upsert(profileKey, checked.value)) {
-      setError(null);
-      refresh();
-    } else {
-      // A blocked version or unavailable storage: keep the event in memory for this page only.
-      setError('事件未儲存（可能有不支援的資料版本，或瀏覽器儲存空間不可用），這次變更只保留到關閉頁面。');
-      setEvents(current => cleanEvents([...current.filter(item => item.id !== checked.value.id), checked.value]));
+    const outcome = session.submit(checked.value);
+    if (outcome === 'full' || outcome === 'invalid') {
+      setError(outcome === 'full' ? '每份命盤最多保留 200 筆事件，請先刪除不需要的項目。' : '資料不完整。');
+      return;
     }
+    setError(outcome === 'saved' ? null : '事件未儲存，變更只保留在本頁；儲存恢復後可按「重試儲存」。重新整理或關閉頁面會失去暫存變更。');
+    refresh();
     setForm(emptyForm());
   }
 
@@ -167,21 +171,25 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
   }
 
   function remove(id: string) {
-    if (!store.remove(profileKey, id)) {
-      setError('刪除未儲存：無法寫入這個瀏覽器的儲存空間。');
+    if (!session.remove(id)) {
+      setError('刪除未儲存：無法寫入這個瀏覽器的儲存空間。已儲存項目仍保留。');
+      refresh();
       return;
     }
-    setEvents(current => current.filter(item => item.id !== id));
+    refresh();
+    setError(null);
     if (form.id === id) setForm(emptyForm());
   }
 
   function removeAll() {
     if (typeof window !== 'undefined' && !window.confirm('刪除這份命盤在本機的全部人生事件？此動作無法復原。')) return;
-    if (!store.clearProfile(profileKey)) {
-      setError('刪除未儲存：無法寫入這個瀏覽器的儲存空間。');
+    if (!session.clear()) {
+      setError('刪除未儲存：無法寫入這個瀏覽器的儲存空間。已儲存項目仍保留。');
+      refresh();
       return;
     }
-    setEvents([]);
+    refresh();
+    setError(null);
     setForm(emptyForm());
   }
 
@@ -212,6 +220,16 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
       <p className="life__privacy" role="note">
         <strong>隱私</strong>人生事件只存在這個瀏覽器（localStorage），不會上傳到任何伺服器；按「刪除全部」或清除瀏覽器資料即永久移除。
       </p>
+      {!store.isReadable() && <p role="alert">無法讀取或辨識本機事件資料，原始資料已保留；目前變更不會覆寫它。</p>}
+      {session.pendingIds().length > 0 && <p role="status">有 {session.pendingIds().length} 筆未儲存變更。
+        <button type="button" className="button button--quiet" onClick={() => {
+          const ok = session.retry(); refresh();
+          setError(ok ? null : '仍無法儲存；暫存變更仍在本頁，原始資料未覆寫。');
+        }}>重試儲存</button>
+      </p>}
+      {legacyProfileKeyOf(report.input) !== profileKey && store.hasProfile(legacyProfileKeyOf(report.input)) && (
+        <p role="alert">舊識別碼的事件尚未安全搬移，原始資料仍保留；本頁不會假裝已完成搬移。請勿清除瀏覽器資料。</p>
+      )}
       {unsupportedStoredVersion && (
         <p className="life__warning" role="alert">
           本機含不支援版本的人生事件，原始資料已保留；這些事件不會顯示或納入回驗，相關資料的儲存或搬移已暫停。
@@ -274,7 +292,8 @@ export function LifeEvents({ report, store: injected }: { report: Report; store?
         <>
           <ol className="life__list" aria-label="已記錄的人生事件">
             {list.map(item => (
-              <li key={item.id} className="life__item">
+              <li key={item.id} className="life__item" data-pending={session.pendingIds().includes(item.id) ? "true" : undefined}>
+                {session.pendingIds().includes(item.id) && <span>未儲存</span>}
                 <span className="life__date">{item.date}{item.approx ? '（約）' : ''}</span>
                 <span className="life__what">{item.category}・{item.domains}{item.description ? `：${item.description}` : ''}</span>
                 <span className="life__item-actions">

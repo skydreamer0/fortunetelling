@@ -1,3 +1,4 @@
+import { producerCategory } from './helpers/producerComponents';
 import { expect, test } from 'vitest';
 import type { astro } from 'iztro';
 import type { Language } from 'iztro/lib/data/types';
@@ -363,7 +364,7 @@ for (const language of ['zh-TW', 'zh-CN', 'en-US', 'ja-JP', 'ko-KR', 'vi-VN'] sa
     const result = new SeamEngine(value => { chart = value; }, language).run(new BirthData(INPUT));
     expect(chart).toBeDefined();
     for (const palace of chart!.palaces) {
-      const emitted = result.byCategory('palaces').find(c => c.value.index === palace.index)!;
+      const emitted = producerCategory(result, 'ziwei', 'palaces').find(c => c.value.index === palace.index)!;
       for (const group of ['majorStars', 'minorStars', 'adjectiveStars'] as const) {
         expect(emitted.value[group]).toEqual(palace[group].map(star => ({
           name: star.name, type: star.type, brightness: star.brightness ?? '',
@@ -372,9 +373,9 @@ for (const language of ['zh-TW', 'zh-CN', 'en-US', 'ja-JP', 'ko-KR', 'vi-VN'] sa
         })));
         for (const star of palace[group]) {
           checkedStars++;
-          const transformed = result.byCategory('fourTransforms').filter(c => c.value.star === star.name && c.value.palaceIndex === palace.index);
+          const transformed = producerCategory(result, 'ziwei', 'fourTransforms').filter(c => c.value.star === star.name && c.value.palaceIndex === palace.index);
           expect(transformed.map(c => c.value.mutagen)).toEqual(star.mutagen ? [star.mutagen] : []);
-          if (group === 'majorStars') expect(result.byCategory('mainStars').find(c => c.value.star === star.name)!.value.mutagen).toBe(star.mutagen ?? null);
+          if (group === 'majorStars') expect(producerCategory(result, 'ziwei', 'mainStars').find(c => c.value.star === star.name)!.value.mutagen).toBe(star.mutagen ?? null);
         }
       }
     }
@@ -391,19 +392,19 @@ test('empty and nullish star fields preserve brightness defaults and falsy four-
       palaceIndex = palace.index; name = star.name;
       replace(star, 'brightness', missing); replace(star, 'mutagen', missing);
     }).run(new BirthData(INPUT));
-    const main = result.byCategory('mainStars').find(c => c.value.star === name)!;
+    const main = producerCategory(result, 'ziwei', 'mainStars').find(c => c.value.star === name)!;
     expect(main.value).toMatchObject({ brightness: '', brightnessScore: null, mutagen: missing === '' ? '' : null });
-    expect(result.byCategory('palaces').find(c => c.value.index === palaceIndex)!.value.majorStars[0]).toMatchObject({ brightness: '', brightnessScore: null, mutagen: missing === '' ? '' : null });
-    expect(result.byCategory('fourTransforms').some(c => c.value.star === name && c.value.palaceIndex === palaceIndex)).toBe(false);
+    expect(producerCategory(result, 'ziwei', 'palaces').find(c => c.value.index === palaceIndex)!.value.majorStars[0]).toMatchObject({ brightness: '', brightnessScore: null, mutagen: missing === '' ? '' : null });
+    expect(producerCategory(result, 'ziwei', 'fourTransforms').some(c => c.value.star === name && c.value.palaceIndex === palaceIndex)).toBe(false);
   }
 });
 
 test('missing decadal ranges omit only the corresponding decade and retain null palace range', () => {
   for (const missing of [undefined, null]) {
     const result = new SeamEngine(chart => { replace(chart.palaces[0], 'decadal', missing); }).run(new BirthData(INPUT));
-    expect(result.byCategory('palaces')[0].value.decadalRange).toBeNull();
-    expect(result.byCategory('daXian')).toHaveLength(11);
-    expect(result.byCategory('daXian').some(c => c.value.palaceIndex === 0)).toBe(false);
+    expect(producerCategory(result, 'ziwei', 'palaces')[0].value.decadalRange).toBeNull();
+    expect(producerCategory(result, 'ziwei', 'daXian')).toHaveLength(11);
+    expect(producerCategory(result, 'ziwei', 'daXian').some(c => c.value.palaceIndex === 0)).toBe(false);
   }
 });
 
@@ -417,10 +418,10 @@ test('missing period objects are omitted and nullish nominal age remains null', 
         return period;
       });
     }).run(new BirthData(INPUT));
-    expect(result.byCategory('xiaoXian')).toEqual([]);
-    expect(result.byCategory('flyingStars')).toEqual([]);
-    expect(result.byCategory('daXian')).toHaveLength(12);
-    expect(result.byCategory('daXian').every(c => c.value.mutagen === null && c.value.isCurrent === false)).toBe(true);
+    expect(producerCategory(result, 'ziwei', 'xiaoXian')).toEqual([]);
+    expect(producerCategory(result, 'ziwei', 'flyingStars')).toEqual([]);
+    expect(producerCategory(result, 'ziwei', 'daXian')).toHaveLength(12);
+    expect(producerCategory(result, 'ziwei', 'daXian').every(c => c.value.mutagen === null && c.value.isCurrent === false)).toBe(true);
     expect(result.errors).toEqual([]);
     const age = new SeamEngine(chart => {
       const horoscope = chart.horoscope.bind(chart);
@@ -428,9 +429,9 @@ test('missing period objects are omitted and nullish nominal age remains null', 
         const period = horoscope(...args); replace(period.age, 'nominalAge', missing); return period;
       });
     }).run(new BirthData(INPUT));
-    expect(age.byCategory('xiaoXian')[0].value.nominalAge).toBeNull();
-    expect(age.byCategory('xiaoXian')[0].name).toBe('小限（虛歲 ?）');
-    expect(age.byCategory('daXian').every(c => !c.value.isCurrent)).toBe(true);
+    expect(producerCategory(age, 'ziwei', 'xiaoXian')[0].value.nominalAge).toBeNull();
+    expect(producerCategory(age, 'ziwei', 'xiaoXian')[0].name).toBe('小限（虛歲 ?）');
+    expect(producerCategory(age, 'ziwei', 'daXian').every(c => !c.value.isCurrent)).toBe(true);
   }
 });
 
@@ -442,14 +443,14 @@ test('decade mutagen preserves string-array lengths and probe failure warnings',
         const period = horoscope(...args); replace(period.decadal, 'mutagen', mutagen); return period;
       });
     }).run(new BirthData(INPUT));
-    expect(result.byCategory('daXian').map(c => c.value.mutagen)).toEqual(Array(12).fill(mutagen ?? null));
+    expect(producerCategory(result, 'ziwei', 'daXian').map(c => c.value.mutagen)).toEqual(Array(12).fill(mutagen ?? null));
   }
   const failed = new SeamEngine(chart => { replace(chart, 'horoscope', () => { throw new Error('period seam'); }); }).run(new BirthData(INPUT));
-  expect(failed.byCategory('natal')).toHaveLength(1);
-  expect(failed.byCategory('daXian')).toHaveLength(12);
-  expect(failed.byCategory('daXian').every(c => c.value.mutagen === null && !c.value.isCurrent)).toBe(true);
-  expect(failed.byCategory('xiaoXian')).toEqual([]);
-  expect(failed.byCategory('flyingStars')).toEqual([]);
+  expect(producerCategory(failed, 'ziwei', 'natal')).toHaveLength(1);
+  expect(producerCategory(failed, 'ziwei', 'daXian')).toHaveLength(12);
+  expect(producerCategory(failed, 'ziwei', 'daXian').every(c => c.value.mutagen === null && !c.value.isCurrent)).toBe(true);
+  expect(producerCategory(failed, 'ziwei', 'xiaoXian')).toEqual([]);
+  expect(producerCategory(failed, 'ziwei', 'flyingStars')).toEqual([]);
   expect(failed.errors).toHaveLength(13);
   expect(failed.errors[0]).toBe('運限計算失敗（2026-07-11）：period seam');
   expect(failed.errors.slice(1).every(error => error.includes('四化計算失敗') && error.endsWith('period seam'))).toBe(true);
@@ -457,9 +458,9 @@ test('decade mutagen preserves string-array lengths and probe failure warnings',
 
 test('context lookup failures retain natal and time-varying components with the existing warning', () => {
   const failed = new SeamEngine(chart => { replace(chart, 'surroundedPalaces', () => { throw new Error('facet seam'); }); }).run(new BirthData(INPUT));
-  expect(failed.byCategory('soulVsBody')).toHaveLength(1);
-  expect(failed.byCategory('sanFangSiZheng')).toEqual([]);
-  expect(failed.byCategory('flyingStars')).toHaveLength(1);
+  expect(producerCategory(failed, 'ziwei', 'soulVsBody')).toHaveLength(1);
+  expect(producerCategory(failed, 'ziwei', 'sanFangSiZheng')).toEqual([]);
+  expect(producerCategory(failed, 'ziwei', 'flyingStars')).toHaveLength(1);
   expect(failed.errors).toEqual(['L3 情境部件計算失敗：facet seam']);
 });
 

@@ -1,0 +1,24 @@
+{
+  "version": "0.11.0",
+  "issue": "https://github.com/skydreamer0/fortunetelling/issues/51",
+  "reason": "Core version and derived chart calculation identity only; Profile2/Export2 and every calculation remain unchanged.",
+  "changes": [
+    {
+      "path": [
+        "versions",
+        "coreVersion"
+      ],
+      "before": "0.10.0",
+      "after": "0.11.0"
+    },
+    {
+      "path": [
+        "files",
+        "chart.json",
+        "hash"
+      ],
+      "before": "385e875b2a18ee16",
+      "after": "835d86062dc74ec0"
+    }
+  ]
+}

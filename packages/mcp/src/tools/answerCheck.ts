@@ -35,7 +35,7 @@ export const answerCheckTools = [
       const q = args.questionContext;
       const questionContext = q ? questionContextOf(computeQuestionContext(analysis, q.category, q.range, q.systems, q.verifiedOnly)) : null;
       const result = checkAnswer(args.answerText, { questionContext, signalLookup: id => analysis.findSignal(id), directionalEvidence: () => analysis.directionalEvidence() });
-      return ok({ asOf: analysis.asOf, data: result, caveats: caveatsFor(analysis) });
+      return ok({ calculation: analysis.calculation, asOf: analysis.asOf, data: result, caveats: caveatsFor(analysis) });
     },
   }),
 ];

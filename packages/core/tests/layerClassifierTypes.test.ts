@@ -26,8 +26,8 @@ export type Contract = [
   Reject<{ id: number } extends InputComponent ? true : false>,
   Reject<{ name: boolean } extends InputComponent ? true : false>,
   Reject<{ category: object } extends InputComponent ? true : false>,
-  // The output remains legacy-compatible; downstream payload typing is separate.
-  Accept<IsAny<ClassifiedComponent['value']>>,
+  // Classified output is opaque; runtime payload identity remains unchanged.
+  Reject<IsAny<ClassifiedComponent['value']>>,
 ];
 
 // Frozen from master 466f7323; independent executable oracle and byte-erasure check.

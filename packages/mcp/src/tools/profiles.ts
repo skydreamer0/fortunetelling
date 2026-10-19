@@ -1,3 +1,4 @@
+import { profileSettings } from '@fortune/core';
 import { z } from 'zod';
 import { ok } from '../envelope';
 import { defineTool } from './types';
@@ -31,6 +32,7 @@ export const profileTools = [
         data: {
           profileId: file.profileId,
           chartFingerprint: file.chartFingerprint,
+          calculationSettings: profileSettings(file),
           gender: p.gender,
           timeAccuracy: p.timeAccuracy,
           timeKnown: p.time !== null,

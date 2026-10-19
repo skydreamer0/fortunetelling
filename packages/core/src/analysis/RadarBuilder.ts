@@ -24,7 +24,7 @@ import type { BaziElementsValue } from '../engines/baziTypes';
 import type { ZiweiPalaceValue } from '../engines/ziweiTypes';
 import type { NumerologyDigitCounts } from '../engines/numerologyTypes';
 
-// Keep this consumer opaque even while the shared Component.value is still any.
+// The shared component boundary stays opaque; known categories select existing contracts.
 // Only the existing engine/category reads below select producer contracts; the
 // assertions do not validate, copy or normalize legacy report payloads.
 type RadarComponentInput = Omit<Component, 'value'> & { value: unknown };
@@ -45,7 +45,7 @@ export interface RadarAxis {
   /** Must resolve via ScoringRules.getRule() */
   ruleId: string;
   /** Actual substituted variable values */
-  inputs: Record<string, any>;
+  inputs: Record<string, unknown>;
   /** 資產面 */
   assets: string[];
   /** 負債面 */

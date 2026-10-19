@@ -12,6 +12,7 @@ import {
 } from '../lib/core';
 import { SIGNAL_SYSTEM_NAMES, TIMELINE_DOMAINS, type TimelineDomain } from './selectors';
 import type { Report } from './types';
+import { reportReplaySession, requiresReportReplay } from './reportReplay';
 import { reportTimelineOptions } from './reportTimeline';
 
 export const INSUFFICIENT_LABEL = '樣本不足，僅供參考';
@@ -101,13 +102,20 @@ export function selectBacktestView(result: BacktestResult): BacktestView {
 
 /** Backtesting needs the v4 time context (report v3 has none). */
 export function canBacktest(report: Report): boolean {
-  return typeof report.asOf === 'string' && reportTimelineOptions(report) !== null;
+  return typeof report.asOf === 'string' && reportTimelineOptions(report) !== null
+    && (!requiresReportReplay(report) || reportReplaySession(report) !== null);
 }
 
 /** The LifeEvents compute path: never rebuild with implicit global defaults. */
 export function buildReportBacktestTimeline(report: Report) {
   const options = reportTimelineOptions(report);
   if (!options) throw new Error('報告缺少可重播的時間設定，請重新排盤');
+  const replay = reportReplaySession(report);
+  if (requiresReportReplay(report) && !replay) throw new Error('報告快照無法以目前版本驗證，請重新排盤');
+  if (replay) {
+    const projected = replay.backtest({ asOf: report.asOf, ...options });
+    return { ...projected.timeline, calculation: projected.calculation };
+  }
   return buildBacktestTimeline(report.timeContext as unknown as TimeContext, { asOf: report.asOf, ...options });
 }
 

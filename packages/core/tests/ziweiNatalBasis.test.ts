@@ -1,3 +1,5 @@
+import { producerComponents } from './helpers/producerComponents';
+import type { ZiweiPalaceValue } from '../src/engines/ziweiTypes';
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 import { afterEach, describe, expect, test, vi  } from 'vitest';
@@ -99,8 +101,8 @@ describe('Issue #51 run-local Ziwei natal reuse (not a persisted ChartSnapshot)'
     const calls = observe(), provider = create(ctx, ziweiOptions);
     const main = new TimeContextZiweiEngine({ ctx, asOf: new Date(ASOF), ...options, natalBasis: provider } as any).run(birth);
     expect(stable(main)).toEqual(stable(expectedEngine));
-    const palace = main.components.find(component => component.category === 'palaces' && component.value.decadalRange)!;
-    palace.value.decadalRange[0] = -123;
+    const palace = producerComponents(main, 'ziwei').find(component => component.category === 'palaces' && component.value.decadalRange)!;
+    (palace.value as ZiweiPalaceValue).decadalRange![0] = -123;
     // The test intentionally adds a non-catalogue reason to this mutable copy.
     // Narrow only that metadata projection, preserving the mutation probe.
     const timeConvention = main.meta.timeConvention as { alternatives: Array<{ reasons: string[] }> };

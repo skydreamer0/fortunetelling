@@ -9,21 +9,18 @@
  * @module export/buildExport
  */
 
-import { runCalculators } from '../calculators/index';
 import { humanDesignCalculator } from '../calculators/humanDesign/calculator';
 import { jyotishCalculator } from '../calculators/jyotish/calculator';
-import { initEphemeris } from '../calculators/astro/index';
 import type { ChartResult } from '../calculators/types';
 import { buildConsensus } from '../consensus/buildConsensus';
 import { canonicalStringify } from '../portable/canonical';
-import { createProfileFile, PROFILE_FILE_FORMAT, PROFILE_SCHEMA_VERSION } from '../portable/profileFile';
-import type { ProfileFileV1 } from '../portable/profileFile';
+import { PROFILE_FILE_FORMAT, ownProfileFile } from '../portable/profileFile';
+import type { ProfileFile } from '../portable/profileFile';
 import { buildVersionInfo } from '../portable/versions';
 import { fnv1a64Hex } from '../signals/signalId';
 import type { Signal } from '../signals/types';
-import { buildTimelineAsync } from '../timeline/buildTimeline';
 import type { Timeline, TimelineCell } from '../timeline/buildTimeline';
-import { createTimeContext } from '../time/createTimeContext';
+import { createProfileCalculation } from '../portable/profileCalculation';
 import { buildExportReadme } from './readme';
 import { redactProfile, scrubDeep, sensitiveStringsOf, type SensitiveStrings } from './redact';
 import {
@@ -73,7 +70,10 @@ function collectSignals(timeline: Timeline): Signal[] {
  * 產生匯出包（純資料物件，可序列化）。因 jyotish／humanDesign 需要星曆，函式為 async。
  * `file` 通常來自 {@link createProfileFile} 或 `parseProfileFile`。
  */
-export async function buildExportBundle(file: ProfileFileV1, options: BuildExportOptions): Promise<ExportBundle> {
+export async function buildExportBundle(file: ProfileFile, options: BuildExportOptions): Promise<ExportBundle> {
+  // Own the validated source before async ephemeris work; later caller edits must
+  // not make profile.json disagree with the snapshot used by chart/timeline.
+  file = ownProfileFile(file);
   const { preset, asOf } = options;
   if (!EXPORT_PRESETS.includes(preset)) throw new Error(`preset must be one of ${EXPORT_PRESETS.join(', ')} (got ${JSON.stringify(preset)})`);
   if (!ASOF_RE.test(asOf) || Number.isNaN(Date.parse(`${asOf}T00:00:00Z`))) {
@@ -83,18 +83,14 @@ export async function buildExportBundle(file: ProfileFileV1, options: BuildExpor
   const secrets = redacted ? sensitiveStringsOf(file.profile) : NO_SECRETS;
   const scrub = <T>(value: T): T => scrubDeep(value, secrets);
 
-  const ctx = createTimeContext(file.profile);
-  await initEphemeris();
-  // Profile v1 carries no calculation settings. Preserve the existing export
-  // calculator policy explicitly; never infer settings from another report.
-  const timeline = await buildTimelineAsync(ctx, {
-    asOf, topSignalsPerDomain: Infinity, useTrueSolarTime: true, ziHourConvention: 'late',
-  });
+  const session = createProfileCalculation(file);
+  const ctx = session.context();
+  const timeline = await session.timelineAsync({ asOf, topSignalsPerDomain: Infinity });
   const consensus = buildConsensus(timeline);
   const signals = collectSignals(timeline);
 
   // 命盤：七個系統一份，時間未知者標 available:false，不猜。
-  const results = new Map<string, ChartResult<unknown>>(runCalculators(ctx, { asOf }).map(r => [r.system as string, r]));
+  const results = new Map<string, ChartResult<unknown>>(session.charts(asOf).map(r => [r.system as string, r]));
   results.set('jyotish', jyotishCalculator.calculate(ctx, { asOf }));
   results.set('humanDesign', humanDesignCalculator.calculate(ctx, { asOf }));
   const chart: Record<string, unknown> = {};
@@ -110,20 +106,21 @@ export async function buildExportBundle(file: ProfileFileV1, options: BuildExpor
     chartStatus[system] = { available: true, version: res.version };
   }
 
-  const profileFile: ProfileFileV1 | Record<string, unknown> = redacted
+  const profileFile: ProfileFile | Record<string, unknown> = redacted
     ? {
         format: PROFILE_FILE_FORMAT,
-        schemaVersion: PROFILE_SCHEMA_VERSION,
+        schemaVersion: file.schemaVersion,
+        ...(file.schemaVersion === 2 ? { settings: file.settings } : {}),
         profileId: file.profileId,
         chartFingerprint: file.chartFingerprint,
         profile: redactProfile(file.profile),
       }
-    : createProfileFile(file.profileId, file.profile);
+    : structuredClone(file);
 
   const versions = buildVersionInfo({ asOf, ephemeris: 'moshier' });
   const body = {
     profile: scrub(profileFile),
-    chart: scrub({ asOf, systems: chart }),
+    chart: scrub({ asOf, calculation: session.calculation, systems: chart }),
     signals: scrub({ asOf, count: signals.length, signals }),
     timeline: scrub({ ...timeline, years: timeline.years.map(slimCell), months: timeline.months.map(slimCell) }),
     consensus: scrub(consensus),
@@ -145,6 +142,7 @@ export async function buildExportBundle(file: ProfileFileV1, options: BuildExpor
     redacted,
     profileId: file.profileId,
     chartFingerprint: file.chartFingerprint,
+    calculation: session.calculation,
     asOf,
     versions,
     systems: {

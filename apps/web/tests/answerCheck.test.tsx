@@ -15,6 +15,17 @@ const INPUT: BirthInput = {
 const report = core.analyze(INPUT as any, { asOf: '2026-09-25' }) as unknown as Report;
 
 describe('M4-03 貼回 Claude 回答檢查', () => {
+  test('下載前顯示 Profile2 最低版本、來源更新與程序重啟，不暗示 npm ci 會升級來源', () => {
+    const html = renderToStaticMarkup(<McpEntry report={report} />);
+    const notice = html.slice(html.indexOf('id="ask-profile-compatibility"'), html.indexOf('class="ask__download"'));
+    for (const text of ['Core 0.10.0 或以上', '舊版 MCP 會拒絕', '網站無法檢查', '先備份',
+      '專案來源更新', '只跑 npm ci 不會更新程式來源', 'npm run build:packages', 'console.log(VERSION)',
+      'npm run doctor', '完全結束並重開 Claude 桌面版', '其他正在執行的 MCP 程序',
+      '不要直接覆蓋', '新版 MCP 仍可讀 Profile1', '請勿手改版本號或刪除設定']) {
+      expect(notice).toContain(text);
+    }
+    expect(html).toContain('aria-describedby="ask-profile-compatibility"');
+  });
   test('入口多一個「檢查回答」步驟，且預設不顯示結果', () => {
     const html = renderToStaticMarkup(<McpEntry report={report} />);
     expect(html).toContain('檢查回答（選填）');

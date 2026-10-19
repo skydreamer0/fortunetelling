@@ -884,3 +884,29 @@ partial-year abort/retry、interleaved reports、A→B→A、同步搶先、glob
 controls 和真 16 年 scan 都需通過；最後仍需 exact candidate 非作者 review 與
 既有 native production-browser harness。Bun/source PASS 不能取代 UI responsiveness
 驗收；診斷 PR91 的 inert native run 也不是修復後實測。
+
+## D-075 — Portable Profile2 settings and owned current-build replay (2026-10-18)
+
+Issues #26/#51/#52. Core 0.10.0 adds Profile2 and Export2; Report7, CalculationSpec1 and ChartSnapshot1 keep their existing shapes. Existing `createProfileFile` deliberately retains v1 bytes; callers opt into `createProfileFileV2`, while Web downloads use recorded report conventions. Missing historical conventions remain v1, invalid recorded conventions fail instead of being silently defaulted. v1 never gains settings during parsing; `migrateProfileFile` is explicit and copies data with documented legacy trueSolar/late choices. A v1 file containing settings is rejected to prevent a false promise that they are applied.
+
+`createProfileCalculation` owns and validates a current-build sync snapshot. Its chart, timeline, yearly MCP question projections and backtest methods reuse the owned BaZi/Ziwei providers. Actual provider contexts are canonical snapshot contexts, while source labels remain in the outward TimeContext/report metadata. `analyzeProfileFile` returns `{ report, calculation, snapshot }` and passes those same owned providers through the Report7 orchestrator. Existing analyze() and old saved reports are not mutated or backfilled. Explicit JSON snapshot reload reconstructs once and compares the complete current identity/content; it does not run historical dependencies, restore historical versions or provide storage.
+
+MCP source slots retain D-043 current-generation ownership, check specHash before full identity/source bytes and never authorize a hit using hash alone. Adding specHash to the slot key itself was rejected because A→B→A would revive an obsolete pending A; the slot remains profileId/asOf. `cf1` retains its old chart-input meaning and is not the settings cache key. The two canonical choices map explicitly to the existing per-system options. Name-dependent Numerology remains part of sync identity; neither hash is anonymous or cryptographically secure. The whole async timeline is not identified by this sync snapshot. `calculation.scope` and excludedSystems disclose that boundary.
+
+Full current MCP response contracts preserve all data/caveat digests; a new versioned delta records only the version/envelope additions, without changing the previous fixture. Existing report goldens receive exactly thirteen version-string deltas. Export2 adds manifest metadata and chart.json calculation; the original profile/signals/timeline/consensus/README hashes remain fixed for the v1 baseline. Compact question payloads retain the 4 KiB prior-content budget plus at most 320 bytes for the explicit calculation envelope; total test ceiling is 4416 bytes. No payload field is removed to meet the budget.
+
+Acceptance remains bounded: #52's portable choices/default disclosure and D-043 checks are implemented. #51/#26 remain open for Report8/Web Question/Backtest full-entry identity, a persistent store/cache/migrations, historical-version replay, async ephemeris identity and the remaining calendar/oracle matrix. The old default-only and internal snapshot work is not claimed again. No account/database or Next.js work (#22/#23), merge, package publish or deployment is part of this change.
+
+### D-076: opt-in Web Report8 current-build snapshot replay (#26/#51)
+
+Web creates Report8 through `analyzeReplayReport`; ordinary core analyze keeps Report7.
+One owned sync snapshot feeds the report and actual Question/citation/cooperative
+lookup/LifeEvents projections. JSON reload reconstructs and verifies current full
+spec/snapshot plus consumed report input/context/timeline/signals; malformed new
+reports fail closed instead of falling back. Old reports retain recorded-options
+behavior and are never backfilled with identity. Core0.11 / Profile2 / Export2;
+async systems remain explicitly excluded. Full replay contains personal birth data,
+not anonymized hashes; it is not added to redacted export or AI payloads. No database,
+historical engine execution or persistent-cache migration is implied. See
+[contract and original-AC matrix](contracts/web-report-replay.md). Parent issues
+remain open; this package is stacked on unmerged Draft151 without merging it.
