@@ -6,7 +6,7 @@
 export {
   TIMELINE_SCHEMA_VERSION, TIMELINE_SYSTEMS, DEFAULT_TIMELINE_YEARS, TOP_SIGNALS_PER_DOMAIN,
   TIMELINE_CONVENTIONS, TIMELINE_CONVENTIONS_HUMAN_DESIGN, timelineConventions, dominantPeriod,
-  buildTimeline, buildTimelineAsync, buildTimelineCooperatively, restrictTimelineCell, restrictTimeline,
+  buildTimeline, buildTimelineAsync, replayAsyncTimeline, buildTimelineCooperatively, restrictTimelineCell, restrictTimeline,
 } from './buildTimeline';
 export type {
   TimelineSkipReason, SkippedSystem, TimelineOptions, TimelineDomainCell, TimelineCell, Timeline,
@@ -14,3 +14,5 @@ export type {
 } from './buildTimeline';
 export { TimelineEnvironmentChangedError } from './cooperative';
 export * from './numerologyRules';
+
+export type { AsyncTimelineRecord } from './asyncReplay';
