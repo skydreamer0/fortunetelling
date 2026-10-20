@@ -18,7 +18,7 @@ test('AskAi never uses report A question decision in report B, including A→B�
   };
   const range={start:'2027-01',end:'2027-12'};
   const model={matchQuestionCategory:(s:string)=>s?'investment':null,questionRange:()=>range,
-    localQuestion(r:typeof a){calls.push(r.id);return {category:'investment',categoryName:'投資時機',range,answer:{owner:r.id,status:r.id==='A'?'ranked':'no_clear_advantage',top:[],abstentionReasons:[]}}},
+    localQuestionV4(r:typeof a){calls.push(r.id);return {category:'investment',categoryName:'投資時機',range,answer:{owner:r.id,answerVersion:4,status:'insufficient_evidence',top:[],abstentionReasons:[]}}},
   };
   const mod:any={exports:{}};
   const built = await buildModule({ entryPoints: ['apps/web/src/components/report/AskAi.tsx'], platform: 'node', format: 'cjs', external: ['*'], bundle: true, write: false });
@@ -34,7 +34,7 @@ test('AskAi never uses report A question decision in report B, including A→B�
   walk(tree).find(n=>n.type==='textarea'&&n.props.maxLength===500).props.onChange({target:{value:'何時投資'}});render();
   expect(lastPrompt.answer).toBeNull();flush();expect(lastPrompt.answer.owner).toBe('A');
   report=b;render();expect(lastPrompt.answer).toBeNull();expect(timers.size).toBe(1);
-  flush();expect(lastPrompt.answer.owner).toBe('B');expect(lastPrompt.answer.status).toBe('no_clear_advantage');
+  flush();expect(lastPrompt.answer.owner).toBe('B');expect(lastPrompt.answer.status).toBe('insufficient_evidence');expect(lastPrompt.answer.answerVersion).toBe(4);
   report=a;render();expect(lastPrompt.answer).toBeNull();flush();expect(lastPrompt.answer.owner).toBe('A');
   report=b;render();report=a;render();expect(timers.size).toBe(0);expect(lastPrompt.answer.owner).toBe('A');
   expect(calls).toEqual(['A','B','A']);effects.forEach(e=>e.cleanup?.());

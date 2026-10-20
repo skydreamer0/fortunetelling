@@ -19,7 +19,7 @@
  * Pure and deterministic (D-014): same report + options → same text.
  * Browser-safe: must never import the Anthropic SDK (`./client`, `./anthropic`).
  */
-import type { QuestionAnswer, Signal, Timeline, TimelineCell } from '@fortune/core';
+import type { QuestionAnswer, QuestionAnswerV4, Signal, Timeline, TimelineCell } from '@fortune/core';
 import { listQuestionCategories, type SensitiveStrings } from './core-pure';
 import {
   buildInterpretationPayloadFromSelection,
@@ -42,7 +42,7 @@ export interface CopyPromptOptions {
   /** Free-text question typed by the user (optional). */
   question?: string;
   /** Deterministic Question Engine answer computed by the site (optional). */
-  questionAnswer?: QuestionAnswer | null;
+  questionAnswer?: QuestionAnswer | QuestionAnswerV4 | null;
   /** Default: 'question' when a question is given, else 'overview'. */
   focus?: CopyPromptFocus;
   /** Maximum length of the whole text, default 24 000. */
@@ -169,8 +169,9 @@ function restrictTopSignals(report: ReportLike, keep: Set<string>): ReportLike {
   return { ...report, timeline: { ...tl, years: cells(tl.years ?? []), months: cells(tl.months ?? []) } };
 }
 
-function trimQuestion(answer: QuestionAnswer | null | undefined): QuestionAnswer | null {
+function trimQuestion(answer: QuestionAnswer | QuestionAnswerV4 | null | undefined): QuestionAnswer | QuestionAnswerV4 | null {
   if (!answer) return null;
+  if ('answerVersion' in answer) return { ...answer, ranking: [] };
   return {
     ...answer,
     ranking: [],

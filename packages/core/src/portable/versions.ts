@@ -22,6 +22,7 @@ import ziweiTraits from '../traits/ziwei.json';
 import ziweiModifiers from '../traits/ziweiModifiers.json';
 import numerologyCatalog from '../timeline/numerologyCatalog.json';
 import questionCatalog from '../questions/catalog.v3.json';
+import { questionModelIdentityV4 } from '../questions/engine.v4';
 import jyotishCatalog from '../calculators/jyotish/catalog.json';
 import humanDesignCatalog from '../calculators/humanDesign/catalog.json';
 import { EXPERIMENTAL_SYSTEMS } from '../signals/eligibility';
@@ -35,6 +36,7 @@ export type VersionInfo = {
   /** `null` for time-independent answers (e.g. listing profiles). */
   asOf: string | null;
   coreVersion: string;
+  questionModel?: { modelVersion: string; fingerprint: string };
   profileSchemaVersion: number;
   reportSchemaVersion: number;
   timelineSchemaVersion: number;
@@ -49,11 +51,12 @@ export type VersionInfo = {
 const versionOf = (catalog: { version?: number; schemaVersion?: number }): number =>
   catalog.version ?? catalog.schemaVersion ?? 0;
 
-export function buildVersionInfo(opts: { asOf: string | null; ephemeris?: EphemerisState }): VersionInfo {
+export function buildVersionInfo(opts: { asOf: string | null; ephemeris?: EphemerisState; questionVersion?: 4 }): VersionInfo {
   if (opts.asOf !== null && !/^\d{4}-\d{2}-\d{2}$/.test(opts.asOf)) throw new Error(`asOf must be 'YYYY-MM-DD' (got ${JSON.stringify(opts.asOf)})`);
   return {
     asOf: opts.asOf,
     coreVersion: VERSION,
+    ...(opts.questionVersion === 4 ? { questionModel: { modelVersion: questionModelIdentityV4().modelVersion, fingerprint: questionModelIdentityV4().fingerprint } } : {}),
     profileSchemaVersion: PROFILE_SCHEMA_VERSION,
     reportSchemaVersion: REPORT_SCHEMA_VERSION,
     timelineSchemaVersion: TIMELINE_SCHEMA_VERSION,
@@ -74,7 +77,7 @@ export function buildVersionInfo(opts: { asOf: string | null; ephemeris?: Epheme
       ziweiTraits: versionOf(ziweiTraits),
       ziweiModifiers: versionOf(ziweiModifiers),
       numerology: versionOf(numerologyCatalog),
-      questions: versionOf(questionCatalog),
+      questions: opts.questionVersion === 4 ? 4 : versionOf(questionCatalog),
       jyotish: versionOf(jyotishCatalog),
       humanDesign: versionOf(humanDesignCatalog),
     },

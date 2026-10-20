@@ -1,7 +1,7 @@
 import {
   EXPERIMENTAL_SYSTEM_IDS,
   analyzeCompatibility,
-  answerQuestion,
+  answerQuestion, answerQuestionV4,
   experimentalSensitivity,
   getQuestionCategory,
   listQuestionCategories,
@@ -262,3 +262,39 @@ export const questionTools = [
     },
   }),
 ];
+
+/** Separate versioned context: never calls the frozen v3 scorer or D045 vote cache. */
+export function computeQuestionContextV4(analysis: Analysis, category: string, range: { start: string; end: string }, systems?: readonly string[], verifiedOnly?: boolean) {
+  const n = monthsInRange(range);
+  const years = resolvableYearRange(analysis.asOf);
+  if (!YM.test(range.start) || !YM.test(range.end) || n < 1 || n > MAX_MONTHS ||
+      Number(range.start.slice(0, 4)) < years.min || Number(range.end.slice(0, 4)) > years.max) throw new ToolError('invalid_args', 'invalid v4 question range');
+  const sel = resolveSystems(analysis, systems, verifiedOnly);
+  return answerQuestionV4({ category, range }, monthSignalProvider(analysis), sel.filtered ? { systems: sel.systemsUsed } : {});
+}
+
+export const questionV4Tools = [defineTool({
+  name: 'answer_question_v4',
+  description: 'Versioned directional Question v4. Current production model is diagnostic-only: source grouping, coverage, denominator and recommendation policy are unavailable, so top is always empty. Read model and abstentionReasons; never turn activity or raw diagnostics into month recommendations. Legacy answer_question remains frozen v3 and is not a substitute for v4. Full evidence is available with detail and get_signal; check_answer_v4 must receive the returned questionContext unchanged.',
+  input: {
+    profileId: z.string(), asOf: z.string(), category: z.string(),
+    range: z.object({ start: ymShape, end: ymShape }).strict().optional(),
+    modelVersion: z.literal('question-v4-diagnostic-1').optional(),
+    systems: systemsInput, verifiedOnly: verifiedOnlyInput, detail: z.boolean().optional(),
+  },
+  async handler({ profileId, asOf, category, range: given, systems, verifiedOnly, detail }, { analyzer }) {
+    assertAsOf(asOf);
+    const analysis = await analyzer.get(profileId, asOf);
+    const range = given ?? defaultRange(asOf);
+    const answer = computeQuestionContextV4(analysis, category, range, systems, verifiedOnly);
+    const sel = resolveSystems(analysis, systems, verifiedOnly);
+    const ranking = answer.ranking.map(row => ({ window: row.window, rank: row.rank,
+      coverage: row.coverage, groupMetrics: row.groupMetrics, signalIds: row.signalIds, signalsTotal: row.signals.length,
+      ...(detail ? { directionalDiagnostics: row.directionalDiagnostics } : {}) }));
+    return ok({ calculation: analysis.calculation, asOf, questionVersion: 4, includeVersions: true, caveats: caveatsFor(analysis, sel), data: { ...answer, ranking,
+      sourceEvidence: 'Full source signals, original traits and provenance are available through get_signal; this projection does not rerank.',
+      questionContext: { answerVersion: 4, modelVersion: answer.model.modelVersion, modelFingerprint: answer.model.fingerprint,
+        category, range, ...(systems ? { systems } : {}), ...(verifiedOnly !== undefined ? { verifiedOnly } : {}) },
+      ...systemsFields(sel) } });
+  },
+})];

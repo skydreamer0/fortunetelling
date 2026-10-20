@@ -1,3 +1,4 @@
+import { answerQuestionV4 } from '../lib/core';
 /**
  * 問 AI (D-035, V5-05): map a free-text question to a Question Engine category by
  * KEYWORDS ONLY (no AI), derive a month range, and run the deterministic
@@ -294,4 +295,20 @@ export function localQuestion(report: Report, text: string): LocalQuestion | nul
   }
   const replay = reportReplaySession(report);
   return { category, categoryName, range, answer, ...(replay ? { calculation: replay.calculation } : {}) };
+}
+
+
+/** Versioned live direction consumer; legacy localQuestion remains a byte-compatible v3 API. */
+export interface LocalQuestionV4 extends Omit<LocalQuestion, 'answer'> { answer: import('../lib/core').QuestionAnswerV4 }
+export function localQuestionV4(report: Report, text: string): LocalQuestionV4 | null {
+  const category = matchQuestionCategory(text);
+  if (!category) return null;
+  const range = questionRange(text, report.asOf);
+  const request = { category, range };
+  let answer: import('../lib/core').QuestionAnswerV4;
+  try { answer = answerQuestionV4(request, monthSignalProvider(report)); }
+  catch { answer = answerQuestionV4(request, null); }
+  const replay = reportReplaySession(report);
+  return { category, categoryName: getQuestionCategory(category)?.name ?? category, range, answer,
+    ...(replay ? { calculation: replay.calculation } : {}) };
 }

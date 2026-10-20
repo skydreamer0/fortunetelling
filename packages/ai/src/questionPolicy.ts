@@ -1,4 +1,6 @@
-import type { AbstentionReason, QuestionAnswer, QuestionAnswerV2, QuestionRange, QuestionStatus } from '@fortune/core';
+import type { QuestionAnswer, QuestionAnswerV2, QuestionAnswerV4, QuestionModelIdentityV4, QuestionRange, QuestionStatus } from '@fortune/core';
+import { questionModelIdentityV4 } from './core-pure';
+import { canonicalJson } from './canonical';
 
 /** The decision from the SAME category, range, systems and analysis as the answer being checked. */
 export interface QuestionCheckContext {
@@ -6,11 +8,19 @@ export interface QuestionCheckContext {
   range: QuestionRange | null;
   catalogVersion: number;
   status: QuestionStatus;
-  abstentionReasons: readonly AbstentionReason[];
+  abstentionReasons: readonly { code: string; message: string }[];
+  answerVersion?: 4;
+  model?: QuestionModelIdentityV4;
 }
 
 /** Archived answers are readable, but cannot acquire a new ranking policy by implication. */
-export function questionContextOf(answer: QuestionAnswer | QuestionAnswerV2): QuestionCheckContext {
+export function questionContextOf(answer: QuestionAnswer | QuestionAnswerV2 | QuestionAnswerV4): QuestionCheckContext {
+  if ('answerVersion' in answer) {
+    if (answer.answerVersion !== 4 || canonicalJson(answer.model) !== canonicalJson(questionModelIdentityV4()) ||
+        !['insufficient_evidence', 'unsupported'].includes(answer.status) || answer.top.length !== 0) throw new Error('Unknown or invalid Question v4 model');
+    return { category: answer.category, range: answer.range, catalogVersion: 4, answerVersion: 4,
+      model: structuredClone(answer.model), status: answer.status, abstentionReasons: structuredClone(answer.abstentionReasons) };
+  }
   const current = answer as Partial<QuestionAnswer>;
   const known = ['ranked', 'tied', 'no_clear_advantage', 'insufficient_evidence', 'unsupported'].includes(current.status ?? '');
   return {

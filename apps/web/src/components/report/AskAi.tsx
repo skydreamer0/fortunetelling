@@ -11,7 +11,7 @@
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { buildCopyPrompt, checkPastedAnswer, type CopyPromptFocus, type PasteCheckResult } from '@fortune/ai/copy';
-import { localQuestion, matchQuestionCategory, questionRange, type LocalQuestion } from '../../model/askAi';
+import { localQuestionV4, matchQuestionCategory, questionRange, type LocalQuestion, type LocalQuestionV4 } from '../../model/askAi';
 import type { Report } from '../../model/types';
 import { Section } from '../ui/primitives';
 import { McpEntry } from './McpEntry';
@@ -71,7 +71,7 @@ export function PasteCheckView({ result }: { result: PasteCheckResult }) {
 }
 
 /** Mapping status under the question box (exported for tests). */
-export function QuestionStatus({ text, local, ranking }: { text: string; local: LocalQuestion | null; ranking: boolean }) {
+export function QuestionStatus({ text, local, ranking }: { text: string; local: LocalQuestion | LocalQuestionV4 | null; ranking: boolean }) {
   if (!text.trim()) return <p className="ask__status">可留空；留空時 AI 只做整體解讀。</p>;
   if (ranking) return <p className="ask__status" aria-busy="true">對應到網站的問事類別，正在計算月份排名（約 1–2 秒）…</p>;
   if (!local) {
@@ -111,13 +111,13 @@ export function AskAi({ report, clipboard }: {
   const localKey = category && range ? `${category}|${range.start}|${range.end}` : '';
   // The ranking needs one timeline build per calendar year (~1 s each), so it runs after
   // paint, only when the category or range changes; the prompt is rebuilt when it lands.
-  const [ranked, setRanked] = useState<{ report: Report; key: string; local: LocalQuestion } | null>(null);
+  const [ranked, setRanked] = useState<{ report: Report; key: string; local: LocalQuestionV4 } | null>(null);
   const questionRef = useRef(deferredQuestion);
   questionRef.current = deferredQuestion;
   useEffect(() => {
     if (!localKey || (ranked?.report === report && ranked?.key === localKey)) return;
     const timer = setTimeout(() => {
-      const result = localQuestion(report, questionRef.current);
+      const result = localQuestionV4(report, questionRef.current);
       if (result) setRanked({ report, key: localKey, local: result });
     }, 30);
     return () => clearTimeout(timer);

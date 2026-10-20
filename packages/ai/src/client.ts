@@ -12,7 +12,7 @@
  * cache stores the RAW model output and re-runs validation on every hit, so a
  * tightened validator applies to old cache entries too.
  */
-import type { QuestionAnswer, QuestionRequest } from '@fortune/core';
+import type { QuestionAnswer, QuestionAnswerV4, QuestionRequest } from '@fortune/core';
 import type { QuestionCheckContext } from './questionPolicy';
 import { canonicalJson, sha256Hex } from './canonical';
 import { validateQuestionRequest } from './core-pure';
@@ -109,7 +109,7 @@ export interface Interpretation {
 
 export interface InterpretOptions {
   complete: CompleteFn;
-  question?: QuestionAnswer | null;
+  question?: QuestionAnswer | QuestionAnswerV4 | null;
   /** Model id for the cache key; defaults to `complete.model`. */
   model?: string;
   store?: InterpretationCacheStore;
@@ -160,6 +160,7 @@ export async function interpret(report: ReportLike, options: InterpretOptions): 
     question: built.payload.question
       ? { category: built.payload.question.category, range: built.payload.question.range,
         catalogVersion: built.payload.question.catalogVersion, status: built.payload.question.status,
+        ...(built.payload.question.answerVersion === 4 ? { answerVersion: 4, model: structuredClone(built.payload.question.model) } : {}),
         abstentionReasons: built.payload.question.abstentionReasons, unsupported: built.payload.question.unsupported }
       : null,
     sections: kept,

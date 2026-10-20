@@ -452,3 +452,9 @@ export function experimentalSensitivity(
   const changed = all.length !== verified.length || all.some((e, i) => e.month !== verified[i].month);
   return { systemsAll: withSet, systemsVerifiedOnly: withoutSet, top3All: all, top3VerifiedOnly: verified, changed };
 }
+
+/** Frozen v3 entry point. New direction semantics live exclusively in answerQuestionV4. */
+export function replayQuestionAnswerV3(request: QuestionRequest | unknown, provider: SignalProvider,
+  opts: Omit<AnswerOptions, 'catalog'> = {}): QuestionAnswer {
+  return answerQuestion(request, provider, { ...opts, catalog: catalogJson as unknown as QuestionCatalog });
+}
