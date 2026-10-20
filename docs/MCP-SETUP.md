@@ -74,8 +74,10 @@ npm run add-profile --workspace @fortune/mcp -- sky \
 | `get_timeline` | 逐年各領域分數，預設為精簡年度表 `yearTable`（每年每領域一列，只列前 3 個短編號與總筆數，約 6.7 KB；`detail: true` 回完整年度 cell）；加 `months: {start,end}`（`YYYY-MM`，最多 36 個月）才回逐月；指定 `domain` 時逐月為每月一列的 `monthTable`。可帶 `systems`／`verifiedOnly` |
 | `get_consensus` / `list_conflicts` | 跨系統共識與矛盾；`get_consensus` 可帶 `systems`／`verifiedOnly`（`list_conflicts` 不篩選） |
 | `answer_question` / `list_question_categories` | 問事（例如「哪幾個月適合買車」）月份排名；先用 `list_question_categories` 取得 category id，或直接帶 `question` 讓固定關鍵字表決定類別（比對不到或並列會回 `invalid_args` 與 `availableCategories`，不猜）。預設精簡回傳前 3 名＋排名表，附 `experimentalSensitivity`；可帶 `systems`／`verifiedOnly` |
+| `answer_question_v4` | 明確選用 Question v4 方向診斷，保留完整模型身份與 unresolved coverage；預設回傳訊號 IDs／數量，`detail: true` 才加逐訊號 support／pressure；完整原始訊號、trait 與 evidence 透過 `get_signal` 取得。負 valence 只計壓力，activity 不增加正向推薦；目前來源分組與推薦政策未採用，正向資料也回 `insufficient_evidence`、空 `top` 與 `rank: null`，不是可用排名模型。既有 `answer_question` 保留 v3 行為。 |
 | `compare_profiles` | 雙人合盤（姓名與出生資料不會出現在結果中） |
 | `check_answer` | 貼回一段 AI 回答（`profileId`、`asOf`、`answerText`），檢查引用的 `sig_` id 是否存在、有無宿命論或保證式用語、有沒有把 experimental 系統（目前只有 Jyotish）當成「高共識」。只標示、不改寫；回 `{ ok, citedIds, unknownCitations, issues[] }` |
+| `check_answer_v4` | 檢查 v4 問事回答，必須帶回 `answer_question_v4` 的完整 `questionContext`（包含 `answerVersion: 4` 與模型指紋），並使用相同 `profileId`／`asOf`。缺少或錯誤版本／模型身份會拒絕，不退回 v3；依 v4 abstain 狀態檢查引用與過度推薦。 |
 | `batch` | 把最多 8 個唯讀查詢合成一次往返（`calls: [{ tool, args }]`），依序在行程內執行、共用分析快取；每個結果各自成功或帶結構化錯誤，不可巢狀、不可放 `import_profile` |
 | `import_profile` | 匯入網站匯出的 `.fortune.json`（`content` 全文或 `path` 路徑二選一）。已存在同名 profile 不會覆蓋，要 `overwrite: true`；指紋缺漏或過期會重算並警告 |
 
@@ -84,7 +86,7 @@ npm run add-profile --workspace @fortune/mcp -- sky \
 版本與警告欄位：
 
 - `versionsHash`：版本區塊（core、calculator、規則目錄版本與 ephemeris 狀態）的 12 碼雜湊，不含 `asOf`。同一輸入同一版本會得到相同結果；雜湊變了代表版本變了。
-- `versions`：完整版本區塊（約 500 bytes）在 `list_profiles`、`get_profile` 與 `compare_bazi_conventions` 的直接成功回應中回傳，其餘工具預設只回 `versionsHash` 以節省上下文。`batch` 的子結果不保留完整 `versions`；需要比較工具的版本明細時，請直接呼叫該工具。
+- `versions`：完整版本區塊（約 500 bytes）在 `list_profiles`、`get_profile` 與 `compare_bazi_conventions` 的直接成功回應中回傳；`answer_question_v4` 的直接成功回應也會包含完整 `versions`，其中 `catalogs.questions` 為 `4`，`questionModel` 保留模型版本與指紋。其餘工具預設只回 `versionsHash` 以節省上下文。`batch` 的子結果不保留完整 `versions`；需要比較工具的版本明細時，請直接呼叫該工具。
 - `caveats`：Claude 不該過度相信的地方——分數未校準、時間邊界、未參與的系統，以及仍標 `experimental` 的 Jyotish。[人類圖已有兩站 38 案交叉驗證](../packages/core/tests/fixtures/validation/humandesign-validation-report.md)，M5-03 起視為已驗證（不再有 `experimental:humanDesign` caveat，可計入高共識）；[吠陀占星已有 30 案獨立對照，但仍缺兩個公開吠陀計算器 ≥ 20 案](../packages/core/tests/fixtures/validation/jyotish-validation-report.md)，[experimental 標記](../packages/core/src/portable/versions.ts)仍保留。計算結果對照不代表預測有效性已驗證。
 - 回應太大時不會截斷，而是回 `response_too_large` 並提示縮小範圍。
 

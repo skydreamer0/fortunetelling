@@ -21,6 +21,7 @@ function imports(source: string): Array<{ spec: string; typeOnly: boolean }> {
 const FORBIDDEN = [/calculators/, /engines/, /iztro/, /lunar-javascript/, /swisseph/, /\/time\//, /\/rules\//, /\/timeline\//];
 const ALLOWED_CORE_RUNTIME = new Set([
   '../../core/src/questions/engine',
+  '../../core/src/questions/engine.v4',
   '../../core/src/analysis/HonestyGuard',
   '../../core/src/export/redact',
   '../../core/src/signals/shortId',
