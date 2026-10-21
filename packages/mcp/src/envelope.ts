@@ -75,8 +75,9 @@ export function ok<T>(input: {
   ephemeris?: 'moshier' | 'not_initialized';
   /** Attach the full version block (default false: only `versionsHash`). */
   includeVersions?: boolean;
+  questionVersion?: 4;
 }): Envelope<T> {
-  const versions = buildVersionInfo({ asOf: input.asOf, ephemeris: input.ephemeris ?? 'moshier' });
+  const versions = buildVersionInfo({ asOf: input.asOf, ephemeris: input.ephemeris ?? 'moshier', ...(input.questionVersion === 4 ? { questionVersion: 4 } : {}) });
   return {
     asOf: input.asOf,
     versionsHash: hashVersions(versions),

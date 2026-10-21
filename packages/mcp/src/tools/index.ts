@@ -1,16 +1,16 @@
-import { answerCheckTools } from './answerCheck';
+import { answerCheckTools, answerCheckV4Tools } from './answerCheck';
 import { chartTools } from './chart';
 import { comparisonTools } from './compareBazi';
 import { importProfileTools } from './importProfile';
 import { profileTools } from './profiles';
-import { questionTools } from './questions';
+import { questionTools, questionV4Tools } from './questions';
 import { signalTools } from './signals';
 import { defineTool, type ToolContext, type RegisteredTool } from './types';
 import { z } from 'zod';
 import { MAX_RESPONSE_CHARS, ok, render, renderError, type Caveat } from '../envelope';
 import { ToolError } from '../errors';
 
-const BASE_TOOLS: readonly RegisteredTool[] = [...profileTools, ...chartTools, ...comparisonTools, ...signalTools, ...questionTools, ...answerCheckTools, ...importProfileTools];
+const BASE_TOOLS: readonly RegisteredTool[] = [...profileTools, ...chartTools, ...comparisonTools, ...signalTools, ...questionTools, ...questionV4Tools, ...answerCheckTools, ...answerCheckV4Tools, ...importProfileTools];
 
 /** batch 一次最多幾個呼叫。 */
 export const MAX_BATCH_CALLS = 8;

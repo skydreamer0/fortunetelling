@@ -1,3 +1,6 @@
 # golden 與 fixtures 需位元穩定，固定使用 LF（避免 Windows autocrlf 造成比對失敗）
 packages/*/tests/fixtures/** text eol=lf
 *.golden.json text eol=lf
+
+# Compressed complete legacy replay fixture must not undergo newline conversion.
+packages/core/tests/fixtures/questionLegacy32.v2-v3.json.gz binary

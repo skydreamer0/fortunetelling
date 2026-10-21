@@ -1,8 +1,10 @@
 import { checkAnswer, questionContextOf } from '@fortune/ai/mcp';
 import { z } from 'zod';
+import { questionModelIdentityV4 } from '@fortune/core';
+import { ToolError } from '../errors';
 import { caveatsFor, ok } from '../envelope';
 import { defineTool } from './types';
-import { computeQuestionContext } from './questions';
+import { computeQuestionContext, computeQuestionContextV4 } from './questions';
 import { systemsInput, verifiedOnlyInput } from '../systems';
 
 /** 貼回的回答長度上限（字元），避免把整段對話倒進來。 */
@@ -24,6 +26,9 @@ export const answerCheckTools = [
       asOf: z.string().describe("Evaluation date 'YYYY-MM-DD'；須與產生該回答時查詢用的 asOf 相同，否則 id 可能對不上。"),
       answerText: z.string().min(1).max(MAX_ANSWER_CHARS).describe(`要檢查的回答全文（最多 ${MAX_ANSWER_CHARS} 字）。`),
       questionContext: z.object({
+        answerVersion: z.literal(4).optional(),
+        modelVersion: z.literal('question-v4-diagnostic-1').optional(),
+        modelFingerprint: z.string().optional(),
         category: z.string(),
         range: z.object({ start: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/), end: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/) }).strict(),
         systems: systemsInput,
@@ -33,9 +38,24 @@ export const answerCheckTools = [
     async handler(args, { analyzer }) {
       const analysis = await analyzer.get(args.profileId, args.asOf);
       const q = args.questionContext;
-      const questionContext = q ? questionContextOf(computeQuestionContext(analysis, q.category, q.range, q.systems, q.verifiedOnly)) : null;
+      if (q && (q.answerVersion !== undefined || q.modelVersion !== undefined || q.modelFingerprint !== undefined) &&
+          (q.answerVersion !== 4 || q.modelVersion !== questionModelIdentityV4().modelVersion || q.modelFingerprint !== questionModelIdentityV4().fingerprint)) {
+        throw new ToolError('invalid_args', 'Question v4 requires exact version and fingerprint; no legacy fallback');
+      }
+      const questionContext = q?.answerVersion === 4 ? questionContextOf(computeQuestionContextV4(analysis, q.category, q.range, q.systems, q.verifiedOnly)) : q ? questionContextOf(computeQuestionContext(analysis, q.category, q.range, q.systems, q.verifiedOnly)) : null;
       const result = checkAnswer(args.answerText, { questionContext, signalLookup: id => analysis.findSignal(id), directionalEvidence: () => analysis.directionalEvidence() });
-      return ok({ calculation: analysis.calculation, asOf: analysis.asOf, data: result, caveats: caveatsFor(analysis) });
+      return ok({ calculation: analysis.calculation, asOf: analysis.asOf, ...(q?.answerVersion === 4 ? { questionVersion: 4 as const } : {}), data: result, caveats: caveatsFor(analysis) });
     },
   }),
 ];
+
+
+/** V4 clients cannot silently fall back by omitting model metadata. Historical check_answer remains readable. */
+export const answerCheckV4Tools = [defineTool({
+  ...answerCheckTools[0],
+  name: 'check_answer_v4',
+  description: 'Check a Question v4 answer using the exact returned questionContext. Version and model fingerprint are required; missing or unknown versions are rejected, never recalculated with v3.',
+  input: { ...answerCheckTools[0].input, questionContext: answerCheckTools[0].input.questionContext.unwrap().extend({
+    answerVersion: z.literal(4), modelVersion: z.literal('question-v4-diagnostic-1'), modelFingerprint: z.string(),
+  }).strict() },
+})];

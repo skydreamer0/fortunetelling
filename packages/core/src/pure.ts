@@ -24,3 +24,5 @@ export {
   supportsHighConsensusCitations, validAgreementThresholds,
 } from './signals/directionalEvidence';
 export type { DirectionalEvidence, AgreementThresholds, AgreementCitation } from './signals/directionalEvidence';
+
+export { questionModelIdentityV4 } from './questions/engine.v4';

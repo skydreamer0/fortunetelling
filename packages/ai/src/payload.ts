@@ -20,7 +20,7 @@
  */
 import type {
   Domain,
-  QuestionAnswer,
+  QuestionAnswer, QuestionAnswerV4,
   RankedWindow,
   Signal,
   SignalConflict,
@@ -187,7 +187,7 @@ export interface InterpretationPayload {
 }
 
 export interface BuildPayloadOptions {
-  question?: QuestionAnswer | null;
+  question?: QuestionAnswer | QuestionAnswerV4 | null;
   /** Serialised-size budget in characters; default 120 000. */
   maxChars?: number;
   /**
@@ -328,7 +328,9 @@ function buildTimelineCells(cells: TimelineCell[] | undefined, sid: IdMapper, ti
   }));
 }
 
-function buildQuestion(answer: QuestionAnswer, sid: IdMapper): PayloadQuestion {
+function buildQuestion(answer: QuestionAnswer | QuestionAnswerV4, sid: IdMapper): PayloadQuestion {
+  if ('answerVersion' in answer) return { ...questionContextOf(answer), thresholds: null, category: answer.category,
+    range: answer.range, unsupported: answer.unsupported === true, catalogVersion: 4, top: [] };
   return {
     ...questionContextOf(answer),
     thresholds: validAgreementThresholds(answer.thresholds) ? { ...answer.thresholds } : null,
@@ -399,7 +401,7 @@ export function buildInterpretationPayloadFromSelection(report: ReportLike, opti
   const byId = new Map<string, Signal>();
   for (const s of report.signals ?? []) if (s && typeof s.id === 'string') byId.set(s.id, s);
   const protectedIds = new Set<string>();
-  for (const w of answer && questionContextOf(answer).status === 'ranked' ? answer.top : []) {
+  for (const w of answer && !('answerVersion' in answer) && questionContextOf(answer).status === 'ranked' ? answer.top : []) {
     for (const s of [...w.supportSignals, ...w.riskSignals]) {
       if (!byId.has(s.id)) byId.set(s.id, s);
       protectedIds.add(s.id);

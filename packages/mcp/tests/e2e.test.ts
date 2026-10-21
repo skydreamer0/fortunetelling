@@ -11,8 +11,8 @@ const EXPECTED_TOOLS = [
   'list_profiles', 'get_profile',
   'get_chart', 'get_time_context', 'compare_bazi_conventions',
   'list_signals', 'get_signal', 'get_timeline', 'get_consensus', 'list_conflicts',
-  'answer_question', 'list_question_categories', 'compare_profiles',
-  'check_answer', 'import_profile', 'batch',
+  'answer_question', 'answer_question_v4', 'list_question_categories', 'compare_profiles',
+  'check_answer', 'check_answer_v4', 'import_profile', 'batch',
 ];
 
 let fx: Awaited<ReturnType<typeof makeFixture>>;

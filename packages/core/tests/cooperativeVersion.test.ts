@@ -25,7 +25,13 @@ test('0.9.0 retains existing runtime exports and explicitly lists additive APIs'
     // #15/#59/#60: explicit opt-in observation APIs; retain the historical inventory.
     'OBSERVATION_SPLITS', 'auditObservationDataset', 'countObservationUnits',
     'migrateLifeEventV1', 'readLifeObservationV2', 'restoreLifeEventV1',
-    'replayAsyncTimeline'].sort());
+    'replayAsyncTimeline',
+    // #29/#47: additive opt-in v4 diagnostics/research APIs and explicit legacy v3 replay.
+    // Keep every historical export and the exact inventory assertion; no version bump.
+    'DIRECTIONAL_KERNEL_V4', 'QUESTION_V4_MODEL_VERSION',
+    'answerQuestionV4', 'compareDirectionalAxesV4', 'directionalAxesV4',
+    'evaluateResearchGroupV4', 'questionModelIdentityV4', 'replayQuestionAnswerV3',
+    'serializeQuestionAnswerV4', 'validatedSignalsV4'].sort());
   expect(typeof core.ResolvedBirthData).toBe('function');
   for (const helper of ['calculateZiweiSteps', 'decadeSequenceSteps', 'yearlySequenceSteps', 'monthlySequenceSteps']) {
     expect(helper in core).toBe(false);
