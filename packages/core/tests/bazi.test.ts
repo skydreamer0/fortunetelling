@@ -1,3 +1,4 @@
+import { producerCategory } from './helpers/producerComponents';
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { BirthData, createEngines } from '../src/index';
@@ -22,8 +23,8 @@ test('八字：1986-05-29 辰時產出固定四柱與時間慣例', () => {
   }));
 
   assert.equal(result.errors.length, 0, result.errors.join('; '));
-  const natal = result.byCategory('natal')[0];
-  const dayMaster = result.byCategory('dayMaster')[0];
+  const natal = producerCategory(result, 'bazi', 'natal')[0];
+  const dayMaster = producerCategory(result, 'bazi', 'dayMaster')[0];
 
   assert.deepEqual(natal.value, {
     year: '丙寅', month: '癸巳', day: '癸酉', time: '丙辰',
@@ -36,8 +37,8 @@ test('八字：五行與十神以十四次出現統計且包含日干', () => {
   const result = getBaZiEngine().run(new BirthData({
     year: 1986, month: 5, day: 29, hour: 8, minute: 0,
   }));
-  const elements = result.byCategory('elements')[0];
-  const tenGods = result.byCategory('tenGods')[0];
+  const elements = producerCategory(result, 'bazi', 'elements')[0];
+  const tenGods = producerCategory(result, 'bazi', 'tenGods')[0];
 
   assert.deepEqual(elements.value.counts, { 木: 2, 火: 4, 土: 3, 金: 2, 水: 3 });
   assert.equal(elements.value.total, 14);
@@ -55,8 +56,8 @@ test('八字 B3：十神關係角色排除日主並產出固定顯隱統計', ()
   const result = getBaZiEngine().run(new BirthData({
     year: 1986, month: 5, day: 29, hour: 8, minute: 0,
   }));
-  const tenGods = result.byCategory('tenGods')[0];
-  const context = result.byCategory('tenGodsContext')[0];
+  const tenGods = producerCategory(result, 'bazi', 'tenGods')[0];
+  const context = producerCategory(result, 'bazi', 'tenGodsContext')[0];
 
   assert.ok(context, '應產出 tenGodsContext');
   assert.equal(context.id, 'tenGodsContext');
@@ -102,8 +103,9 @@ test('八字 B3：十神群完全未出現時 presence 為無', () => {
   const result = getBaZiEngine().run(new BirthData({
     year: 1980, month: 1, day: 3, hour: 0, minute: 0,
   }));
-  const context = result.byCategory('tenGodsContext')[0];
+  const context = producerCategory(result, 'bazi', 'tenGodsContext')[0];
   const officers = context.value.groups.find((group: any) => group.group === '官殺');
+  assert.ok(officers);
 
   assert.deepEqual(officers.breakdown, { 正官: 0, 七殺: 0 });
   assert.deepEqual(officers.observedTenGods, []);
@@ -126,8 +128,8 @@ test('八字：1991-10-05 14:00 產出四個完整 L0 component', () => {
       .filter(cat => ['natal', 'dayMaster', 'elements', 'tenGods'].includes(cat)),
     ['natal', 'dayMaster', 'elements', 'tenGods']
   );
-  const elements = result.byCategory('elements')[0].value;
-  const tenGods = result.byCategory('tenGods')[0].value;
+  const elements = producerCategory(result, 'bazi', 'elements')[0].value;
+  const tenGods = producerCategory(result, 'bazi', 'tenGods')[0].value;
   assert.equal(tenGods.total, elements.total);
   assert.ok(tenGods.total > 0);
 });
@@ -140,7 +142,7 @@ test('八字：B2 大運與流年驗證 1991-10-05 14:00 女 asOf=2026-07-11', (
 
   assert.equal(result.errors.length, 0, result.errors.join('; '));
 
-  const daYuns = result.byCategory('daYun');
+  const daYuns = producerCategory(result, 'bazi', 'daYun');
   assert.equal(daYuns.length, 10, '應恰好產出 10 步大運');
 
   let currentCount = 0;
@@ -156,7 +158,7 @@ test('八字：B2 大運與流年驗證 1991-10-05 14:00 女 asOf=2026-07-11', (
 
   assert.equal(currentCount, 1, '剛好一步大運是 isCurrent: true');
 
-  const liuNian = result.byCategory('liuNian')[0];
+  const liuNian = producerCategory(result, 'bazi', 'liuNian')[0];
   assert.equal(liuNian.value.year, 2026);
   assert.equal(liuNian.value.ganZhi, '丙午');
 });
@@ -172,15 +174,15 @@ test('八字：B2 2030-01-01 大運靜態不變與己酉流年', () => {
   const res26 = engine26!.run(birth);
   const res30 = engine30!.run(birth);
 
-  const dyn26 = res26.byCategory('daYun');
-  const dyn30 = res30.byCategory('daYun');
+  const dyn26 = producerCategory(res26, 'bazi', 'daYun');
+  const dyn30 = producerCategory(res30, 'bazi', 'daYun');
 
   for (let i = 0; i < 10; i++) {
     assert.equal(dyn26[i].value.ganZhi, dyn30[i].value.ganZhi);
     assert.equal(dyn26[i].value.startYear, dyn30[i].value.startYear);
   }
 
-  const liuNian30 = res30.byCategory('liuNian')[0];
+  const liuNian30 = producerCategory(res30, 'bazi', 'liuNian')[0];
   assert.equal(liuNian30.value.year, 2030);
   assert.equal(liuNian30.value.ganZhi, '己酉');
 });

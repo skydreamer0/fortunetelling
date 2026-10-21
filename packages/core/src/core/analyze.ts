@@ -1,3 +1,5 @@
+import { chartSnapshotRuntime, type ChartSnapshot } from './chartSnapshot';
+import { canonicalStringify } from '../portable/canonical';
 /**
  * @fileoverview `analyze()` — the single public orchestrator.
  *
@@ -156,7 +158,12 @@ type ReportDraft = Omit<Report, 'insights' | 'timeContext' | 'timeline' | 'conse
  * @throws {Error} If the input fails validation. Individual engine
  *   failures do NOT throw — they surface as `errors` on that engine's result.
  */
-export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf?: Date | string | null } = {}): Report {
+export function analyze(input: AnalyzeInput | BirthData, options: { asOf?: Date | string | null } = {}): Report {
+  return analyzeWithSnapshot(input, options);
+}
+
+/** Internal owned-snapshot route; the public analyze signature stays unchanged. */
+export function analyzeWithSnapshot(input: AnalyzeInput | BirthData, { asOf = null }: { asOf?: Date | string | null } = {}, snapshot?: ChartSnapshot): Report {
   // fail fast with a clear message before running engines
   const { birth, profile, options, birthplaceSource, spec } = resolveCalculationSpec(input);
 
@@ -167,9 +174,14 @@ export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf
   const asOfStr = asOfDate.toISOString().slice(0, 10);
 
   // ① 時間標準化層（D-026）：唯一時間來源
-  const ctx = createTimeContext(profile, { dstOverlap: spec.identity.settings.time.dstOverlap });
-  const baziNatalBasis = createBaziNatalBasisProvider(ctx, options);
-  const ziweiNatalBasis = createZiweiNatalBasisProvider(ctx, {
+  const sourceContext = createTimeContext(profile, { dstOverlap: spec.identity.settings.time.dstOverlap });
+  if (snapshot && (snapshot.specHash !== spec.specHash || canonicalStringify(snapshot.identity) !== canonicalStringify(spec.identity))) {
+    throw new Error('Report input must match the complete snapshot identity');
+  }
+  const runtime = snapshot ? chartSnapshotRuntime(snapshot) : undefined;
+  const ctx = runtime?.ctx ?? sourceContext;
+  const baziNatalBasis = runtime?.bazi ?? createBaziNatalBasisProvider(ctx, options);
+  const ziweiNatalBasis = runtime?.ziwei ?? createZiweiNatalBasisProvider(ctx, {
     useTrueSolarTime: options.useTrueSolarTime, ziHourConvention: toZiweiZiConvention(options.ziHourConvention),
   });
 
@@ -249,7 +261,7 @@ export function analyze(input: AnalyzeInput | BirthData, { asOf = null }: { asOf
 
   // ── v4：時間脈絡、時間軸、訊號——先於誠實稽核填入，讓訊號文字受檢 ──
   const { timeline, signals } = buildSyncTimeline(ctx, asOfStr, birth.name, options, baziNatalBasis, ziweiNatalBasis);
-  report.timeContext = buildReportTimeContext(ctx, options, birthplaceSource);
+  report.timeContext = buildReportTimeContext(sourceContext, options, birthplaceSource);
   report.timeline = timeline;
   report.signals = signals;
   // ── v5：跨系統共識／矛盾摘要（只重排 timeline 已有的判定，不另算分數，D-033）──

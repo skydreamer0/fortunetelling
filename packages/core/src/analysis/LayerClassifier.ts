@@ -58,7 +58,7 @@ export interface ClassifiedComponent {
   /** Sub-category within the engine */
   category: string;
   /** The component's value / data */
-  value: any;
+  value: unknown;
   /** Why it was classified into this layer */
   rationale: string;
   /**

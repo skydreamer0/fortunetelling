@@ -1,3 +1,4 @@
+import { producerCategory } from './helpers/producerComponents';
 import { expect, test } from 'vitest';
 import { BirthData } from '../src/core/models/BirthData';
 import { SystemResult } from '../src/core/models/SystemResult';
@@ -123,12 +124,12 @@ test('Numerology retains zero name numbers, absent-name warning, and nullable fi
     expect(result.components).toHaveLength(hasLatin ? 18 : 15);
     expect(result.errors).toEqual(hasLatin ? [] : ['姓名無拉丁字母，略過表達數/靈魂數/人格數計算']);
     expect(result.meta).toEqual({ name });
-    expect(result.byCategory('lifePath')[0].value).toEqual({ number: 22, isMaster: true });
-    expect(result.byCategory('pinnacles').map(component => component.value.isMaster)).toEqual([true, true, true, false]);
-    expect(result.byCategory('pinnacles')[3].value.endAge).toBeNull();
-    expect(result.byCategory('challenges')[3].value.endAge).toBeNull();
-    if (name === 'AEIOU') expect(result.byCategory('personality')[0].value).toEqual({ number: 0, isMaster: false });
-    if (name === 'BCDF' || name === 'Y') expect(result.byCategory('soulUrge')[0].value).toEqual({ number: 0, isMaster: false });
+    expect(producerCategory(result, 'numerology', 'lifePath')[0].value).toEqual({ number: 22, isMaster: true });
+    expect(producerCategory(result, 'numerology', 'pinnacles').map(component => component.value.isMaster)).toEqual([true, true, true, false]);
+    expect(producerCategory(result, 'numerology', 'pinnacles')[3].value.endAge).toBeNull();
+    expect(producerCategory(result, 'numerology', 'challenges')[3].value.endAge).toBeNull();
+    if (name === 'AEIOU') expect(producerCategory(result, 'numerology', 'personality')[0].value).toEqual({ number: 0, isMaster: false });
+    if (name === 'BCDF' || name === 'Y') expect(producerCategory(result, 'numerology', 'soulUrge')[0].value).toEqual({ number: 0, isMaster: false });
   }
 });
 

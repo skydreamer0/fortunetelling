@@ -14,6 +14,7 @@ import {
 } from '../lib/core';
 import type { Report } from './types';
 import { reportTimelineOptions } from './reportTimeline';
+import { reportReplaySession, requiresReportReplay } from './reportReplay';
 import { createBrowserYieldTask } from './yieldToBrowser';
 
 /** Keyword → category. First category with a hit wins only if no other category also hits. */
@@ -84,12 +85,14 @@ type MonthSignalsSource = ((year: number) => Map<string, CoreSignal[]>) & {
 function monthSignalsByYear(report: Report): MonthSignalsSource | null {
   const ctx = report.timeContext as unknown as TimeContext | null | undefined;
   const options = reportTimelineOptions(report);
-  if (!ctx || !options) return null;
-  const asOfYear = Number(report.asOf.slice(0, 4));
+  const replay = reportReplaySession(report);
+  if (!ctx || !options || (requiresReportReplay(report) && !replay)) return null;
+  const ownedAsOf = report.asOf;
+  const asOfYear = Number(ownedAsOf.slice(0, 4));
   const byYear = new Map<number, MonthSignalsDraft>();
   const proofs: DirectionalEvidence[] = [];
   const timelineOptions = (year: number) => ({
-    asOf: year === asOfYear ? report.asOf : `${year}-01-01`,
+    asOf: year === asOfYear ? (replay ? ownedAsOf : report.asOf) : `${year}-01-01`,
     years: 1, includeMonths: true, topSignalsPerDomain: Infinity, ...options,
   });
   const project = (tl: ReturnType<typeof buildTimeline>): MonthSignalsDraft => {
@@ -115,7 +118,7 @@ function monthSignalsByYear(report: Report): MonthSignalsSource | null {
   const read = (year: number) => {
     let draft = byYear.get(year);
     if (!draft) {
-      draft = project(buildTimeline(ctx, timelineOptions(year)));
+      draft = project(replay ? replay.timeline(timelineOptions(year)).timeline : buildTimeline(ctx, timelineOptions(year)));
       commit(year, draft);
     }
     return draft.months;
@@ -123,7 +126,9 @@ function monthSignalsByYear(report: Report): MonthSignalsSource | null {
   const stage = async (year: number, signal: AbortSignal, yieldTask: () => Promise<void>) => {
     const cached = byYear.get(year);
     if (cached) return cached;
-    const tl = await buildTimelineCooperatively(ctx, timelineOptions(year), { signal, yieldTask });
+    const tl = replay
+      ? (await replay.timelineCooperatively(timelineOptions(year), { signal, yieldTask })).timeline
+      : await buildTimelineCooperatively(ctx, timelineOptions(year), { signal, yieldTask });
     signal.throwIfAborted();
     return project(tl); // No cache/proof publication here, including partial years.
   };
@@ -144,27 +149,30 @@ const LOOKUP_YEARS = { before: 5, after: 10 } as const;
  * not-yet-scanned year could hold a second signal with the same prefix. Ambiguous → null, never a guess.
  */
 export type ReportSignalLookup = ((id: string) => CoreSignal | null) & {
+  calculation?: import('../lib/core').ReportCalculation;
   directionalEvidence(): DirectionalEvidence[];
   /** Prepare the same lookup in bounded units; publish only complete owned years. */
   prepare(ids: readonly string[], signal: AbortSignal, yieldTask?: () => Promise<void>): Promise<void>;
 };
 export function reportSignalLookup(report: Report): ReportSignalLookup {
+  const replay = reportReplaySession(report);
+  const usable = !requiresReportReplay(report) || replay !== null;
   const known = new Map<string, CoreSignal>();
   const add = (signal: CoreSignal | null | undefined) => {
-    if (signal && typeof signal.id === 'string') known.set(signal.id, signal);
+    if (signal && typeof signal.id === 'string') known.set(signal.id, replay ? structuredClone(signal) : signal);
   };
-  if (Array.isArray(report.signals)) report.signals.forEach(add);
-  for (const cell of [...(report.timeline?.years ?? []), ...(report.timeline?.months ?? [])]) {
+  if (usable && Array.isArray(report.signals)) report.signals.forEach(add);
+  for (const cell of usable ? [...(report.timeline?.years ?? []), ...(report.timeline?.months ?? [])] : []) {
     for (const domain of cell.domains) domain.topSignals.forEach(add);
   }
   const monthsOf = monthSignalsByYear(report);
   const proofs: DirectionalEvidence[] = [];
-  if (report.timeline && report.timeline.schemaVersion >= 2) {
+  if (usable && report.timeline && report.timeline.schemaVersion >= 2) {
     const timeline = report.timeline;
     for (const cell of [...timeline.years, ...timeline.months]) for (const domain of cell.domains) {
       if (evidenceMatchesContext(domain.directionalEvidence, { domain: domain.domain, window: cell.window,
         thresholds: timeline.thresholds, systems: timeline.systems, systemWeights: timeline.systemWeights, perSystem: domain.perSystem,
-      })) proofs.push(domain.directionalEvidence);
+      })) proofs.push(replay ? structuredClone(domain.directionalEvidence) : domain.directionalEvidence);
     }
   }
   const asOfYear = Number(report.asOf.slice(0, 4));
@@ -191,7 +199,8 @@ export function reportSignalLookup(report: Report): ReportSignalLookup {
     if (monthsOf && scanned < last && !(isFull && known.has(wanted))) supersede();
     while (monthsOf && scanned < last && !(isFull && known.has(wanted))) scanNext();
     const found = resolveSignalId(wanted, known.keys());
-    return found.status === 'exact' || found.status === 'unique' ? known.get(found.id) ?? null : null;
+    const result = found.status === 'exact' || found.status === 'unique' ? known.get(found.id) ?? null : null;
+    return replay && result ? structuredClone(result) : result;
   };
   const prepare: ReportSignalLookup['prepare'] = async (ids, signal, yieldTask = createBrowserYieldTask()) => {
     signal.throwIfAborted();
@@ -236,10 +245,14 @@ export function reportSignalLookup(report: Report): ReportSignalLookup {
       if (active === controller) active = null;
     }
   };
-  return Object.assign(lookup, { prepare, directionalEvidence: () => [...proofs, ...(monthsOf?.directionalEvidence() ?? [])] });
+  return Object.assign(lookup, { ...(replay ? { calculation: replay.calculation } : {}), prepare, directionalEvidence: () => {
+    const result = [...proofs, ...(monthsOf?.directionalEvidence() ?? [])];
+    return replay ? structuredClone(result) : result;
+  } });
 }
 
 export interface LocalQuestion {
+  calculation?: import('../lib/core').ReportCalculation;
   category: string;
   categoryName: string;
   range: QuestionRange;
@@ -279,5 +292,6 @@ export function localQuestion(report: Report, text: string): LocalQuestion | nul
     answer.ranking = [];
     answer.abstentionReasons = [{ code: 'source_unavailable', message: '這份報告缺少可重放的月份資料，或月份計算未完成；不能把未取得的資料當成已評估的零分，不提供月份排名。' }];
   }
-  return { category, categoryName, range, answer };
+  const replay = reportReplaySession(report);
+  return { category, categoryName, range, answer, ...(replay ? { calculation: replay.calculation } : {}) };
 }

@@ -1,3 +1,4 @@
+import type { BaziComponent, BaziTenGodsContextValue, SerializedStar, ZiweiPalaceValue, ZiweiDaXianValue, ZiweiSoulVsBodyValue, ZiweiSanFangSiZhengValue, MingGuaValue } from '@fortune/core';
 /**
  * Pure selectors: Report → view models. Components render these and never
  * dig through `engines[].components` themselves, so the parsing lives in one
@@ -34,11 +35,12 @@ export function engine(report: Report, id: string): EngineResult | null {
   return report.engines.find(item => item.engineId === id) ?? null;
 }
 
-function byCategory<V = any>(result: EngineResult | null, category: string): Component<V>[] {
-  return (result?.components ?? []).filter(item => item.category === category);
+/** Producer views after existing engine/category selection; no runtime validation or normalization. */
+function byCategory<V = unknown>(result: EngineResult | null, category: string): Component<V>[] {
+  return (result?.components ?? []).filter(item => item.category === category) as Component<V>[];
 }
 
-function first<V = any>(result: EngineResult | null, category: string): V | null {
+function first<V = unknown>(result: EngineResult | null, category: string): V | null {
   return byCategory<V>(result, category)[0]?.value ?? null;
 }
 
@@ -80,7 +82,7 @@ export function pillars(report: Report): Pillar[] | null {
 }
 
 export function dayMaster(report: Report): { stem: string; element: string; yinYang: string } | null {
-  return first(engine(report, 'bazi'), 'dayMaster');
+  return first<Extract<BaziComponent, { category: 'dayMaster' }>['value']>(engine(report, 'bazi'), 'dayMaster');
 }
 
 export interface BaziStructure {
@@ -105,7 +107,7 @@ export function baziStructure(report: Report): BaziStructure | null {
   const elements = first<{ counts: Record<Element, number>; total: number; limitation: string }>(bazi, 'elements');
   if (!elements) return null;
   const tenGods = first<{ counts: Record<string, number> }>(bazi, 'tenGods');
-  const context = first<{ groups: any[] }>(bazi, 'tenGodsContext');
+  const context = first<BaziTenGodsContextValue>(bazi, 'tenGodsContext');
   return {
     elements: ELEMENTS.map(element => ({
       element,
@@ -124,7 +126,7 @@ export function baziStructure(report: Report): BaziStructure | null {
       hiddenCount: group.hiddenCount ?? 0,
       observed: group.observedTenGods ?? [],
     })),
-    currentYear: first(bazi, 'liuNian'),
+    currentYear: first<Extract<BaziComponent, { category: 'liuNian' }>['value']>(bazi, 'liuNian'),
   };
 }
 
@@ -162,7 +164,7 @@ const BRANCH_POSITIONS: Record<string, [number, number]> = {
   寅: [4, 1], 丑: [4, 2], 子: [4, 3], 亥: [4, 4],
 };
 
-function toStar(star: any): Star {
+function toStar(star: SerializedStar): Star {
   return {
     name: star.name,
     brightness: star.brightness ?? '',
@@ -185,11 +187,11 @@ export interface ZiweiBoard {
 
 export function ziweiBoard(report: Report): ZiweiBoard | null {
   const ziwei = engine(report, 'ziwei');
-  const palaces = byCategory(ziwei, 'palaces');
+  const palaces = byCategory<ZiweiPalaceValue>(ziwei, 'palaces');
   if (palaces.length !== 12) return null;
   const strength = report.radars.find(radar => radar.id === 'ziwei_palace_strength');
   const natal = first<Record<string, string>>(ziwei, 'natal') ?? {};
-  const decades = byCategory(ziwei, 'daXian').map(item => item.value);
+  const decades = byCategory<ZiweiDaXianValue>(ziwei, 'daXian').map(item => item.value);
   const currentDecade = decades.find(item => item.isCurrent);
   const flying = first<{ heavenlyStem: string; earthlyBranch: string; mutagen: string[]; palaceIndex: number }>(ziwei, 'flyingStars');
 
@@ -232,14 +234,14 @@ export function ziweiBoard(report: Report): ZiweiBoard | null {
 /** The soul palace's stars; falls back to the opposite palace when empty (借宮). */
 export function soulStars(report: Report): { text: string; borrowed: boolean } | null {
   const ziwei = engine(report, 'ziwei');
-  const svb = first<any>(ziwei, 'soulVsBody');
+  const svb = first<ZiweiSoulVsBodyValue>(ziwei, 'soulVsBody');
   if (!svb) return null;
-  const direct = (svb.soul?.majorStars ?? []).map((star: any) => star.name);
+  const direct = (svb.soul?.majorStars ?? []).map(star => star.name);
   if (direct.length) return { text: direct.join('、'), borrowed: false };
-  const sanfang = byCategory(ziwei, 'sanFangSiZheng').find(item => item.value?.anchor === '命宮')?.value;
-  const opposite = (sanfang?.opposite?.majorStars ?? []).map((star: any) => star.name);
+  const sanfang = byCategory<ZiweiSanFangSiZhengValue>(ziwei, 'sanFangSiZheng').find(item => item.value?.anchor === '命宮')?.value;
+  const opposite = (sanfang?.opposite?.majorStars ?? []).map(star => star.name);
   return opposite.length
-    ? { text: `借${sanfang.opposite.name}　${opposite.join('、')}`, borrowed: true }
+    ? { text: `借${sanfang!.opposite.name}　${opposite.join('、')}`, borrowed: true }
     : { text: '命宮無主星', borrowed: false };
 }
 
@@ -285,7 +287,7 @@ export const COMPASS_ORDER = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as con
 
 export function mingGua(report: Report) {
   const result = engine(report, 'minggua');
-  const gua = first<any>(result, 'mingGua');
+  const gua = first<MingGuaValue>(result, 'mingGua');
   const directions = first<{ auspicious: Record<string, { code: string; zh: string }>; inauspicious: Record<string, { code: string; zh: string }> }>(result, 'directions');
   if (!gua || !directions) return null;
   const byCode = new Map<string, { name: string; zh: string; good: boolean }>();

@@ -1,3 +1,4 @@
+import { producerCategory } from './helpers/producerComponents';
 /**
  * 黃金測試：引擎對已知向量的輸出（可覆核的計算正確性）。
  */
@@ -11,13 +12,13 @@ const BIRTH = new BirthData({ year: 1991, month: 10, day: 5, hour: 14, gender: '
 
 test('靈數：1991-10-05 生命靈數 = 8', () => {
   const res = new NumerologyEngine().run(BIRTH);
-  const lifePath = res.byCategory('lifePath')[0];
+  const lifePath = producerCategory(res, 'numerology', 'lifePath')[0];
   assert.equal(lifePath.value.number, 8); // (1991→2) + (10→1) + 5 = 8
 });
 
 test('靈數：九宮格頻次符合出生日期各位數', () => {
   const res = new NumerologyEngine().run(BIRTH);
-  const freq = res.byCategory('digitFrequency')[0].value;
+  const freq = producerCategory(res, 'numerology', 'digitFrequency')[0].value;
   // 19911005 → 1×3, 9×2, 5×1（0 不計）
   assert.equal(freq[1], 3);
   assert.equal(freq[9], 2);
@@ -43,16 +44,16 @@ test('紫微：L3 情境部件（命宮vs身宮、三方四正）如實產出', 
   const res = new ZiweiEngine({ asOf: '2026-07-11' }).run(BIRTH);
   assert.equal(res.errors.length, 0, res.errors.join('; '));
 
-  const soulVsBody = res.byCategory('soulVsBody');
+  const soulVsBody = producerCategory(res, 'ziwei', 'soulVsBody');
   assert.equal(soulVsBody.length, 1);
   assert.ok(soulVsBody[0].value.soul.name);
   assert.ok(soulVsBody[0].value.body.name);
   assert.equal(typeof soulVsBody[0].value.samePalace, 'boolean');
 
-  const sanfang = res.byCategory('sanFangSiZheng');
+  const sanfang = producerCategory(res, 'ziwei', 'sanFangSiZheng');
   assert.ok(sanfang.length >= 1);
   for (const facet of sanfang) {
-    for (const key of ['target', 'opposite', 'wealth', 'career']) {
+    for (const key of ['target', 'opposite', 'wealth', 'career'] as const) {
       assert.ok(facet.value[key]?.name, `${facet.name} 缺 ${key}`);
     }
   }
@@ -64,7 +65,7 @@ test('紫微：大限全序列（12 步、range 遞增不重疊、每步四化 4
   const res = new ZiweiEngine({ asOf: '2026-07-11' }).run(BIRTH);
   assert.equal(res.errors.length, 0, res.errors.join('; '));
 
-  const daXian = res.byCategory('daXian');
+  const daXian = producerCategory(res, 'ziwei', 'daXian');
   assert.equal(daXian.length, 12);
 
   // 舊的單一 daXian_current 已移除；改為 daXian_1 … daXian_12
@@ -102,7 +103,7 @@ test('紫微：大限全序列（12 步、range 遞增不重疊、每步四化 4
 
 test('紫微：大限恰一步 isCurrent，且其 range 含 asOf 虛歲 36', () => {
   const res = new ZiweiEngine({ asOf: '2026-07-11' }).run(BIRTH);
-  const current = res.byCategory('daXian').filter(c => c.value.isCurrent);
+  const current = producerCategory(res, 'ziwei', 'daXian').filter(c => c.value.isCurrent);
   assert.equal(current.length, 1);
   // 1991-10-05 生、asOf=2026-07-11 → 虛歲 36
   const [start, end] = current[0].value.range;
@@ -122,7 +123,7 @@ test('紫微：大限部件全部歸 L1', () => {
 
 test('紫微：主星皆帶亮度分數（0–1 或 null）', () => {
   const res = new ZiweiEngine({ asOf: '2026-07-11' }).run(BIRTH);
-  const stars = res.byCategory('mainStars');
+  const stars = producerCategory(res, 'ziwei', 'mainStars');
   assert.ok(stars.length > 0);
   for (const star of stars) {
     const s = star.value.brightnessScore;

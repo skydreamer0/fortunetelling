@@ -1,0 +1,247 @@
+{
+  "version": "0.11.0",
+  "baseCommit": "354d0899a1c81d5346628555831d45cb8d1138c6",
+  "reason": "Core version and derived sync identity only. All eight full data/caveat hashes unchanged.",
+  "cases": [
+    {
+      "id": "chart-full",
+      "before": {
+        "data": "10fc2c86d95373983d8a06b749c4135c2aee2ab5cb6b5834f9bf3607afb5faa2",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "af049d09663fe3620fb3f9376eb95327d763a1bec8530009af4d94a1a13c9d6b",
+        "envelope": "6f776dad54512050f48c606994bb5ab97f98f8e43861e6b55568a36da462975d"
+      },
+      "after": {
+        "data": "10fc2c86d95373983d8a06b749c4135c2aee2ab5cb6b5834f9bf3607afb5faa2",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "b3b6290d3fa9ad607f40bf5ed49463e8da11f07200862c445e22bec3d90c6a2b",
+        "envelope": "56f5129f77165717c6a4da37f6f5da7ef896df12b3ad90211a751cfaf1e23864"
+      },
+      "calculation": {
+        "excludedSystems": [
+          "jyotish",
+          "humanDesign"
+        ],
+        "schemaVersion": 1,
+        "scope": "analyze-sync-natal",
+        "settings": {
+          "useTrueSolarTime": true,
+          "ziHourConvention": "late"
+        },
+        "settingsSource": "profile-v1-defaults",
+        "snapshotId": "sn1-b0a7dbcefde071b8",
+        "specHash": "cs1-f8667a4ab42a8f49"
+      }
+    },
+    {
+      "id": "chart-summary",
+      "before": {
+        "data": "f0b2e1aeaf0a0d6f48ceda4d2e91578be07b073e30920edfa52eca8a1850893a",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "af049d09663fe3620fb3f9376eb95327d763a1bec8530009af4d94a1a13c9d6b",
+        "envelope": "6f776dad54512050f48c606994bb5ab97f98f8e43861e6b55568a36da462975d"
+      },
+      "after": {
+        "data": "f0b2e1aeaf0a0d6f48ceda4d2e91578be07b073e30920edfa52eca8a1850893a",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "b3b6290d3fa9ad607f40bf5ed49463e8da11f07200862c445e22bec3d90c6a2b",
+        "envelope": "56f5129f77165717c6a4da37f6f5da7ef896df12b3ad90211a751cfaf1e23864"
+      },
+      "calculation": {
+        "excludedSystems": [
+          "jyotish",
+          "humanDesign"
+        ],
+        "schemaVersion": 1,
+        "scope": "analyze-sync-natal",
+        "settings": {
+          "useTrueSolarTime": true,
+          "ziHourConvention": "late"
+        },
+        "settingsSource": "profile-v1-defaults",
+        "snapshotId": "sn1-b0a7dbcefde071b8",
+        "specHash": "cs1-f8667a4ab42a8f49"
+      }
+    },
+    {
+      "id": "timeline-years",
+      "before": {
+        "data": "d4d691d06221b229ad917f826e099491cf92cf3ae8178c8fc27b05123e750e2b",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "af049d09663fe3620fb3f9376eb95327d763a1bec8530009af4d94a1a13c9d6b",
+        "envelope": "6f776dad54512050f48c606994bb5ab97f98f8e43861e6b55568a36da462975d"
+      },
+      "after": {
+        "data": "d4d691d06221b229ad917f826e099491cf92cf3ae8178c8fc27b05123e750e2b",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "b3b6290d3fa9ad607f40bf5ed49463e8da11f07200862c445e22bec3d90c6a2b",
+        "envelope": "56f5129f77165717c6a4da37f6f5da7ef896df12b3ad90211a751cfaf1e23864"
+      },
+      "calculation": {
+        "excludedSystems": [
+          "jyotish",
+          "humanDesign"
+        ],
+        "schemaVersion": 1,
+        "scope": "analyze-sync-natal",
+        "settings": {
+          "useTrueSolarTime": true,
+          "ziHourConvention": "late"
+        },
+        "settingsSource": "profile-v1-defaults",
+        "snapshotId": "sn1-b0a7dbcefde071b8",
+        "specHash": "cs1-f8667a4ab42a8f49"
+      }
+    },
+    {
+      "id": "timeline-cells",
+      "before": {
+        "data": "8edb45e6ef8f2b8e05762d4467780c2b17ece776a8459f2f109d28ef8f50c044",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "af049d09663fe3620fb3f9376eb95327d763a1bec8530009af4d94a1a13c9d6b",
+        "envelope": "6f776dad54512050f48c606994bb5ab97f98f8e43861e6b55568a36da462975d"
+      },
+      "after": {
+        "data": "8edb45e6ef8f2b8e05762d4467780c2b17ece776a8459f2f109d28ef8f50c044",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "b3b6290d3fa9ad607f40bf5ed49463e8da11f07200862c445e22bec3d90c6a2b",
+        "envelope": "56f5129f77165717c6a4da37f6f5da7ef896df12b3ad90211a751cfaf1e23864"
+      },
+      "calculation": {
+        "excludedSystems": [
+          "jyotish",
+          "humanDesign"
+        ],
+        "schemaVersion": 1,
+        "scope": "analyze-sync-natal",
+        "settings": {
+          "useTrueSolarTime": true,
+          "ziHourConvention": "late"
+        },
+        "settingsSource": "profile-v1-defaults",
+        "snapshotId": "sn1-b0a7dbcefde071b8",
+        "specHash": "cs1-f8667a4ab42a8f49"
+      }
+    },
+    {
+      "id": "timeline-table",
+      "before": {
+        "data": "dac64784a7b8fd4a3aabb1870847745ac447bdcbc845ecb0e5193999295f2d93",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "af049d09663fe3620fb3f9376eb95327d763a1bec8530009af4d94a1a13c9d6b",
+        "envelope": "6f776dad54512050f48c606994bb5ab97f98f8e43861e6b55568a36da462975d"
+      },
+      "after": {
+        "data": "dac64784a7b8fd4a3aabb1870847745ac447bdcbc845ecb0e5193999295f2d93",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "b3b6290d3fa9ad607f40bf5ed49463e8da11f07200862c445e22bec3d90c6a2b",
+        "envelope": "56f5129f77165717c6a4da37f6f5da7ef896df12b3ad90211a751cfaf1e23864"
+      },
+      "calculation": {
+        "excludedSystems": [
+          "jyotish",
+          "humanDesign"
+        ],
+        "schemaVersion": 1,
+        "scope": "analyze-sync-natal",
+        "settings": {
+          "useTrueSolarTime": true,
+          "ziHourConvention": "late"
+        },
+        "settingsSource": "profile-v1-defaults",
+        "snapshotId": "sn1-b0a7dbcefde071b8",
+        "specHash": "cs1-f8667a4ab42a8f49"
+      }
+    },
+    {
+      "id": "consensus-full",
+      "before": {
+        "data": "757f2e14dd6759a93e4328ca213e702af1e1249f799c27d8666a322075c32444",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "af049d09663fe3620fb3f9376eb95327d763a1bec8530009af4d94a1a13c9d6b",
+        "envelope": "6f776dad54512050f48c606994bb5ab97f98f8e43861e6b55568a36da462975d"
+      },
+      "after": {
+        "data": "757f2e14dd6759a93e4328ca213e702af1e1249f799c27d8666a322075c32444",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "b3b6290d3fa9ad607f40bf5ed49463e8da11f07200862c445e22bec3d90c6a2b",
+        "envelope": "56f5129f77165717c6a4da37f6f5da7ef896df12b3ad90211a751cfaf1e23864"
+      },
+      "calculation": {
+        "excludedSystems": [
+          "jyotish",
+          "humanDesign"
+        ],
+        "schemaVersion": 1,
+        "scope": "analyze-sync-natal",
+        "settings": {
+          "useTrueSolarTime": true,
+          "ziHourConvention": "late"
+        },
+        "settingsSource": "profile-v1-defaults",
+        "snapshotId": "sn1-b0a7dbcefde071b8",
+        "specHash": "cs1-f8667a4ab42a8f49"
+      }
+    },
+    {
+      "id": "answer-full",
+      "before": {
+        "data": "7ef679dd0497a9c7c9eeca2a37badff809f1eab4ec271309a68ea0ed04be1977",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "af049d09663fe3620fb3f9376eb95327d763a1bec8530009af4d94a1a13c9d6b",
+        "envelope": "6f776dad54512050f48c606994bb5ab97f98f8e43861e6b55568a36da462975d"
+      },
+      "after": {
+        "data": "7ef679dd0497a9c7c9eeca2a37badff809f1eab4ec271309a68ea0ed04be1977",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "b3b6290d3fa9ad607f40bf5ed49463e8da11f07200862c445e22bec3d90c6a2b",
+        "envelope": "56f5129f77165717c6a4da37f6f5da7ef896df12b3ad90211a751cfaf1e23864"
+      },
+      "calculation": {
+        "excludedSystems": [
+          "jyotish",
+          "humanDesign"
+        ],
+        "schemaVersion": 1,
+        "scope": "analyze-sync-natal",
+        "settings": {
+          "useTrueSolarTime": true,
+          "ziHourConvention": "late"
+        },
+        "settingsSource": "profile-v1-defaults",
+        "snapshotId": "sn1-b0a7dbcefde071b8",
+        "specHash": "cs1-f8667a4ab42a8f49"
+      }
+    },
+    {
+      "id": "answer-compact",
+      "before": {
+        "data": "8d17733522d6412aea808ce59ba2990359db5da5dba403215df41215af13476b",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "af049d09663fe3620fb3f9376eb95327d763a1bec8530009af4d94a1a13c9d6b",
+        "envelope": "6f776dad54512050f48c606994bb5ab97f98f8e43861e6b55568a36da462975d"
+      },
+      "after": {
+        "data": "8d17733522d6412aea808ce59ba2990359db5da5dba403215df41215af13476b",
+        "caveats": "3d4979d4aa6325a8c8f1c0c4c051d6ff97ab4f7b1b907f35721739552bf2a9e3",
+        "versions": "b3b6290d3fa9ad607f40bf5ed49463e8da11f07200862c445e22bec3d90c6a2b",
+        "envelope": "56f5129f77165717c6a4da37f6f5da7ef896df12b3ad90211a751cfaf1e23864"
+      },
+      "calculation": {
+        "excludedSystems": [
+          "jyotish",
+          "humanDesign"
+        ],
+        "schemaVersion": 1,
+        "scope": "analyze-sync-natal",
+        "settings": {
+          "useTrueSolarTime": true,
+          "ziHourConvention": "late"
+        },
+        "settingsSource": "profile-v1-defaults",
+        "snapshotId": "sn1-b0a7dbcefde071b8",
+        "specHash": "cs1-f8667a4ab42a8f49"
+      }
+    }
+  ]
+}

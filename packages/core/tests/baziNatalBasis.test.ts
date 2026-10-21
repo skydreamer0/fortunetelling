@@ -1,3 +1,4 @@
+import { producerComponents } from './helpers/producerComponents';
 import { spawnSync } from 'node:child_process';
 import { afterEach, describe, expect, test, vi  } from 'vitest';
 // Native ESM namespaces are immutable; auto-spies preserve real implementations.
@@ -160,7 +161,7 @@ describe('run-local immutable bazi natal basis', () => {
       expect(clean(engine)).toEqual(clean(new TimeContextBaZiEngine({ ctx, ...cfg }).run(data)));
       if (asOf === basis.luckCycles.startDate) {
         expect(basis.luckCycles.startIso.slice(11)).not.toBe('00:00:00');
-        expect(engine.components.find(component => component.id === 'daYun_1')!.value.isCurrent).toBe(false);
+        expect(producerComponents(engine, 'bazi').filter(component => component.category === 'daYun').find(component => component.id === 'daYun_1')!.value.isCurrent).toBe(false);
         expect(actual.chart.luckCycles[0].isCurrent).toBe(true);
       }
       projected.push(actual.chart.annualSequence);

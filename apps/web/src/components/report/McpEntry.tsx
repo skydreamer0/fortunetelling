@@ -140,6 +140,16 @@ export function McpEntry({ report, clipboard, onDownload = downloadTextFile }: {
 
         <li className="ask__step">
           <h3 className="ask__step-title">替這個人取名並下載檔案</h3>
+          <div className="ask__callout" role="note" id="ask-profile-compatibility">
+            <p><strong>下載前確認本機版本</strong>：有記錄計算設定的報告會下載 Profile2，保留真太陽時與子時選擇；本機 MCP 必須搭配 Core 0.10.0 或以上。舊版 MCP 會拒絕此檔案，網站無法檢查你的本機版本。</p>
+            <p>已安裝者請先備份本機檔案與修改，再將專案來源更新到支援 Profile2 的版本；在專案資料夾執行下列指令。只跑 npm ci 不會更新程式來源。</p>
+            <pre className="ask__code ask__code--inline" tabIndex={0}><code>{`npm ci
+npm run build:packages
+node --input-type=module -e "import { VERSION } from '@fortune/core'; console.log(VERSION)"
+npm run doctor` }</code></pre>
+            <p>確認版本指令印出 0.10.0 或以上且 doctor 檢查通過，再完全結束並重開 Claude 桌面版及其他正在執行的 MCP 程序，然後匯入下載檔。請另存備份，不要直接覆蓋既有 profile。</p>
+            <p>新版 MCP 仍可讀 Profile1，沿用真太陽時／晚子時預設；沒有記錄設定的舊報告仍下載 Profile1。請勿手改版本號或刪除設定來遷就舊版 MCP，以免改變計算結果。</p>
+          </div>
           <div className="ask__download">
             <label className="field ask__id">
               <span className="field__label">profileId（之後問 Claude 時用的名字）</span>
@@ -150,7 +160,7 @@ export function McpEntry({ report, clipboard, onDownload = downloadTextFile }: {
                 onBlur={() => setTouched(true)} />
             </label>
             <button type="button" className="button button--seal ask__download-button" onClick={download}
-              disabled={error !== null}>
+              disabled={error !== null} aria-describedby="ask-profile-compatibility">
               下載 .fortune.json
             </button>
           </div>

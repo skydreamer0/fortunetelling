@@ -1,3 +1,4 @@
+import { producerComponents } from './helpers/producerComponents';
 import { expect, test } from 'vitest';
 import { BirthData } from '../src/core/models/BirthData';
 import { SystemResult } from '../src/core/models/SystemResult';
@@ -38,7 +39,7 @@ test('category discrimination binds each emitted Ming Gua payload', () => {
     year: 1990, month: 6, day: 15, hour: 12, minute: 0, gender: 'male', timeKnown: true,
   }));
   expect(result.errors).toEqual([]);
-  expect(result.components.map(c => c.category === 'mingGua'
+  expect(producerComponents(result, 'minggua').map(c => c.category === 'mingGua'
     ? [c.id, c.value.group] : [c.id, ...Object.keys(c.value.auspicious)])).toEqual([
     ['ming_gua', 'east'], ['directions', '生氣', '天醫', '延年', '伏位'],
   ]);

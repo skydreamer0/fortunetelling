@@ -5,7 +5,7 @@
 
 import type { VersionInfo } from '../portable/versions';
 
-export const EXPORT_SCHEMA_VERSION = 1 as const;
+export const EXPORT_SCHEMA_VERSION = 2 as const;
 
 export const EXPORT_PRESETS = ['local-full', 'share-redacted'] as const;
 export type ExportPreset = (typeof EXPORT_PRESETS)[number];
@@ -30,6 +30,7 @@ export type ExportManifest = {
   profileId: string;
   chartFingerprint: string;
   asOf: string;
+  calculation: ReturnType<typeof import('../portable/profileCalculation').createProfileCalculation>['calculation'];
   versions: VersionInfo;
   /** 參與時間軸與被略過的系統（含原因）。 */
   systems: {

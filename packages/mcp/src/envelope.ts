@@ -23,6 +23,7 @@ export type Envelope<T = unknown> = {
   versions?: VersionInfo;
   caveats: Caveat[];
   data: T;
+  calculation?: Analysis['calculation'];
 };
 
 /** Caveats every time-dependent answer carries, derived from the analysis (never hand-written per tool). */
@@ -69,6 +70,7 @@ export function hashVersions(versions: VersionInfo): string {
 export function ok<T>(input: {
   asOf: string | null;
   data: T;
+  calculation?: Analysis['calculation'];
   caveats?: Caveat[];
   ephemeris?: 'moshier' | 'not_initialized';
   /** Attach the full version block (default false: only `versionsHash`). */
@@ -81,6 +83,7 @@ export function ok<T>(input: {
     ...(input.includeVersions ? { versions } : {}),
     caveats: input.caveats ?? [],
     data: input.data,
+    ...(input.calculation ? { calculation: input.calculation } : {}),
   };
 }
 

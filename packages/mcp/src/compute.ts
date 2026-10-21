@@ -6,10 +6,8 @@
 
 import {
   buildConsensus,
-  buildTimeline,
-  buildTimelineAsync,
+  createProfileCalculation, createCalculationSpec, profileAnalyzeInput,
   canonicalStringify,
-  createTimeContext,
   evidenceMatchesContext,
   type DirectionalEvidence,
   type QuestionAnswer,
@@ -18,7 +16,7 @@ import {
   type TimeContext,
   type Timeline,
   type TimelineCell,
-  type ProfileFileV1,
+  type ProfileFile,
 } from '@fortune/core';
 import { ToolError } from './errors';
 import { SignalIndex, type SignalResolution } from './signalIndex';
@@ -27,7 +25,9 @@ import type { ProfileStore } from './store';
 export type { SignalResolution } from './signalIndex';
 
 export type Analysis = {
-  file: ProfileFileV1;
+  file: ProfileFile;
+  calculation: ReturnType<typeof createProfileCalculation>['calculation'];
+  charts: ReturnType<typeof createProfileCalculation>['charts'];
   warnings: string[];
   asOf: string;
   ctx: TimeContext;
@@ -76,24 +76,26 @@ export function assertAsOf(asOf: unknown): asserts asOf is string {
 export class Analyzer {
   // One current generation per profile/asOf. cf1 is a portable chart fingerprint,
   // not complete calculation/source identity: it excludes name/label and rounds
-  // coordinates. This private, in-process cache is not a cs1 or snapshot contract.
-  private cache = new Map<string, { identity: string; pending: Promise<Analysis> }>();
+  // coordinates. Each slot checks specHash AND full calculation/source bytes.
+  // Keep one current generation so A → B → A cannot revive an older pending A.
+  private cache = new Map<string, { specHash: string; identity: string; pending: Promise<Analysis> }>();
 
   constructor(private store: ProfileStore) {}
 
   async get(profileId: string, asOf: string): Promise<Analysis> {
     assertAsOf(asOf);
     const { file, warnings } = await this.store.get(profileId);
+    const spec = createCalculationSpec(profileAnalyzeInput(file));
     const key = canonicalStringify({ profileId: file.profileId, asOf });
     // Include exact profile values, all validated file metadata and the parser's
     // current warnings. Store validation remains before every cache lookup.
     // Use full canonical bytes, not a lossy fingerprint or collision-prone hash.
-    const identity = canonicalStringify({ file, warnings, asOf });
+    const identity = canonicalStringify({ file, warnings, asOf, calculationIdentity: spec.identity });
     const cached = this.cache.get(key);
-    if (cached?.identity === identity) return cached.pending;
+    if (cached?.specHash === spec.specHash && cached.identity === identity) return cached.pending;
 
     const pending = this.compute(file, warnings, asOf);
-    const entry = { identity, pending };
+    const entry = { specHash: spec.specHash, identity, pending };
     this.cache.set(key, entry);
     pending.catch(() => {
       // An older generation can reject after a newer source replaced its slot,
@@ -103,12 +105,10 @@ export class Analyzer {
     return pending;
   }
 
-  private async compute(file: ProfileFileV1, warnings: string[], asOf: string): Promise<Analysis> {
-    const ctx = createTimeContext(file.profile);
-    // Profile v1 has no settings field. This is the existing MCP policy
-    // documented in MCP-SETUP, shared by this analysis and every month projection.
-    const timeOptions = { useTrueSolarTime: true, ziHourConvention: 'late' } as const;
-    const timeline = await buildTimelineAsync(ctx, { asOf, topSignalsPerDomain: Infinity, ...timeOptions });
+  private async compute(file: ProfileFile, warnings: string[], asOf: string): Promise<Analysis> {
+    const session = createProfileCalculation(file);
+    const ctx = session.context();
+    const timeline = await session.timelineAsync({ asOf, topSignalsPerDomain: Infinity });
     const byId = new Map<string, Signal>();
     for (const cell of [...timeline.years, ...timeline.months]) {
       for (const domain of cell.domains) for (const signal of domain.topSignals) byId.set(signal.id, signal);
@@ -121,8 +121,7 @@ export class Analyzer {
     const monthCells = (year: number): TimelineCell[] => {
       let cells = cellsByYear.get(year);
       if (!cells) {
-        cells = buildTimeline(ctx, {
-          ...timeOptions,
+        cells = session.timeline({
           asOf: year === asOfYear ? asOf : `${year}-01-01`,
           years: 1,
           includeMonths: true,
@@ -188,7 +187,7 @@ export class Analyzer {
       }
       return [...out.values()];
     };
-    return { file, warnings, asOf, ctx, timeline, consensus: buildConsensus(timeline), signals, monthCells,
+    return { file, warnings, asOf, ctx, calculation: session.calculation, charts: session.charts, timeline, consensus: buildConsensus(timeline), signals, monthCells,
       monthSignals: trackedMonthSignals, findSignal, resolveSignal, shortIds, directionalEvidence, rememberQuestionEvidence };
   }
 }

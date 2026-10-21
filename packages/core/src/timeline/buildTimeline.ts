@@ -26,6 +26,7 @@
  * @module timeline/buildTimeline
  */
 
+import { ownAsyncData, verifyAsyncEnvironment, asyncExecutionSpec, executionOptions, recordAsyncTimeline, replayAsyncTimelineUsing, type AsyncTimelineRecord } from './asyncReplay';
 import { initEphemeris, isEphemerisReady } from '../calculators/astro/ephemeris';
 import { baziCalculator, calculateBaziWithNatalBasis } from '../calculators/bazi/calculator';
 import type { BaziNatalBasisProvider } from '../calculators/bazi/natalBasis';
@@ -656,11 +657,25 @@ export function restrictTimeline(timeline: Timeline, systems: readonly SystemId[
 }
 
 /** Validate effective settings before initialization, then include jyotish and humanDesign. */
-export async function buildTimelineAsync(ctx: TimeContext, opts: TimelineOptions): Promise<Timeline> {
-  validateTimeOptions(opts);
-  const spec = createAsyncEphemerisCalculationSpec(opts.ephemeris);
-  // Capture selected settings before initialization yields to caller code.
-  const options = { ...opts, ephemeris: spec.identity.settings };
+export function buildTimelineAsync(ctx: TimeContext, opts: TimelineOptions): Promise<Timeline>;
+export function buildTimelineAsync(ctx: TimeContext, opts: TimelineOptions, record: { captureReplay: true }): Promise<AsyncTimelineRecord>;
+export async function buildTimelineAsync(ctx: TimeContext, opts: TimelineOptions, record?: { captureReplay: true }): Promise<Timeline | AsyncTimelineRecord> {
+  const context = ownAsyncData(ctx), requested = ownAsyncData(opts);
+  validateTimeOptions(requested);
+  const recording = ownAsyncData(record);
+  if (recording !== undefined && (!recording || Object.keys(recording).length !== 1 || recording.captureReplay !== true)) throw new TypeError('Invalid async recording option');
+  const execution = record ? asyncExecutionSpec(context, requested) : null;
+  const spec = createAsyncEphemerisCalculationSpec(requested.ephemeris);
+  const options = execution ? executionOptions(execution) : { ...requested, ephemeris: spec.identity.settings };
+  const verify = execution ? () => verifyAsyncEnvironment(execution) : () => {};
   await initEphemeris();
-  return buildTimeline(ctx, options);
+  verify();
+  const timeline = buildTimeline(context, options);
+  verify();
+  return execution ? recordAsyncTimeline(execution, timeline) : timeline;
+}
+
+/** Same-build JSON reload through the actual async entry; historical executables are not loaded. */
+export function replayAsyncTimeline(value: unknown): Promise<AsyncTimelineRecord> {
+  return replayAsyncTimelineUsing(value, (ctx, opts) => buildTimelineAsync(ctx, opts));
 }

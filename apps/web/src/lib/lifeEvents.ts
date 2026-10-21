@@ -2,7 +2,7 @@
  * Browser-only persistence for life events (V4-03, D-029). Events are sensitive:
  * they stay in this browser's localStorage, keyed by a profile fingerprint, and
  * are never sent anywhere. Same patterns as `store.ts`: injectable storage,
- * every read/write guarded, corrupt data → empty.
+ * every read/write guarded; unreadable data is empty for display only, never for mutation.
  */
 
 import { hashString, validateLifeEvent, type LifeEvent } from './core';
@@ -64,21 +64,25 @@ function containsUnsupportedVersion(items: unknown): boolean {
 }
 
 export function createLifeEventStore(storage: KeyValueStorage | undefined = safeLocalStorage()) {
-  function read(): StoredData {
+  function read(): StoredData | null {
     try {
-      const parsed = JSON.parse(storage?.getItem(LIFE_EVENTS_STORE_KEY) ?? 'null');
-      if (!parsed || parsed.version !== 1 || typeof parsed.profiles !== 'object' || parsed.profiles === null) {
-        return { version: 1, profiles: {} };
+      if (!storage) return null;
+      const raw = storage.getItem(LIFE_EVENTS_STORE_KEY);
+      if (raw === null) return { version: 1, profiles: {} };
+      const parsed = JSON.parse(raw);
+      if (!parsed || parsed.version !== 1 || typeof parsed.profiles !== 'object' || parsed.profiles === null || Array.isArray(parsed.profiles)) {
+        return null;
       }
+      if (Object.values(parsed.profiles).some(profile => !profile || typeof profile !== 'object' || Array.isArray(profile) || !Array.isArray((profile as StoredProfile).events))) return null;
       return parsed as StoredData;
     } catch {
-      return { version: 1, profiles: {} };
+      return null;
     }
   }
 
   function write(data: StoredData): boolean {
     try {
-      if (Object.keys(data.profiles).length === 0) storage?.removeItem(LIFE_EVENTS_STORE_KEY);
+      if (Object.keys(data.profiles).length === 0 && Object.keys(data).length === 2) storage?.removeItem(LIFE_EVENTS_STORE_KEY);
       else storage?.setItem(LIFE_EVENTS_STORE_KEY, JSON.stringify(data));
       return Boolean(storage);
     } catch {
@@ -87,17 +91,19 @@ export function createLifeEventStore(storage: KeyValueStorage | undefined = safe
   }
 
   function list(profileKey: string): LifeEvent[] {
-    return cleanEvents(read().profiles[profileKey]?.events);
+    return cleanEvents(read()?.profiles[profileKey]?.events);
   }
 
   function hasUnsupportedVersion(profileKey: string): boolean {
-    return containsUnsupportedVersion(read().profiles[profileKey]?.events);
+    return containsUnsupportedVersion(read()?.profiles[profileKey]?.events);
   }
 
   /** Replace supported v1 data only. Refuse opaque stored/input versions without writing. */
   function replace(profileKey: string, events: LifeEvent[]): boolean {
     const data = read();
+    if (!data) return false;
     if (containsUnsupportedVersion(data.profiles[profileKey]?.events) || containsUnsupportedVersion(events)) return false;
+    if (data.profiles[profileKey] && !Array.isArray(data.profiles[profileKey].events)) return false;
     const clean = cleanEvents(events);
     if (clean.length === 0) delete data.profiles[profileKey];
     else data.profiles[profileKey] = { events: clean };
@@ -106,47 +112,82 @@ export function createLifeEventStore(storage: KeyValueStorage | undefined = safe
 
   /**
    * Move the events under `fromKey` (the legacy key) to `toKey`. Events already under `toKey`
-   * win on a same-id clash; nothing is dropped except events that were already invalid.
+   * win on a same-id clash; malformed records, metadata or excess capacity block migration.
    * Unsupported per-event versions in either profile block the move, preserving raw storage.
    * The old key is removed only after the new data is written. Returns true when something moved.
    */
   function migrate(fromKey: string, toKey: string): boolean {
     if (fromKey === toKey) return false;
     const data = read();
+    if (!data) return false;
     const legacy = data.profiles[fromKey];
-    if (!legacy) return false;
+    if (!legacy || !Array.isArray(legacy.events) || (data.profiles[toKey] && !Array.isArray(data.profiles[toKey].events))) return false;
     if (containsUnsupportedVersion(legacy.events) || containsUnsupportedVersion(data.profiles[toKey]?.events)) return false;
-    const merged = cleanEvents([...(data.profiles[toKey]?.events ?? []), ...(Array.isArray(legacy.events) ? legacy.events : [])]);
+    const target = data.profiles[toKey];
+    // Unknown profile metadata has no defined merge semantics. Preserve both originals.
+    if ([legacy, target].some(profile => profile && Object.keys(profile).some(key => key !== 'events'))) return false;
+    const combined = [...(target?.events ?? []), ...legacy.events];
+    if (combined.some(event => !validateLifeEvent(event).ok)) return false;
+    const byId = new Map<string, LifeEvent>();
+    for (const event of combined) if (!byId.has(event.id)) byId.set(event.id, event);
+    if (byId.size > MAX_LIFE_EVENTS_PER_PROFILE) return false;
+    // Preserve complete raw records; the display cleaner is not a mutation primitive.
+    const merged = [...byId.values()];
     if (merged.length > 0) data.profiles[toKey] = { events: merged };
     delete data.profiles[fromKey];
     return write(data);
   }
 
+  /** One read/modify/write for all pending additions/edits; never replace unread data. */
+  function upsertMany(profileKey: string, events: LifeEvent[]): boolean {
+    const data = read();
+    if (!data || events.some(event => !validateLifeEvent(event).ok)) return false;
+    const existing = data.profiles[profileKey];
+    if (existing && (!Array.isArray(existing.events) || containsUnsupportedVersion(existing.events))) return false;
+    if (existing && existing.events.length > MAX_LIFE_EVENTS_PER_PROFILE) return false;
+    const byId = new Map(cleanEvents(existing?.events).map(event => [event.id, event]));
+    for (const event of events) byId.set(event.id, event);
+    if (byId.size > MAX_LIFE_EVENTS_PER_PROFILE) return false;
+    data.profiles[profileKey] = { ...existing, events: cleanEvents([...byId.values()]) };
+    return write(data);
+  }
+
   return {
     list,
+    upsertMany,
+    isReadable: () => read() !== null,
+    hasProfile(profileKey: string): boolean {
+      const data = read();
+      return data !== null && Object.hasOwn(data.profiles, profileKey);
+    },
+    snapshot(profileKey: string): LifeEvent[] | null {
+      const data = read();
+      return data ? cleanEvents(data.profiles[profileKey]?.events) : null;
+    },
     hasUnsupportedVersion,
     replace,
     migrate,
     /** Add or replace (same id) one event. Invalid events are rejected. */
     upsert(profileKey: string, event: LifeEvent): boolean {
-      if (!validateLifeEvent(event).ok) return false;
-      return replace(profileKey, [...list(profileKey).filter(item => item.id !== event.id), event]);
+      return upsertMany(profileKey, [event]);
     },
     remove(profileKey: string, id: string): boolean {
       const data = read();
+      if (!data) return false;
       const events = data.profiles[profileKey]?.events;
-      if (containsUnsupportedVersion(events)) {
-        // Explicit deletion targets only this id; do not normalize the opaque survivors.
-        const remaining = events.filter(item => item === null || typeof item !== 'object' || item.id !== id);
-        if (remaining.length === 0) delete data.profiles[profileKey];
-        else data.profiles[profileKey] = { ...data.profiles[profileKey], events: remaining };
-        return write(data);
-      }
-      return replace(profileKey, list(profileKey).filter(item => item.id !== id));
+      if (events !== undefined && !Array.isArray(events)) return false;
+      // A selected-id deletion must never normalize, cap, or rewrite survivors.
+      const remaining = (events ?? []).filter(item => item === null || typeof item !== 'object' || item.id !== id);
+      const profile = data.profiles[profileKey];
+      if (remaining.length || (profile && Object.keys(profile).some(key => key !== 'events'))) {
+        data.profiles[profileKey] = { ...profile, events: remaining };
+      } else delete data.profiles[profileKey];
+      return write(data);
     },
     /** 「刪除全部」: every event of this profile. */
     clearProfile(profileKey: string): boolean {
       const data = read();
+      if (!data) return false;
       delete data.profiles[profileKey];
       return write(data);
     },

@@ -7,6 +7,10 @@ on:
       - 'apps/web/scripts/answer-check-browser-check.ts'
       - 'apps/web/scripts/report-navigation-browser-check.ts'
       - 'apps/web/src/App.tsx'
+      - 'apps/web/src/lib/lifeEvents.ts'
+      - 'apps/web/src/lib/lifeEventSession.ts'
+      - 'apps/web/src/components/report/LifeEvents.tsx'
+      - 'apps/web/scripts/life-events-browser-check.ts'
       - 'apps/web/src/lib/viewHistory.ts'
       - 'apps/web/src/components/report/ReportView.tsx'
       - 'apps/web/tsconfig.answer-browser.json'
@@ -140,3 +144,18 @@ jobs:
           retention-days: 1
           if-no-files-found: error
           path: report-navigation-results/
+
+      - name: Verify synthetic LifeEvents storage recovery in stock sandboxed Chrome
+        timeout-minutes: 3
+        env:
+          LIFE_EVENTS_CHECK: '1'
+        run: node apps/web/scripts/life-events-browser-check.ts
+
+      - name: Retain synthetic LifeEvents evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: life-events-${{ github.event.pull_request.head.sha }}-${{ github.run_attempt }}
+          retention-days: 1
+          if-no-files-found: error
+          path: life-event-results/

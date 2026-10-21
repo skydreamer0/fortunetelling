@@ -148,8 +148,8 @@ test('legacy natal rebuilding preserves custom convention metadata and component
     throw new Error('The natal component must retain its convention metadata.');
   }
   expect(metadata.convention).toBe(convention);
-  expect(components[0].value.convention).toBe(convention);
-  expect(components[2].value.limitation).toBe('custom limitation');
+  expect((components[0].value as BaziNatalValue).convention).toBe(convention);
+  expect((components[2].value as BaziElementsValue).limitation).toBe('custom limitation');
   expect(components.slice(1).every(component => !Object.hasOwn(component, 'meta'))).toBe(true);
   expect(buildBaziNatalComponents(pillars, { convention: undefined, elementsLimitation: undefined }))
     .toEqual(buildBaziNatalComponents(pillars));

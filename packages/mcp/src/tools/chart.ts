@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EXPERIMENTAL_SYSTEMS, humanDesignCalculator, initEphemeris, jyotishCalculator, runCalculators, type Component } from '@fortune/core';
+import { EXPERIMENTAL_SYSTEMS, humanDesignCalculator, initEphemeris, jyotishCalculator, type Component } from '@fortune/core';
 import type { Analysis } from '../compute';
 import { conventionsFor } from '../conventions';
 import { caveatsFor, ok, type Caveat } from '../envelope';
@@ -59,7 +59,7 @@ async function calculate(system: System, analysis: Analysis) {
     default:
       return {
         requiresTime: system === 'bazi' || system === 'ziwei',
-        run: () => runCalculators(ctx, { asOf }).find(r => r.system === system)!,
+        run: () => analysis.charts(asOf).find(r => r.system === system)!,
       };
   }
 }
@@ -91,7 +91,7 @@ export const chartTools = [
       }
       const { requiresTime, run } = await calculate(system, analysis);
       if (requiresTime && analysis.ctx.profile.time === null) {
-        return ok({
+        return ok({ calculation: analysis.calculation,
           asOf: args.asOf,
           caveats,
           data: { system, available: false, reason: 'time_unknown: this system requires a known birth time; no chart is computed.' },
@@ -103,7 +103,7 @@ export const chartTools = [
         detail === 'full'
           ? { chart: res.chart, components: res.components, warnings: res.warnings }
           : summarize(res.chart, res.components, res.warnings);
-      return ok({
+      return ok({ calculation: analysis.calculation,
         asOf: args.asOf,
         caveats,
         data: { system, available: true, detail, version: res.version, conventions: conventionsFor(system, res.chart, analysis.ctx), ...redact(body, name) },
@@ -118,7 +118,7 @@ export const chartTools = [
     async handler(args, { analyzer }) {
       const analysis = await analyzer.get(args.profileId, args.asOf);
       const { local, utc, jd, solar, lunar, solarTerms, flags } = analysis.ctx;
-      return ok({ asOf: args.asOf, caveats: caveatsFor(analysis), data: { local, utc, jd, solar, lunar: { ...lunar, zodiac: zodiacHant(lunar.zodiac) }, solarTerms, flags } });
+      return ok({ calculation: analysis.calculation, asOf: args.asOf, caveats: caveatsFor(analysis), data: { local, utc, jd, solar, lunar: { ...lunar, zodiac: zodiacHant(lunar.zodiac) }, solarTerms, flags } });
     },
   }),
 ];

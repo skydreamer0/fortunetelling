@@ -5,10 +5,13 @@ import type { BirthInput, CompatibilityResult, LunarInput, Report } from '../mod
 
 type YMD = { year: number; month: number; day: number };
 
-export const analyze = (input: BirthInput): Report => core.analyze(input as any) as unknown as Report;
+export const analyze = (input: BirthInput): Report => core.analyzeReplayReport(input) as unknown as Report;
 
 export const analyzeCompatibility = (first: BirthInput, second: BirthInput): CompatibilityResult =>
   core.analyzeCompatibility(first as any, second as any) as unknown as CompatibilityResult;
+
+export { createReportReplaySession } from '@fortune/core';
+export type { ReportCalculation, ReplayReport } from '@fortune/core';
 
 // V4 life events + backtesting: pure core functions, re-exported so components keep one bridge.
 export {
@@ -31,7 +34,7 @@ export type { SignalIdResolution } from '@fortune/core';
 
 // M4-02: `.fortune.json` profile file (shared with the local MCP server).
 export {
-  PROFILE_FILE_EXTENSION, PROFILE_ID_RE, chartFingerprint, createProfileFile, isValidProfileId, serializeProfileFile,
+  PROFILE_FILE_EXTENSION, PROFILE_ID_RE, chartFingerprint, createProfileFile, createProfileFileV2, validateProfileSettings, isValidProfileId, serializeProfileFile,
 } from '@fortune/core';
 export type { BirthProfile } from '@fortune/core';
 

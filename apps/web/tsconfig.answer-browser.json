@@ -10,5 +10,5 @@
     "allowImportingTsExtensions": true,
     "skipLibCheck": true
   },
-  "include": ["scripts/answer-check-browser-check.ts", "scripts/report-navigation-browser-check.ts"]
+  "include": ["scripts/answer-check-browser-check.ts", "scripts/report-navigation-browser-check.ts", "scripts/life-events-browser-check.ts"]
 }

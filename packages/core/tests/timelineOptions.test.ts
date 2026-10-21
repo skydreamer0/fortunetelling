@@ -1,3 +1,4 @@
+import { producerValue } from './helpers/producerComponents';
 import { describe, expect, test } from 'vitest';
 import { analyze, type AnalyzeInput } from '../src/core/analyze';
 import { resolveAnalyzeInput, toZiweiZiConvention, type AnalysisTimeOptions } from '../src/core/analyzeInput';
@@ -58,7 +59,7 @@ function assertReportUsesOptions(input: AnalyzeInput) {
   const mainBazi = report.engines.find(e => e.engineId === 'bazi')!;
   const mainZiwei = report.engines.find(e => e.engineId === 'ziwei')!;
   const p = bazi.chart.pillars!;
-  const natal = mainBazi.components.find(c => c.id === 'natal')!.value;
+  const natal = producerValue(mainBazi, 'bazi', 'natal');
   expect({ year: natal.year, month: natal.month, day: natal.day, hour: natal.time }).toEqual(p);
   expect(mainZiwei.components).toEqual(ziwei.components);
   const time = ziwei.chart.time!;
