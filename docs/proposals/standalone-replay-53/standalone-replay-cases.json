@@ -1,0 +1,430 @@
+{
+  "package": "FORTUNE-53-STANDALONE-REPLAY-DECISION-20261026",
+  "status": "PROPOSAL_NOT_ADOPTED",
+  "base_sha": "d9133cf63070791bb3e6480357ab2d363eafcb8c",
+  "purpose": "Declarative counterexamples, not executable fixtures or an astronomical oracle",
+  "data_policy": "Synthetic only. Construction strings describe JS-only values and MUST NOT be parsed as execution instructions. No real birth record.",
+  "source_key": "S1-S6 are exact commit/blob citations in standalone-replay-decision.md",
+  "all_execution_status": "NOT_RUN",
+  "cases": [
+    {
+      "id": "SR01",
+      "category": "omitted",
+      "synthetic_input": {
+        "config": {
+          "asOf": "2026-07-11"
+        }
+      },
+      "current_source_expectation": "S1 default year 365.25; S3 omitted vs explicit defaults output equality",
+      "proposed_A": "capture effective365.25, raw dasha presence absent",
+      "proposed_B": "v1 remains old behavior; new version requires explicit entry",
+      "sources": [
+        "S1",
+        "S3"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR02",
+      "category": "explicit-default",
+      "synthetic_input": {
+        "dashaYearDays": 365.25
+      },
+      "current_source_expectation": "S3 output same as omitted",
+      "proposed_A": "same full output as SR01, raw presence=value means identity may differ",
+      "proposed_B": "new version same numeric default; never change old aes1 bytes",
+      "sources": [
+        "S1",
+        "S3"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR03",
+      "category": "null",
+      "synthetic_input": {
+        "dashaYearDays": null
+      },
+      "current_source_expectation": "S1/S3 legacy nullish fallback",
+      "proposed_A": "raw null preserved, effective365.25; replay identical under proposed nullable raw policy",
+      "proposed_B": "legacy unchanged; newer strict timeline null rejection policy must remain explicit",
+      "sources": [
+        "S1",
+        "S3",
+        "S2"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR04",
+      "category": "own-undefined",
+      "synthetic_input": {
+        "construction": "Object with own dashaYearDays property whose value is undefined"
+      },
+      "current_source_expectation": "S1 legacy nullish fallback",
+      "proposed_A": "raw descriptor state=undefined survives JSON; no real undefined in record; distinct from absent",
+      "proposed_B": "existing strict timeline nested undefined does not become valid through new version accidentally",
+      "sources": [
+        "S1",
+        "S2",
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR05",
+      "category": "custom-year",
+      "synthetic_input": {
+        "dashaYearDays": 360,
+        "asOf": "2026-07-11"
+      },
+      "current_source_expectation": "S3 custom year affects actual periods; strict aes1 rejects field",
+      "proposed_A": "accept proposed capture with matching effective year and whole ChartResult; old aes1 remains unchanged",
+      "proposed_B": "only explicit new version accepts value; full timeline/registry semantics require separate acceptance",
+      "sources": [
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR06",
+      "category": "custom-year",
+      "synthetic_input": {
+        "dashaYearDays": 365.2422,
+        "asOf": "2026-07-11"
+      },
+      "current_source_expectation": "S3 custom year affects actual periods; strict aes1 rejects field",
+      "proposed_A": "accept proposed capture with matching effective year and whole ChartResult; old aes1 remains unchanged",
+      "proposed_B": "only explicit new version accepts value; full timeline/registry semantics require separate acceptance",
+      "sources": [
+        "S2",
+        "S3",
+        "S4"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR07",
+      "category": "changed-year",
+      "synthetic_input": {
+        "first": 360,
+        "second": 365.2422
+      },
+      "current_source_expectation": "S3 both standalone supported",
+      "proposed_A": "distinct full execution identity, do not reuse result even if some chart fields coincide",
+      "proposed_B": "new version identity changes; legacy v1 fixed convention stays365.25",
+      "sources": [
+        "S3",
+        "S4"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR08",
+      "category": "unknown-time",
+      "synthetic_input": {
+        "time": null,
+        "timeAccuracy": "unknown",
+        "dashaYearDays": 360
+      },
+      "current_source_expectation": "S3 empty chart/arrays, dasha/lagna null, time_unknown",
+      "proposed_A": "record empty-chart semantics without guessed noon; valid effective settings preserved",
+      "proposed_B": "new version must preserve same unknown-time skip contract",
+      "sources": [
+        "S3",
+        "S4"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR09",
+      "category": "different-context",
+      "synthetic_input": {
+        "twoSyntheticContexts": "same options but distinct birth context"
+      },
+      "current_source_expectation": "aes1 omits birth identity",
+      "proposed_A": "execution identity differs; no aes1 result cache reuse",
+      "proposed_B": "new full record must bind context separately from settings",
+      "sources": [
+        "S2",
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR10",
+      "category": "changed-asof",
+      "synthetic_input": {
+        "first": "2026-07-11",
+        "second": "2027-07-11"
+      },
+      "current_source_expectation": "S4 current depends on normalized asOf",
+      "proposed_A": "capture supplied and normalized dates; new identity and recomputation",
+      "proposed_B": "new timeline period/asOf fields mandatory; cannot assume same result",
+      "sources": [
+        "S4",
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR11",
+      "category": "asof-date-mutation",
+      "synthetic_input": {
+        "construction": "asOf Date(2026-07-11T00:00:00Z), mutated to2030 during initialization"
+      },
+      "current_source_expectation": "S3/S5 registry already isolates Date",
+      "proposed_A": "new capture snapshots Date before await; caller remains mutable; original date result",
+      "proposed_B": "new path must isolate Date without repeating registry work as new deliverable",
+      "sources": [
+        "S3",
+        "S5"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR12",
+      "category": "context-config-mutation",
+      "synthetic_input": {
+        "construction": "change nested context and yearDays while new capture initialization is pending"
+      },
+      "current_source_expectation": "S6 timeline ownership already exists; standalone new wrapper not implemented",
+      "proposed_A": "new record/output bound to pre-await data; later caller mutation irrelevant",
+      "proposed_B": "new version full input ownership, legacy remains untouched",
+      "sources": [
+        "S4",
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR13",
+      "category": "json-roundtrip",
+      "synthetic_input": {
+        "operation": "capture->JSON.stringify->JSON.parse->replay"
+      },
+      "current_source_expectation": "S6 real JSON replay exists only bounded async timeline",
+      "proposed_A": "strict descriptors reconstruct legal raw presence, full spec/result exact match; no defaulting unknown stored values",
+      "proposed_B": "new-version roundtrip separately verified; old v1 reader still reads old bytes",
+      "sources": [
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR14",
+      "category": "invalid-numbers",
+      "synthetic_input": {
+        "construction": "each of NaN,+Infinity,-Infinity,zero,negative yearDays"
+      },
+      "current_source_expectation": "S1 itself does not validate all numbers; no claim of full legacy malformed semantics",
+      "proposed_A": "proposed new capture rejects before costly work; do not serialize NaN/Infinity to null; legacy API unchanged",
+      "proposed_B": "new version domain explicitly adopted, v1 unsupported field still rejected",
+      "sources": [
+        "S1",
+        "S2"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR15",
+      "category": "extreme-finite",
+      "synthetic_input": {
+        "construction": "very small positive and very large finite yearDays"
+      },
+      "current_source_expectation": "not measured in this task",
+      "proposed_A": "no invented numeric cutoff; if full calculation overflows/nonfinite fail without record; execution budget requires separate decision",
+      "proposed_B": "same safety outcome; new timeline workload budget cannot be assumed",
+      "sources": [
+        "S1",
+        "S4"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR16",
+      "category": "malformed",
+      "synthetic_input": {
+        "construction": "string yearDays, invalid ayanamsa/node, unknown fields, null top-level envelope"
+      },
+      "current_source_expectation": "S2 strict timeline rejects unsupported fields; not a blanket legacy claim",
+      "proposed_A": "new capture/replay strict allowed fields and values; malformed stored effective settings never default",
+      "proposed_B": "new version explicit schema; old validators preserved",
+      "sources": [
+        "S1",
+        "S2",
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR17",
+      "category": "invalid-asof",
+      "synthetic_input": {
+        "construction": "invalid Date or absent required asOf"
+      },
+      "current_source_expectation": "S4 calls normalizeAsOf before chart generation",
+      "proposed_A": "new capture fails clearly; no current-clock substitution",
+      "proposed_B": "new version explicit period/asOf requirements",
+      "sources": [
+        "S4"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR18",
+      "category": "version-mismatch",
+      "synthetic_input": {
+        "mutation": "core/calculator/tzdb/dependency integrity/schema/implementation individually changed"
+      },
+      "current_source_expectation": "S6 current-build replay rejects changed source/version",
+      "proposed_A": "reject each mismatch, never fetch historical runtime or auto-migrate",
+      "proposed_B": "separate version dispatcher may support known version only; old record remains unchanged",
+      "sources": [
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR19",
+      "category": "tampered-result",
+      "synthetic_input": {
+        "mutation": "change chart, component, warning or hash alone"
+      },
+      "current_source_expectation": "S6 verifies whole record, not hash alone",
+      "proposed_A": "recompute real calculator and compare all fields; hashes not signatures",
+      "proposed_B": "same full-record comparison for explicit new version",
+      "sources": [
+        "S4",
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR20",
+      "category": "non-plain",
+      "synthetic_input": {
+        "construction": "getter/cycle/custom prototype/symbol/hidden property/sparse array"
+      },
+      "current_source_expectation": "S6 ownership rejects such inputs",
+      "proposed_A": "reject without invoking getter; Date exception limited toasOf descriptor",
+      "proposed_B": "new path same ownership policy, no relaxation of old parser",
+      "sources": [
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR21",
+      "category": "legacy-bytes",
+      "synthetic_input": {
+        "operation": "compare old direct/registry/aes1/cs1/Profile2/Report8/AsyncTimelineRecord with untouched base"
+      },
+      "current_source_expectation": "baseline bytes retained; existing receipts scoped to exacthead",
+      "proposed_A": "new API never auto-captures or adds fields; old outputs unchanged",
+      "proposed_B": "v1 route frozen; new version only opt-in, no retrospective upgrade",
+      "sources": [
+        "S2",
+        "S3",
+        "S5",
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR22",
+      "category": "consistency-not-authenticity",
+      "synthetic_input": {
+        "mutation": "replace entire record with another self-consistent synthetic record"
+      },
+      "current_source_expectation": "S6 FNV not provenance/security signature",
+      "proposed_A": "may replay consistently; no authenticity assertion or sharing authorization",
+      "proposed_B": "same limitation; no fake signature guarantee",
+      "sources": [
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR23",
+      "category": "strict-existing-boundary",
+      "synthetic_input": {
+        "jyotish": {
+          "dashaYearDays": 360
+        }
+      },
+      "current_source_expectation": "S2/S3 createAsyncEphemerisCalculationSpec rejects this",
+      "proposed_A": "must keep rejecting; standalonecapture is separate API",
+      "proposed_B": "old function rejects; only explicitly versioned new API can admit custom year",
+      "sources": [
+        "S2",
+        "S3"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    },
+    {
+      "id": "SR24",
+      "category": "privacy",
+      "synthetic_input": {
+        "operation": "capture syntheticcontext then do not request export"
+      },
+      "current_source_expectation": "existing async capture is opt-in and no persistent cache",
+      "proposed_A": "no upload,DB,telemetry,automaticexport; sensitive context is not a safe log field",
+      "proposed_B": "same; each consumer export remains outside firstpackage",
+      "sources": [
+        "S6"
+      ],
+      "status": "NOT_RUN",
+      "actual_result": null,
+      "evidence": null
+    }
+  ]
+}

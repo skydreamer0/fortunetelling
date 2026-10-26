@@ -46,16 +46,35 @@ not independently attested as a canonical derivation of the profile.
 
 ## Delivery and remaining acceptance
 
-This additive package starts from master ea811be and does not require unmerged
-PR151 (Profile2/Core0.10) or PR153 (Report8/Core0.11). Its executable schema and
-implementation are explicitly versioned; the base Core package version remains
-0.9.1. Integration with those pending version changes must retain the resulting
-Core version in identity; old records fail closed rather than being silently
-upgraded. No old runtime is downloaded or selected.
+Historical package baseline: #154 started from master
+`ea811be95f6784d507c10b94077179e1aabfe3ed` / Core 0.9.1 independently of the
+then-unmerged #151 (Profile2/Core0.10) and #153 (Report8/Core0.11). Those versions
+and pending statuses describe the original package, not the current build.
+
+Current documentation checkpoint: master
+[`d9133cf63070791bb3e6480357ab2d363eafcb8c`](https://github.com/skydreamer0/fortunetelling/commit/d9133cf63070791bb3e6480357ab2d363eafcb8c).
+The reviewed #154 content and #151 via #153 were composed through merged
+[#160](https://github.com/skydreamer0/fortunetelling/pull/160). This is content
+integration, not a claim that the individual component PR commits were merged.
+[`VERSION`](https://github.com/skydreamer0/fortunetelling/blob/d9133cf63070791bb3e6480357ab2d363eafcb8c/packages/core/src/core/version.ts)
+is now 0.11.0;
+[`asyncReplay.ts`](https://github.com/skydreamer0/fortunetelling/blob/d9133cf63070791bb3e6480357ab2d363eafcb8c/packages/core/src/timeline/asyncReplay.ts)
+uses that exact Core version in `spec.versions.core`, together with the full
+context/options and dependency/rule identity. Record schema 1 and implementation
+`async-timeline-replay-v1` have not changed. Version-mismatched records fail closed
+rather than being silently upgraded. No old runtime is downloaded or selected.
 
 Completed scope: actual async ownership bug regression; full execution identity;
 owned JSON replay through real calculation; dependency binding; complete-result
 parity; changed-option isolation; unknown-time and rejection acceptance.
+
+The [existing synthetic consumer integration](../validation/report-replay-consumer-integration.md)
+checks the Report8/Profile2/MCP sync chain and a **separate** current-build async
+record. Report8/Profile2 identify `analyze-sync-natal`, excluding Jyotish/HumanDesign;
+that integration does not make them full async replay consumers. Likewise,
+settings-only `aes1` is not the full record identity. See the
+[settings boundary and historical receipts](../validation/async-ephemeris-spec-53.md)
+and the [#53 post-merge status](https://github.com/skydreamer0/fortunetelling/issues/53#issuecomment-6308858144).
 
 Remaining parent-issue scope: historical executable/ruleset storage and routing,
 async natal snapshots and Report/Profile/UI/MCP replay integration, persistent
@@ -64,13 +83,20 @@ and historical accuracy. This record does not establish any of those claims and
 does not complete all acceptance criteria in #26 or #53. It adds no cancellation
 contract to the existing async entry.
 
+This 2026-10-24 correction is static documentation only: no replay tests,
+calibration, typechecks, build, browser or device checks were rerun. Existing
+acceptance receipts retain their original heads and scope. #22/#23 Holds and
+#31/#64 source/semantic restrictions remain unchanged; documentation does not
+authorize publication, deployment or parent-issue closure.
+
 ## Privacy and validation
 
 A record contains full birth/profile information and derived timeline evidence.
 Treat it as personal data. Capture is opt-in and does not upload or write anything.
 Only synthetic profiles are used in repository tests.
 
-`asyncTimelineOwnership.test.ts` first fails against untouched master because a
+Historically, `asyncTimelineOwnership.test.ts` first failed against the untouched
+`ea811be` package baseline because a
 caller-mutated systems array changes the pending result. `asyncTimelineReplay`
 exercises real WASM calculations, mixed-system A/B/ABA, JSON round trips, complete
 output comparisons, version/source/result negative controls and ownership.
