@@ -107,3 +107,7 @@ export * from './export/index';
 
 export { analyzeReplayReport, createReportReplaySession, REPLAY_REPORT_SCHEMA_VERSION } from './core/reportReplay';
 export type { ReplayReport, ReportCalculation } from './core/reportReplay';
+
+// Explicit opt-in standalone Jyotish record; no existing API auto-captures.
+export { captureStandaloneJyotish, replayStandaloneJyotish } from './core/standaloneEphemerisReplay';
+export type { StandaloneEphemerisRecord, StandaloneJyotishInput } from './core/standaloneEphemerisReplay';
