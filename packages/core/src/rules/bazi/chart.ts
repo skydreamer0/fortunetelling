@@ -5,6 +5,13 @@
  * `liuNian`); the V1-04 calculator will later build the same `BaziRuleChart` directly.
  */
 import { parseGanZhi } from './relations';
+import type { BaziNatalValue, BaziDaYunValue } from '../../engines/baziTypes';
+import type { BaziAnnual as ProducerAnnual } from '../../calculators/bazi/calculator';
+
+// Erased compatibility views, not runtime validation of open component inputs.
+type LuckView = Pick<BaziDaYunValue, 'index' | 'ganZhi' | 'startYear' | 'endYear'>;
+type AnnualView = Pick<ProducerAnnual, 'year' | 'ganZhi'>;
+type NatalView = Partial<Pick<BaziNatalValue, 'year' | 'month' | 'day' | 'time'>> & { hour?: BaziNatalValue['time'] };
 
 export const NATAL_PILLARS = ['year', 'month', 'day', 'hour'] as const;
 export type NatalPillar = (typeof NATAL_PILLARS)[number];
@@ -49,7 +56,7 @@ export interface BaziRuleChart {
 interface ComponentLike {
   id: string;
   category?: string;
-  value?: any;
+  value?: unknown;
 }
 
 /**
@@ -57,32 +64,32 @@ interface ComponentLike {
  * cycle is taken as `startYear-01-01 … endYear-12-31` (year precision).
  */
 export function fromBaziComponents(input: readonly ComponentLike[] | { components: readonly ComponentLike[] }): BaziRuleChart {
-  const components = Array.isArray(input) ? input : (input as { components: readonly ComponentLike[] }).components;
+  const components: readonly ComponentLike[] = Array.isArray(input) ? input : (input as { components: readonly ComponentLike[] }).components;
   if (!Array.isArray(components)) throw new Error('fromBaziComponents: expected a component array or a result with components');
 
   const natal = components.find((c) => c.id === 'natal');
   const pillars: Record<NatalPillar, string | null> = { year: null, month: null, day: null, hour: null };
   if (natal?.value) {
-    pillars.year = natal.value.year ?? null;
-    pillars.month = natal.value.month ?? null;
-    pillars.day = natal.value.day ?? null;
+    pillars.year = (natal.value as NatalView).year ?? null;
+    pillars.month = (natal.value as NatalView).month ?? null;
+    pillars.day = (natal.value as NatalView).day ?? null;
     // BaZiEngine names the hour pillar `time`.
-    pillars.hour = natal.value.time ?? natal.value.hour ?? null;
+    pillars.hour = (natal.value as NatalView).time ?? (natal.value as NatalView).hour ?? null;
   }
 
   const luckCycles: BaziLuckCycle[] = components
     .filter((c) => c.category === 'daYun' && c.value)
     .map((c) => ({
-      index: c.value.index,
-      ganZhi: c.value.ganZhi,
-      start: `${String(c.value.startYear).padStart(4, '0')}-01-01`,
-      end: `${String(c.value.endYear).padStart(4, '0')}-12-31`,
+      index: (c.value as LuckView).index,
+      ganZhi: (c.value as LuckView).ganZhi,
+      start: `${String((c.value as LuckView).startYear).padStart(4, '0')}-01-01`,
+      end: `${String((c.value as LuckView).endYear).padStart(4, '0')}-12-31`,
       componentId: c.id,
     }));
 
   const chart: BaziRuleChart = { pillars, luckCycles, natalComponentId: natal ? natal.id : 'natal' };
   const liuNian = components.find((c) => c.category === 'liuNian' && c.value);
-  if (liuNian) chart.annual = { year: liuNian.value.year, ganZhi: liuNian.value.ganZhi, componentId: liuNian.id };
+  if (liuNian) chart.annual = { year: (liuNian.value as AnnualView).year, ganZhi: (liuNian.value as AnnualView).ganZhi, componentId: liuNian.id };
   return normalizeChart(chart);
 }
 
