@@ -1,0 +1,673 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate-not-adopted",
+  "scope": "two-catalog-native-metadata-inventory-only",
+  "baseline": "ff745920264faa01aafd149407ce4a145fa84dc8",
+  "authority": {
+    "scientificValidation": "not-assessed",
+    "independence": "not-established",
+    "productionGrouping": false,
+    "productionConsumer": false,
+    "g1Approved": false
+  },
+  "sourcePins": [
+    {
+      "path": "packages/core/src/facts/natalRuleMetadata.ts",
+      "blobSha": "9b655ecd7d5805c4acd4e93fac22732f1d5bd399",
+      "sha256": "b5f525841840bb12665863a7680182a7bcae296d58f0633a043aad62539394b3"
+    },
+    {
+      "path": "packages/core/src/rules/natalHitMetadata.ts",
+      "blobSha": "09eaa61cff34b50161f23e93fa556c246a20eb0e",
+      "sha256": "24a7b01c77c2bfa4f041395a53bb2505208848a08ec3be87d7bf87a292dfae33"
+    },
+    {
+      "path": "packages/core/src/rules/bazi/catalog.json",
+      "blobSha": "ca23de7ec15811aea8f130531b483c1cc6f5efda",
+      "sha256": "6946083359caeca71e43865364af75d03815b1b7799eb7cc1f00745554c190fa"
+    },
+    {
+      "path": "packages/core/src/rules/bazi/rules.ts",
+      "blobSha": "fa9c761713fbe2c3172a840d40bae67acd6c2e4f",
+      "sha256": "e15fa279666518ab96fdbc425e2451cb4830ef2241cd64a5d6619bc0322515e5"
+    },
+    {
+      "path": "packages/core/src/rules/ziwei/catalog.json",
+      "blobSha": "6e7191f8e0897ec13e01dd6922bab10f0e348a9b",
+      "sha256": "9b6b0fbc11705aed97bceeab1c5946f9453d72dd97ed772d310a28c3a283f296"
+    },
+    {
+      "path": "packages/core/src/rules/ziwei/rules.ts",
+      "blobSha": "79433e3eb8b69ff54b5d5009171130a00af60ed6",
+      "sha256": "d190556c6e4c6fcc43f41614820340d9560e6298dd1a0497dad570c7eea1ebdd"
+    },
+    {
+      "path": "packages/core/src/rules/ziwei/traitSignals.ts",
+      "blobSha": "7d1bc5d52153fc3cd0b509502f984acc2a95fbd8",
+      "sha256": "e5b66df63bb7cb3d4f3716570e87e3041cb36528e413a502fe0fd79d00f3d4ae"
+    },
+    {
+      "path": "packages/core/src/traits/ziwei.json",
+      "blobSha": "af2cb91a283b1a062f9298dec0abe542920a3c01",
+      "sha256": "21e3b4002eb91bdae766c922a70ef8588af0b980a53fb2fde72e846a40f31111"
+    },
+    {
+      "path": "packages/core/src/traits/ziweiModifiers.json",
+      "blobSha": "a9098f76baf9d1d517e4b9a7a9c51caf123e25cf",
+      "sha256": "1022e44cfd97008d41d5fbe8dee9c74d9eda82d7c2e79da9b96d7f71594a583c"
+    },
+    {
+      "path": "packages/core/src/facts/natalValidationLinks.ts",
+      "blobSha": "d4f374c6a7cd3f9690cecb9fb47485cd81ec05ec",
+      "sha256": "d8f0a638c7c66d83afbdbf400f3868f2889e809de965df2eba92befe87ae567d"
+    }
+  ],
+  "coverage": {
+    "catalogs": {
+      "bazi": 13,
+      "ziwei": 11
+    },
+    "totalCatalogRules": 24,
+    "natalCatalogRules": 16,
+    "mappedLimitedNatalRules": 3,
+    "unmappedNatalRules": 13,
+    "outsideNatalRules": 8,
+    "excludes": [
+      "bazi-ten-god-catalog",
+      "other-systems",
+      "alternative-charts",
+      "flow-period-metadata",
+      "all-school-question-mappings",
+      "general-source-family-equivalence"
+    ]
+  },
+  "rules": [
+    {
+      "system": "bazi",
+      "ruleId": "bazi.branch.break",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/9",
+        "declaredSource": "子平常見慣例之六破表。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.branch.clash",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/4",
+        "declaredSource": "《三命通會》論地支六沖。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.branch.directional",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/6",
+        "declaredSource": "《三命通會》論方局（三會）。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.branch.harmony",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/3",
+        "declaredSource": "《三命通會》論支元六合；午未合依常見慣例標土。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.branch.harm",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/8",
+        "declaredSource": "《三命通會》論六害（相穿）。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.branch.punishment",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/7",
+        "declaredSource": "《三命通會》論三刑：寅巳申無恩之刑、丑戌未恃勢之刑、子卯無禮之刑、辰午酉亥自刑。自刑需同一地支出現兩次。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.branch.trine",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/5",
+        "declaredSource": "《三命通會》論三合。半合只取含旺支（子午卯酉）的生旺、旺墓兩支；不含旺支的拱合不計。被完整三合涵蓋的兩支不另報半合。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.pillar.fanyin",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/11",
+        "declaredSource": "子平慣例：天干相沖且地支相沖為反吟。戊己無天干相沖，故不構成反吟（本版不採「天剋地沖」寬鬆定義）。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.pillar.fuyin",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/10",
+        "declaredSource": "子平慣例：運歲干支與原局某柱相同為伏吟。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.stem.combine",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/0",
+        "declaredSource": "《淵海子平》天干五合。只標示合化五行，不判定是否真化（需月令等條件）。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.stem.control",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/1",
+        "declaredSource": "五行生剋（《五行大義》），以天干本身五行判定；與五合並存時兩者皆列出，不互相抵銷。"
+      },
+      "nativeMetadataCoverage": "mapped-limited",
+      "nativeAttribution": {
+        "triggerKind": "bazi.stemControl",
+        "sourceStatus": "resolved",
+        "sourceRoles": [
+          "controller",
+          "controlled"
+        ],
+        "factKinds": [
+          "bazi.pillar"
+        ],
+        "gaps": [],
+        "boundaries": [
+          "primary-natal-only",
+          "ordered-controller-controlled",
+          "claim-unresolved"
+        ]
+      },
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.stem.produce",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal",
+        "decade",
+        "year",
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/2",
+        "declaredSource": "五行生剋（《五行大義》），以天干本身五行判定。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "bazi",
+      "ruleId": "bazi.suiyun.binglin",
+      "ruleVersion": 1,
+      "scopes": [
+        "year"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/bazi/catalog.json",
+        "pointer": "/rules/12",
+        "declaredSource": "《三命通會》／子平慣例：流年與大運同一干支為歲運並臨。"
+      },
+      "nativeMetadataCoverage": "outside-natal-scope",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "ziwei",
+      "ruleId": "ziwei.decade.mutagen",
+      "ruleVersion": 1,
+      "scopes": [
+        "decade"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/ziwei/catalog.json",
+        "pointer": "/rules/1",
+        "declaredSource": "飛星派四化慣例（大限宮干四化）；四化對照由 iztro 提供，經 ZiweiEngine daXian_n.mutagen 輸出。"
+      },
+      "nativeMetadataCoverage": "outside-natal-scope",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "ziwei",
+      "ruleId": "ziwei.decade.palace_overlay",
+      "ruleVersion": 1,
+      "scopes": [
+        "decade"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/ziwei/catalog.json",
+        "pointer": "/rules/2",
+        "declaredSource": "大限疊宮（運限宮位與本命宮位重疊論斷）通行慣例。"
+      },
+      "nativeMetadataCoverage": "outside-natal-scope",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "ziwei",
+      "ruleId": "ziwei.month.mutagen",
+      "ruleVersion": 1,
+      "scopes": [
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/ziwei/catalog.json",
+        "pointer": "/rules/9",
+        "declaredSource": "流月四化慣例；流月干支、宮位由 iztro horoscope 提供，經 calculators/ziwei monthlySequence 輸出。"
+      },
+      "nativeMetadataCoverage": "outside-natal-scope",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "ziwei",
+      "ruleId": "ziwei.month.palace_overlay",
+      "ruleVersion": 1,
+      "scopes": [
+        "month"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/ziwei/catalog.json",
+        "pointer": "/rules/10",
+        "declaredSource": "流月疊宮通行慣例（流年地支逆數生月、順數生時定正月）；宮位由 iztro horoscope 提供。"
+      },
+      "nativeMetadataCoverage": "outside-natal-scope",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "ziwei",
+      "ruleId": "ziwei.natal.star_traits",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/ziwei/catalog.json",
+        "pointer": "/rules/0",
+        "declaredSource": "《紫微斗數全書》星性描述；旺陷七級依 D-005；空宮借對宮為通行慣例。"
+      },
+      "nativeMetadataCoverage": "mapped-limited",
+      "nativeAttribution": {
+        "triggerKind": "ziwei.star-placement",
+        "sourceStatus": "partial",
+        "sourceRoles": [
+          "primary-placement",
+          "natal-transformation",
+          "same-palace-sha"
+        ],
+        "factKinds": [
+          "ziwei.star-placement",
+          "ziwei.natal-transformation"
+        ],
+        "gaps": [
+          "absence-conditions-not-facts",
+          "brightness-not-fact",
+          "palace-relations-not-facts"
+        ],
+        "boundaries": [
+          "primary-natal-only",
+          "host-source-palace-retained",
+          "borrowed-not-independent-star",
+          "claim-unresolved"
+        ]
+      },
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "ziwei",
+      "ruleId": "ziwei.sanfang.sha",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/ziwei/catalog.json",
+        "pointer": "/rules/3",
+        "declaredSource": "三方四正會照論法；會照權重見 traits/ziweiModifiers.json sanfang。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "ziwei",
+      "ruleId": "ziwei.star.lucun",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/ziwei/catalog.json",
+        "pointer": "/rules/5",
+        "declaredSource": "祿存為祿星之慣例（主財祿、守成）。"
+      },
+      "nativeMetadataCoverage": "unmapped",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "ziwei",
+      "ruleId": "ziwei.star.tianma",
+      "ruleVersion": 1,
+      "scopes": [
+        "natal"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/ziwei/catalog.json",
+        "pointer": "/rules/4",
+        "declaredSource": "驛馬慣例；祿馬交馳見《紫微斗數全書》格局。"
+      },
+      "nativeMetadataCoverage": "mapped-limited",
+      "nativeAttribution": {
+        "triggerKind": "ziwei.star-placement",
+        "sourceStatus": "partial",
+        "sourceRoles": [
+          "primary-placement",
+          "lucun-本宮",
+          "lucun-對宮",
+          "lucun-三合",
+          "same-palace-sha"
+        ],
+        "factKinds": [
+          "ziwei.star-placement"
+        ],
+        "gaps": [
+          "absence-conditions-not-facts",
+          "palace-relations-not-facts"
+        ],
+        "boundaries": [
+          "primary-natal-only",
+          "host-source-palace-retained",
+          "claim-unresolved"
+        ]
+      },
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "ziwei",
+      "ruleId": "ziwei.year.mutagen",
+      "ruleVersion": 1,
+      "scopes": [
+        "year"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/ziwei/catalog.json",
+        "pointer": "/rules/6",
+        "declaredSource": "流年四化慣例；資料來自 ZiweiEngine flyingStars_yearly。"
+      },
+      "nativeMetadataCoverage": "outside-natal-scope",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "ziwei",
+      "ruleId": "ziwei.year.palace_overlay",
+      "ruleVersion": 1,
+      "scopes": [
+        "year"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/ziwei/catalog.json",
+        "pointer": "/rules/7",
+        "declaredSource": "流年疊宮通行慣例；資料來自 ZiweiEngine flyingStars_yearly.palaceIndex。"
+      },
+      "nativeMetadataCoverage": "outside-natal-scope",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    },
+    {
+      "system": "ziwei",
+      "ruleId": "ziwei.year.sequence",
+      "ruleVersion": 1,
+      "scopes": [
+        "year"
+      ],
+      "catalogRef": {
+        "path": "packages/core/src/rules/ziwei/catalog.json",
+        "pointer": "/rules/8",
+        "declaredSource": "流年四化、流年疊宮通行慣例；序列由 calculators/ziwei（iztro horoscope）輸出，農曆年界取 lunar-javascript 春節日期。"
+      },
+      "nativeMetadataCoverage": "outside-natal-scope",
+      "nativeAttribution": null,
+      "schoolMapping": null,
+      "questionMapping": null,
+      "sourceFamilyMapping": null,
+      "scoringGroupKey": null,
+      "eligibilityPolicy": null
+    }
+  ],
+  "adoptionRequirements": [
+    "exact-rule-and-catalog-versions",
+    "reviewed-school-and-question-scope",
+    "reviewed-source-family-domain-native-trigger-definition",
+    "independent-source-fixtures-and-counterexamples",
+    "explicit-unresolved-coverage",
+    "separate-eligibility-policy",
+    "named-owner-adoption-receipt",
+    "new-version-not-in-place-promotion"
+  ]
+}
