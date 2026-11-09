@@ -15,6 +15,18 @@
  *     passed in via `options.sequences` (chart-level ids such as 'liuNian_2027').
  */
 
+import type { SerializedStar, ZiweiNatalValue, ZiweiPalaceValue, ZiweiMainStarValue,
+  ZiweiDaXianValue, ZiweiFlyingStarsValue } from '../../engines/ziweiTypes';
+
+// Erased field views preserve the legacy adapter's open input/coercion contract.
+// They are not runtime validators and category strings do not prove payload shape.
+type StarFields = Pick<SerializedStar, 'name' | 'brightness' | 'brightnessScore' | 'mutagen'>;
+type StarView = Partial<StarFields> | null | undefined;
+type PalaceView = Pick<ZiweiPalaceValue, 'index' | 'name' | 'earthlyBranch' | 'isBodyPalace' | 'majorStars' | 'minorStars'>;
+type MainStarView = Pick<ZiweiMainStarValue, 'star'>;
+type DecadeView = Pick<ZiweiDaXianValue, 'range' | 'index' | 'palaceIndex' | 'heavenlyStem' | 'earthlyBranch' | 'mutagen'>;
+type YearlyView = Pick<ZiweiFlyingStarsValue, 'asOf' | 'heavenlyStem' | 'earthlyBranch' | 'palaceIndex' | 'mutagen'>;
+
 export type MutagenKind = '祿' | '權' | '科' | '忌';
 export const MUTAGEN_ORDER: readonly MutagenKind[] = ['祿', '權', '科', '忌'];
 
@@ -84,7 +96,7 @@ export interface ZiweiRuleChart {
 export interface ZiweiComponentLike {
   id: string;
   category?: string;
-  value?: any;
+  value?: unknown;
 }
 
 export interface FromZiweiComponentsOptions {
@@ -140,13 +152,13 @@ function toMutagenRecord(v: unknown): Record<MutagenKind, string> | null {
   return { 祿: v[0], 權: v[1], 科: v[2], 忌: v[3] };
 }
 
-function toStar(raw: any, kind: 'major' | 'minor'): ZiweiStar {
+function toStar(raw: unknown, kind: 'major' | 'minor'): ZiweiStar {
   return {
-    name: String(raw?.name ?? ''),
+    name: String((raw as StarView)?.name ?? ''),
     kind,
-    brightness: typeof raw?.brightness === 'string' ? raw.brightness : '',
-    brightnessScore: typeof raw?.brightnessScore === 'number' ? raw.brightnessScore : null,
-    mutagen: toMutagen(raw?.mutagen),
+    brightness: typeof (raw as StarView)?.brightness === 'string' ? (raw as StarFields).brightness : '',
+    brightnessScore: typeof (raw as StarView)?.brightnessScore === 'number' ? (raw as StarFields).brightnessScore : null,
+    mutagen: toMutagen((raw as StarView)?.mutagen),
   };
 }
 
@@ -185,7 +197,7 @@ export function fromZiweiComponents(
   const mainStarComponentIds: Record<string, string> = {};
   const natalMutagenComponentIds: Partial<Record<MutagenKind, string>> = {};
   const decadeRaw: { c: ZiweiComponentLike; start: number }[] = [];
-  let natal: any = null;
+  let natal: unknown = null;
   let yearlyRaw: ZiweiComponentLike | null = null;
 
   for (const c of components) {
@@ -197,26 +209,26 @@ export function fromZiweiComponents(
       case 'palaces':
         palaces.push({
           componentId: c.id,
-          index: v.index,
-          name: v.name,
-          earthlyBranch: v.earthlyBranch,
-          isBodyPalace: Boolean(v.isBodyPalace),
+          index: (v as PalaceView).index,
+          name: (v as PalaceView).name,
+          earthlyBranch: (v as PalaceView).earthlyBranch,
+          isBodyPalace: Boolean((v as PalaceView).isBodyPalace),
           stars: [
-            ...(v.majorStars ?? []).map((s: any) => toStar(s, 'major')),
-            ...(v.minorStars ?? []).map((s: any) => toStar(s, 'minor')),
+            ...((v as PalaceView).majorStars ?? []).map((s: unknown) => toStar(s, 'major')),
+            ...((v as PalaceView).minorStars ?? []).map((s: unknown) => toStar(s, 'minor')),
           ],
         });
         break;
       case 'mainStars':
-        if (typeof v.star === 'string') mainStarComponentIds[v.star] = c.id;
+        if (typeof (v as Partial<MainStarView>).star === 'string') mainStarComponentIds[(v as MainStarView).star] = c.id;
         break;
       case 'fourTransforms': {
-        const k = toMutagen(v.mutagen);
+        const k = toMutagen((v as { mutagen?: unknown }).mutagen);
         if (k) natalMutagenComponentIds[k] = c.id;
         break;
       }
       case 'daXian':
-        if (Array.isArray(v.range)) decadeRaw.push({ c, start: v.range[0] });
+        if (Array.isArray((v as Partial<DecadeView>).range)) decadeRaw.push({ c, start: (v as DecadeView).range[0] });
         break;
       case 'flyingStars':
         if (c.id === 'flyingStars_yearly') yearlyRaw = c;
@@ -231,12 +243,12 @@ export function fromZiweiComponents(
     throw new Error(`fromZiweiComponents: expected 12 palaces indexed 0–11, got ${palaces.length}`);
   }
 
-  const birthLunarYear = options.birthLunarYear ?? parseLunarYear(natal?.lunarDate);
+  const birthLunarYear = options.birthLunarYear ?? parseLunarYear((natal as Partial<Pick<ZiweiNatalValue, 'lunarDate'>> | null)?.lunarDate);
 
   const decades: ZiweiPeriod[] = decadeRaw
     .sort((a, b) => a.start - b.start)
     .map(({ c }) => {
-      const v = c.value;
+      const v = c.value as DecadeView;
       const [s, e] = v.range as [number, number];
       const span = birthLunarYear !== null ? lunarYearSpan(birthLunarYear + s - 1, birthLunarYear + e - 1, options.lunarNewYear) : null;
       return {
@@ -253,7 +265,7 @@ export function fromZiweiComponents(
 
   let yearly: ZiweiPeriod | null = null;
   if (yearlyRaw) {
-    const v = yearlyRaw.value;
+    const v = yearlyRaw.value as YearlyView;
     const asOfYear = typeof v.asOf === 'string' ? Number(v.asOf.slice(0, 4)) : NaN;
     const y = Number.isFinite(asOfYear) ? yearOfGanZhi(v.heavenlyStem, v.earthlyBranch, asOfYear) : null;
     const span = y !== null ? lunarYearSpan(y, y, options.lunarNewYear) : null;
