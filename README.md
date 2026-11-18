@@ -25,7 +25,7 @@ Web 提供報告、年度與月份視角、雙人合盤、本機事件紀錄、A
 
 ## 快速開始
 
-準備 Git 與 [Node.js 24 LTS](https://nodejs.org)；目前 [CI](.github/workflows/ci.yml) 使用 Node.js **24.19.0** 與 npm **11.9.0**。以下指令都從 repository 根目錄執行。
+準備 Git 與 [Node.js 24 LTS](https://nodejs.org)；`package.json` 的 `engines` 要求 Node.js `>=24.19.0 <25` 與 npm `>=11 <12`，目前 [CI](.github/workflows/ci.yml) 使用 Node.js **24.19.0** 與 npm **11.9.0**。以下指令都從 repository 根目錄執行。
 
 ```bash
 git clone https://github.com/skydreamer0/fortunetelling.git
@@ -40,6 +40,7 @@ npm run dev
 | --- | --- |
 | `npm run dev` | 啟動 Web 開發伺服器 |
 | `npm test` | 執行 workspace 測試 |
+| `npm run typecheck` | 對所有 workspace 執行型別檢查（typecheck） |
 | `npm run build` | 建置靜態網站至 `apps/web/dist` |
 | `npm run preview` | 預覽已建置的網站 |
 | `npm run doctor` | 檢查 MCP 啟動、profile 與 Claude 桌面版設定 |
@@ -97,19 +98,19 @@ npm run add-profile --workspace @fortune/mcp -- demo \
 
 先由 `list_profiles` 取得 id；個人查詢明確指定 `profileId`，時間相關工具明確指定 `asOf`。成功結果會包含 `data`、`caveats` 與 `versionsHash`；命盤另外附上 `conventions`。不要只取結論而丟棄警告與口徑。
 
-目前共有 **16 個工具**：
+目前共有 **18 個工具**：
 
 | 類型 | 工具 |
 | --- | --- |
 | Profile | `list_profiles`、`get_profile`、`import_profile` |
 | 命盤與時間 | `get_chart`、`get_time_context`、`get_timeline` |
 | 規則依據 | `list_signals`、`get_signal`、`get_consensus`、`list_conflicts` |
-| 問事與比較 | `list_question_categories`、`answer_question`、`compare_profiles`、`compare_bazi_conventions` |
-| 回答檢查與批次 | `check_answer`、`batch` |
+| 問事與比較 | `list_question_categories`、`answer_question`、`answer_question_v4`、`compare_profiles`、`compare_bazi_conventions` |
+| 回答檢查與批次 | `check_answer`、`check_answer_v4`、`batch` |
 
 `import_profile` 會寫入本機檔案；`batch` 僅支援唯讀查詢，最多 8 個，不能包含匯入或巢狀批次。完整參數與回應格式見 [MCP 設定指南](docs/MCP-SETUP.md)。
 
-問事只在 `status = ranked` 時比較排名；其他狀態應先讀 `abstentionReasons`。`check_answer` 可以標示引用與部分用語問題，不能當成完整事實查核或預測有效性驗證。
+問事只在 `status = ranked` 時比較排名；其他狀態應先讀 `abstentionReasons`。`answer_question_v4` 是需明確選用的方向診斷（direction diagnostics），目前不提供可用排名；其回答須以 `check_answer_v4` 檢查，既有 `answer_question`／`check_answer` 行為不變。`check_answer` 可以標示引用與部分用語問題，不能當成完整事實查核或預測有效性驗證。
 
 ## 在程式中使用核心
 
@@ -162,7 +163,7 @@ node example.mjs
 - `analyze()` 回傳同步 `Report`，包括各引擎結果、分層、計分規則、訊號、時間軸與共識。
 - 同步報告涵蓋八字、紫微斗數、生命靈數、馬雅 Kin 與八宅命卦。人類圖／吠陀占星需要非同步星曆路徑，不會因你先初始化星曆就自動加入 `analyze()`。
 - 直接使用 `buildTimeline`、`buildTimelineAsync` 或 `buildBacktestTimeline` 時，須明確提供 `useTrueSolarTime` 與 `ziHourConvention`；詳見[有效設定契約](docs/CONTRIBUTING.md)。
-- 目前 core 為 **0.9.1**，Report schema 為 **7**，兩者獨立演進。保存結果時也應保存輸入、有效口徑與版本；這不代表已具備跨版本歷史重播能力。
+- 目前 core 為 **0.11.0**，Report schema 為 **7**，兩者獨立演進。保存結果時也應保存輸入、有效口徑與版本；這不代表已具備跨版本歷史重播能力。
 
 ## 系統架構
 

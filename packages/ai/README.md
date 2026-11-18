@@ -74,7 +74,7 @@ const result = await interpret(report, { complete, question: answer });
 
 ### Claude 實作（`createAnthropicComplete`）
 
-- 官方 `@anthropic-ai/sdk`（**選用 peerDependency**，不裝也不影響 `mcp`／`copy`；需要時 `bun add @anthropic-ai/sdk`，缺少時 `createAnthropicComplete` 會丟出明確錯誤）；`output_config.format` json_schema 結構化輸出。
+- 官方 `@anthropic-ai/sdk`（**選用 peerDependency**，不裝也不影響 `mcp`／`copy`；需要時 `npm install @anthropic-ai/sdk`，缺少時 `createAnthropicComplete` 會丟出明確錯誤）；`output_config.format` json_schema 結構化輸出。
 - Prompt caching：固定系統指令與 payload 區塊都加 `cache_control: ephemeral`（同一份報告重複發問可重用前綴）。
   前綴低於模型最小可快取長度時不會快取；用 `usage.cache_read_input_tokens` 驗證。
 - 串流 + `finalMessage()`，避免長輸出逾時。
@@ -98,7 +98,7 @@ const prompt = buildCopyPrompt(report, {
   questionAnswer,                     // 選用：網站本地 answerQuestion() 的結果
   maxChars: 24_000,                   // 預設；整段文字的長度上限
 });
-prompt.text; prompt.charCount; prompt.truncated; prompt.promptVersion; // 'copy-v1'
+prompt.text; prompt.charCount; prompt.truncated; prompt.promptVersion; // 'copy-v6'
 
 const check = checkPastedAnswer(prompt.payload, pastedAnswer); // 或傳整份 report（以完整資料比對）
 check.paragraphs[i].flags; // [{ code, label, values }]
@@ -126,7 +126,7 @@ check.paragraphs[i].flags; // [{ code, label, values }]
 - **輸入接受完整或 ≥ 8 位前綴**（大小寫不分）：`checkPastedAnswer`、`validateSections` 用 `resolveCitation` 比對（短編號、完整編號、前綴都映射回 payload 內的編號）；`checkAnswer` 把「回答寫的編號（小寫）」原樣交給 `signalLookup`，由呼叫端解析前綴。
 - **前綴要唯一才解析**：對到多筆（ambiguous）與查不到一律當「引用不存在」，絕不猜。少於 8 位不當作編號（`checkAnswer` 直接忽略）。
 - 規則的唯一來源是 core 的 `signals/shortId`（`resolveSignalId`、`shortSignalId`…），經 `core-pure.ts` 匯入（零 import 的純模組，`boundaries.test.ts` 已列入白名單）。
-- 版本：`COPY_PROMPT_VERSION = 'copy-v3'`、`CONVERSATION_PROMPT_VERSION = 'chat-v2'`。
+- 版本：`COPY_PROMPT_VERSION = 'copy-v6'`、`CONVERSATION_PROMPT_VERSION = 'chat-v4'`。
 
 ### `checkPastedAnswer`（貼回檢查，建議性）
 
@@ -149,9 +149,9 @@ BYOK（使用者自備 key，只存 `sessionStorage`，`createAnthropicComplete(
 ## 測試
 
 ```
-bun test packages/ai            # 全部 mock，不連網
-ANTHROPIC_API_KEY=… bun test packages/ai/tests/live.test.ts   # 真實 API smoke test（可用 FORTUNE_AI_MODEL 覆寫模型）
-bun run --filter @fortune/ai typecheck
+npm test --workspace @fortune/ai   # 全部 mock，不連網
+ANTHROPIC_API_KEY=… npx vitest run packages/ai/tests/live.test.ts   # 真實 API smoke test（可用 FORTUNE_AI_MODEL 覆寫模型）
+npm run typecheck --workspace @fortune/ai
 ```
 
 `tests/fixtures/report-v4.json` 是一次 `analyze()` 真實輸出的精簡版（timeline `topSignals` 只留 id、
