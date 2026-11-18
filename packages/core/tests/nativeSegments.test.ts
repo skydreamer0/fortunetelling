@@ -109,6 +109,7 @@ describe('#58 native segment helper (inert; not wired into any consumer)', () =>
     expect('baziNativePeriodsFor' in api).toBe(false);
   });
 
-  // #56 consumer AC: needs buildTimeline wiring, out of scope for this inert slice.
-  it.todo('#56 consumer: a January event must not be evaluated with the post-立春 year pillar');
+  // Not tested here (CI forbids todo/skip): the #56 consumer AC "a January event
+  // must not be evaluated with the post-立春 year pillar" needs buildTimeline
+  // wiring, which is out of scope for this inert slice.
 });
