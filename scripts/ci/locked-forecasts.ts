@@ -184,15 +184,16 @@ export function resolveBase(
   eventName: string | undefined,
   event: { pull_request?: { base?: { sha?: unknown } }; before?: unknown } | undefined,
 ): string | null {
-  const sha = (value: unknown) => typeof value === 'string' && /^[0-9a-f]{40}$/.test(value) && !/^0+$/.test(value);
+  const sha = (value: unknown): value is string => typeof value === 'string' && /^[0-9a-f]{40}$/.test(value) && !/^0+$/.test(value);
   if (eventName === 'pull_request') {
     const base = event?.pull_request?.base?.sha;
     if (!sha(base)) throw new Error('pull_request event without a valid base SHA');
     return base;
   }
   if (eventName === 'push') {
-    if (!sha(event?.before)) throw new Error('push event without a usable "before" SHA (new branch or force push); refusing to skip the append-only check');
-    return event!.before as string;
+    const before = event?.before;
+    if (!sha(before)) throw new Error('push event without a usable "before" SHA (new branch or force push); refusing to skip the append-only check');
+    return before;
   }
   if (eventName === 'workflow_dispatch') return null;
   throw new Error(`Unsupported event ${JSON.stringify(eventName)} for the locked forecast guard`);
