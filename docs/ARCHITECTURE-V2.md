@@ -48,7 +48,9 @@
 7. **本地優先**（延續 ROADMAPS 原則 1，D-029）：`core` 必須能在瀏覽器內獨立運作（不需伺服器、不需資料庫）。資料庫與 AI 都是**選用**的上層。
 8. （見 ROADMAPS.md，D-036）**MCP 只包裝 core**：不自行重算第二套邏輯；工具輸出有大小上限，並附 `asOf`／`versions`／`caveats`。原則 1（core 不得呼叫 LLM、AI 不得重新排盤）不變。
 
-## 2. Repo 結構（Bun workspaces，D-024/D-025）
+## 2. Repo 結構（npm workspaces）
+
+根目錄的 `package.json` 將 `packages/*` 與 `apps/*` 宣告為 npm workspaces。開發工具鏈使用 Node.js 24 LTS 與 npm 11（[#140](https://github.com/skydreamer0/fortunetelling/issues/140)）。
 
 ```
 packages/
@@ -321,7 +323,7 @@ backtest_runs         -- 規則版本、樣本數、命中率、日期
 | **V4** | 資料庫、帳號、life_events、回驗 | 回驗報告可重現 |
 | **V5** | Question Engine + AI 解讀層 | 後驗證攔截率測試：故意餵入錯誤干支的輸出必須被丟棄 |
 
-上表 V1–V5 為歷史里程碑。現行規劃為 M0.5～M5（Profile 契約✅、本機 MCP server✅、匯出／匯入、整理 AI 層、網站對接、計算端驗證），見 [HISTORY.md](HISTORY.md)（D-036）。
+上表 V0–V5 為歷史里程碑。現行規劃為 M0.5～M5（Profile 契約✅、本機 MCP server✅、匯出／匯入、整理 AI 層、網站對接、計算端驗證），見 [HISTORY.md](HISTORY.md)（D-036）。
 
 現行任務細節與驗收門檻以 [GitHub Issues](https://github.com/skydreamer0/fortunetelling/issues) 為準（見 [ROADMAPS.md](../ROADMAPS.md)）。
 舊 B/C/D [TASKS](archive/2026-07-v1/TASKS.md) 與 [HARNESS_SPEC](archive/2026-07-v1/HARNESS_SPEC.md) 僅保留為歷史交付依據，完整入口見[文件索引](README.md)。
