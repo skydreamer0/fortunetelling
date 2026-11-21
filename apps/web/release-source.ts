@@ -14,7 +14,7 @@ export function sourceOffer(env: NodeJS.ProcessEnv, head: () => string): string 
   if (!/^[a-f0-9]{40}$/.test(sha) || (publishing && sha !== env.GITHUB_SHA)) {
     throw new Error('The exact GitHub source commit must match this checkout.');
   }
-  return `${REPOSITORY_URL}/tree/${sha}`;
+  return `${REPOSITORY_URL}/archive/${sha}.zip`;
 }
 
 export function officialBuildSource(env = process.env): string | undefined {

@@ -21,7 +21,8 @@
 ## 另有授權或待核對的內容
 
 - `packages/core/tests/fixtures/fortel1952.json` 的附隨授權為 [Apache-2.0](packages/core/tests/fixtures/fortel1952.LICENSE)。保留原始歸屬及聲明；測試資料不因專案授權變更。
-- `docs/validation/` 的外部校驗來源與資料、`.agents/skills/` 的規則文件、圖片與其他素材，照各檔來源及授權，不視為本專案能再授權的內容。
+- External comparison fixtures and third-party media remain subject to their source terms, not the repository AGPL grant. Selected Astro-Databank / public calculator reference files stay out of the Pages source ZIP; see [source scope](docs/licensing-release-checklist.md#網頁對應原始碼與測試資料的分界).
+- Developer-only `.agents/skills/` includes material from [UI UX Pro Max Skill at `12b486b`](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/tree/12b486b22e67f5d887962ef8351c1ac863bfaeb9). The [upstream MIT notice](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/12b486b22e67f5d887962ef8351c1ac863bfaeb9/LICENSE) and the [UI Styling Apache-2.0 license](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill/blob/12b486b22e67f5d887962ef8351c1ac863bfaeb9/.claude/skills/ui-styling/LICENSE.txt) apply to the corresponding upstream materials; this does not assign a license to unmatched generated files. The skills are not used by the Web build or included in its source ZIP.
 - Web HTML 向 Google Fonts 請求字體，並未在此專案夾帶字體檔。若改為自行封裝，重新核對對應字體許可與聲明。
 - Web 發布附 `WEB-DEPENDENCY-LICENSES.txt`：從實際 chunk 的套件加上已驗證的 Swiss 包內嵌 core、Vite／Rolldown 產生的執行期程式，原樣保留安裝包的 `LICENSE`／`COPYING`／`COPYRIGHT`／`NOTICE`。它不包含只用於 Node 測試或 Node/MCP 中而未送到瀏覽器的元件。
 - 目前 GitHub Releases 沒有獨立二進位包，core／AI／MCP workspace 都是 private，不能由建置成功推定有發行 Node 套件。如果日後另行散布 Node/MCP，必須對該產物重做完整第三方清單、聲明與來源提供。參見 [發布核對](docs/licensing-release-checklist.md)。

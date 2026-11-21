@@ -5,8 +5,22 @@
 ## 準備
 
 - 授權路線是保留 Swiss Ephemeris，對專案可依法授權的原創程式碼採 AGPL-3.0-only；第三方仍依原授權。單列 MIT 或只換根目錄名稱無法消除既有 Swiss Ephemeris 和 JS wrapper 條件。
-- 正式 GitHub Actions build 的網頁底部提供 checkout 完整 commit 的原始碼網址；來源下載應含鎖檔和可執行的建置、安裝腳本。建置以 `npm ci; npm run build` 重現；對應 Node/npm 版本看該 commit 的 package.json。從 GitHub archive 或 fork 自行重建不會標為官方成品。
+- 正式 GitHub Actions build 的網頁底部提供 checkout 完整 commit 的原始碼 ZIP；來源下載應含鎖檔和可執行的建置、安裝腳本。建置以 `npm ci; npm run build` 重現；對應 Node/npm 版本看該 commit 的 package.json。從 GitHub archive 或 fork 自行重建不會標為官方成品。
 - 網頁 build 內隨附 `LICENSE.txt`、`THIRD-PARTY-NOTICES.txt`、`WEB-DEPENDENCY-LICENSES.txt`；前兩個比對 checkout，第三個從建置中的 bundle 套件擷取原文。另核對實際產物的 Swiss WASM 雜湊、PWA 離線選單與 exact-commit source URL。
+
+## 網頁對應原始碼與測試資料的分界
+
+「本版原始碼」連至完整 commit 的 GitHub ZIP（由 `git archive` 產生），不連會變動的分支。解壓縮後，以 `.nvmrc` 指定的 Node 與 npm 11 執行：
+
+```sh
+npm ci
+npm run build
+node scripts/ci/assets.ts
+```
+
+產物在 `apps/web/dist`。依賴鎖檔、建置腳本、實際 Web 程式、圖示與授權聲明都在 ZIP 內。ZIP 不是完整開發用 checkout，故不聲稱可以重跑所有對照測試。官方 Actions 建置才會寫入對應的完整 commit URL；ZIP 解壓後的本機建置不會宣稱是官方成品。
+
+`.gitattributes` 只將開發代理 skills 與不參與 Web 建置的外部對照資料（含 Astro-Databank 與其他公開計算器的個案紀錄）從來源 ZIP 排除。這沒有移除 Git 歷史、給外部資料重新授權、也沒有停用或削弱維護者 checkout 的現有測試。一般歷史 checkout 中仍有這些資料，是獨立的權利核對範圍。
 
 ## 必須完成才能將新產物宣稱為授權與發布均已通過
 
