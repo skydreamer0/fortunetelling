@@ -183,6 +183,13 @@ export function App() {
 
       <footer className="colophon">
         <p>計算於本機完成・結果為觀察假說，非決定論</p>
+        {import.meta.env.VITE_FORTUNE_BUILD_SOURCE && (
+          <p>
+            <a href={import.meta.env.VITE_FORTUNE_BUILD_SOURCE}>本版原始碼</a>
+            {' ・ '}
+            <a href={`${import.meta.env.BASE_URL}THIRD-PARTY-NOTICES.txt`}>第三方授權</a>
+          </p>
+        )}
       </footer>
 
       {loading && (

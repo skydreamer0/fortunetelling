@@ -1,11 +1,29 @@
-import { defineConfig } from 'vite';
+import { readFileSync } from 'node:fs';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { pwa } from './pwa/plugin';
+import { officialBuildSource } from './release-source';
+
+const licenseFiles = [['LICENSE', 'LICENSE.txt'], ['THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-NOTICES.txt']] as const;
+
+function releaseLicenses(): Plugin {
+  return {
+    name: 'fortune:release-licenses',
+    apply: 'build',
+    generateBundle() {
+      for (const [repoPath, fileName] of licenseFiles) {
+        const source = readFileSync(new URL(`../../${repoPath}`, import.meta.url));
+        this.emitFile({ type: 'asset', fileName, source });
+      }
+    },
+  };
+}
 
 // GitHub Pages serves the site from /<repo-name>/.
 export default defineConfig({
   base: '/fortunetelling/',
-  plugins: [react(), pwa()],
+  plugins: [react(), releaseLicenses(), pwa()],
+  define: { 'import.meta.env.VITE_FORTUNE_BUILD_SOURCE': JSON.stringify(officialBuildSource() ?? '') },
   build: {
     rolldownOptions: {
       output: {

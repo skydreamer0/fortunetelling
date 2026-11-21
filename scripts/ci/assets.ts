@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { officialBuildSource } from '../../apps/web/release-source.ts';
 
 export function pngDimensions(bytes: Uint8Array): [number, number] {
   assert(bytes.length >= 33 && Buffer.from(bytes.subarray(0, 8)).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])), 'Invalid PNG signature');
@@ -42,4 +43,19 @@ export function validateBuiltAssets(publicDir = 'apps/web/public', distDir = 'ap
   for (const path of ['index.html', 'manifest.webmanifest']) assert(paths.includes(path), `Missing app shell: ${path}`);
   console.log('Built public bytes, icon dimensions, manifest references and PWA precache passed (not visual/mobile acceptance).');
 }
-if (import.meta.main) validateBuiltAssets();
+export function validateBuiltLicensing(distDir = 'apps/web/dist', sourceDir = '.'): void {
+  for (const [repoPath, fileName] of [['LICENSE', 'LICENSE.txt'], ['THIRD-PARTY-NOTICES.md', 'THIRD-PARTY-NOTICES.txt']] as const) {
+    assert(readFileSync(join(sourceDir, repoPath)).equals(readFileSync(join(distDir, fileName))),
+      `Built license text differs: ${fileName}`);
+  }
+  const url = officialBuildSource();
+  if (url) {
+    const assets = join(distDir, 'assets');
+    assert(readdirSync(assets).some(file => file.endsWith('.js') && readFileSync(join(assets, file), 'utf8').includes(url)),
+      'Built app does not advertise the exact official source checkout');
+  }
+}
+if (import.meta.main) {
+  validateBuiltAssets();
+  validateBuiltLicensing();
+}
