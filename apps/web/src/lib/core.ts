@@ -7,6 +7,10 @@ type YMD = { year: number; month: number; day: number };
 
 export const analyze = (input: BirthInput): Report => core.analyzeReplayReport(input) as unknown as Report;
 
+/** Reuse the current replay path for an in-memory birth-time hypothesis. */
+export const birthTimeSnapshot = (input: Parameters<typeof core.analyzeReplayReport>[0], asOf: string) =>
+  core.analyzeReplayReport(input, { asOf }).replay.snapshot;
+
 export const analyzeCompatibility = (first: BirthInput, second: BirthInput): CompatibilityResult =>
   core.analyzeCompatibility(first as any, second as any) as unknown as CompatibilityResult;
 

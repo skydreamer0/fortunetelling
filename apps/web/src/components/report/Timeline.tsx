@@ -210,9 +210,19 @@ export function TimelineDetail({ cell }: { cell: TimelineCellView | null }) {
               <p className="tl-signal__head">
                 <span className="tl-signal__system">{signal.systemName}</span>
                 <span className="tl-signal__rule">{signal.ruleLabel}</span>
-                <code className="tl-signal__id">{signal.ruleId}</code>
+                <code className="tl-signal__id">{signal.ruleId}{signal.ruleVersion !== undefined ? ` v${signal.ruleVersion}` : ''}</code>
               </p>
               <p className="tl-signal__text">{signal.text}</p>
+              {(signal.system === 'bazi' || signal.system === 'ziwei') && (
+                <details className="proof-trace">
+                  <summary>查看命盤部件與判讀依據</summary>
+                  {signal.target && <p>判讀位置：<code>{signal.target}</code></p>}
+                  {signal.trace?.length ? <ul>{signal.trace.map(item => <li key={item.id}>
+                    <code>{item.id}</code>{item.detail ? `：${item.detail}` : '（本報告未附部件明細）'}
+                  </li>)}</ul> : <p>此訊號未附部件明細。</p>}
+                  {signal.modifiers?.length ? <ul aria-label="判讀修正">{signal.modifiers.map((item, i) => <li key={`${item.id}:${i}`}>{item.reason || item.id}</li>)}</ul> : null}
+                </details>
+              )}
               <p className="tl-signal__meta">
                 <span>特徵：{signal.traitLabel}</span>
                 <span>方向：{signal.direction}</span>

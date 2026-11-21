@@ -1,7 +1,8 @@
 /** Small shared building blocks used across the report. */
 
-import { useId, useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { createContext, useContext, useId, useRef, type KeyboardEvent, type ReactNode } from 'react';
 import { segmentGlossary } from '../../lib/glossary';
+import type { EvidenceLookup } from '../../model/sourceEvidence';
 import { SYSTEM_NAMES } from '../../model/selectors';
 
 /** Text with glossary terms marked (first occurrence within this text). */
@@ -19,9 +20,12 @@ export function Gloss({ text }: { text: string }) {
   );
 }
 
+export const ReportEvidenceContext = createContext<EvidenceLookup | null>(null);
+
 export interface SourceChip { system: string; componentId: string; name: string }
 
 export function Sources({ items, label = '資料來源' }: { items?: SourceChip[]; label?: string }) {
+  const evidence = useContext(ReportEvidenceContext);
   if (!items?.length) return null;
   const unique = items.filter((item, index) =>
     items.findIndex(other => other.system === item.system && other.componentId === item.componentId) === index);
@@ -31,6 +35,9 @@ export function Sources({ items, label = '資料來源' }: { items?: SourceChip[
         <li key={`${item.system}/${item.componentId}`} className="source" data-system={item.system} title={`${item.system}/${item.componentId}`}>
           <span className="source__system">{SYSTEM_NAMES[item.system] ?? item.system}</span>
           <span className="source__name">{item.name}</span>
+          {(item.system === 'bazi' || item.system === 'ziwei') && <span className="source__name">
+            {evidence?.(item.system, item.componentId)?.detail || item.componentId}
+          </span>}
         </li>
       ))}
     </ul>
