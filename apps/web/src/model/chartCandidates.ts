@@ -31,25 +31,39 @@ function ziweiRows(a: Ziwei, b: Ziwei) {
   ];
 }
 
-const REASONS: Record<string, string> = {
+const REASONS = new Map<string, string>(Object.entries({
   near_shichen_boundary: '時辰交界',
   near_jie_boundary: '交節交界',
   zi_hour_convention: '子時換日口徑',
-  civil_time: '民用時間口徑',
-};
+  civil_time: '改用出生地的民用時間',
+}));
+const reasonLabel = (reason: string) => REASONS.get(reason) ?? '未識別的候選原因';
+
+function baziDetail(detail: string): string {
+  const boundary = /^(civil|trueSolar) clock (\S+) \(boundary (\S+)\)$/.exec(detail);
+  if (boundary) return `${boundary[1] === 'civil' ? '民用時間' : '真太陽時'} ${boundary[2].replace('T', ' ')}（時辰交界 ${boundary[3]}）`;
+  const term = /^instant (\S+) \((\S+) (\S+)\)$/.exec(detail);
+  if (term) return `${term[1].replace('T', ' ').replace(/Z$/, ' UTC')}（${term[2]}交節）`;
+  if (detail === "ziHourConvention 'early'") return '子初換日（23:00）';
+  if (detail === "ziHourConvention 'late'") return '午夜換日（00:00）';
+  return '未提供可顯示的候選時間或口徑';
+}
 
 export function chartCandidates(snapshot: Snapshot): Comparison[] {
   const { bazi, ziwei } = snapshot.natal;
   const compareBazi = bazi.status === 'computed' ? bazi.chart.pillars : null;
   const compareZiwei = ziwei.status === 'computed' ? ziwei.chart : null;
+  const ziweiReason = (candidate: NonNullable<typeof compareZiwei>['alternatives'][number]['time']) =>
+    compareZiwei?.time.alternatives.find(time => time.date === candidate.date && time.timeIndex === candidate.timeIndex)
+      ?.reasons.map(reasonLabel).join('、') || '未提供候選原因';
   return [
     ...(compareBazi?.alternatives.map(alt => ({
-      label: `八字｜${REASONS[alt.reason]}`,
-      columns: ['主盤', `候選盤：${alt.detail}`] as const,
+      label: `八字｜${reasonLabel(alt.reason)}`,
+      columns: ['主盤', `候選盤：${baziDetail(alt.detail)}`] as const,
       rows: baziRows(compareBazi.pillars, alt.pillars),
     })) ?? []),
-    ...(compareZiwei?.alternatives.map(({ time, natal }, index) => ({
-      label: `紫微｜${compareZiwei.time.alternatives[index]?.reasons.map(reason => REASONS[reason]).join('、') || '候選口徑'}`,
+    ...(compareZiwei?.alternatives.map(({ time, natal }) => ({
+      label: `紫微｜${ziweiReason(time)}`,
       columns: [`主盤：${compareZiwei.time.wallTime.slice(0, 16).replace('T', ' ')}`, `候選盤：${time.wallTime.slice(0, 16).replace('T', ' ')}`] as const,
       rows: ziweiRows(compareZiwei.primary, natal),
     })) ?? []),

@@ -1,4 +1,4 @@
-import type { Component, Report } from './types';
+import type { Component, Report, Signal } from './types';
 import type { ZiweiPalaceValue } from '@fortune/core';
 
 const text = (v: unknown) => typeof v === 'string' ? v : '';
@@ -55,5 +55,25 @@ export function sourceEvidence(report: Pick<Report, 'engines'>): EvidenceLookup 
     // headline report's as-of component value for a differently scoped hit.
     if (mode === 'timeline' && result?.category === 'flyingStars') return undefined;
     return result;
+  };
+}
+
+/** Read rule evidence from the exact timeline bucket, never the report-wide signal list. */
+export function timelineEvidence(report: Report, cell: { grain: 'year' | 'month'; start: string; domain: string }) {
+  const buckets = cell.grain === 'year' ? report.timeline?.years : report.timeline?.months;
+  const found = buckets?.find(item => item.window.start === cell.start)?.domains.find(item => item.domain === cell.domain);
+  const lookup = sourceEvidence(report);
+  const signals = new Map<string, Signal>((found?.topSignals ?? []).map(signal => [signal.id, signal]));
+  return (id: string) => {
+    const signal = signals.get(id);
+    if (!signal) return undefined;
+    return {
+      ruleVersion: signal.ruleVersion,
+      target: signal.target,
+      trace: [...new Set(signal.evidence?.componentIds ?? [])].map(id => ({
+        id, detail: lookup(signal.system, id, 'timeline')?.detail || null,
+      })),
+      modifiers: signal.evidence?.modifiers ?? [],
+    };
   };
 }

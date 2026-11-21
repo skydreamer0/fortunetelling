@@ -36,7 +36,7 @@ export function Sources({ items, label = '資料來源' }: { items?: SourceChip[
           <span className="source__system">{SYSTEM_NAMES[item.system] ?? item.system}</span>
           <span className="source__name">{item.name}</span>
           {(item.system === 'bazi' || item.system === 'ziwei') && <span className="source__name">
-            {evidence?.(item.system, item.componentId)?.detail || item.componentId}
+            {evidence?.(item.system, item.componentId)?.detail || `未提供命盤依據（來源代碼：${item.componentId}）`}
           </span>}
         </li>
       ))}

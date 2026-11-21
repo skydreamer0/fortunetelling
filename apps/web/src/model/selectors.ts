@@ -7,7 +7,6 @@ import type { BaziComponent, BaziTenGodsContextValue, SerializedStar, ZiweiPalac
 
 import type { Domain as CoreDomain, DreamspellMetadata, TimelineCell, ZiweiMetadata } from '@fortune/core';
 import { HISTORICAL_ZONE_WARNING_TEXT, shortSignalId, directionalVotes, evidenceMatchesContext } from '../lib/core';
-import { sourceEvidence, type EvidenceLookup } from './sourceEvidence';
 import type { Component, ConsensusSummary, EngineResult, Period, Radar, Report, ScoringRule, Signal, SystemId, Timeline } from './types';
 
 export const SYSTEM_NAMES: Record<string, string> = {
@@ -470,10 +469,6 @@ export interface TimelineSignalView {
   systemName: string;
   ruleId: string;
   ruleLabel: string;
-  ruleVersion?: number;
-  target?: string | null;
-  trace?: { id: string; detail: string | null }[];
-  modifiers?: { id: string; reason: string }[];
   trait: string;
   traitLabel: string;
   text: string;
@@ -568,7 +563,7 @@ export function ruleLabel(ruleId: string): string {
   return RULE_LABELS[ruleId] ?? ruleId;
 }
 
-function toSignalView(signal: Signal, evidence?: EvidenceLookup): TimelineSignalView {
+function toSignalView(signal: Signal): TimelineSignalView {
   const valence = Number(signal.valence) || 0;
   return {
     id: signal.id,
@@ -576,12 +571,6 @@ function toSignalView(signal: Signal, evidence?: EvidenceLookup): TimelineSignal
     systemName: SIGNAL_SYSTEM_NAMES[signal.system] ?? signal.system,
     ruleId: signal.ruleId,
     ruleLabel: ruleLabel(signal.ruleId),
-    ruleVersion: signal.ruleVersion,
-    target: signal.target,
-    trace: (signal.evidence?.componentIds ?? []).map(id => ({
-      id, detail: evidence?.(signal.system, id, 'timeline')?.detail || null,
-    })),
-    modifiers: signal.evidence?.modifiers ?? [],
     trait: signal.trait,
     traitLabel: TRAIT_LABELS[signal.trait] ?? signal.trait,
     text: signal.evidence?.text ?? '',
@@ -652,7 +641,6 @@ function buildGrid(report: Report, grain: 'year' | 'month'): TimelineGrid | null
   if (!cells.length) return null;
   const cuts = bandCutsOf(timeline);
   const lookup = reportSignals(report);
-  const evidence = sourceEvidence(report);
   const coverage = coverageIndex(report, grain);
   const asOf = timeline.asOf ?? report.asOf;
 
@@ -670,7 +658,7 @@ function buildGrid(report: Report, grain: 'year' | 'month'): TimelineGrid | null
       const systems = Object.entries(found?.perSystem ?? {})
         .filter(([, value]) => (value?.signalIds?.length ?? 0) > 0)
         .map(([system]) => SIGNAL_SYSTEM_NAMES[system] ?? system);
-      const topSignals = (found?.topSignals ?? []).map(signal => toSignalView(signal, evidence));
+      const topSignals = (found?.topSignals ?? []).map(toSignalView);
       const votes = found && timeline.schemaVersion >= 2 && evidenceMatchesContext(found.directionalEvidence, {
         domain: found.domain, window: cell.window, thresholds: timeline.thresholds, systems: timeline.systems,
         systemWeights: timeline.systemWeights, perSystem: found.perSystem,
