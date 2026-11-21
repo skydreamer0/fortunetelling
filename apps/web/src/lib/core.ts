@@ -8,7 +8,7 @@ type YMD = { year: number; month: number; day: number };
 export const analyze = (input: BirthInput): Report => core.analyzeReplayReport(input) as unknown as Report;
 
 export const analyzeCompatibility = (first: BirthInput, second: BirthInput): CompatibilityResult =>
-  core.analyzeCompatibility(first as any, second as any) as unknown as CompatibilityResult;
+  core.analyzeCompatibility(first, second) as unknown as CompatibilityResult;
 
 export { createReportReplaySession } from '@fortune/core';
 export type { ReportCalculation, ReplayReport } from '@fortune/core';
