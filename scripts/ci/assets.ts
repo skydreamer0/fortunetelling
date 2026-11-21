@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { officialBuildSource } from '../../apps/web/release-source.ts';
+import { assertSwissWasm, WEB_LICENSES_FILE } from '../../apps/web/release-licenses.ts';
 
 export function pngDimensions(bytes: Uint8Array): [number, number] {
   assert(bytes.length >= 33 && Buffer.from(bytes.subarray(0, 8)).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])), 'Invalid PNG signature');
@@ -48,10 +49,19 @@ export function validateBuiltLicensing(distDir = 'apps/web/dist', sourceDir = '.
     assert(readFileSync(join(sourceDir, repoPath)).equals(readFileSync(join(distDir, fileName))),
       `Built license text differs: ${fileName}`);
   }
+  const assets = join(distDir, 'assets');
+  const assetsList = readdirSync(assets);
+  assertSwissWasm(assetsList.filter(file => /^swisseph-[\w-]+\.wasm$/.test(file)).map(file => readFileSync(join(assets, file))));
+  const precached = precachePaths(readFileSync(join(distDir, 'sw.js'), 'utf8'));
+  for (const file of ['LICENSE.txt', 'THIRD-PARTY-NOTICES.txt', WEB_LICENSES_FILE]) {
+    assert(precached.includes(file), `Missing offline licensing file: ${file}`);
+  }
+  const bundledLicenses = readFileSync(join(distDir, WEB_LICENSES_FILE), 'utf8');
+  assert(bundledLicenses.includes('@swisseph/browser@1.3.1') && bundledLicenses.includes('react@'),
+    'Built dependency license inventory omitted an expected package');
   const url = officialBuildSource();
   if (url) {
-    const assets = join(distDir, 'assets');
-    assert(readdirSync(assets).some(file => file.endsWith('.js') && readFileSync(join(assets, file), 'utf8').includes(url)),
+    assert(assetsList.some(file => file.endsWith('.js') && readFileSync(join(assets, file), 'utf8').includes(url)),
       'Built app does not advertise the exact official source checkout');
   }
 }
