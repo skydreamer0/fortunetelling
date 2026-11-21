@@ -4,3 +4,14 @@ packages/*/tests/fixtures/** text eol=lf
 
 # Compressed complete legacy replay fixture must not undergo newline conversion.
 packages/core/tests/fixtures/questionLegacy32.v2-v3.json.gz binary
+
+# Pages corresponding-source ZIP: exclude ancillary developer tools and
+# external comparison records, not any code/assets needed to build the site.
+# A Git checkout keeps all of these; CI therefore runs the same test suite.
+/.agents/skills export-ignore
+/packages/core/tests/fixtures/integrationCases.ts export-ignore
+/packages/core/tests/fixtures/validation/humandesign-reference.* export-ignore
+/packages/core/tests/fixtures/validation/humandesign-validation-report.md export-ignore
+/packages/core/tests/fixtures/validation/jyotish-cases.json export-ignore
+/packages/core/tests/fixtures/validation/jyotish-thirdparty.json export-ignore
+/packages/core/tests/fixtures/validation/jyotish-validation-report.md export-ignore

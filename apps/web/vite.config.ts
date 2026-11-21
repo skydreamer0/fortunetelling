@@ -1,11 +1,15 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { pwa } from './pwa/plugin';
+import { officialBuildSource } from './release-source';
+
+import { releaseLicenses } from './release-licenses';
 
 // GitHub Pages serves the site from /<repo-name>/.
 export default defineConfig({
   base: '/fortunetelling/',
-  plugins: [react(), pwa()],
+  plugins: [react(), releaseLicenses(), pwa()],
+  define: { 'import.meta.env.VITE_FORTUNE_BUILD_SOURCE': JSON.stringify(officialBuildSource() ?? '') },
   build: {
     rolldownOptions: {
       output: {
