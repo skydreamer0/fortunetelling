@@ -412,3 +412,29 @@
   .couple { grid-template-columns: 1fr; }
   .report__actions { margin-bottom: 0.75rem; }
 }
+
+.candidate-charts {
+  margin-block: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+}
+.candidate-charts summary { font-weight: 600; cursor: pointer; }
+.candidate-charts__form { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; }
+.candidate-charts__form input { max-width: 100%; }
+.candidate-charts__table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-block: 1rem;
+  overflow-wrap: anywhere;
+  font-size: var(--text-sm);
+}
+.candidate-charts__table th, .candidate-charts__table td {
+  padding: .35rem;
+  text-align: start;
+  border-bottom: 1px solid var(--rule);
+}
+.candidate-charts__table th:first-child { width: 25%; }
+.candidate-charts__table th small { display: block; color: var(--ink-2); font-weight: normal; }
+.candidate-charts__table tr[data-differs] { background: var(--zhu-wash); }

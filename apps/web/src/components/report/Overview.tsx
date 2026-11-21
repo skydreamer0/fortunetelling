@@ -2,7 +2,7 @@
 
 import { ELEMENT_KEY, identity, pillars } from '../../model/selectors';
 import type { Report } from '../../model/types';
-import { EmptyNote, Gloss, Section } from '../ui/primitives';
+import { EmptyNote, Gloss, Section, Sources } from '../ui/primitives';
 
 const NUMERALS = ['一', '二', '三', '四', '五', '六'];
 
@@ -57,13 +57,9 @@ export function Overview({ report }: { report: Report }) {
               <span className="reading__index" aria-hidden="true">{NUMERALS[index] ?? index + 1}</span>
               <div>
                 <p className="reading__text"><Gloss text={sentence.text} /></p>
-                <p className="reading__source">
-                  {sentence.sources.map(source => (
-                    <span key={source.componentId} data-system={source.engineId}>
-                      {source.engineName}・{source.componentName}
-                    </span>
-                  ))}
-                </p>
+                <Sources items={sentence.sources.map(source => ({
+                  system: source.engineId, componentId: source.componentId, name: source.componentName,
+                }))} />
               </div>
             </li>
           ))}

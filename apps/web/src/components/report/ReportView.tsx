@@ -1,11 +1,14 @@
 /** Report page: title block, sticky chapter index and the chapters. */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { cityById, cityLabel } from '../../lib/cities';
 import { birthLabel, notices } from '../../model/selectors';
+import { sourceEvidence } from '../../model/sourceEvidence';
+import { ReportEvidenceContext } from '../ui/primitives';
 import type { Report } from '../../model/types';
 import { Annual } from './Annual';
 import { AskAi } from './AskAi';
+import { ChartCandidates } from './ChartCandidates';
 import { Charts } from './Charts';
 import { Domains } from './Domains';
 import { Guidance } from './Guidance';
@@ -72,6 +75,7 @@ function useActiveChapter(): string {
 
 export function ReportView({ report, onBack }: { report: Report; onBack: () => void }) {
   const active = useActiveChapter();
+  const evidence = useMemo(() => sourceEvidence(report), [report]);
   const navRef = useRef<HTMLElement>(null);
   const { date, time } = birthLabel(report.input);
   const { unavailable, warnings, timeZone } = notices(report);
@@ -87,6 +91,7 @@ export function ReportView({ report, onBack }: { report: Report; onBack: () => v
   }, [active]);
 
   return (
+    <ReportEvidenceContext.Provider value={evidence}>
     <article className="report">
       <header className="report__head">
         <div className="report__actions">
@@ -124,6 +129,7 @@ export function ReportView({ report, onBack }: { report: Report; onBack: () => v
         </aside>
       )}
 
+      <ChartCandidates key={report.calculation?.snapshotId ?? report.generatedAt} report={report} />
       <Overview report={report} />
       <Annual report={report} />
       <Timeline report={report} />
@@ -136,5 +142,6 @@ export function ReportView({ report, onBack }: { report: Report; onBack: () => v
       <Guidance report={report} />
       <Method report={report} />
     </article>
+    </ReportEvidenceContext.Provider>
   );
 }

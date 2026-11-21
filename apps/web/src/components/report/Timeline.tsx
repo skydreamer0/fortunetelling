@@ -3,7 +3,7 @@
  * months, and a detail panel listing the rules behind any cell. Report v5 adds
  * a 「共識與分歧」 summary above the grid and per-cell system coverage (D-034).
  *
- * Reads only `model/selectors` (D-015). Scores stay 0–100 in the data; the grid
+ * Reads projected models (D-015). Scores stay 0–100 in the data; the grid
  * shows the four bands 低／中／中高／高 and exposes the number on hover, focus,
  * in the detail panel and in the data table.
  */
@@ -14,6 +14,7 @@ import {
   type ConsensusConflictSideView, type ConsensusSystemChip, type ConsensusView,
   type TimelineCellView, type TimelineConflictSide, type TimelineGrid, type TimelineMeta,
 } from '../../model/selectors';
+import { timelineEvidence } from '../../model/sourceEvidence';
 import type { Report } from '../../model/types';
 import { EmptyNote, Section } from '../ui/primitives';
 
@@ -145,7 +146,7 @@ function ConflictList({ title, items }: { title: string; items: TimelineConflict
 }
 
 /** Detail panel: why a cell has its band — every top signal with its evidence. */
-export function TimelineDetail({ cell }: { cell: TimelineCellView | null }) {
+export function TimelineDetail({ cell, report }: { cell: TimelineCellView | null; report?: Report }) {
   if (!cell) {
     return (
       <aside className="tl-detail tl-detail--idle" aria-live="polite">
@@ -153,6 +154,7 @@ export function TimelineDetail({ cell }: { cell: TimelineCellView | null }) {
       </aside>
     );
   }
+  const lookup = report ? timelineEvidence(report, cell) : undefined;
   const when = cell.grain === 'year' ? `${cell.periodLabel} 年` : `${cell.start.slice(0, 4)} 年 ${cell.periodLabel}`;
   return (
     <aside className="tl-detail" aria-live="polite" aria-labelledby="tl-detail-title">
@@ -205,14 +207,26 @@ export function TimelineDetail({ cell }: { cell: TimelineCellView | null }) {
         <p className="tl-detail__empty">此期間沒有規則觸發，分數以 0 計。這表示沒有可用訊號，不表示這個領域低落。</p>
       ) : (
         <ol className="tl-signals" aria-label="主要訊號">
-          {cell.topSignals.map(signal => (
+          {cell.topSignals.map(signal => {
+            const proof = lookup?.(signal.id);
+            return (
             <li key={signal.id} className="tl-signal" data-system={signal.system}>
               <p className="tl-signal__head">
                 <span className="tl-signal__system">{signal.systemName}</span>
                 <span className="tl-signal__rule">{signal.ruleLabel}</span>
-                <code className="tl-signal__id">{signal.ruleId}</code>
+                <code className="tl-signal__id">{signal.ruleId}{proof?.ruleVersion !== undefined ? ` v${proof?.ruleVersion}` : ''}</code>
               </p>
               <p className="tl-signal__text">{signal.text}</p>
+              {(signal.system === 'bazi' || signal.system === 'ziwei') && (
+                <details className="proof-trace">
+                  <summary>查看命盤部件與判讀依據</summary>
+                  {proof?.target && <p>判讀位置：<code>{proof?.target}</code></p>}
+                  {proof?.trace?.length ? <ul>{proof?.trace.map(item => <li key={item.id}>
+                    <code>{item.id}</code>{item.detail ? `：${item.detail}` : '（本報告未附部件明細）'}
+                  </li>)}</ul> : <p>此訊號未附部件明細。</p>}
+                  {proof?.modifiers?.length ? <ul aria-label="判讀修正">{proof?.modifiers.map((item, i) => <li key={`${item.id}:${i}`}>{item.reason || item.id}</li>)}</ul> : null}
+                </details>
+              )}
               <p className="tl-signal__meta">
                 <span>特徵：{signal.traitLabel}</span>
                 <span>方向：{signal.direction}</span>
@@ -222,7 +236,8 @@ export function TimelineDetail({ cell }: { cell: TimelineCellView | null }) {
                 </span>
               </p>
             </li>
-          ))}
+            );
+          })}
         </ol>
       )}
     </aside>
@@ -373,12 +388,13 @@ interface TimelineViewProps {
   /** Report v5 only; null/absent hides the 「共識與分歧」 block. */
   consensus?: ConsensusView | null;
   schemaVersion: number;
+  report?: Report;
   selected: string | null;
   onSelect: (key: string) => void;
 }
 
 /** Stateless body of the chapter (selection is owned by `Timeline`). */
-export function TimelineView({ years, months, meta, consensus = null, schemaVersion, selected, onSelect }: TimelineViewProps) {
+export function TimelineView({ years, months, meta, consensus = null, schemaVersion, report, selected, onSelect }: TimelineViewProps) {
   if (!years || !meta) {
     return (
       <EmptyNote>
@@ -425,7 +441,7 @@ export function TimelineView({ years, months, meta, consensus = null, schemaVers
       </div>
 
       <div className="timeline__side">
-        <TimelineDetail cell={cell} />
+        <TimelineDetail cell={cell} report={report} />
       </div>
 
       <div className="timeline__notes">
@@ -472,7 +488,7 @@ export function Timeline({ report, initialSelected }: { report: Report; initialS
   return (
     <Section id="ch-timeline" index="參" title="時序"
       lede="未來五年與今年各月，十個生活領域被多少規則觸發。點選任一格，可以看到背後的規則與原文依據。">
-      <TimelineView years={years} months={months} meta={meta} consensus={consensus} schemaVersion={report.schemaVersion}
+      <TimelineView years={years} months={months} meta={meta} consensus={consensus} report={report} schemaVersion={report.schemaVersion}
         selected={selected} onSelect={setSelected} />
     </Section>
   );
