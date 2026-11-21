@@ -16,7 +16,7 @@
 | zod | 3.25.76 | [MIT](https://github.com/colinhacks/zod/blob/main/LICENSE) |
 
 網頁的星曆使用套件內 Swiss Ephemeris WebAssembly 和 Moshier 路徑；Node/MCP 也可載入同一套件的本地 WASM。本專案沒有另行提供 `.se1` 星曆資料檔；沒有這些檔案仍有 WASM 的授權義務。
-上游 wrapper 的 1.3.1 版[發布修正原始碼候選](https://github.com/swisseph-js/swisseph/tree/d15a8a30700f521489f01474385e86a4ce93b5aa)尚未與發布 tarball 的 `gitHead`、WASM 和重建輸入核對，不能用這個連結冒稱已提供完整的對應原始碼。
+1.3.1 發布的 npm provenance 指向[確切上游原始碼與建置腳本](https://github.com/swisseph-js/swisseph/tree/d15a8a30700f521489f01474385e86a4ce93b5aa)：包含 `native/libswe`、`packages/browser/src/swisseph_wasm.c` 和 `packages/browser/build-wasm.sh`。證據：[Browser attestation](https://registry.npmjs.org/-/npm/v1/attestations/@swisseph%2fbrowser@1.3.1)、[Core attestation](https://registry.npmjs.org/-/npm/v1/attestations/@swisseph%2fcore@1.3.1)、[上游發布執行](https://github.com/swisseph-js/swisseph/actions/runs/29828416348/attempts/1)。兩套 tarball 的 SHA-512 均符合 npm 鎖檔與 attestation subject，browser source map 內 4 個 TypeScript 檔案均與對應 Git blob 一致。npm 內附 WASM 的 SHA-256 為 `c73d47b63f9879fafc99171fe1cf484b7f2dda214c0fd7d5299bad8542d56968`；尚未逐位元重建，原工作流程指定 `emsdk: latest`，具體版本未由保存日誌證實。
 
 ## 另有授權或待核對的內容
 
