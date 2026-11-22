@@ -12,7 +12,7 @@ export const birthTimeSnapshot = (input: Parameters<typeof core.analyzeReplayRep
   core.analyzeReplayReport(input, { asOf }).replay.snapshot;
 
 export const analyzeCompatibility = (first: BirthInput, second: BirthInput): CompatibilityResult =>
-  core.analyzeCompatibility(first as any, second as any) as unknown as CompatibilityResult;
+  core.analyzeCompatibility(first, second) as unknown as CompatibilityResult;
 
 export { createReportReplaySession } from '@fortune/core';
 export type { ReportCalculation, ReplayReport } from '@fortune/core';
