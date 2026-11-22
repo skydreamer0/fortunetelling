@@ -28,6 +28,8 @@ jobs:
         with:
           node-version: '24.19.0'
       - run: npm ci --ignore-scripts
+      - name: Guard locked forecasts (append-only, #61)
+        run: node --import tsx scripts/ci/locked-forecasts.ts
       - id: plan
         run: node --import tsx scripts/ci/pipeline.ts plan
 
