@@ -1,0 +1,24 @@
+name: 功能或規則提案
+description: 提議新增功能，或調整命理計算與判讀規則。
+body:
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案內容
+      description: 請說明目前遇到的問題、建議的做法，以及希望看到的結果。
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: 來源或文獻依據
+      description: 若涉及命理規則，請附上可核對的出處，例如書名、版本與頁碼，並說明適用的流派或計算口徑。一般功能若沒有文獻依據，可以填寫使用情境。
+    validations:
+      required: true
+  - type: input
+    id: affected-systems
+    attributes:
+      label: 受影響的命理系統
+      description: 請列出受影響的系統。通用功能可填寫「跨系統」或「不適用」。
+    validations:
+      required: true

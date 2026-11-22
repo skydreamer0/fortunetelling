@@ -1,0 +1,46 @@
+name: 計算結果錯誤回報
+description: 回報可重現的排盤或計算結果差異。
+body:
+  - type: input
+    id: system
+    attributes:
+      label: 命理系統
+      placeholder: 例如八字、紫微斗數或人類圖
+    validations:
+      required: true
+  - type: textarea
+    id: birth-data
+    attributes:
+      label: 範例出生資料
+      description: 請勿貼上自己或他人的真實個資，也不要附上含個資的檔案或截圖。請改用能重現問題的虛構資料，填寫出生日期、時間及計算需要的出生地或性別。若出生時間未知，請註明。
+    validations:
+      required: true
+  - type: textarea
+    id: time-settings
+    attributes:
+      label: 時區與換日設定
+      description: 請填寫時區、是否啟用真太陽時，以及採用早子時或晚子時。若沿用預設值、不適用或不確定，請註明。
+      placeholder: 例如 Asia/Taipei、啟用真太陽時、晚子時
+    validations:
+      required: true
+  - type: textarea
+    id: expected-result
+    attributes:
+      label: 預期結果與來源
+      description: 請列出預期的結果，並附上可核對的書名與頁碼、規則出處或對照工具連結。有不同流派或計算口徑時，請註明採用哪一種。
+    validations:
+      required: true
+  - type: textarea
+    id: actual-result
+    attributes:
+      label: 實際結果
+      description: 請貼出有差異的輸出片段，並說明使用 Web、MCP 或核心 API 的哪個操作得出結果。
+    validations:
+      required: true
+  - type: input
+    id: core-version
+    attributes:
+      label: 核心版本
+      description: 請填寫 `@fortune/core` 版本。若從原始碼執行，也可以提供 Git commit。若無法確認，請填寫「未知」。
+    validations:
+      required: true
